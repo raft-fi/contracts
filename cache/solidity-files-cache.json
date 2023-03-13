@@ -1,0 +1,3313 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/yuval/repos/dev/packages/contracts/contracts/ActivePool.sol": {
+      "lastModificationDate": 1678349176048,
+      "contentHash": "2be591ea1b172a1c61dd089c79629781",
+      "sourceName": "contracts/ActivePool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/IActivePool.sol",
+        "./Dependencies/SafeMath.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ActivePool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/SafeMath.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "319458fccf4239a98459ce69c9c4f709",
+      "sourceName": "contracts/Dependencies/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/Ownable.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "88be68382f8f36d2ac83810f491278db",
+      "sourceName": "contracts/Dependencies/Ownable.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "Ownable"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/IActivePool.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "46a3e0f99e655fef31bf7bfede2a210a",
+      "sourceName": "contracts/Interfaces/IActivePool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IActivePool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/CheckContract.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "86ac7f2634e3be59fafadf922b060ca5",
+      "sourceName": "contracts/Dependencies/CheckContract.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "CheckContract"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/console.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "7b3dddb93624a8c8e64ce8e0b9e6f873",
+      "sourceName": "contracts/Dependencies/console.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "console"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/IPool.sol": {
+      "lastModificationDate": 1678349176051,
+      "contentHash": "9420d17dcddba9409dbffc293f7bc3eb",
+      "sourceName": "contracts/Interfaces/IPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/EchidnaTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "295212b3d32c3e0d7106ab53824edc9f",
+      "sourceName": "contracts/TestContracts/EchidnaTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../TroveManager.sol",
+        "../BorrowerOperations.sol",
+        "../ActivePool.sol",
+        "../DefaultPool.sol",
+        "../StabilityPool.sol",
+        "../GasPool.sol",
+        "../CollSurplusPool.sol",
+        "../LUSDToken.sol",
+        "./PriceFeedTestnet.sol",
+        "../SortedTroves.sol",
+        "./EchidnaProxy.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "EchidnaTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TroveManager.sol": {
+      "lastModificationDate": 1678351784216,
+      "contentHash": "3fb5ee25a0a463a545ae054a51bfae48",
+      "sourceName": "contracts/TroveManager.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/ITroveManager.sol",
+        "./Interfaces/IStabilityPool.sol",
+        "./Interfaces/ICollSurplusPool.sol",
+        "./Interfaces/ILUSDToken.sol",
+        "./Interfaces/ISortedTroves.sol",
+        "./Interfaces/ILQTYToken.sol",
+        "./Interfaces/ILQTYStaking.sol",
+        "./Dependencies/LiquityBase.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "TroveManager"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/BorrowerOperations.sol": {
+      "lastModificationDate": 1678349176048,
+      "contentHash": "3f517f1db0da3cd2e26fa91757e169e2",
+      "sourceName": "contracts/BorrowerOperations.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/IBorrowerOperations.sol",
+        "./Interfaces/ITroveManager.sol",
+        "./Interfaces/ILUSDToken.sol",
+        "./Interfaces/ICollSurplusPool.sol",
+        "./Interfaces/ISortedTroves.sol",
+        "./Interfaces/ILQTYStaking.sol",
+        "./Dependencies/LiquityBase.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "BorrowerOperations"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/DefaultPool.sol": {
+      "lastModificationDate": 1678349176048,
+      "contentHash": "995c1410263bc8f2eb7eb7904c66b53f",
+      "sourceName": "contracts/DefaultPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/IDefaultPool.sol",
+        "./Dependencies/SafeMath.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "DefaultPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/StabilityPool.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "4d47f79b79bc656f93064da22372772a",
+      "sourceName": "contracts/StabilityPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/IBorrowerOperations.sol",
+        "./Interfaces/IStabilityPool.sol",
+        "./Interfaces/IBorrowerOperations.sol",
+        "./Interfaces/ITroveManager.sol",
+        "./Interfaces/ILUSDToken.sol",
+        "./Interfaces/ISortedTroves.sol",
+        "./Interfaces/ICommunityIssuance.sol",
+        "./Dependencies/LiquityBase.sol",
+        "./Dependencies/SafeMath.sol",
+        "./Dependencies/LiquitySafeMath128.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "StabilityPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/CollSurplusPool.sol": {
+      "lastModificationDate": 1678349176048,
+      "contentHash": "0caaa3c0184861a90056f7a43f0c2bfb",
+      "sourceName": "contracts/CollSurplusPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/ICollSurplusPool.sol",
+        "./Dependencies/SafeMath.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "CollSurplusPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/PriceFeedTestnet.sol": {
+      "lastModificationDate": 1678349176055,
+      "contentHash": "be8d8c62baa6bf6b8c17cbf9f980e196",
+      "sourceName": "contracts/TestContracts/PriceFeedTestnet.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Interfaces/IPriceFeed.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "PriceFeedTestnet"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/GasPool.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "9f4dd01d7765056df98c3f3868548848",
+      "sourceName": "contracts/GasPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "GasPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/SortedTroves.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "57e19e50ce7820b19ddfd41de09296ee",
+      "sourceName": "contracts/SortedTroves.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/ISortedTroves.sol",
+        "./Interfaces/ITroveManager.sol",
+        "./Interfaces/IBorrowerOperations.sol",
+        "./Dependencies/SafeMath.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "SortedTroves"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LUSDToken.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "6553c57ef1644e82034d4f53d85d9213",
+      "sourceName": "contracts/LUSDToken.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/ILUSDToken.sol",
+        "./Dependencies/SafeMath.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LUSDToken"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/EchidnaProxy.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "e0dc5b1fabcf3ebba320250060b13f93",
+      "sourceName": "contracts/TestContracts/EchidnaProxy.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../TroveManager.sol",
+        "../BorrowerOperations.sol",
+        "../StabilityPool.sol",
+        "../LUSDToken.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "EchidnaProxy"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ITroveManager.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "086f29a392117cad9c12e93c6b341339",
+      "sourceName": "contracts/Interfaces/ITroveManager.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ILiquityBase.sol",
+        "./IStabilityPool.sol",
+        "./ILUSDToken.sol",
+        "./ILQTYToken.sol",
+        "./ILQTYStaking.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ITroveManager"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/IStabilityPool.sol": {
+      "lastModificationDate": 1678349176051,
+      "contentHash": "1b74e87e4271cbe312248822f04d0366",
+      "sourceName": "contracts/Interfaces/IStabilityPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IStabilityPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ICollSurplusPool.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "4c3de691e35fe3cbc8f468f3348ee95e",
+      "sourceName": "contracts/Interfaces/ICollSurplusPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ICollSurplusPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ISortedTroves.sol": {
+      "lastModificationDate": 1678349176051,
+      "contentHash": "596d6e141eea598b5d5b5f149ff45dc8",
+      "sourceName": "contracts/Interfaces/ISortedTroves.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ISortedTroves"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ILUSDToken.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "c1f7bc1420ba555cfd4c79b3ad288504",
+      "sourceName": "contracts/Interfaces/ILUSDToken.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/IERC20.sol",
+        "../Dependencies/IERC2612.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ILUSDToken"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ILQTYToken.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "ce8ac371dab2390dac084497c2faec24",
+      "sourceName": "contracts/Interfaces/ILQTYToken.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/IERC20.sol",
+        "../Dependencies/IERC2612.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ILQTYToken"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/LiquityBase.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "4d3d67c4f66b44c1eb2791bfc7408746",
+      "sourceName": "contracts/Dependencies/LiquityBase.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BaseMath.sol",
+        "./LiquityMath.sol",
+        "../Interfaces/IActivePool.sol",
+        "../Interfaces/IDefaultPool.sol",
+        "../Interfaces/IPriceFeed.sol",
+        "../Interfaces/ILiquityBase.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LiquityBase"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ILQTYStaking.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "8b6197f0d752ee318fd450c809cfd42e",
+      "sourceName": "contracts/Interfaces/ILQTYStaking.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ILQTYStaking"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ILiquityBase.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "4ce63813d9516eab46cafb8f7280c445",
+      "sourceName": "contracts/Interfaces/ILiquityBase.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IPriceFeed.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ILiquityBase"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/IPriceFeed.sol": {
+      "lastModificationDate": 1678349176051,
+      "contentHash": "6a92c5a6d02f593873e82afde20abee5",
+      "sourceName": "contracts/Interfaces/IPriceFeed.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IPriceFeed"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/IERC20.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "7b565373fcb5903d2663e4b0d91c8f0a",
+      "sourceName": "contracts/Dependencies/IERC20.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/IERC2612.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "3c70134daac99735c1cc086a1728f6ba",
+      "sourceName": "contracts/Dependencies/IERC2612.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IERC2612"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/BaseMath.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "2e7e17ddf012c77296d1451991795dc0",
+      "sourceName": "contracts/Dependencies/BaseMath.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "BaseMath"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/LiquityMath.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "12c8ea21fecc4ba0e962330b3718a30f",
+      "sourceName": "contracts/Dependencies/LiquityMath.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./SafeMath.sol",
+        "./console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LiquityMath"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/IDefaultPool.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "7e582b7a76643a77ec1f8faed2128e84",
+      "sourceName": "contracts/Interfaces/IDefaultPool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IDefaultPool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/IBorrowerOperations.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "8877216c7055d59c75c44830fc34f06f",
+      "sourceName": "contracts/Interfaces/IBorrowerOperations.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IBorrowerOperations"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ICommunityIssuance.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "c55faf2ead59cd12fb0c76f54c3d15d5",
+      "sourceName": "contracts/Interfaces/ICommunityIssuance.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ICommunityIssuance"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/LiquitySafeMath128.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "311cfe482ae4000acd3239b9ca710a2e",
+      "sourceName": "contracts/Dependencies/LiquitySafeMath128.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LiquitySafeMath128"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/LUSDTokenTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "5d5c722b13009c15b580e9ede917367f",
+      "sourceName": "contracts/TestContracts/LUSDTokenTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../LUSDToken.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LUSDTokenTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/StabilityPoolTester.sol": {
+      "lastModificationDate": 1678349176055,
+      "contentHash": "8c75880cd60e93836b541d3032e2db3c",
+      "sourceName": "contracts/TestContracts/StabilityPoolTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../StabilityPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "StabilityPoolTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Proxy/BorrowerWrappersScript.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "56cc398fc22739e6c7dc5d0a1ad7920b",
+      "sourceName": "contracts/Proxy/BorrowerWrappersScript.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/SafeMath.sol",
+        "../Dependencies/LiquityMath.sol",
+        "../Dependencies/IERC20.sol",
+        "../Interfaces/IBorrowerOperations.sol",
+        "../Interfaces/ITroveManager.sol",
+        "../Interfaces/IStabilityPool.sol",
+        "../Interfaces/IPriceFeed.sol",
+        "../Interfaces/ILQTYStaking.sol",
+        "./BorrowerOperationsScript.sol",
+        "./ETHTransferScript.sol",
+        "./LQTYStakingScript.sol",
+        "../Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "BorrowerWrappersScript"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Proxy/BorrowerOperationsScript.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "29860f24d0e08842d8ffedab5955f087",
+      "sourceName": "contracts/Proxy/BorrowerOperationsScript.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/CheckContract.sol",
+        "../Interfaces/IBorrowerOperations.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "BorrowerOperationsScript"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Proxy/ETHTransferScript.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "2490690b25902621b2f4c3ca27e2e2c1",
+      "sourceName": "contracts/Proxy/ETHTransferScript.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ETHTransferScript"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Proxy/LQTYStakingScript.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "82af41f3876502c06f61cac6052a0b5e",
+      "sourceName": "contracts/Proxy/LQTYStakingScript.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/CheckContract.sol",
+        "../Interfaces/ILQTYStaking.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LQTYStakingScript"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LQTY/LQTYStaking.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "2250f5961de69824c2356765f4d3fe20",
+      "sourceName": "contracts/LQTY/LQTYStaking.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/BaseMath.sol",
+        "../Dependencies/SafeMath.sol",
+        "../Dependencies/Ownable.sol",
+        "../Dependencies/CheckContract.sol",
+        "../Dependencies/console.sol",
+        "../Interfaces/ILQTYToken.sol",
+        "../Interfaces/ILQTYStaking.sol",
+        "../Dependencies/LiquityMath.sol",
+        "../Interfaces/ILUSDToken.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LQTYStaking"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/LQTYStakingTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "8feec292a61f915a7f85e4ab419dff1f",
+      "sourceName": "contracts/TestContracts/LQTYStakingTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../LQTY/LQTYStaking.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LQTYStakingTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/LiquityMathTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "281c432d7bff4e97306da190e1f63fe0",
+      "sourceName": "contracts/TestContracts/LiquityMathTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/LiquityMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LiquityMathTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/FunctionCaller.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "b1c6fbfcafb586b7ba58860e6390021e",
+      "sourceName": "contracts/TestContracts/FunctionCaller.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Interfaces/ITroveManager.sol",
+        "../Interfaces/ISortedTroves.sol",
+        "../Interfaces/IPriceFeed.sol",
+        "../Dependencies/LiquityMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "FunctionCaller"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/PriceFeed.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "2ade53bec891af16b93be5d4666960cf",
+      "sourceName": "contracts/PriceFeed.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/IPriceFeed.sol",
+        "./Interfaces/ITellorCaller.sol",
+        "./Dependencies/AggregatorV3Interface.sol",
+        "./Dependencies/SafeMath.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol",
+        "./Dependencies/BaseMath.sol",
+        "./Dependencies/LiquityMath.sol",
+        "./Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "PriceFeed"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/AggregatorV3Interface.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "80869bcc297fea759a9d79b9eca11d83",
+      "sourceName": "contracts/Dependencies/AggregatorV3Interface.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "AggregatorV3Interface"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ITellorCaller.sol": {
+      "lastModificationDate": 1678349176051,
+      "contentHash": "37d470c7a90a64c2e2adde381def44c8",
+      "sourceName": "contracts/Interfaces/ITellorCaller.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ITellorCaller"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/PriceFeedTester.sol": {
+      "lastModificationDate": 1678349176055,
+      "contentHash": "ed30de21a2e4838a7908a74e502fa7d5",
+      "sourceName": "contracts/TestContracts/PriceFeedTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../PriceFeed.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "PriceFeedTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LQTY/CommunityIssuance.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "21d90ee6d27c255457ef9ae59b1019b3",
+      "sourceName": "contracts/LQTY/CommunityIssuance.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Interfaces/ILQTYToken.sol",
+        "../Interfaces/ICommunityIssuance.sol",
+        "../Dependencies/BaseMath.sol",
+        "../Dependencies/LiquityMath.sol",
+        "../Dependencies/Ownable.sol",
+        "../Dependencies/CheckContract.sol",
+        "../Dependencies/SafeMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "CommunityIssuance"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/CommunityIssuanceTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "1d8744aa4a26287bd5bf1c61accd5b66",
+      "sourceName": "contracts/TestContracts/CommunityIssuanceTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../LQTY/CommunityIssuance.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "CommunityIssuanceTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LQTY/LockupContract.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "d38ac18eea704ff096cd93dd5fbb4e59",
+      "sourceName": "contracts/LQTY/LockupContract.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/SafeMath.sol",
+        "../Interfaces/ILQTYToken.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LockupContract"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LQTY/LockupContractFactory.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "875f179a328a84fb6720aa3884898536",
+      "sourceName": "contracts/LQTY/LockupContractFactory.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/CheckContract.sol",
+        "../Dependencies/SafeMath.sol",
+        "../Dependencies/Ownable.sol",
+        "../Interfaces/ILockupContractFactory.sol",
+        "./LockupContract.sol",
+        "../Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LockupContractFactory"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Interfaces/ILockupContractFactory.sol": {
+      "lastModificationDate": 1678349176051,
+      "contentHash": "d7c500cc912c5e07c7bef30ee84d481d",
+      "sourceName": "contracts/Interfaces/ILockupContractFactory.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ILockupContractFactory"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LQTY/LQTYToken.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "79208af867bd19464c7a2d1270db6755",
+      "sourceName": "contracts/LQTY/LQTYToken.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/CheckContract.sol",
+        "../Dependencies/SafeMath.sol",
+        "../Interfaces/ILQTYToken.sol",
+        "../Interfaces/ILockupContractFactory.sol",
+        "../Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LQTYToken"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/LQTYTokenTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "e250756e18097ab570c9cdf7f81d58ef",
+      "sourceName": "contracts/TestContracts/LQTYTokenTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../LQTY/LQTYToken.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LQTYTokenTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LPRewards/Unipool.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "bc5899cf240683ddbf323dca86039733",
+      "sourceName": "contracts/LPRewards/Unipool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/LiquityMath.sol",
+        "../Dependencies/SafeMath.sol",
+        "../Dependencies/Ownable.sol",
+        "../Dependencies/CheckContract.sol",
+        "../Interfaces/ILQTYToken.sol",
+        "./Dependencies/SafeERC20.sol",
+        "./Interfaces/ILPTokenWrapper.sol",
+        "./Interfaces/IUnipool.sol",
+        "../Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LPTokenWrapper",
+        "Unipool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LPRewards/Dependencies/SafeERC20.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "dea5d1cbb6854956a59b54bb6cfd7951",
+      "sourceName": "contracts/LPRewards/Dependencies/SafeERC20.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../Dependencies/IERC20.sol",
+        "../../Dependencies/SafeMath.sol",
+        "./Address.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "SafeERC20"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LPRewards/Interfaces/ILPTokenWrapper.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "407d67130dcaae4333af4165266c28c2",
+      "sourceName": "contracts/LPRewards/Interfaces/ILPTokenWrapper.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ILPTokenWrapper"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LPRewards/Interfaces/IUnipool.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "5b86535a8e22f8d607dbcc75a8424df9",
+      "sourceName": "contracts/LPRewards/Interfaces/IUnipool.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "IUnipool"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LPRewards/Dependencies/Address.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "ce5e9c4d616151f26bd1b2f9a967da4e",
+      "sourceName": "contracts/LPRewards/Dependencies/Address.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Proxy/TokenScript.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "c9452bb8edce6fa6aa237ef799cdd4d1",
+      "sourceName": "contracts/Proxy/TokenScript.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/CheckContract.sol",
+        "../Dependencies/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "TokenScript"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/LUSDTokenCaller.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "2c6ed04987a9daf7e2f13e85b576d41e",
+      "sourceName": "contracts/TestContracts/LUSDTokenCaller.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Interfaces/ILUSDToken.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LUSDTokenCaller"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Proxy/TroveManagerScript.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "65bb4cd604310a300b8619d4e5cef293",
+      "sourceName": "contracts/Proxy/TroveManagerScript.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/CheckContract.sol",
+        "../Interfaces/ITroveManager.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "TroveManagerScript"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/HintHelpers.sol": {
+      "lastModificationDate": 1678349176050,
+      "contentHash": "a44e7b903c2534bfaae020d241a71f46",
+      "sourceName": "contracts/HintHelpers.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Interfaces/ITroveManager.sol",
+        "./Interfaces/ISortedTroves.sol",
+        "./Dependencies/LiquityBase.sol",
+        "./Dependencies/Ownable.sol",
+        "./Dependencies/CheckContract.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "HintHelpers"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/SortedTrovesTester.sol": {
+      "lastModificationDate": 1678349176055,
+      "contentHash": "dbbf231722834e920cdbf33bd39bdf30",
+      "sourceName": "contracts/TestContracts/SortedTrovesTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Interfaces/ISortedTroves.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "SortedTrovesTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/BorrowerOperationsTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "476ff099025b989eb310d22f0eb29979",
+      "sourceName": "contracts/TestContracts/BorrowerOperationsTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../BorrowerOperations.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "BorrowerOperationsTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/DefaultPoolTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "83dcf103b37928f26df9fa299b957797",
+      "sourceName": "contracts/TestContracts/DefaultPoolTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../DefaultPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "DefaultPoolTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Proxy/StabilityPoolScript.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "d8e1d73d2a588a7a44518e6efebd88f2",
+      "sourceName": "contracts/Proxy/StabilityPoolScript.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/CheckContract.sol",
+        "../Interfaces/IStabilityPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "StabilityPoolScript"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/TellorCaller.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "8fbccc9e3b8bcdb962358f5914d32bda",
+      "sourceName": "contracts/Dependencies/TellorCaller.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Interfaces/ITellorCaller.sol",
+        "./ITellor.sol",
+        "./SafeMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "TellorCaller"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Dependencies/ITellor.sol": {
+      "lastModificationDate": 1678349176049,
+      "contentHash": "c1bd2caf347f1f4deea3fbf94551ef65",
+      "sourceName": "contracts/Dependencies/ITellor.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ITellor"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/MockAggregator.sol": {
+      "lastModificationDate": 1678349176055,
+      "contentHash": "0b1b58720c0c82c08e223e98b7cbce4d",
+      "sourceName": "contracts/TestContracts/MockAggregator.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/AggregatorV3Interface.sol",
+        "../Dependencies/console.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "MockAggregator"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/MultiTroveGetter.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "ab6deb3f41fd478bb012aed6679d40be",
+      "sourceName": "contracts/MultiTroveGetter.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./TroveManager.sol",
+        "./SortedTroves.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "MultiTroveGetter"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/LiquitySafeMath128Tester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "fb738969fe886ab5cd1942ac88ba3684",
+      "sourceName": "contracts/TestContracts/LiquitySafeMath128Tester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/LiquitySafeMath128.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "LiquitySafeMath128Tester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/CDPManagerTester.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "81fb98819faa4b4afa9a5ac960a54a63",
+      "sourceName": "contracts/TestContracts/CDPManagerTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../TroveManager.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "TroveManagerTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/ActivePoolTester.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "c65ac320e30403e32139fd8c70f1e2d2",
+      "sourceName": "contracts/TestContracts/ActivePoolTester.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../ActivePool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ActivePoolTester"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/LPRewards/TestContracts/ERC20Mock.sol": {
+      "lastModificationDate": 1678349176052,
+      "contentHash": "face3c9fd27a980e694dca7bcf188b64",
+      "sourceName": "contracts/LPRewards/TestContracts/ERC20Mock.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "ERC20Mock"
+      ]
+    },
+    "/Users/yuval/repos/dev/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1678624434667,
+      "contentHash": "8065b340476f61365c076897199425f1",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../utils/Context.sol",
+        "./IERC20.sol",
+        "../../math/SafeMath.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "ERC20"
+      ]
+    },
+    "/Users/yuval/repos/dev/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1678624429154,
+      "contentHash": "2adbd82f6d055a4751566d4671512b03",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "Context"
+      ]
+    },
+    "/Users/yuval/repos/dev/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1678624434667,
+      "contentHash": "e0a41531d159d3a32f84b7a3ecf9fabb",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "/Users/yuval/repos/dev/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
+      "lastModificationDate": 1678624429150,
+      "contentHash": "e03e12206057e809eb76c5f681170c32",
+      "sourceName": "@openzeppelin/contracts/math/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/Migrations.sol": {
+      "lastModificationDate": 1678349176053,
+      "contentHash": "2386143b48a6ba717cf3a097e29ccd9f",
+      "sourceName": "contracts/Migrations.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "Migrations"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/Destructible.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "ea715f1973792f213ab64a57ee7db506",
+      "sourceName": "contracts/TestContracts/Destructible.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "Destructible"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/MockTellor.sol": {
+      "lastModificationDate": 1678349176055,
+      "contentHash": "909fa3e2a4a3c9a85cb90762aa520ba0",
+      "sourceName": "contracts/TestContracts/MockTellor.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "MockTellor"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/NonPayable.sol": {
+      "lastModificationDate": 1678349176055,
+      "contentHash": "0e3e76aa4d941dad7e9ea17bed4a4067",
+      "sourceName": "contracts/TestContracts/NonPayable.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "NonPayable"
+      ]
+    },
+    "/Users/yuval/repos/dev/packages/contracts/contracts/TestContracts/DappSys/proxy.sol": {
+      "lastModificationDate": 1678349176054,
+      "contentHash": "928a9c4b946dd7aaf0a8fca2b142111a",
+      "sourceName": "contracts/TestContracts/DappSys/proxy.sol",
+      "solcConfig": {
+        "version": "0.4.23",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 100
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.4.23"
+      ],
+      "artifacts": [
+        "DSAuth",
+        "DSAuthEvents",
+        "DSAuthority",
+        "DSNote",
+        "DSProxy",
+        "DSProxyCache",
+        "DSProxyFactory"
+      ]
+    }
+  }
+}
