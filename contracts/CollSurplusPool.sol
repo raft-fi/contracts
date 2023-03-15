@@ -31,7 +31,7 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
 
     event CollBalanceUpdated(address indexed _account, uint _newBalance);
     event EtherSent(address _to, uint _amount);
-    
+
     // --- Contract setters ---
 
     function setAddresses(

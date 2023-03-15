@@ -91,18 +91,18 @@ lockupContract addr: 0x0051099Cac8F0C27467425bE5Eedd96078e6f748,
             beneficiary addr: 0xd89852fA2F66B54F485bCa0CcE3Af4e67015597E,
             on-chain beneficiary addr: 0xd89852fA2F66B54F485bCa0CcE3Af4e67015597E,
             unlockTime: 1649147590
-            
+
 lockupContract addr: 0xBa4a395251dBEb49a17BA0d09eAB6cb3F55752F9,
             stored LQTYToken addr: 0x6DEA81C8171D0bA574754EF6F8b412F2Ed88c54D
             beneficiary: ACCOUNT_33,
             beneficiary addr: 0xF6451cCdC8D47a26Ec6535cA8DEa90E6696A3aDC,
             on-chain beneficiary addr: 0xF6451cCdC8D47a26Ec6535cA8DEa90E6696A3aDC,
             unlockTime: 1649147590
-            
+
 LUSD-ETH Pair's current LUSD reserves: 86734375.404508737552275900
 LUSD-ETH Pair's current ETH reserves: 22764.043024824649856061
-number of troves: 1122 
-Trove list size: 1122 
+number of troves: 1122
+Trove list size: 1122
 Entire system debt: 1543939809.042370227162411493
 Entire system coll: 1033585.776904940769348493
 TCR: 253603382

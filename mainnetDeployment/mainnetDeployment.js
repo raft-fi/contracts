@@ -89,7 +89,7 @@ async function mainnetDeploy(configParams) {
   // Log LQTY and Unipool addresses
   await mdh.logContractObjects(LQTYContracts)
   console.log(`Unipool address: ${unipool.address}`)
-  
+
   // let latestBlock = await ethers.provider.getBlockNumber()
   let deploymentStartTime = await LQTYContracts.lqtyToken.getDeploymentStartTime()
 
@@ -112,7 +112,7 @@ async function mainnetDeploy(configParams) {
     } else {
       const txReceipt = await mdh.sendAndWaitForTransaction(LQTYContracts.lockupContractFactory.deployLockupContract(investorAddr, oneYearFromDeployment, { gasPrice }))
 
-      const address = await txReceipt.logs[0].address // The deployment event emitted from the LC itself is is the first of two events, so this is its address 
+      const address = await txReceipt.logs[0].address // The deployment event emitted from the LC itself is is the first of two events, so this is its address
       lockupContracts[investor] = new ethers.Contract(
         address,
         lockupContractEthersFactory.interface,
@@ -140,12 +140,12 @@ async function mainnetDeploy(configParams) {
   // console.log(`deployer trove debt before repaying: ${await liquityCore.troveManager.getTroveDebt(deployerWallet.address)}`)
  // await mdh.sendAndWaitForTransaction(liquityCore.borrowerOperations.repayLUSD(dec(800, 18), th.ZERO_ADDRESS, th.ZERO_ADDRESS, {gasPrice, gasLimit: 1000000}))
   // console.log(`deployer trove debt after repaying: ${await liquityCore.troveManager.getTroveDebt(deployerWallet.address)}`)
-  
+
   // Deployer add coll
   // console.log(`deployer trove coll before adding coll: ${await liquityCore.troveManager.getTroveColl(deployerWallet.address)}`)
   // await mdh.sendAndWaitForTransaction(liquityCore.borrowerOperations.addColl(th.ZERO_ADDRESS, th.ZERO_ADDRESS, {value: dec(2, 'ether'), gasPrice, gasLimit: 1000000}))
   // console.log(`deployer trove coll after addingColl: ${await liquityCore.troveManager.getTroveColl(deployerWallet.address)}`)
-  
+
   // Check chainlink proxy price ---
 
   const chainlinkProxy = new ethers.Contract(
@@ -168,7 +168,7 @@ async function mainnetDeploy(configParams) {
   // Check lockup contracts exist for each beneficiary with correct unlock time
   for (investor of Object.keys(lockupContracts)) {
     const lockupContract = lockupContracts[investor]
-    // check LC references correct LQTYToken 
+    // check LC references correct LQTYToken
     const storedLQTYTokenAddr = await lockupContract.lqtyToken()
     assert.equal(LQTYContracts.lqtyToken.address, storedLQTYTokenAddr)
     // Check contract has stored correct beneficary
@@ -416,7 +416,7 @@ async function mainnetDeploy(configParams) {
   // // Provide to SP
   // await mdh.sendAndWaitForTransaction(liquityCore.stabilityPool.provideToSP(dec(15, 18), th.ZERO_ADDRESS, { gasPrice, gasLimit: 400000 }))
 
-  // // Get SP deposit 
+  // // Get SP deposit
   // SPDeposit = await liquityCore.stabilityPool.getCompoundedLUSDDeposit(deployerWallet.address)
   // th.logBN("deployer SP deposit after depositing 15 LUSD", SPDeposit)
 
@@ -448,7 +448,7 @@ async function mainnetDeploy(configParams) {
   // let account2bal = await LQTYContracts.lqtyToken.balanceOf(account2Wallet.address)
   // th.logBN("account2 LQTY bal before withdrawal attempt", account2bal)
 
-  // // Check LC LQTY bal 
+  // // Check LC LQTY bal
   // let account2LockupContractBal = await LQTYContracts.lqtyToken.balanceOf(account2LockupContract.address)
   // th.logBN("account2's LC LQTY bal before withdrawal attempt", account2LockupContractBal)
 
@@ -459,7 +459,7 @@ async function mainnetDeploy(configParams) {
   // account2bal = await LQTYContracts.lqtyToken.balanceOf(account2Wallet.address)
   // th.logBN("account2's LQTY bal after LC withdrawal attempt", account2bal)
 
-  // // Check LC bal 
+  // // Check LC bal
   // account2LockupContractBal = await LQTYContracts.lqtyToken.balanceOf(account2LockupContract.address)
   // th.logBN("account2's LC LQTY bal LC withdrawal attempt", account2LockupContractBal)
 
@@ -546,7 +546,7 @@ async function mainnetDeploy(configParams) {
   const entireSystemColl = await liquityCore.troveManager.getEntireSystemColl()
   th.logBN("Entire system debt", entireSystemDebt)
   th.logBN("Entire system coll", entireSystemColl)
-  
+
   // TCR
   const TCR = await liquityCore.troveManager.getTCR(chainlinkPrice)
   console.log(`TCR: ${TCR}`)
@@ -571,7 +571,7 @@ async function mainnetDeploy(configParams) {
 
   // --- State variables ---
 
-  // TroveManager 
+  // TroveManager
   console.log("TroveManager state variables:")
   const totalStakes = await liquityCore.troveManager.totalStakes()
   const totalStakesSnapshot = await liquityCore.troveManager.totalStakesSnapshot()
@@ -635,8 +635,8 @@ async function mainnetDeploy(configParams) {
   // const realGeneralSafeAddr = "0xF06016D822943C42e3Cb7FC3a6A3B1889C1045f8"
 
   //   const LQTYToken2EthersFactory = await ethers.getContractFactory("LQTYToken2", deployerWallet)
-  //   const lqtyToken2 = await LQTYToken2EthersFactory.deploy( 
-  //     "0xF41E0DD45d411102ed74c047BdA544396cB71E27",  // CI param: LC1 
+  //   const lqtyToken2 = await LQTYToken2EthersFactory.deploy(
+  //     "0xF41E0DD45d411102ed74c047BdA544396cB71E27",  // CI param: LC1
   //     "0x9694a04263593AC6b895Fc01Df5929E1FC7495fA", // LQTY Staking param: LC2
   //     "0x98f95E112da23c7b753D8AE39515A585be6Fb5Ef", // LCF param: LC3
   //     realGeneralSafeAddr,  // bounty/hackathon param: REAL general safe addr
@@ -663,7 +663,7 @@ async function mainnetDeploy(configParams) {
   // const LCshortTerm = await LCShortTermEthersFactory.deploy(
   //   LQTYContracts.lqtyToken.address,
   //   deployerWallet.address,
-  //   now, 
+  //   now,
   //   {gasPrice, gasLimit: 1000000}
   // )
 
@@ -671,7 +671,7 @@ async function mainnetDeploy(configParams) {
 
   // existing deployment
   // const deployedShortTermLC = await new ethers.Contract(
-  //   "0xbA8c3C09e9f55dA98c5cF0C28d15Acb927792dC7", 
+  //   "0xbA8c3C09e9f55dA98c5cF0C28d15Acb927792dC7",
   //   LCShortTermEthersFactory.interface,
   //   deployerWallet
   // )

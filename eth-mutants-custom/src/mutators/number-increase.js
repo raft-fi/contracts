@@ -9,7 +9,7 @@ NumberIncreaseMutator.prototype.getMutations = function (file, source, visit) {
 
   visit({
     NumberLiteral: (node) => {
-    
+
       if (node.subdenomination) {
         return // TODO(federicobond) add support for numbers with subdenomination
       }

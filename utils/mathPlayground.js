@@ -42,7 +42,7 @@ const ABDKOperations = async () => {
     const res8 = await functionCaller.abdkMath_toUInt_view(res7)
     console.log(`result of 500 * 600, performed in 64.64, converted back to uint64: ${res4}`)
 
-    // // 0.5 * 6 
+    // // 0.5 * 6
     // get 0.5 as 64.64dec
     const res9 = await functionCaller.abdkMath_divu_view(1, 2)
     console.log(`0.5 as 64.64 fixed-point: ${res9}`)
@@ -59,7 +59,7 @@ const ABDKOperations = async () => {
 
     // price = 200.12345678, stored as uint
     // convert 6123456700909.123456789123456789 LUSD to Ether
-    // amount = 6123456700909.123456789123456789 LUSD / 200.12345678 
+    // amount = 6123456700909.123456789123456789 LUSD / 200.12345678
 
     // expect amount 30598395607.571232843807983401100033706903271291774255... Ether
 
@@ -75,18 +75,18 @@ const ABDKOperations = async () => {
     // expected: 30598395607.571232843807983401100033706903271291774255... Ether
     //  actual:   30598395607.571232843814242587 Ether
 
-    // accurate to 22 digits.  So with 99 billion ether, it's accurate to 1 gwei. 
+    // accurate to 22 digits.  So with 99 billion ether, it's accurate to 1 gwei.
 
     // Example computation: Stake computation
 
-    // 1) 
+    // 1)
 
     // reward = stake * S - S0
 
     // stake = 65032.123456789123456789 Ether
     // S = 0.005555555888888888 Ether per unit staked
     // S_0 = 0.003579246835792468 Ether per uint staked
-    // S - S_0 = 0.001976309053096420 
+    // S - S_0 = 0.001976309053096420
     // r = s * S - S0
     // r =  128.523574329736396343 Ether
 
@@ -100,13 +100,13 @@ const ABDKOperations = async () => {
     // returns 128.523574329736395585
     // accurate to 18 digits
 
-    // 2) 
+    // 2)
     // reward = stake * S - S0
 
     /* stake = 5555565032.123456789123456789 Ether
     S = 0.005555555888888888 Ether per unit staked
     S_0 = 0.003579246835792468 Ether per uint staked
-    S - S_0 = 0.001976309053096420 
+    S - S_0 = 0.001976309053096420
     r = s * S - S0
     r = 10979513.468051491046396343 Ether
     */
@@ -131,7 +131,7 @@ const ABDKOperations = async () => {
     // multiply the 64.64dec ratio by the uint, and convert result back to uint
     const res14 = await functionCaller.abdkMath_mulu_view(res13, 6)
     console.log(`result of 0.5 * 6, performed in 64.64, converted back to uint256: ${res14}`)
-    // 
+    //
 
     // //--- Division ---
 
@@ -159,13 +159,13 @@ const ABDKOperations = async () => {
 
     // seems accurate to 18 digits
 
-    /* 
+    /*
     --- Using ABDK functions in Liquity ---
-    
+
     ABDK.mulu is for: (64.64dec * uint)  -> uint.  i.e. for rewardPerUnitStaked  * stake -> reward
-    
-    ABDK.divu is for: (uint / uint)  -> 64.64dec.  i.e. for liquidatedETH / totalStakes 
-    
+
+    ABDK.divu is for: (uint / uint)  -> 64.64dec.  i.e. for liquidatedETH / totalStakes
+
     */
 }
 

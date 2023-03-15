@@ -232,7 +232,7 @@ class MainnetDeploymentHelper {
       await this.sendAndWaitForTransaction(contracts.sortedTroves.setParams(
         maxBytes32,
         contracts.troveManager.address,
-        contracts.borrowerOperations.address, 
+        contracts.borrowerOperations.address,
 	{gasPrice}
       ))
 
@@ -253,7 +253,7 @@ class MainnetDeploymentHelper {
 	{gasPrice}
       ))
 
-    // set contracts in BorrowerOperations 
+    // set contracts in BorrowerOperations
     await this.isOwnershipRenounced(contracts.borrowerOperations) ||
       await this.sendAndWaitForTransaction(contracts.borrowerOperations.setAddresses(
         contracts.troveManager.address,
@@ -328,7 +328,7 @@ class MainnetDeploymentHelper {
       await this.sendAndWaitForTransaction(LQTYContracts.lqtyStaking.setAddresses(
         LQTYContracts.lqtyToken.address,
         coreContracts.lusdToken.address,
-        coreContracts.troveManager.address, 
+        coreContracts.troveManager.address,
         coreContracts.borrowerOperations.address,
         coreContracts.activePool.address,
 	{gasPrice}

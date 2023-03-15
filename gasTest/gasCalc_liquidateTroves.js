@@ -1,4 +1,4 @@
-/* Script that logs gas costs for Liquity operations under various conditions. 
+/* Script that logs gas costs for Liquity operations under various conditions.
 
   Note: uses Mocha testing structure, but the purpose of each test is simply to print gas costs.
 
@@ -445,7 +445,7 @@ contract('Gas cost tests', async accounts => {
 
     const TCR = await troveManager.getTCR(await priceFeed.getPrice())
     console.log(`TCR: ${TCR}`)
-    
+
     // Check Recovery Mode is false
     assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
@@ -1664,7 +1664,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-    
+
     // Liquidate troves
     const tx = await troveManager.batchLiquidateTroves(_50_Defaulters, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)

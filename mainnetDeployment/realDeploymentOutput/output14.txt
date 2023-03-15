@@ -80,11 +80,11 @@ lockupContract addr: 0x5eced47f98e1357E5184FC876335549794FDA513,
             beneficiary addr: 0x895870D281E4761237f4465AFb51D16c3e124EFC,
             on-chain beneficiary addr: 0x895870D281E4761237f4465AFb51D16c3e124EFC,
             unlockTime: 1649147590
-            
+
 LUSD-ETH Pair's current LUSD reserves: 31826.482999633367186802
 LUSD-ETH Pair's current ETH reserves: 18.863437297094816373
-number of troves: 927 
-Trove list size: 927 
+number of troves: 927
+Trove list size: 927
 Entire system debt: 443751316.696782287401628399
 Entire system coll: 589150.996207411458639736
 TCR: 230649547

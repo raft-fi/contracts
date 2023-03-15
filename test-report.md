@@ -400,7 +400,7 @@ TCR: 11.892415157517211309
       ✓ LQTY multisig can't withraw from a LC which it funded (271ms)
       ✓ No one can withraw from a LC (78ms)
 
-  Contract: Deploying the LQTY contracts: LCF, CI, LQTYStaking, and LQTYToken 
+  Contract: Deploying the LQTY contracts: LCF, CI, LQTYStaking, and LQTYToken
     CommunityIssuance deployment
       ✓ Stores the deployer's address
     LQTYStaking deployment
@@ -455,7 +455,7 @@ TCR: 11.892415157517211309
       ✓ Anyone can deploy LCs with unlockTime = one year from deployment, directly and through factory (102ms)
       ✓ Anyone can deploy LCs with unlockTime > one year from deployment, directly and through factory (187ms)
       ✓ No one can deploy LCs with unlockTime < one year from deployment, directly or through factory (100ms)
-      Withdrawal Attempts on LCs before unlockTime has passed 
+      Withdrawal Attempts on LCs before unlockTime has passed
         ✓ Liquity multisig can't withdraw from a funded LC they deployed for another beneficiary through the Factory before the unlockTime
         ✓ Liquity multisig can't withdraw from a funded LC that someone else deployed before the unlockTime (52ms)
         ✓ Beneficiary can't withdraw from their funded LC before the unlockTime (219ms)

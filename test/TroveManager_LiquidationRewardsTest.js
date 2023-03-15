@@ -181,7 +181,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     total Coll: 3
 
     A, B, receive (2.4975)/8.995 * 0.995 ETH from L2.
-    
+
     D, E receive 2/8.995 * 0.995 ETH from L2.
 
     expect A, B coll  = 2 +  0.4975 + 0.2763  =  ETH
@@ -323,7 +323,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(1000, 18))
   })
 
-  // ---Trove adds collateral --- 
+  // ---Trove adds collateral ---
 
   // Test based on scenario in: https://docs.google.com/spreadsheets/d/1F5p3nZy749K5jwO-bwJeTsRoY7ewMfWIQ3QHtokxqzo/edit?usp=sharing
   it("redistribution: A,B,C,D,E open. Liq(A). B adds coll. Liq(C). B and D have correct coll and debt", async () => {
@@ -424,7 +424,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const D_entireColl_0 = (await th.getEntireCollAndDebt(contracts, D)).entireColl
     const E_entireColl_0 = (await th.getEntireCollAndDebt(contracts, E)).entireColl
 
-    // entireSystemColl, excluding A 
+    // entireSystemColl, excluding A
     const denominatorColl_1 = (await troveManager.getEntireSystemColl()).sub(A_entireColl_0)
 
     // Liquidate A
@@ -712,7 +712,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isTrue(txE.receipt.status)
     assert.isFalse(await sortedTroves.contains(erin))
 
-    /* Expected ETH rewards: 
+    /* Expected ETH rewards:
      Carol = 1992.01/1996 * 1996*0.995 = 1982.05 ETH
      Alice = 1.995/1996 * 1996*0.995 = 1.985025 ETH
      Bob = 1.995/1996 * 1996*0.995 = 1.985025 ETH
@@ -791,7 +791,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(bob_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(B_coll).div(totalColl))
     th.assertIsApproximatelyEqual(carol_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(C_coll).div(totalColl))
 
-    /* Alice, Bob, Carol each adds 1 ETH to their troves, 
+    /* Alice, Bob, Carol each adds 1 ETH to their troves,
     bringing them to 2.995, 2.995, 1992.01 total coll each. */
 
     const addedColl = toBN(dec(1, 'ether'))
@@ -814,7 +814,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isTrue(txE.receipt.status)
     assert.isFalse(await sortedTroves.contains(erin))
 
-    /* Expected ETH rewards: 
+    /* Expected ETH rewards:
      Carol = 1992.01/1998 * 1998*0.995 = 1982.04995 ETH
      Alice = 2.995/1998 * 1998*0.995 = 2.980025 ETH
      Bob = 2.995/1998 * 1998*0.995 = 2.980025 ETH
@@ -953,7 +953,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
      L2: (0.9975/2.495)*0.995 = 0.3978 ETH , 110*(0.9975/2.495)= 43.98 LUSDDebt
 
     coll: (1 + 0.4975 - 0.5 + 0.3968) = 1.3953 ETH
-    debt: (110 + 55 + 43.98 = 208.98 LUSDDebt 
+    debt: (110 + 55 + 43.98 = 208.98 LUSDDebt
 
      Alice rewards:
     L1 0.4975, 55 LUSD
@@ -1059,7 +1059,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isTrue(txE.receipt.status)
     assert.isFalse(await sortedTroves.contains(erin))
 
-    /* Expected ETH rewards: 
+    /* Expected ETH rewards:
      Carol = 1990.01/1994 * 1994*0.995 = 1980.05995 ETH
      Alice = 1.995/1994 * 1994*0.995 = 1.985025 ETH
      Bob = 1.995/1994 * 1994*0.995 = 1.985025 ETH
@@ -1138,7 +1138,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(bob_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(B_coll).div(totalColl))
     th.assertIsApproximatelyEqual(carol_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(C_coll).div(totalColl))
 
-    /* Alice, Bob, Carol each withdraw 0.5 ETH to their troves, 
+    /* Alice, Bob, Carol each withdraw 0.5 ETH to their troves,
     bringing them to 1.495, 1.495, 1990.51 total coll each. */
     const withdrawnColl = toBN(dec(500, 'finney'))
     await borrowerOperations.withdrawColl(withdrawnColl, alice, alice, { from: alice })
@@ -1177,7 +1177,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isTrue(txE.receipt.status)
     assert.isFalse(await sortedTroves.contains(erin))
 
-    /* Expected ETH rewards: 
+    /* Expected ETH rewards:
      Carol = 1990.51/1993.5 * 1993.5*0.995 = 1980.55745 ETH
      Alice = 1.495/1993.5 * 1993.5*0.995 = 1.487525 ETH
      Bob = 1.495/1993.5 * 1993.5*0.995 = 1.487525 ETH
@@ -1363,7 +1363,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(1800000, 16)), extraParams: { from: bob, value: toBN('8901000000000000000000') } })
     const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(4600, 16)), extraParams: { from: carol, value: toBN('23902000000000000000') } })
 
-    // Price drops 
+    // Price drops
     await priceFeed.setPrice('1')
 
     // Liquidate A
@@ -1382,7 +1382,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(await troveManager.totalStakesSnapshot(), totalStakesSnapshotAfterL1)
     th.assertIsApproximatelyEqual(await troveManager.totalCollateralSnapshot(), totalCollateralSnapshotAfterL1)
 
-    // Price rises 
+    // Price rises
     await priceFeed.setPrice(dec(1, 27))
 
     // D opens trove: 0.035 ETH
@@ -1420,7 +1420,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(await troveManager.totalStakesSnapshot(), totalStakesSnapshotAfterL2)
     th.assertIsApproximatelyEqual(await troveManager.totalCollateralSnapshot(), totalCollateralSnapshotAfterL2)
 
-    // Price rises 
+    // Price rises
     await priceFeed.setPrice(dec(1, 27))
 
     /* E and F open troves.
@@ -1436,7 +1436,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     const D_collAfterL2 = D_coll.add(D_pendingRewardsAfterL2).add(D_addedColl)
 
-    // Price drops 
+    // Price drops
     await priceFeed.setPrice('1')
 
     // Liquidate F

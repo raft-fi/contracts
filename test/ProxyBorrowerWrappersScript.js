@@ -107,7 +107,7 @@ contract('BorrowerWrappers', async accounts => {
 
     // recover ETH
     const gas_Used = th.gasUsed(await borrowerWrappers.transferETH(alice, amount, { from: alice, gasPrice: GAS_PRICE }))
-    
+
     const balanceAfter = toBN(await web3.eth.getBalance(alice))
     const expectedBalance = toBN(balanceBefore.sub(toBN(gas_Used * GAS_PRICE)))
     assert.equal(balanceAfter.sub(expectedBalance), amount.toString())

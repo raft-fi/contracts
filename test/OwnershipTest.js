@@ -9,7 +9,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
   const [owner, alice, bob] = accounts;
 
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
-  
+
   let contracts
   let lusdToken
   let sortedTroves
@@ -21,7 +21,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   let lqtyStaking
   let communityIssuance
-  let lqtyToken 
+  let lqtyToken
   let lockupContractFactory
 
   before(async () => {

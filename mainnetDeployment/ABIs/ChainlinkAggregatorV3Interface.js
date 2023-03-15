@@ -11,4 +11,3 @@ const ChainlinkAggregatorV3Interface = [
 module.exports = {
     ChainlinkAggregatorV3Interface: ChainlinkAggregatorV3Interface
 }
-  

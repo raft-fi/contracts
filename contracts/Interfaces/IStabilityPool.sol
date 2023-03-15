@@ -36,7 +36,7 @@ pragma solidity 0.6.11;
 interface IStabilityPool {
 
     // --- Events ---
-    
+
     event StabilityPoolETHBalanceUpdated(uint _newBalance);
     event StabilityPoolLUSDBalanceUpdated(uint _newBalance);
 

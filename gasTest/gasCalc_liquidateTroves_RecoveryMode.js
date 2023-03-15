@@ -1,4 +1,4 @@
-/* Script that logs gas costs for Liquity operations under various conditions. 
+/* Script that logs gas costs for Liquity operations under various conditions.
 
   Note: uses Mocha testing structure, but the purpose of each test is simply to print gas costs.
 
@@ -433,7 +433,7 @@ contract('Gas cost tests', async accounts => {
   // 45 troves
   it("", async () => {
     const message = 'liquidateTroves(). n = 45. Pure redistribution. Recovery Mode'
-    // 10 accts each open Trove 
+    // 10 accts each open Trove
     await th.openTrove_allAccounts(accounts.slice(101, 111), contracts, dec(1000, 'ether'), dec(90000, 18))
     for (account of accounts.slice(101, 111)) { assert.isTrue(await sortedTroves.contains(account)) }
 
@@ -662,7 +662,7 @@ contract('Gas cost tests', async accounts => {
     th.appendData({ gas: gas }, message, data)
   })
 
-  // 5 troves 
+  // 5 troves
   it("", async () => {
     const message = 'liquidateTroves(). n = 5. All fully offset with Stability Pool. No pending distribution rewards. In Recovery Mode'
     // 10 accts each open Trove with 10 ether, withdraw 900 LUSD
@@ -1050,7 +1050,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _1_Defaulter) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1123,7 +1123,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _2_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1197,7 +1197,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _3_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1270,7 +1270,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _5_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1343,7 +1343,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _10_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1416,7 +1416,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _20_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1489,7 +1489,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _30_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1562,7 +1562,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _40_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1635,7 +1635,7 @@ contract('Gas cost tests', async accounts => {
     assert.isFalse(await sortedTroves.contains(accounts[500]))
     await priceFeed.setPrice(dec(200, 18))
 
-    // Check all defaulters have pending rewards 
+    // Check all defaulters have pending rewards
     for (account of _45_Defaulters) { assert.isTrue(await troveManager.hasPendingRewards(account)) }
 
     // Whale opens trove and fills SP with 1 billion LUSD
@@ -1998,7 +1998,7 @@ contract('Gas cost tests', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-    
+
     const tx = await troveManager.batchLiquidateTroves(_50_defaulters, { from: accounts[0] })
 
     // check all defaulters liquidated

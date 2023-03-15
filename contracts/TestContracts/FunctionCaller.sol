@@ -7,7 +7,7 @@ import '../Interfaces/ISortedTroves.sol';
 import '../Interfaces/IPriceFeed.sol';
 import '../Dependencies/LiquityMath.sol';
 
-/* Wrapper contract - used for calculating gas of read-only and internal functions. 
+/* Wrapper contract - used for calculating gas of read-only and internal functions.
 Not part of the Liquity application. */
 contract FunctionCaller {
 
@@ -26,7 +26,7 @@ contract FunctionCaller {
         troveManagerAddress = _troveManagerAddress;
         troveManager = ITroveManager(_troveManagerAddress);
     }
-    
+
     function setSortedTrovesAddress(address _sortedTrovesAddress) external {
         troveManagerAddress = _sortedTrovesAddress;
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
@@ -38,9 +38,9 @@ contract FunctionCaller {
     }
 
     // --- Non-view wrapper functions used for calculating gas ---
-    
+
     function troveManager_getCurrentICR(address _address, uint _price) external returns (uint) {
-        return troveManager.getCurrentICR(_address, _price);  
+        return troveManager.getCurrentICR(_address, _price);
     }
 
     function sortedTroves_findInsertPosition(uint _NICR, address _prevId, address _nextId) external returns (address, address) {

@@ -53,7 +53,7 @@ LQTY contracts consist of only those contracts related to the LQTY Token:
 -the LQTY token
 -the Lockup factory and lockup contracts
 -the LQTYStaking contract
--the CommunityIssuance contract 
+-the CommunityIssuance contract
 */
 
 const ZERO_ADDRESS = '0x' + '0'.repeat(40)
@@ -167,9 +167,9 @@ class DeploymentHelper {
     LockupContractFactory.setAsDeployed(lockupContractFactory)
     CommunityIssuance.setAsDeployed(communityIssuance)
 
-    // Deploy LQTY Token, passing Community Issuance and Factory addresses to the constructor 
+    // Deploy LQTY Token, passing Community Issuance and Factory addresses to the constructor
     const lqtyToken = await LQTYToken.new(
-      communityIssuance.address, 
+      communityIssuance.address,
       lqtyStaking.address,
       lockupContractFactory.address,
       bountyAddress,
@@ -196,9 +196,9 @@ class DeploymentHelper {
     LockupContractFactory.setAsDeployed(lockupContractFactory)
     CommunityIssuanceTester.setAsDeployed(communityIssuance)
 
-    // Deploy LQTY Token, passing Community Issuance and Factory addresses to the constructor 
+    // Deploy LQTY Token, passing Community Issuance and Factory addresses to the constructor
     const lqtyToken = await LQTYTokenTester.new(
-      communityIssuance.address, 
+      communityIssuance.address,
       lqtyStaking.address,
       lockupContractFactory.address,
       bountyAddress,
@@ -255,14 +255,14 @@ class DeploymentHelper {
     const lockupContractFactory = await LockupContractFactory.new()
     const communityIssuance = await CommunityIssuance.new()
 
-    /* Deploy LQTY Token, passing Community Issuance,  LQTYStaking, and Factory addresses 
+    /* Deploy LQTY Token, passing Community Issuance,  LQTYStaking, and Factory addresses
     to the constructor  */
     const lqtyToken = await LQTYToken.new(
-      communityIssuance.address, 
+      communityIssuance.address,
       lqtyStaking.address,
       lockupContractFactory.address,
       bountyAddress,
-      lpRewardsAddress, 
+      lpRewardsAddress,
       multisigAddress
     )
 
@@ -334,7 +334,7 @@ class DeploymentHelper {
       contracts.borrowerOperations.address
     )
 
-    // set contract addresses in the FunctionCaller 
+    // set contract addresses in the FunctionCaller
     await contracts.functionCaller.setTroveManagerAddress(contracts.troveManager.address)
     await contracts.functionCaller.setSortedTrovesAddress(contracts.sortedTroves.address)
 
@@ -353,7 +353,7 @@ class DeploymentHelper {
       LQTYContracts.lqtyStaking.address
     )
 
-    // set contracts in BorrowerOperations 
+    // set contracts in BorrowerOperations
     await contracts.borrowerOperations.setAddresses(
       contracts.troveManager.address,
       contracts.activePool.address,
@@ -412,11 +412,11 @@ class DeploymentHelper {
     await LQTYContracts.lqtyStaking.setAddresses(
       LQTYContracts.lqtyToken.address,
       coreContracts.lusdToken.address,
-      coreContracts.troveManager.address, 
+      coreContracts.troveManager.address,
       coreContracts.borrowerOperations.address,
       coreContracts.activePool.address
     )
-  
+
     await LQTYContracts.communityIssuance.setAddresses(
       LQTYContracts.lqtyToken.address,
       coreContracts.stabilityPool.address

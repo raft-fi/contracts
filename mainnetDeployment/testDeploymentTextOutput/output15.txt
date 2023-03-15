@@ -53,10 +53,10 @@ lockupContract addr: 0x22a7...e87F,
           beneficiary addr: 0xdad0...4b3d,
           on-chain beneficiary addr: 0xdAD0...4b3D
           unlockTime: 1649027889
-          
+
 lockupContract addr: 0x55CC...74ab,
           beneficiary: ACCOUNT_3,
           beneficiary addr: 0x625b...996a,
           on-chain beneficiary addr: 0x625b...996a
           unlockTime: 1649027889
-          
+

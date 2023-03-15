@@ -15,7 +15,7 @@ async function main() {
   })
   console.log(`whale address from import: ${ETH_WHALE}`)
 
-  // Get the ETH whale signer 
+  // Get the ETH whale signer
   const whale = await ethers.provider.getSigner(ETH_WHALE)
   console.log(`whale addr : ${await whale.getAddress()}`)
   console.log(`whale ETH balance: ${ await ethers.provider.getBalance(whale.getAddress())}`)

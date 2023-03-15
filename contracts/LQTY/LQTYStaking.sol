@@ -25,13 +25,13 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
     uint public F_LUSD; // Running sum of LQTY fees per-LQTY-staked
 
     // User snapshots of F_ETH and F_LUSD, taken at the point at which their latest deposit was made
-    mapping (address => Snapshot) public snapshots; 
+    mapping (address => Snapshot) public snapshots;
 
     struct Snapshot {
         uint F_ETH_Snapshot;
         uint F_LUSD_Snapshot;
     }
-    
+
     ILQTYToken public lqtyToken;
     ILUSDToken public lusdToken;
 
@@ -61,13 +61,13 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
     (
         address _lqtyTokenAddress,
         address _lusdTokenAddress,
-        address _troveManagerAddress, 
+        address _troveManagerAddress,
         address _borrowerOperationsAddress,
         address _activePoolAddress
-    ) 
-        external 
-        onlyOwner 
-        override 
+    )
+        external
+        onlyOwner
+        override
     {
         checkContract(_lqtyTokenAddress);
         checkContract(_lusdTokenAddress);
@@ -90,7 +90,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         _renounceOwnership();
     }
 
-    // If caller has a pre-existing stake, send any accumulated ETH and LUSD gains to them. 
+    // If caller has a pre-existing stake, send any accumulated ETH and LUSD gains to them.
     function stake(uint _LQTYamount) external override {
         _requireNonZeroAmount(_LQTYamount);
 
@@ -103,7 +103,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
             ETHGain = _getPendingETHGain(msg.sender);
             LUSDGain = _getPendingLUSDGain(msg.sender);
         }
-    
+
        _updateUserSnapshots(msg.sender);
 
         uint newStake = currentStake.add(_LQTYamount);
@@ -126,7 +126,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         }
     }
 
-    // Unstake the LQTY and send the it back to the caller, along with their accumulated LUSD & ETH gains. 
+    // Unstake the LQTY and send the it back to the caller, along with their accumulated LUSD & ETH gains.
     // If requested amount > stake, send their entire stake.
     function unstake(uint _LQTYamount) external override {
         uint currentStake = stakes[msg.sender];
@@ -135,7 +135,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         // Grab any accumulated ETH and LUSD gains from the current stake
         uint ETHGain = _getPendingETHGain(msg.sender);
         uint LUSDGain = _getPendingLUSDGain(msg.sender);
-        
+
         _updateUserSnapshots(msg.sender);
 
         if (_LQTYamount > 0) {
@@ -166,19 +166,19 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
     function increaseF_ETH(uint _ETHFee) external override {
         _requireCallerIsTroveManager();
         uint ETHFeePerLQTYStaked;
-     
+
         if (totalLQTYStaked > 0) {ETHFeePerLQTYStaked = _ETHFee.mul(DECIMAL_PRECISION).div(totalLQTYStaked);}
 
-        F_ETH = F_ETH.add(ETHFeePerLQTYStaked); 
+        F_ETH = F_ETH.add(ETHFeePerLQTYStaked);
         emit F_ETHUpdated(F_ETH);
     }
 
     function increaseF_LUSD(uint _LUSDFee) external override {
         _requireCallerIsBorrowerOperations();
         uint LUSDFeePerLQTYStaked;
-        
+
         if (totalLQTYStaked > 0) {LUSDFeePerLQTYStaked = _LUSDFee.mul(DECIMAL_PRECISION).div(totalLQTYStaked);}
-        
+
         F_LUSD = F_LUSD.add(LUSDFeePerLQTYStaked);
         emit F_LUSDUpdated(F_LUSD);
     }
@@ -233,8 +233,8 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         require(msg.sender == activePoolAddress, "LQTYStaking: caller is not ActivePool");
     }
 
-    function _requireUserHasStake(uint currentStake) internal pure {  
-        require(currentStake > 0, 'LQTYStaking: User must have a non-zero stake');  
+    function _requireUserHasStake(uint currentStake) internal pure {
+        require(currentStake > 0, 'LQTYStaking: User must have a non-zero stake');
     }
 
     function _requireNonZeroAmount(uint _amount) internal pure {

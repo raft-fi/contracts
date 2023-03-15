@@ -211,7 +211,7 @@ contract('During the initial lockup period', async accounts => {
 
     // --- Liquity AG decreaseAllowance restriction, 1st year ---
     it("Liquity multisig can not decreaseAllowance for any EOA or Liquity contract", async () => {
-      // Multisig attempts to decreaseAllowance on EOAs 
+      // Multisig attempts to decreaseAllowance on EOAs
       const LQTYDecreaseAllowanceTxPromise_1 = lqtyToken.decreaseAllowance(A, dec(1, 18), { from: multisig })
       const LQTYDecreaseAllowanceTxPromise_2 = lqtyToken.decreaseAllowance(B, dec(1, 18), { from: multisig })
       await assertRevert(LQTYDecreaseAllowanceTxPromise_1, "LQTYToken: caller must not be the multisig")
@@ -454,7 +454,7 @@ contract('During the initial lockup period', async accounts => {
       const LQTYBalanceOfLC_T2_1 = await lqtyToken.balanceOf(LC_T2.address)
       const LQTYBalanceOfLC_T3_1 = await lqtyToken.balanceOf(LC_T3.address)
 
-      // // Check team member LC balances have increased 
+      // // Check team member LC balances have increased
       assert.isTrue(LQTYBalanceOfLC_T1_1.eq(th.toBN(initialLQTYBalanceOfLC_T1).add(th.toBN(dec(1, 24)))))
       assert.isTrue(LQTYBalanceOfLC_T2_1.eq(th.toBN(initialLQTYBalanceOfLC_T2).add(th.toBN(dec(1, 24)))))
       assert.isTrue(LQTYBalanceOfLC_T3_1.eq(th.toBN(initialLQTYBalanceOfLC_T3).add(th.toBN(dec(1, 24)))))
@@ -624,7 +624,7 @@ contract('During the initial lockup period', async accounts => {
     it("Anyone can deploy LCs with unlockTime > one year from deployment, directly and through factory", async () => {
       const justOverOneYear = oneYearFromSystemDeployment.add(toBN('1'))
       const _17YearsFromDeployment = oneYearFromSystemDeployment.add(toBN(timeValues.SECONDS_IN_ONE_YEAR).mul(toBN('2')))
-      
+
       // Deploy directly
       const LC_1 = await LockupContract.new(lqtyToken.address, A, twoYearsFromSystemDeployment, { from: D })
       const LCTxReceipt_1 = await web3.eth.getTransactionReceipt(LC_1.transactionHash)
@@ -651,12 +651,12 @@ contract('During the initial lockup period', async accounts => {
 
     it("No one can deploy LCs with unlockTime < one year from deployment, directly or through factory", async () => {
       const justUnderOneYear = oneYearFromSystemDeployment.sub(toBN('1'))
-     
+
       // Attempt to deploy directly
       const directDeploymentTxPromise_1 = LockupContract.new(lqtyToken.address, A, justUnderOneYear, { from: D })
       const directDeploymentTxPromise_2 = LockupContract.new(lqtyToken.address, B, '43200', { from: multisig })
       const directDeploymentTxPromise_3 =  LockupContract.new(lqtyToken.address, E, '354534', { from: E })
-  
+
       // Attempt to deploy through factory
       const factoryDploymentTxPromise_1 = lockupContractFactory.deployLockupContract(A, justUnderOneYear, { from: E })
       const factoryDploymentTxPromise_2 = lockupContractFactory.deployLockupContract(C, '43200', { from: multisig })
@@ -724,7 +724,7 @@ contract('During the initial lockup period', async accounts => {
         const unlockTime = await LC_B.unlockTime()
         assert.isTrue(currentTime.lt(unlockTime))
 
-        /* Beneficiaries of all LCS - team, investor, and newly created LCs - 
+        /* Beneficiaries of all LCS - team, investor, and newly created LCs -
         attempt to withdraw from their respective funded contracts */
         const LCs = [
           LC_T1,

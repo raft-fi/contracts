@@ -1,6 +1,6 @@
 const externalAddrs  = {
   // https://data.chain.link/eth-usd
-  CHAINLINK_ETHUSD_PROXY: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", 
+  CHAINLINK_ETHUSD_PROXY: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
   // https://docs.tellor.io/tellor/integration/reference-page
   TELLOR_MASTER:"0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0",
   // https://uniswap.org/docs/v2/smart-contracts/factory/
@@ -16,9 +16,9 @@ const liquityAddrs = {
   DEPLOYER: "0xa850535D3628CD4dFEB528dC85cfA93051Ff2984" // Mainnet REAL deployment address
 }
 
-// Beneficiaries for lockup contracts. 
+// Beneficiaries for lockup contracts.
 const beneficiaries = {
-  ACCOUNT_1: "0xBBdc88676759D09617C288E29f2Eb7Ce94592f25",  
+  ACCOUNT_1: "0xBBdc88676759D09617C288E29f2Eb7Ce94592f25",
   ACCOUNT_2: "0x77616b3a57C9ACf018E87c92ae187C8Cc0B112D6",
   ACCOUNT_3: "0x32c761138aD9Ff95D8595aa9A79208F19b01d8E7",
   ACCOUNT_4: "0x0eBBC1c8B634b775D14b24E6428C9386A1B6C74D",
