@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 
 import "../TroveManager.sol";
 
-/* Tester contract inherits from TroveManager, and provides external functions 
+/* Tester contract inherits from TroveManager, and provides external functions
 for testing the parent's internal functions. */
 
 contract TroveManagerTester is TroveManager {
@@ -28,7 +28,7 @@ contract TroveManagerTester is TroveManager {
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
         baseRate = _calcDecayedBaseRate();
         assert(baseRate >= 0 && baseRate <= DECIMAL_PRECISION);
-        
+
         _updateLastFeeOpTime();
         return baseRate;
     }
@@ -47,7 +47,7 @@ contract TroveManagerTester is TroveManager {
 
     function callGetRedemptionFee(uint _ETHDrawn) external view returns (uint) {
         _getRedemptionFee(_ETHDrawn);
-    }  
+    }
 
     function getActualDebtFromComposite(uint _debtVal) external pure returns (uint) {
         return _getNetDebt(_debtVal);

@@ -39,13 +39,13 @@ lockupContract addr: 0xb69e...d310,
             beneficiary addr: 0x4BDe...e46c,
             on-chain beneficiary addr: 0x4BDe...e46c
             unlockTime: 1649148442
-            
+
 lockupContract addr: 0x015f...Cabf,
             beneficiary: ACCOUNT_3,
             beneficiary addr: 0x7AdD...FD6F,
             on-chain beneficiary addr: 0x7AdD...FD6F
             unlockTime: 1649148442
-            
+
 STORED ADDRESSES IN LQTY TOKEN
 multi-sig address stored in LQTYToken : 0xb8a9...Ca1C
 LQTY Safe address: 0xb8a9...Ca1C

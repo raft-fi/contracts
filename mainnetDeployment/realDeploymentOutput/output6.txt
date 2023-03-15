@@ -60,8 +60,8 @@ account2's LQTY bal after LC withdrawal attempt: .000000000000000000
 account2's LC LQTY bal LC withdrawal attempt: 21.000000000000000000
 LUSD-ETH Pair's current LUSD reserves: 1890.941734972325910671
 LUSD-ETH Pair's current ETH reserves: 1.089530474048812502
-number of troves: 2 
-Trove list size: 2 
+number of troves: 2
+Trove list size: 2
 Entire system debt: 4415.000000000000000000
 Entire system coll: 6.500000000000000000
 TCR: 303834911

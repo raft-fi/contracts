@@ -31,7 +31,7 @@ contract MockTellor {
         revertRequest = !revertRequest;
     }
 
-    // --- Mock data reporting functions --- 
+    // --- Mock data reporting functions ---
 
     function getTimestampbyRequestIDandIndex(uint, uint) external view returns (uint) {
         return updateTime;

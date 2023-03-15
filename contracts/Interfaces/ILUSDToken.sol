@@ -5,8 +5,8 @@ pragma solidity 0.6.11;
 import "../Dependencies/IERC20.sol";
 import "../Dependencies/IERC2612.sol";
 
-interface ILUSDToken is IERC20, IERC2612 { 
-    
+interface ILUSDToken is IERC20, IERC2612 {
+
     // --- Events ---
 
     event TroveManagerAddressChanged(address _troveManagerAddress);

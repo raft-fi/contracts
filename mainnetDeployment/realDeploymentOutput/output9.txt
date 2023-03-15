@@ -71,8 +71,8 @@ current Tellor price: 2117670000
 current Tellor timestamp: 1617636412
 LUSD-ETH Pair's current LUSD reserves: 5786816.243400141433332922
 LUSD-ETH Pair's current ETH reserves: 2823.378863722598862779
-number of troves: 151 
-Trove list size: 151 
+number of troves: 151
+Trove list size: 151
 Entire system debt: 32623241.503000000000000000
 Entire system coll: 26086.756961025510177440
 TCR: 168723051

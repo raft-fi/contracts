@@ -9,7 +9,7 @@ NumberDecreaseMutator.prototype.getMutations = function (file, source, visit) {
 
   visit({
     NumberLiteral: (node) => {
-    
+
       if (node.number === '1e18') {
         mutations.push(new Mutation(file, node.range[0], node.range[1] + 1, '1e17'))
       } else {

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.11;
-    
+
 interface ILockupContractFactory {
-    
+
     // --- Events ---
 
     event LQTYTokenAddressSet(address _lqtyTokenAddress);

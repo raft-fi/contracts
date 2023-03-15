@@ -540,7 +540,7 @@ class TestHelper {
     return { newColl, newDebt }
   }
 
- 
+
   // --- BorrowerOperations gas functions ---
 
   static async openTrove_allAccounts(accounts, contracts, ETHAmount, LUSDAmount) {
@@ -574,7 +574,7 @@ class TestHelper {
 
   static async openTrove_allAccounts_randomETH_ProportionalLUSD(minETH, maxETH, accounts, contracts, proportion) {
     const gasCostList = []
-  
+
     for (const account of accounts) {
       const randCollAmount = this.randAmountInWei(minETH, maxETH)
       const proportionalLUSD = (web3.utils.toBN(proportion)).mul(web3.utils.toBN(randCollAmount))
@@ -754,7 +754,7 @@ class TestHelper {
       const zero = this.toBN('0')
 
       let isDebtIncrease = LUSDChangeBN.gt(zero)
-      LUSDChangeBN = LUSDChangeBN.abs() 
+      LUSDChangeBN = LUSDChangeBN.abs()
 
       // Add ETH to trove
       if (ETHChangeBN.gt(zero)) {
@@ -776,7 +776,7 @@ class TestHelper {
 
     for (const account of accounts) {
       let tx;
-  
+
       let ETHChangeBN = this.toBN(this.randAmountInWei(ETHMin, ETHMax))
       let LUSDChangeBN = this.toBN(this.randAmountInWei(LUSDMin, LUSDMax))
 
@@ -786,7 +786,7 @@ class TestHelper {
       const zero = this.toBN('0')
 
       let isDebtIncrease = LUSDChangeBN.gt(zero)
-      LUSDChangeBN = LUSDChangeBN.abs() 
+      LUSDChangeBN = LUSDChangeBN.abs()
 
       // Add ETH to trove
       if (ETHChangeBN.gt(zero)) {
@@ -1158,7 +1158,7 @@ class TestHelper {
       // console.log("tx failed")
       assert.include(err.message, "revert")
       // TODO !!!
-      
+
       // if (message) {
       //   assert.include(err.message, message)
       // }

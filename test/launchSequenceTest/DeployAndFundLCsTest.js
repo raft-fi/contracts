@@ -49,7 +49,7 @@ contract('Deploying and funding One Year Lockup Contracts', async accounts => {
 
   describe('Deploying LCs', async accounts => {
     it("LQTY Deployer can deploy LCs through the Factory", async () => {
-    
+
       // LQTY deployer deploys LCs
       const LCDeploymentTx_A = await lockupContractFactory.deployLockupContract(A, oneYearFromSystemDeployment, { from: liquityAG })
       const LCDeploymentTx_B = await lockupContractFactory.deployLockupContract(B, oneYearFromSystemDeployment, { from: liquityAG })
@@ -220,7 +220,7 @@ contract('Deploying and funding One Year Lockup Contracts', async accounts => {
 
     it("LC deployment through the Factory reverts when the unlockTime is < 1 year from system deployment", async () => {
       const nearlyOneYear = toBN(oneYearFromSystemDeployment).sub(toBN('60'))  // 1 minute short of 1 year
-      
+
       // Deploy 3 LCs through factory
       const LCDeploymentPromise_A = lockupContractFactory.deployLockupContract(A, nearlyOneYear, { from: liquityAG })
       const LCDeploymentPromise_B = lockupContractFactory.deployLockupContract(B, '37', { from: B })
@@ -234,19 +234,19 @@ contract('Deploying and funding One Year Lockup Contracts', async accounts => {
 
     it("Direct deployment of LC reverts when the unlockTime is < 1 year from system deployment", async () => {
       const nearlyOneYear = toBN(oneYearFromSystemDeployment).sub(toBN('60'))  // 1 minute short of 1 year
-      
+
       // Deploy 3 LCs directly with unlockTime < 1 year from system deployment
       const LCDeploymentPromise_A = LockupContract.new(lqtyToken.address, A, nearlyOneYear, { from: liquityAG })
       const LCDeploymentPromise_B = LockupContract.new(lqtyToken.address, B, '37', { from: B })
       const LCDeploymentPromise_C = LockupContract.new(lqtyToken.address, C, '43200', { from: E })
-     
+
       // Confirm contract deployments revert
       await assertRevert(LCDeploymentPromise_A, "LockupContract: unlock time must be at least one year after system deployment")
       await assertRevert(LCDeploymentPromise_B, "LockupContract: unlock time must be at least one year after system deployment")
       await assertRevert(LCDeploymentPromise_C, "LockupContract: unlock time must be at least one year after system deployment")
     })
 
-  
+
   })
 
   describe('Funding LCs', async accounts => {
@@ -285,7 +285,7 @@ contract('Deploying and funding One Year Lockup Contracts', async accounts => {
       assert.equal(await lqtyToken.balanceOf(LCAddress_E), LQTYEntitlement_E)
     })
 
-    it("LQTY Multisig can transfer LQTY to LCs deployed through the factory by anyone", async () => {  
+    it("LQTY Multisig can transfer LQTY to LCs deployed through the factory by anyone", async () => {
       // Various accts deploy 5 LCs
       const deployedLCtx_A = await lockupContractFactory.deployLockupContract(A, oneYearFromSystemDeployment, { from: F })
       const deployedLCtx_B = await lockupContractFactory.deployLockupContract(B, oneYearFromSystemDeployment, { from: G })

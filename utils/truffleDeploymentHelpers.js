@@ -66,7 +66,7 @@ const connectContracts = async (contracts, addresses) => {
   // set TroveManager addr in SortedTroves
   await contracts.sortedTroves.setTroveManager(addresses.TroveManager)
 
-  // set contract addresses in the FunctionCaller 
+  // set contract addresses in the FunctionCaller
   await contracts.functionCaller.setTroveManagerAddress(addresses.TroveManager)
   await contracts.functionCaller.setSortedTrovesAddress(addresses.SortedTroves)
 
@@ -82,7 +82,7 @@ const connectContracts = async (contracts, addresses) => {
   await contracts.troveManager.setStabilityPool(addresses.StabilityPool)
   await contracts.troveManager.setBorrowerOperations(addresses.BorrowerOperations)
 
-  // set contracts in BorrowerOperations 
+  // set contracts in BorrowerOperations
   await contracts.borrowerOperations.setSortedTroves(addresses.SortedTroves)
   await contracts.borrowerOperations.setPriceFeed(addresses.PriceFeedTestnet)
   await contracts.borrowerOperations.setActivePool(addresses.ActivePool)

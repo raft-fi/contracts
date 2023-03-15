@@ -604,7 +604,7 @@ contract('StabilityPool', async accounts => {
 
       assert.equal(LUSDinSP_Before, dec(180, 18))
 
-      // Bob provides 0 LUSD to the Stability Pool 
+      // Bob provides 0 LUSD to the Stability Pool
       const txPromise_B = stabilityPool.provideToSP(0, frontEnd_1, { from: bob })
       await th.assertRevert(txPromise_B)
     })
@@ -719,7 +719,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), new deposit: depositor does not receive any LQTY rewards", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale, value: dec(50, 'ether') } })
 
-      // A, B, open troves 
+      // A, B, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(1000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(2000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
 
@@ -747,7 +747,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), new deposit after past full withdrawal: depositor does not receive any LQTY rewards", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, open troves 
+      // A, B, C, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(1000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(2000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -755,7 +755,7 @@ contract('StabilityPool', async accounts => {
 
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
 
-      // --- SETUP --- 
+      // --- SETUP ---
 
       const initialDeposit_A = await lusdToken.balanceOf(A)
       const initialDeposit_B = await lusdToken.balanceOf(B)
@@ -775,14 +775,14 @@ contract('StabilityPool', async accounts => {
 
       await troveManager.liquidate(defaulter_1)
 
-      // price bounces back to 200 
+      // price bounces back to 200
       await priceFeed.setPrice(dec(200, 18))
 
       // A and B fully withdraw from the pool
       await stabilityPool.withdrawFromSP(initialDeposit_A, { from: A })
       await stabilityPool.withdrawFromSP(initialDeposit_B, { from: B })
 
-      // --- TEST --- 
+      // --- TEST ---
 
       // Get A, B, C LQTY balances before and confirm they're non-zero
       const A_LQTYBalance_Before = await lqtyToken.balanceOf(A)
@@ -807,7 +807,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), new eligible deposit: tagged front end receives LQTY rewards", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, open troves 
+      // A, B, C, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(1000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(2000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -857,7 +857,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), new eligible deposit: tagged front end's stake increases", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, open troves 
+      // A, B, C, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(1000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(2000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -885,7 +885,7 @@ contract('StabilityPool', async accounts => {
       const F2_Diff = F2_Stake_After.sub(F2_Stake_Before)
       const F3_Diff = F3_Stake_After.sub(F3_Stake_Before)
 
-      // Check front ends' stakes have increased by amount equal to the deposit made through them 
+      // Check front ends' stakes have increased by amount equal to the deposit made through them
       assert.equal(F1_Diff, deposit_A)
       assert.equal(F2_Diff, deposit_B)
       assert.equal(F3_Diff, deposit_C)
@@ -894,7 +894,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), new eligible deposit: tagged front end's snapshots update", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, open troves 
+      // A, B, C, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(1000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(2000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -936,7 +936,7 @@ contract('StabilityPool', async accounts => {
         const snapshot = await stabilityPool.frontEndSnapshots(frontEnd)
 
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends, since S corresponds to ETH gain)
-        assert.equal(snapshot[1], '0')  // P 
+        assert.equal(snapshot[1], '0')  // P
         assert.equal(snapshot[2], '0')  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -970,7 +970,7 @@ contract('StabilityPool', async accounts => {
 
         // Check snapshots are the expected values
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends)
-        assert.isTrue(snapshot[1].eq(P_Before))  // P 
+        assert.isTrue(snapshot[1].eq(P_Before))  // P
         assert.isTrue(snapshot[2].eq(G))  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -1100,7 +1100,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), topup: triggers LQTY reward event - increases the sum G", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(1000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(2000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -1132,7 +1132,7 @@ contract('StabilityPool', async accounts => {
       await lusdToken.transfer(D, dec(100, 18), { from: whale })
       await lusdToken.transfer(E, dec(200, 18), { from: whale })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(100, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(200, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(300, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -1171,7 +1171,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), topup: depositor receives LQTY rewards", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(100, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(200, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(300, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -1207,7 +1207,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), topup: tagged front end receives LQTY rewards", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(100, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(200, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(300, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -1243,7 +1243,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), topup: tagged front end's stake increases", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, D, E, F open troves 
+      // A, B, C, D, E, F open troves
       await openTrove({ extraLUSDAmount: toBN(dec(100, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(200, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(300, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -1285,7 +1285,7 @@ contract('StabilityPool', async accounts => {
     it("provideToSP(), topup: tagged front end's snapshots update", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, open troves 
+      // A, B, C, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(200, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(400, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(600, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -1335,7 +1335,7 @@ contract('StabilityPool', async accounts => {
         const snapshot = await stabilityPool.frontEndSnapshots(frontEnd)
 
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends, since S corresponds to ETH gain)
-        assert.equal(snapshot[1], dec(1, 18))  // P 
+        assert.equal(snapshot[1], dec(1, 18))  // P
         assert.equal(snapshot[2], '0')  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -1366,7 +1366,7 @@ contract('StabilityPool', async accounts => {
 
         // Check snapshots are the expected values
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends)
-        assert.isTrue(snapshot[1].eq(P_Before))  // P 
+        assert.isTrue(snapshot[1].eq(P_Before))  // P
         assert.isTrue(snapshot[2].eq(G))  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -1395,7 +1395,7 @@ contract('StabilityPool', async accounts => {
     })
 
     it("provideToSP(): reverts if user is a registered front end", async () => {
-      // C, D, E, F open troves 
+      // C, D, E, F open troves
       await openTrove({ extraLUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
       await openTrove({ extraLUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
       await openTrove({ extraLUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
@@ -1760,7 +1760,7 @@ contract('StabilityPool', async accounts => {
     })
 
     it("withdrawFromSP(): All depositors are able to withdraw from the SP to their account", async () => {
-      // Whale opens trove 
+      // Whale opens trove
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
       // 1 defaulter open
@@ -1798,7 +1798,7 @@ contract('StabilityPool', async accounts => {
     })
 
     it("withdrawFromSP(): increases depositor's LUSD token balance by the expected amount", async () => {
-      // Whale opens trove 
+      // Whale opens trove
       await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
       // 1 defaulter opens trove
@@ -1828,7 +1828,7 @@ contract('StabilityPool', async accounts => {
       // Price bounces back to $200 per ETH
       await priceFeed.setPrice(dec(200, 18))
 
-      // Bob issues a further 5000 LUSD from his trove 
+      // Bob issues a further 5000 LUSD from his trove
       await borrowerOperations.withdrawLUSD(th._100pct, dec(5000, 18), bob, bob, { from: bob })
 
       // Expect Alice's LUSD balance increase be very close to 8333.3333333333333333 LUSD
@@ -1883,7 +1883,7 @@ contract('StabilityPool', async accounts => {
       // Price rises
       await priceFeed.setPrice(dec(200, 18))
 
-      // Carol withdraws her Stability deposit 
+      // Carol withdraws her Stability deposit
       assert.equal(((await stabilityPool.deposits(carol))[0]).toString(), dec(30000, 18))
       await stabilityPool.withdrawFromSP(dec(30000, 18), { from: carol })
       assert.equal(((await stabilityPool.deposits(carol))[0]).toString(), '0')
@@ -1936,7 +1936,7 @@ contract('StabilityPool', async accounts => {
       const defaultedColl_Before = (await defaultPool.getETH()).toString()
       const TCR_Before = (await th.getTCR(contracts)).toString()
 
-      // Carol withdraws her Stability deposit 
+      // Carol withdraws her Stability deposit
       assert.equal(((await stabilityPool.deposits(carol))[0]).toString(), dec(30000, 18))
       await stabilityPool.withdrawFromSP(dec(30000, 18), { from: carol })
       assert.equal(((await stabilityPool.deposits(carol))[0]).toString(), '0')
@@ -1991,7 +1991,7 @@ contract('StabilityPool', async accounts => {
       // price rises
       await priceFeed.setPrice(dec(200, 18))
 
-      // Carol withdraws her Stability deposit 
+      // Carol withdraws her Stability deposit
       assert.equal(((await stabilityPool.deposits(carol))[0]).toString(), dec(30000, 18))
       await stabilityPool.withdrawFromSP(dec(30000, 18), { from: carol })
       assert.equal(((await stabilityPool.deposits(carol))[0]).toString(), '0')
@@ -2069,7 +2069,7 @@ contract('StabilityPool', async accounts => {
       assert.isTrue(tx.receipt.status)
 
       const A_expectedBalance = A_ETHBalBefore.sub((toBN(th.gasUsed(tx) * GAS_PRICE)))
-  
+
       const A_ETHBalAfter = toBN(await web3.eth.getBalance(A))
 
       const A_LQTYBalAfter = await lqtyToken.balanceOf(A)
@@ -2099,7 +2099,7 @@ contract('StabilityPool', async accounts => {
 
       assert.equal(LUSDinSP_Before, dec(180, 18))
 
-      // Bob withdraws 0 LUSD from the Stability Pool 
+      // Bob withdraws 0 LUSD from the Stability Pool
       await stabilityPool.withdrawFromSP(0, { from: bob })
 
       // check Bob's deposit and total LUSD in Stability Pool has not changed
@@ -2198,7 +2198,7 @@ contract('StabilityPool', async accounts => {
       const bob_LUSD_Balance_After = (await lusdToken.balanceOf(bob)).toString()
       assert.equal(bob_LUSD_Balance_After, bob_expectedLUSDBalance)
 
-      // Alice attempts to withdraws 2309842309.000000000000000000 LUSD from the Stability Pool 
+      // Alice attempts to withdraws 2309842309.000000000000000000 LUSD from the Stability Pool
       await stabilityPool.withdrawFromSP('2309842309000000000000000000', { from: alice })
 
       // Check Alice's LUSD balance has risen by only the value of her compounded deposit
@@ -2216,13 +2216,13 @@ contract('StabilityPool', async accounts => {
       // --- SETUP ---
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C open troves 
-      // A, B, C open troves 
-      // A, B, C open troves 
-      // A, B, C open troves 
-      // A, B, C open troves 
-      // A, B, C open troves 
-      // A, B, C open troves 
+      // A, B, C open troves
+      // A, B, C open troves
+      // A, B, C open troves
+      // A, B, C open troves
+      // A, B, C open troves
+      // A, B, C open troves
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
@@ -2331,7 +2331,7 @@ contract('StabilityPool', async accounts => {
       const carol_expectedLUSDBalance = (carol_LUSD_Balance_Before.add(carol_Deposit_Before)).toString()
 
       const alice_LUSD_Balance_After = (await lusdToken.balanceOf(alice)).toString()
- 
+
       const bob_LUSD_Balance_After = (await lusdToken.balanceOf(bob)).toString()
       const carol_LUSD_Balance_After = (await lusdToken.balanceOf(carol)).toString()
 
@@ -2381,7 +2381,7 @@ contract('StabilityPool', async accounts => {
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
-      // defaulters open troves 
+      // defaulters open troves
       await openTrove({ extraLUSDAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_2 } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_3 } })
@@ -2590,7 +2590,7 @@ contract('StabilityPool', async accounts => {
     it("withdrawFromSP(), partial withdrawal: tagged front end's stake decreases", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, D, E, F open troves 
+      // A, B, C, D, E, F open troves
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -2613,7 +2613,7 @@ contract('StabilityPool', async accounts => {
       const F2_Stake_Before = await stabilityPool.frontEndStakes(frontEnd_2)
       const F3_Stake_Before = await stabilityPool.frontEndStakes(frontEnd_3)
 
-      // A, B, C withdraw 
+      // A, B, C withdraw
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: A })
       await stabilityPool.withdrawFromSP(dec(2, 18), { from: B })
       await stabilityPool.withdrawFromSP(dec(3, 18), { from: C })
@@ -2632,7 +2632,7 @@ contract('StabilityPool', async accounts => {
     it("withdrawFromSP(), partial withdrawal: tagged front end's snapshots update", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, open troves 
+      // A, B, C, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(60000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
@@ -2682,7 +2682,7 @@ contract('StabilityPool', async accounts => {
         const snapshot = await stabilityPool.frontEndSnapshots(frontEnd)
 
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends, since S corresponds to ETH gain)
-        assert.equal(snapshot[1], dec(1, 18))  // P 
+        assert.equal(snapshot[1], dec(1, 18))  // P
         assert.equal(snapshot[2], '0')  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -2715,7 +2715,7 @@ contract('StabilityPool', async accounts => {
 
         // Check snapshots are the expected values
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends)
-        assert.isTrue(snapshot[1].eq(P_Before))  // P 
+        assert.isTrue(snapshot[1].eq(P_Before))  // P
         assert.isTrue(snapshot[2].eq(G))  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -2725,7 +2725,7 @@ contract('StabilityPool', async accounts => {
     it("withdrawFromSP(), full withdrawal: removes deposit's front end tag", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // Whale transfers to A, B 
+      // Whale transfers to A, B
       await lusdToken.transfer(A, dec(10000, 18), { from: whale })
       await lusdToken.transfer(B, dec(20000, 18), { from: whale })
 
@@ -2739,7 +2739,7 @@ contract('StabilityPool', async accounts => {
       await stabilityPool.provideToSP(dec(30000, 18), frontEnd_2, { from: C })
       await stabilityPool.provideToSP(dec(40000, 18), ZERO_ADDRESS, { from: D })
 
-      // Check deposits are tagged with correct front end 
+      // Check deposits are tagged with correct front end
       const A_tagBefore = await getFrontEndTag(stabilityPool, A)
       const B_tagBefore = await getFrontEndTag(stabilityPool, B)
       const C_tagBefore = await getFrontEndTag(stabilityPool, C)
@@ -2773,7 +2773,7 @@ contract('StabilityPool', async accounts => {
 
       await openTrove({  ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
 
-      //  SETUP: Execute a series of operations to make G, S > 0 and P < 1  
+      //  SETUP: Execute a series of operations to make G, S > 0 and P < 1
 
       // E opens trove and makes a deposit
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: E } })
@@ -2827,8 +2827,8 @@ contract('StabilityPool', async accounts => {
 
         const ZERO = toBN('0')
         // Check S,P, G snapshots are non-zero
-        assert.isTrue(snapshot[0].eq(S_Before))  // S 
-        assert.isTrue(snapshot[1].eq(P_Before))  // P 
+        assert.isTrue(snapshot[0].eq(S_Before))  // S
+        assert.isTrue(snapshot[1].eq(P_Before))  // P
         assert.isTrue(snapshot[2].gt(ZERO))  // GL increases a bit between each depositor op, so just check it is non-zero
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -2845,8 +2845,8 @@ contract('StabilityPool', async accounts => {
         const snapshot = await stabilityPool.depositSnapshots(depositor)
 
         // Check S, P, G snapshots are now zero
-        assert.equal(snapshot[0], '0')  // S 
-        assert.equal(snapshot[1], '0')  // P 
+        assert.equal(snapshot[0], '0')  // S
+        assert.equal(snapshot[1], '0')  // P
         assert.equal(snapshot[2], '0')  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -2858,7 +2858,7 @@ contract('StabilityPool', async accounts => {
 
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
 
-      //  SETUP: Execute a series of operations to make G, S > 0 and P < 1  
+      //  SETUP: Execute a series of operations to make G, S > 0 and P < 1
 
       // E opens trove and makes a deposit
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
@@ -2904,7 +2904,7 @@ contract('StabilityPool', async accounts => {
         const ZERO = toBN('0')
         // Check S,P, G snapshots are non-zero
         assert.equal(snapshot[0], '0')  // S  (always zero for front-end)
-        assert.isTrue(snapshot[1].eq(P_Before))  // P 
+        assert.isTrue(snapshot[1].eq(P_Before))  // P
         assert.isTrue(snapshot[2].gt(ZERO))  // GL increases a bit between each depositor op, so just check it is non-zero
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -2922,8 +2922,8 @@ contract('StabilityPool', async accounts => {
 
         // Check S, P, G snapshots are now zero
         assert.equal(snapshot[0], '0')  // S  (always zero for front-end)
-        assert.equal(snapshot[1], '0')  // P 
-        assert.equal(snapshot[2], '0')  // G 
+        assert.equal(snapshot[1], '0')  // P
+        assert.equal(snapshot[2], '0')  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
       }
@@ -3189,7 +3189,7 @@ contract('StabilityPool', async accounts => {
     })
 
     it("withdrawETHGainToTrove(): All depositors are able to withdraw their ETH gain from the SP to their Trove", async () => {
-      // Whale opens trove 
+      // Whale opens trove
       await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
       // Defaulter opens trove
@@ -3224,7 +3224,7 @@ contract('StabilityPool', async accounts => {
     })
 
     it("withdrawETHGainToTrove(): All depositors withdraw, each withdraw their correct ETH gain", async () => {
-      // Whale opens trove 
+      // Whale opens trove
       await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
       // defaulter opened
@@ -3243,10 +3243,10 @@ contract('StabilityPool', async accounts => {
       const [, liquidatedColl, ,] = th.getEmittedLiquidationValues(liquidationTx)
 
 
-      /* All depositors attempt to withdraw their ETH gain to their Trove. Each depositor 
+      /* All depositors attempt to withdraw their ETH gain to their Trove. Each depositor
       receives (liquidatedColl/ 6).
 
-      Thus, expected new collateral for each depositor with 1 Ether in their trove originally, is 
+      Thus, expected new collateral for each depositor with 1 Ether in their trove originally, is
       (1 + liquidatedColl/6)
       */
 
@@ -3285,11 +3285,11 @@ contract('StabilityPool', async accounts => {
      // Defaulter opens
      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-      
+
       // A, B, C provides 10000, 5000, 3000 LUSD to SP
       await stabilityPool.provideToSP(dec(10000, 18), frontEnd_1, { from: alice })
       await stabilityPool.provideToSP(dec(5000, 18), frontEnd_1, { from: bob })
@@ -3297,7 +3297,7 @@ contract('StabilityPool', async accounts => {
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
 
-      // Price drops to 105, 
+      // Price drops to 105,
       await priceFeed.setPrice(dec(105, 18))
       const price = await priceFeed.getPrice()
 
@@ -3345,11 +3345,11 @@ contract('StabilityPool', async accounts => {
     it("withdrawETHGainToTrove(): reverts if user has no trove", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-      
+
      // Defaulter opens
      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
 
@@ -3375,11 +3375,11 @@ contract('StabilityPool', async accounts => {
     it("withdrawETHGainToTrove(): triggers LQTY reward event - increases the sum G", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      
+
       // A and B provide to SP
       await stabilityPool.provideToSP(dec(10000, 18), frontEnd_1, { from: A })
       await stabilityPool.provideToSP(dec(10000, 18), ZERO_ADDRESS, { from: B })
@@ -3422,11 +3422,11 @@ contract('StabilityPool', async accounts => {
     it("withdrawETHGainToTrove(), partial withdrawal: doesn't change the front end tag", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C open troves 
+      // A, B, C open troves
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      
+
       // A, B, C, D, E provide to SP
       await stabilityPool.provideToSP(dec(10000, 18), frontEnd_1, { from: A })
       await stabilityPool.provideToSP(dec(20000, 18), frontEnd_2, { from: B })
@@ -3466,11 +3466,11 @@ contract('StabilityPool', async accounts => {
     it("withdrawETHGainToTrove(), eligible deposit: depositor receives LQTY rewards", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-       // A, B, C open troves 
+       // A, B, C open troves
        await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
        await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
        await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-       
+
       // A, B, C, provide to SP
       await stabilityPool.provideToSP(dec(1000, 18), frontEnd_1, { from: A })
       await stabilityPool.provideToSP(dec(2000, 18), frontEnd_2, { from: B })
@@ -3516,11 +3516,11 @@ contract('StabilityPool', async accounts => {
     it("withdrawETHGainToTrove(), eligible deposit: tagged front end receives LQTY rewards", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-     // A, B, C open troves 
+     // A, B, C open troves
      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
      await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
      await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-     
+
       // A, B, C, provide to SP
       await stabilityPool.provideToSP(dec(1000, 18), frontEnd_1, { from: A })
       await stabilityPool.provideToSP(dec(2000, 18), frontEnd_2, { from: B })
@@ -3566,14 +3566,14 @@ contract('StabilityPool', async accounts => {
     it("withdrawETHGainToTrove(), eligible deposit: tagged front end's stake decreases", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, D, E, F open troves 
+      // A, B, C, D, E, F open troves
      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
      await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
      await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: F } })
-      
+
       // A, B, C, D, E, F provide to SP
       await stabilityPool.provideToSP(dec(1000, 18), frontEnd_1, { from: A })
       await stabilityPool.provideToSP(dec(2000, 18), frontEnd_2, { from: B })
@@ -3622,16 +3622,16 @@ contract('StabilityPool', async accounts => {
     it("withdrawETHGainToTrove(), eligible deposit: tagged front end's snapshots update", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      // A, B, C, open troves 
+      // A, B, C, open troves
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
      await openTrove({ extraLUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
      await openTrove({ extraLUSDAmount: toBN(dec(60000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-     
+
       // D opens trove
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
-     
+
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
-     
+
       // --- SETUP ---
 
       const deposit_A = dec(100, 18)
@@ -3672,7 +3672,7 @@ contract('StabilityPool', async accounts => {
         const snapshot = await stabilityPool.frontEndSnapshots(frontEnd)
 
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends, since S corresponds to ETH gain)
-        assert.equal(snapshot[1], dec(1, 18))  // P 
+        assert.equal(snapshot[1], dec(1, 18))  // P
         assert.equal(snapshot[2], '0')  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -3710,7 +3710,7 @@ contract('StabilityPool', async accounts => {
 
         // Check snapshots are the expected values
         assert.equal(snapshot[0], '0')  // S (should always be 0 for front ends)
-        assert.isTrue(snapshot[1].eq(P_Before))  // P 
+        assert.isTrue(snapshot[1].eq(P_Before))  // P
         assert.isTrue(snapshot[2].eq(G))  // G
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
@@ -3724,10 +3724,10 @@ contract('StabilityPool', async accounts => {
       await lusdToken.transfer(A, dec(10000, 18), { from: whale })
       await lusdToken.transfer(B, dec(20000, 18), { from: whale })
 
-      // C, D open troves 
+      // C, D open troves
       await openTrove({ extraLUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
       await openTrove({ extraLUSDAmount: toBN(dec(4000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
-      
+
       // A, B, C, D provide to SP
       await stabilityPool.provideToSP(dec(10, 18), frontEnd_1, { from: A })
       await stabilityPool.provideToSP(dec(20, 18), ZERO_ADDRESS, { from: B })
@@ -3816,11 +3816,11 @@ contract('StabilityPool', async accounts => {
     })
 
     it("registerFrontEnd(): reverts if address has a non-zero deposit already", async () => {
-      // C, D, E open troves 
+      // C, D, E open troves
       await openTrove({ extraLUSDAmount: toBN(dec(10, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
       await openTrove({ extraLUSDAmount: toBN(dec(10, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
       await openTrove({ extraLUSDAmount: toBN(dec(10, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
-      
+
       // C, E provides to SP
       await stabilityPool.provideToSP(dec(10, 18), frontEnd_1, { from: C })
       await stabilityPool.provideToSP(dec(10, 18), ZERO_ADDRESS, { from: E })

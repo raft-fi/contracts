@@ -447,7 +447,7 @@ contract('Fee arithmetic tests', async accounts => {
       const expectedDecayedBaseRate = decayBaseRateResults[startBaseRate][i]
       await troveManagerTester.setLastFeeOpTimeToNow()
 
-      // Progress time 
+      // Progress time
       await th.fastForwardTime(secondsPassed, web3.currentProvider)
 
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
@@ -457,10 +457,10 @@ contract('Fee arithmetic tests', async accounts => {
 
       const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
       // console.log(
-      //   `starting baseRate: ${startBaseRate}, 
-      //   minutesPassed: ${minutesPassed}, 
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate}, 
-      //   decayedBaseRate: ${decayedBaseRate}, 
+      //   `starting baseRate: ${startBaseRate},
+      //   minutesPassed: ${minutesPassed},
+      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
+      //   decayedBaseRate: ${decayedBaseRate},
       //   error: ${error}`
       // )
       assert.isAtMost(getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()), 100000) // allow absolute error tolerance of 1e-13
@@ -481,7 +481,7 @@ contract('Fee arithmetic tests', async accounts => {
       const expectedDecayedBaseRate = decayBaseRateResults['0.1'][i]
       await troveManagerTester.setLastFeeOpTimeToNow()
 
-      // Progress time 
+      // Progress time
       await th.fastForwardTime(secondsPassed, web3.currentProvider)
 
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
@@ -491,10 +491,10 @@ contract('Fee arithmetic tests', async accounts => {
 
       const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
       // console.log(
-      //   `starting baseRate: ${startBaseRate}, 
-      //   minutesPassed: ${minutesPassed}, 
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate}, 
-      //   decayedBaseRate: ${decayedBaseRate}, 
+      //   `starting baseRate: ${startBaseRate},
+      //   minutesPassed: ${minutesPassed},
+      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
+      //   decayedBaseRate: ${decayedBaseRate},
       //   error: ${error}`
       // )
       assert.isAtMost(getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()), 1000000) // allow absolute error tolerance of 1e-12
@@ -515,7 +515,7 @@ contract('Fee arithmetic tests', async accounts => {
       const expectedDecayedBaseRate = decayBaseRateResults[startBaseRate][i]
       await troveManagerTester.setLastFeeOpTimeToNow()
 
-      // Progress time 
+      // Progress time
       await th.fastForwardTime(secondsPassed, web3.currentProvider)
 
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
@@ -525,10 +525,10 @@ contract('Fee arithmetic tests', async accounts => {
 
       const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
       // console.log(
-      //   `starting baseRate: ${startBaseRate}, 
-      //   minutesPassed: ${minutesPassed}, 
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate}, 
-      //   decayedBaseRate: ${decayedBaseRate}, 
+      //   `starting baseRate: ${startBaseRate},
+      //   minutesPassed: ${minutesPassed},
+      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
+      //   decayedBaseRate: ${decayedBaseRate},
       //   error: ${error}`
       // )
 
@@ -549,7 +549,7 @@ contract('Fee arithmetic tests', async accounts => {
       const expectedDecayedBaseRate = decayBaseRateResults[startBaseRate][i]
       await troveManagerTester.setLastFeeOpTimeToNow()
 
-      // progress time 
+      // progress time
       await th.fastForwardTime(secondsPassed, web3.currentProvider)
 
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
@@ -560,10 +560,10 @@ contract('Fee arithmetic tests', async accounts => {
       const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
 
       // console.log(
-      //   `starting baseRate: ${startBaseRate}, 
-      //   minutesPassed: ${minutesPassed}, 
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate}, 
-      //   decayedBaseRate: ${decayedBaseRate}, 
+      //   `starting baseRate: ${startBaseRate},
+      //   minutesPassed: ${minutesPassed},
+      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
+      //   decayedBaseRate: ${decayedBaseRate},
       //   error: ${error}`
       // )
 
@@ -946,7 +946,7 @@ contract('Fee arithmetic tests', async accounts => {
         assert.isTrue(response.receipt.status)
 
         const result = await mathTester.callDecPow(base, exponent)
-    
+
         const error = expected.sub(result).abs()
 
         console.log(`run: ${i}. base: ${base}, exp: ${exponent}, res: ${result}, error: ${error}`)
@@ -965,7 +965,7 @@ contract('Fee arithmetic tests', async accounts => {
         assert.isTrue(response.receipt.status)
 
         const result = await mathTester.callDecPow(base, exponent)
-    
+
         const error = expected.sub(result).abs()
 
         console.log(`run: ${i}. base: ${base}, exp: ${exponent}, res: ${result}, error: ${error}`)

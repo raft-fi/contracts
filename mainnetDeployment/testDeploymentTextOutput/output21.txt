@@ -59,13 +59,13 @@ lockupContract addr: 0x66bD...AD9a,
             beneficiary addr: 0x4BDe...e46c,
             on-chain beneficiary addr: 0x4BDe...e46c
             unlockTime: 1649064337
-            
+
 lockupContract addr: 0xC4aC...FfEC,
             beneficiary: ACCOUNT_3,
             beneficiary addr: 0x7AdD...FD6F,
             on-chain beneficiary addr: 0x7AdD...FD6F
             unlockTime: 1649064337
-            
+
 INITIAL LQTY BALANCES
 Unipool LQTY balance       : 1332511.757789535567313421
 LQTY Safe balance     : 64666666.666666666666666667
@@ -100,7 +100,7 @@ LUSDETHPair addr: 0x01365a50da15e38e9Fcc5Ee193E67D4845ff118E
 Pair addr stored in Unipool: 0x01365a50da15e38e9Fcc5Ee193E67D4845ff118E
 deployer's farmed LQTY before staking LP tokens: .000000000000048944
 Already staked in Unipool
-wait 90 seconds before checking earnings... 
+wait 90 seconds before checking earnings...
 deployer's farmed LQTY from Unipool after waiting ~1.5mins: .000000000000049005
 deployer LQTY Balance Before SP deposit: 1395.789802366656842257
 CHECK DEPLOYER MAKING DEPOSIT AND EARNING LQTY
@@ -131,8 +131,8 @@ deployer LUSD bal before withdrawing staking gains: 2311.224204161781052791
 deployer LUSD bal after withdrawing staking gains: 2311.224204161781052791
 LUSD-ETH Pair's current LUSD reserves: 40.036378355965833891
 LUSD-ETH Pair's current ETH reserves: .188993756164807541
-number of troves: 3 
-Trove list size: 3 
+number of troves: 3
+Trove list size: 3
 Entire system debt: 7425.000000000000000000
 Entire system coll: 6.000000000000000000
 Base rate: .000000000000000000

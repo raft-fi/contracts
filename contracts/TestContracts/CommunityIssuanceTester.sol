@@ -15,10 +15,10 @@ contract CommunityIssuanceTester is CommunityIssuance {
 
     function unprotectedIssueLQTY() external returns (uint) {
         // No checks on caller address
-       
+
         uint latestTotalLQTYIssued = LQTYSupplyCap.mul(_getCumulativeIssuanceFraction()).div(DECIMAL_PRECISION);
         uint issuance = latestTotalLQTYIssued.sub(totalLQTYIssued);
-      
+
         totalLQTYIssued = latestTotalLQTYIssued;
         return issuance;
     }

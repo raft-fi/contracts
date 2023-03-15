@@ -27,7 +27,7 @@ const randomChar = (chars) => {
 const makeHardhatAccountsList = (n) => {
   accountsDict = {}
   accounts = []
- 
+
   let i = 0;
   let account;
 
@@ -47,7 +47,7 @@ const makeHardhatAccountsList = (n) => {
 
   return(
         `const accountsList = \n
-        [ ${accounts.join(",\n")} ]\n 
+        [ ${accounts.join(",\n")} ]\n
           module.exports = {
           accountsList: accountsList
       };`)

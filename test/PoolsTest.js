@@ -57,7 +57,7 @@ contract('ActivePool', async accounts => {
     const recordedETHBalance = await activePool.getLUSDDebt()
     assert.equal(recordedETHBalance, 0)
   })
- 
+
   it('increaseLUSD(): increases the recorded LUSD balance by the correct amount', async () => {
     const recordedLUSD_balanceBefore = await activePool.getLUSDDebt()
     assert.equal(recordedLUSD_balanceBefore, 0)
@@ -120,7 +120,7 @@ contract('ActivePool', async accounts => {
 })
 
 contract('DefaultPool', async accounts => {
- 
+
   let defaultPool, mockTroveManager, mockActivePool
 
   const [owner, alice] = accounts;
@@ -140,7 +140,7 @@ contract('DefaultPool', async accounts => {
     const recordedETHBalance = await defaultPool.getLUSDDebt()
     assert.equal(recordedETHBalance, 0)
   })
- 
+
   it('increaseLUSD(): increases the recorded LUSD balance by the correct amount', async () => {
     const recordedLUSD_balanceBefore = await defaultPool.getLUSDDebt()
     assert.equal(recordedLUSD_balanceBefore, 0)
@@ -153,7 +153,7 @@ contract('DefaultPool', async accounts => {
     const recordedLUSD_balanceAfter = await defaultPool.getLUSDDebt()
     assert.equal(recordedLUSD_balanceAfter, 100)
   })
-  
+
   it('decreaseLUSD(): decreases the recorded LUSD balance by the correct amount', async () => {
     // start the pool on 100 wei
     //await defaultPool.increaseLUSDDebt(100, { from: mockTroveManagerAddress })

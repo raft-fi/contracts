@@ -13,7 +13,7 @@ class ModelParams:
 
         self.max_redemption_fraction = 1 # Maximum fraction of supply that can be redeemed in a timestep
 
-# time series data 
+# time series data
 class Data:
     def __init__(self):
         self.ETH_price = [500.0]
@@ -24,8 +24,8 @@ class Data:
         self.trove_issuance = [100.0]
         self.token_supply = [100.0]
         self.token_demand = 100.0
-  
-        
+
+
 ### Functions
 def get_new_momentum(data, params, ETH_price):
     lookback = params.lookback
@@ -39,7 +39,7 @@ def get_new_momentum(data, params, ETH_price):
 
 def get_past_ETH_price(data, params):
     length = len(data.ETH_price)
-    
+
     ETH_price_past = None
     if (params.lookback > length):
         ETH_price_past = data.ETH_price[0]
@@ -51,17 +51,17 @@ def get_past_ETH_price(data, params):
     return ETH_price_past
 
 def get_new_redeemed_amount(data, params):
-    max_redeemable  = data.token_supply[-1] * params.max_redemption_fraction 
+    max_redeemable  = data.token_supply[-1] * params.max_redemption_fraction
     if max_redeemable == 0:
         return 0
 
-    redeemed = (1 - data.token_price[-1] - data.base_fee[-1]) * data.token_supply[-1] 
+    redeemed = (1 - data.token_price[-1] - data.base_fee[-1]) * data.token_supply[-1]
 
     if redeemed < 0:
         return 0
     else:
         return min(redeemed, max_redeemable)
-       
+
 
 # Decay base fee correctly
 def get_new_base_fee(data, redeemed_amount):
@@ -72,7 +72,7 @@ def get_new_base_fee(data, redeemed_amount):
     return base_fee
 
 # return the exogenous market demand for holding LQTY tokens. Assume constant. Could be a function of:
-# - Demand for a safe-haven $1-pegged asset  
+# - Demand for a safe-haven $1-pegged asset
 # - Traders' demand for short-term liquidity
 def get_token_demand():
     return 100.0
@@ -84,7 +84,7 @@ def get_new_token_price(data, params, redeemed_amount, momentum):
 
     factor =  1/T
     print(f'factor: {factor}')
-    price = (((data.token_demand  - redeemed_amount) / (data.trove_issuance[-1])) - (F * momentum)) * factor 
+    price = (((data.token_demand  - redeemed_amount) / (data.trove_issuance[-1])) - (F * momentum)) * factor
 
     if price < 0:
         return 0
@@ -96,7 +96,7 @@ def get_new_token_demand(data, params, token_price, momentum):
     demand = data.token_demand
     if demand < 0:
         return 0
-    else: 
+    else:
         return demand
 
 def get_new_trove_issuance(data, params, token_price, momentum ):
@@ -104,7 +104,7 @@ def get_new_trove_issuance(data, params, token_price, momentum ):
 
     if trove_issuance < 0:
         return 0
-    else: 
+    else:
         return trove_issuance
 
 def get_new_token_supply(trove_issuance, redeemed):
@@ -112,10 +112,10 @@ def get_new_token_supply(trove_issuance, redeemed):
 
     if new_supply < 0:
         return 0
-    else: 
+    else:
         return new_supply
 
-# Given Liquity's hard price ceiling of 1.10, 
+# Given Liquity's hard price ceiling of 1.10,
 # compute the excess trove issuance needed to maintain the price at 1.1, according to QTM.
 def get_excess_issuance(token_price, token_supply):
     if token_price > 1.1:
@@ -123,7 +123,7 @@ def get_excess_issuance(token_price, token_supply):
         return excess_issuance
     else:
         return 0
- 
+
 ### Various ETH price functions
 
 def constant_ETH_price(last_price):
@@ -136,10 +136,10 @@ def randomwalk_ETH_price(last_price):
 
     if (big_event_chance > 1.5) or (big_event_chance < -1.5):
         big_event = big_event_chance * 20
- 
+
     new_price  = last_price + np.random.normal(scale=5) + big_event
-    
-    if new_price < 0: 
+
+    if new_price < 0:
         return 0
     else:
         return new_price
@@ -164,11 +164,11 @@ def quadratic_ETH_price(min, scale, i):
 
 def sublinear_ETH_price(last_price, steepness, i):
     return last_price + 1/(2*np.sqrt(steepness*(i+1)))
-    
+
 # ### Script
 
 # Initialize model parameters and data timeseries
-params = ModelParams() 
+params = ModelParams()
 data = Data()
 
 # Run the model
@@ -185,7 +185,7 @@ for i in range(1, 250):
     # ETH_price = linear_decreasing_ETH_price(800, 1, i)
     # ETH_price = one_over_i_ETH_price(1000, i)
     # ETH_price = sublinear_ETH_price(last_ETH_price, 10, i)
-    
+
     momentum = get_new_momentum(data, params, ETH_price)
     redeemed_amount = get_new_redeemed_amount(data, params)
     base_fee = get_new_base_fee(data, redeemed_amount)
@@ -197,16 +197,16 @@ for i in range(1, 250):
     token_demand = get_new_token_demand(data, params, token_price, momentum)
     trove_issuance = get_new_trove_issuance(data, params, token_price, momentum)
     token_supply = get_new_token_supply(trove_issuance, redeemed_amount)
-    
+
     # if price > 1.1, correct it via the price ceiling and QTM
     excess_issuance = get_excess_issuance(token_price, token_supply)
-    
+
     if token_price > 1.1:
         token_price = 1.1
 
     trove_issuance = trove_issuance + excess_issuance
     token_supply = get_new_token_supply(trove_issuance, 0)
-    
+
     # Log all new values
     print(f'step: {i}')
     print(f'ETH price: {ETH_price}')

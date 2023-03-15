@@ -59,13 +59,13 @@ lockupContract addr: 0x66bD...AD9a,
             beneficiary addr: 0x4BDe...e46c,
             on-chain beneficiary addr: 0x4BDe...e46c
             unlockTime: 1649064337
-            
+
 lockupContract addr: 0xC4aC...FfEC,
             beneficiary: ACCOUNT_3,
             beneficiary addr: 0x7AdD...FD6F,
             on-chain beneficiary addr: 0x7AdD...FD6F
             unlockTime: 1649064337
-            
+
 STORED ADDRESSES IN LQTY TOKEN
 multi-sig address stored in LQTYToken : 0x20C8...Be74
 LQTY Safe address: 0x20c8...be74
@@ -103,4 +103,4 @@ LUSDETHPair addr: 0x01365a50da15e38e9Fcc5Ee193E67D4845ff118E
 Pair addr stored in Unipool: 0x01365a50da15e38e9Fcc5Ee193E67D4845ff118E
 deployer's farmed LQTY before staking LP tokens: .000000000000050909
 Already staked in Unipool
-wait 90 seconds before checking earnings... 
+wait 90 seconds before checking earnings...

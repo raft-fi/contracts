@@ -69,9 +69,9 @@ import "./Dependencies/console.sol";
  * So, to track P accurately, we use a scale factor: if a liquidation would cause P to decrease to <1e-9 (and be rounded to 0 by Solidity),
  * we first multiply P by 1e9, and increment a currentScale factor by 1.
  *
- * The added benefit of using 1e9 for the scale factor (rather than 1e18) is that it ensures negligible precision loss close to the 
- * scale boundary: when P is at its minimum value of 1e9, the relative precision loss in P due to floor division is only on the 
- * order of 1e-9. 
+ * The added benefit of using 1e9 for the scale factor (rather than 1e18) is that it ensures negligible precision loss close to the
+ * scale boundary: when P is at its minimum value of 1e9, the relative precision loss in P due to floor division is only on the
+ * order of 1e-9.
  *
  * --- EPOCHS ---
  *
@@ -394,7 +394,7 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
         // First pay out any LQTY gains
         address frontEnd = deposits[msg.sender].frontEndTag;
         _payOutLQTYGains(communityIssuanceCached, msg.sender, frontEnd);
-        
+
         // Update front end stake
         uint compoundedFrontEndStake = getCompoundedFrontEndStake(frontEnd);
         uint newFrontEndStake = compoundedFrontEndStake.sub(LUSDtoWithdraw);
@@ -486,12 +486,12 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
     }
 
     function _computeLQTYPerUnitStaked(uint _LQTYIssuance, uint _totalLUSDDeposits) internal returns (uint) {
-        /*  
-        * Calculate the LQTY-per-unit staked.  Division uses a "feedback" error correction, to keep the 
+        /*
+        * Calculate the LQTY-per-unit staked.  Division uses a "feedback" error correction, to keep the
         * cumulative error low in the running total G:
         *
-        * 1) Form a numerator which compensates for the floor division error that occurred the last time this 
-        * function was called.  
+        * 1) Form a numerator which compensates for the floor division error that occurred the last time this
+        * function was called.
         * 2) Calculate "per-unit-staked" ratio.
         * 3) Multiply the ratio back by its denominator, to reveal the current floor division error.
         * 4) Store this error for use in the next correction when this function is called.
@@ -541,8 +541,8 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
         * Compute the LUSD and ETH rewards. Uses a "feedback" error correction, to keep
         * the cumulative error in the P and S state variables low:
         *
-        * 1) Form numerators which compensate for the floor division errors that occurred the last time this 
-        * function was called.  
+        * 1) Form numerators which compensate for the floor division errors that occurred the last time this
+        * function was called.
         * 2) Calculate "per-unit-staked" ratios.
         * 3) Multiply each ratio back by its denominator, to reveal the current floor division error.
         * 4) Store these errors for use in the next correction when this function is called.
@@ -552,7 +552,7 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
 
         assert(_debtToOffset <= _totalLUSDDeposits);
         if (_debtToOffset == _totalLUSDDeposits) {
-            LUSDLossPerUnitStaked = DECIMAL_PRECISION;  // When the Pool depletes to 0, so does each deposit 
+            LUSDLossPerUnitStaked = DECIMAL_PRECISION;  // When the Pool depletes to 0, so does each deposit
             lastLUSDLossError_Offset = 0;
         } else {
             uint LUSDLossNumerator = _debtToOffset.mul(DECIMAL_PRECISION).sub(lastLUSDLossError_Offset);
@@ -608,7 +608,7 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
 
         // If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
         } else if (currentP.mul(newProductFactor).div(DECIMAL_PRECISION) < SCALE_FACTOR) {
-            newP = currentP.mul(newProductFactor).mul(SCALE_FACTOR).div(DECIMAL_PRECISION); 
+            newP = currentP.mul(newProductFactor).mul(SCALE_FACTOR).div(DECIMAL_PRECISION);
             currentScale = currentScaleCached.add(1);
             emit ScaleUpdated(currentScale);
         } else {

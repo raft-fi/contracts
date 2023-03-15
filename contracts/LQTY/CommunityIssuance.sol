@@ -25,21 +25,21 @@ contract CommunityIssuance is ICommunityIssuance, Ownable, CheckContract, BaseMa
     * Minutes in one year: 60*24*365 = 525600
     *
     * For 50% of remaining tokens issued each year, with minutes as time units, we have:
-    * 
+    *
     * F ** 525600 = 0.5
-    * 
+    *
     * Re-arranging:
-    * 
+    *
     * 525600 * ln(F) = ln(0.5)
     * F = 0.5 ** (1/525600)
-    * F = 0.999998681227695000 
+    * F = 0.999998681227695000
     */
     uint constant public ISSUANCE_FACTOR = 999998681227695000;
 
-    /* 
+    /*
     * The community LQTY supply cap is the starting balance of the Community Issuance contract.
     * It should be minted to this contract by LQTYToken, when the token is deployed.
-    * 
+    *
     * Set to 32M (slightly less than 1/3) of total LQTY supply.
     */
     uint constant public LQTYSupplyCap = 32e24; // 32 million
@@ -65,12 +65,12 @@ contract CommunityIssuance is ICommunityIssuance, Ownable, CheckContract, BaseMa
 
     function setAddresses
     (
-        address _lqtyTokenAddress, 
+        address _lqtyTokenAddress,
         address _stabilityPoolAddress
-    ) 
-        external 
-        onlyOwner 
-        override 
+    )
+        external
+        onlyOwner
+        override
     {
         checkContract(_lqtyTokenAddress);
         checkContract(_stabilityPoolAddress);
@@ -96,7 +96,7 @@ contract CommunityIssuance is ICommunityIssuance, Ownable, CheckContract, BaseMa
 
         totalLQTYIssued = latestTotalLQTYIssued;
         emit TotalLQTYIssuedUpdated(latestTotalLQTYIssued);
-        
+
         return issuance;
     }
 

@@ -1,6 +1,6 @@
 const _1e36Str = "1000000000000000000000000000000000000"
 
-const accountsList = 
+const accountsList =
 
         [ { privateKey: "0x60ddFE7f579aB6867cbE7A2Dc03853dC141d7A4aB6DBEFc0Dae2d2B1Bd4e487F", balance: _1e36Str },
 { privateKey: "0xeaa445c85f7b438dEd6e831d06a4eD0CEBDc2f8527f84Fcda6EBB5fCfAd4C0e9", balance: _1e36Str },
@@ -2002,7 +2002,7 @@ const accountsList =
 { privateKey: "0x72a88DafE5e4Bd140F730da7a8bAC3F15fEB006Fc1FBC37e1C1A82EFBEC80875", balance: _1e36Str },
 { privateKey: "0x91DEC3CB17104f6fD6eaAFbbD47Da6A2a9EcD57fcdCaeD07aB9Bf6Ad61F1EcfC", balance: _1e36Str },
 { privateKey: "0xB9253e5a74f3E2c9eAACd396fA367d2d999BB2DC1bbEFCF1AbD62d1f350b9Db8", balance: _1e36Str } ]
- 
+
 module.exports = {
 accountsList: accountsList
 };

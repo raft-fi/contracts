@@ -1,9 +1,9 @@
-/* Script for processing logged gas outputs from tests. 
+/* Script for processing logged gas outputs from tests.
 
-Gas profiling logs the 'gas left', which includes the cost of the previous console.log call in the .sol file. 
+Gas profiling logs the 'gas left', which includes the cost of the previous console.log call in the .sol file.
 
 A Hardhat console.log call of the form:
-    
+
 console.log("01. gas left: %s", gasleft());
 
 costs ~1900 gas in Solidity.
@@ -19,7 +19,7 @@ const gasUsed = []
 
 for (line of data) {
   if (line.includes("gas left:")) {
-    
+
     const newLine = line.slice(0, 4) + line.slice(14).trim()
     gasUsed.push(newLine)
   }

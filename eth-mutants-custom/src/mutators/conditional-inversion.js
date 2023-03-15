@@ -14,7 +14,7 @@ ConditionalInversionMutator.prototype.getMutations = function(file, source, visi
       const text = source.slice(start, end)
 
       let replacement;
-  
+
       if (node.operator === '<') {
         replacement = text.replace('<', '>')
       } else if (node.operator === '>') {

@@ -24,8 +24,8 @@ MAX_FEE = Wei(1e18)
 
 """# Ether price (exogenous)
 
-Ether is the collateral for LUSD. The ether price $P_t^e$ follows 
-> $P_t^e = P_{t-1}^e (1+\zeta_t^e)(1+\sigma_t^e)$, 
+Ether is the collateral for LUSD. The ether price $P_t^e$ follows
+> $P_t^e = P_{t-1}^e (1+\zeta_t^e)(1+\sigma_t^e)$,
 
 where $\zeta_t^e \sim N(0, $ sd_ether$)$ represents ether price shock and $\sigma_t^e$ the drift of ether price. At the end of the year, the expected ether price is:
 > $E(P_{8760}^e) = P_0^e \cdot (1 +$ drift_ether$)^{8760}$
@@ -54,7 +54,7 @@ drift_ether4 = -0.0002
 """# LQTY price
 In the first month, the price of LQTY follows
 
-> $P_t^q = P_{t-1}^q (1+\zeta_t^q)(1+\sigma_t^q)$. 
+> $P_t^q = P_{t-1}^q (1+\zeta_t^q)(1+\sigma_t^q)$.
 
 Note that $\zeta_t^q \sim N(0,$ sd_LQTY) represents LQTY price shock and $\sigma_t^q$ the drift. Here, $\sigma_t^q =$ drift_LQTY, so that the expected LQTY price increases from price_LQTY_initial to the following at the end of the first month:
 > $E(P_{720}^q) = $price_LQTY_initial$ \cdot (1+$ drift_LQTY$)^{720}$
@@ -128,11 +128,11 @@ delta = -20
 
 """# Stability Pool
 
-The demand of tokens from stability pool is defined by 
+The demand of tokens from stability pool is defined by
 >$$D_t^s = D_{t-1}^s (1+\zeta_t^s) (1+R_{t-1}^s-R_{t}^n)^\theta, \\
 D_0^s = stability\_initial$$
 
-where $\zeta_t^s \sim N(0, sd\_stability)$ is the shock in the liquidity pool. 
+where $\zeta_t^s \sim N(0, sd\_stability)$ is the shock in the liquidity pool.
 
 During the first month the formula above is also multiplied by a drift factor, $drift\_stability$.
 
@@ -171,17 +171,17 @@ which can be denoted by
 
 **Open Troves**
 
-The amount of new troves opened in period t is denoted by $N_t^o$, which follows 
+The amount of new troves opened in period t is denoted by $N_t^o$, which follows
 
 
-> $N_t^o = \begin{cases} 
+> $N_t^o = \begin{cases}
 initial\_open &\mbox{if } t = 0\\
 max(0, n\_steady \cdot (1+\zeta_t^o)) &\mbox{if } P_{t-1}^l \leq 1 + f_t^i\\
 max(0, n\_steady \cdot (1+\zeta_t^o)) + \alpha (P_{t-1}^l - (1 + f_t^i)) N_t &\mbox{otherwise }
 \end{cases}
 $
 
-where the shock $\zeta_t^o \sim N(0,sd\_opentroves)$. 
+where the shock $\zeta_t^o \sim N(0,sd\_opentroves)$.
 
 $R_t^o$ represents the break-even natural rate of opening troves and $f_t^i$ represents the issuance fee.
 
@@ -206,7 +206,7 @@ So that $E(Q_t^e) = collateral\_gamma\_k \cdot collateral\_gamma\_theta$ and $Va
 
 
 $CR^*(i)$ follows a chi-squared distribution with $df=target\_cr\_chi\_square\_df$, i.e. $CR^*(i) \sim \chi_{df}^2$, so that $CR^*(i)\geq target\_cr\_a$:
-> $CR^*(i) = target\_cr\_a + target\_cr\_b \cdot \chi_{df}^2$. 
+> $CR^*(i) = target\_cr\_a + target\_cr\_b \cdot \chi_{df}^2$.
 
 Then:\
 $E(CR^*(i)) = target\_cr\_a + target\_cr\_b * target\_cr\_chi\_square\_df$, \\
@@ -220,7 +220,7 @@ Each trove is associated with a rational inattention parameter $\tau(i)$.
 The collateral ratio of the existing troves vary with the ether price $P_t^e$
 > $$CR_t(i) = \frac{P_t^e Q_t^e(i)}{Q_t^d(i)}.$$
 
-If the collateral ratio falls in the range 
+If the collateral ratio falls in the range
 > $CR_t(i) \in [CR^*(i)-\tau(i), CR^*(i)+2\tau(i)]$,
 
 no action taken. Otherwise, the trove owner readjusts the collateral ratio so that
@@ -250,13 +250,13 @@ alpha = 0.3
 """**Close Troves**
 
 The amount of troves closed in period t is denoted as $N_t^c$, which follows
-> $$N_t^c = \begin{cases} 
-U(0, 1) &\mbox{if } t \in [0,240] \\ 
-max(0, n\_steady \cdot (1+\zeta_t^c)) &\mbox{if } P_{t-1}^l \geq 1 \\ 
+> $$N_t^c = \begin{cases}
+U(0, 1) &\mbox{if } t \in [0,240] \\
+max(0, n\_steady \cdot (1+\zeta_t^c)) &\mbox{if } P_{t-1}^l \geq 1 \\
 max(0, n\_steady \cdot (1+\zeta_t^c)) + \beta(1 - P_{t-1}^l)N_t &\mbox{otherwise }
 \end{cases} $$
 
-where the shock $\zeta_t^c \sim N(0, sd\_closetroves)$. 
+where the shock $\zeta_t^c \sim N(0, sd\_closetroves)$.
 $N_t^c$ is rounded to an integer.
 """
 
@@ -267,10 +267,10 @@ beta = 0.2
 
 """**Trove Liquidation**
 
-At the beginning of each period, 
-right after the feed of ether price, 
+At the beginning of each period,
+right after the feed of ether price,
 the system checks the collateral ratio of the exisitng troves in the
-trove pool. 
+trove pool.
 
 If the collateral ratio falls below 110%, i.e.
 > $$CR_t(i) = \frac{P_t^e Q_t^e(i)}{Q_t^d(i)}<110\%,$$
@@ -289,7 +289,7 @@ The debt $Q_t^d$ is paid by the stability pool in exchange for the collateral $Q
 > $$R_{t-1}^s=\frac{R_t^l+R_t^a}{P_{t-1}^lD_{t-1}^s}$$
 
 where:
-- $R_t^l=P_t^eQ_t^e-P_{t-1}^lQ_t^d$ is the liquidation gain 
+- $R_t^l=P_t^eQ_t^e-P_{t-1}^lQ_t^d$ is the liquidation gain
 - $R_t^a=P_{t}^q\hat{Q}_t^q$ is the airdrop gain, $\hat{Q}_t^q=1000$ denotes the amount of LQTY token airdropped to the stability pool providers
 - $D_{t}^{s}$ is the total amount of LUSD deposited in the Stability Pool (see below)
 
@@ -341,7 +341,7 @@ for i in range(1, period):
 #LQTY price
 for i in range(1, month):
     random.seed(2+13*i)
-    shock_LQTY = random.normalvariate(0,sd_LQTY)  
+    shock_LQTY = random.normalvariate(0,sd_LQTY)
     price_LQTY.append(price_LQTY[i-1]*(1+shock_LQTY)*(1+drift_LQTY))
 
 """# Troves

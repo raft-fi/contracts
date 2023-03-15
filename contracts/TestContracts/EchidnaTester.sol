@@ -61,30 +61,30 @@ contract EchidnaTester {
 
         sortedTroves = new SortedTroves();
 
-        troveManager.setAddresses(address(borrowerOperations), 
-            address(activePool), address(defaultPool), 
+        troveManager.setAddresses(address(borrowerOperations),
+            address(activePool), address(defaultPool),
             address(stabilityPool), address(gasPool), address(collSurplusPool),
-            address(priceFeedTestnet), address(lusdToken), 
+            address(priceFeedTestnet), address(lusdToken),
             address(sortedTroves), address(0), address(0));
-       
-        borrowerOperations.setAddresses(address(troveManager), 
-            address(activePool), address(defaultPool), 
+
+        borrowerOperations.setAddresses(address(troveManager),
+            address(activePool), address(defaultPool),
             address(stabilityPool), address(gasPool), address(collSurplusPool),
-            address(priceFeedTestnet), address(sortedTroves), 
+            address(priceFeedTestnet), address(sortedTroves),
             address(lusdToken), address(0));
 
-        activePool.setAddresses(address(borrowerOperations), 
+        activePool.setAddresses(address(borrowerOperations),
             address(troveManager), address(stabilityPool), address(defaultPool));
 
         defaultPool.setAddresses(address(troveManager), address(activePool));
-        
-        stabilityPool.setAddresses(address(borrowerOperations), 
-            address(troveManager), address(activePool), address(lusdToken), 
+
+        stabilityPool.setAddresses(address(borrowerOperations),
+            address(troveManager), address(activePool), address(lusdToken),
             address(sortedTroves), address(priceFeedTestnet), address(0));
 
-        collSurplusPool.setAddresses(address(borrowerOperations), 
+        collSurplusPool.setAddresses(address(borrowerOperations),
              address(troveManager), address(activePool));
-    
+
         sortedTroves.setParams(1e18, address(troveManager), address(borrowerOperations));
 
         for (uint i = 0; i < NUMBER_OF_ACTORS; i++) {
@@ -376,11 +376,11 @@ contract EchidnaTester {
         if (address(lusdToken).balance > 0) {
             return false;
         }
-    
+
         if (address(priceFeedTestnet).balance > 0) {
             return false;
         }
-        
+
         if (address(sortedTroves).balance > 0) {
             return false;
         }
@@ -391,7 +391,7 @@ contract EchidnaTester {
     // TODO: What should we do with this? Should it be allowed? Should it be a canary?
     function echidna_price() public view returns(bool) {
         uint price = priceFeedTestnet.getPrice();
-        
+
         if (price == 0) {
             return false;
         }

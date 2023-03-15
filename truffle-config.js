@@ -35,7 +35,7 @@ module.exports = {
       runs: 1000
     },
   },
-  // use native binaries rather than solc.js 
+  // use native binaries rather than solc.js
   compilers: {
     solc: {
       version: "0.6.11"

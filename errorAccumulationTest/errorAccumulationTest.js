@@ -9,22 +9,22 @@ const randAmountInWei = th.randAmountInWei
 const ZERO_ADDRESS = th.ZERO_ADDRESS
 
 contract('TroveManager', async accounts => {
-  
+
   const bountyAddress = accounts[998]
   const lpRewardsAddress = accounts[999]
 
-  let contracts 
+  let contracts
   let priceFeed
   let troveManager
   let activePool
   let stabilityPool
   let defaultPool
   let borrowerOperations
-  
+
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress)
-    
+
     lusdToken = contracts.lusdToken
     priceFeed = contracts.priceFeedTestnet
     sortedTroves = contracts.sortedTroves
@@ -33,7 +33,7 @@ contract('TroveManager', async accounts => {
     stabilityPool = contracts.stabilityPool
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
-  
+
     lqtyStaking = LQTYContracts.lqtyStaking
     lqtyToken = LQTYContracts.lqtyToken
     communityIssuance = LQTYContracts.communityIssuance
@@ -61,7 +61,7 @@ contract('TroveManager', async accounts => {
     }
 
     await borrowerOperations.addColl(accounts[99], accounts[99], { from: accounts[99], value: 1 })
-    
+
     // check DefaultPool
     const ETH_DefaultPool = await defaultPool.getETH()
     const LUSDDebt_DefaultPool = await defaultPool.getLUSDDebt()
@@ -95,7 +95,7 @@ contract('TroveManager', async accounts => {
     for (account of accounts.slice(1, 100)) {
       borrowerOperations.addColl(account, account, { from: account, value: 1 })
     }
-   
+
     await borrowerOperations.addColl(accounts[999], accounts[999], { from: accounts[999], value: 1 })
     // check DefaultPool
     const ETH_DefaultPool = await defaultPool.getETH()
@@ -136,11 +136,11 @@ contract('TroveManager', async accounts => {
     console.log(`ETH left in Default Pool is: ${ETH_DefaultPool}`)
     console.log(`LUSDDebt left in Default Pool is: ${LUSDDebt_DefaultPool}`)
   })
-  
+
   /* ABDK64, no error correction:
     ETH left in Default Pool is: 64
-    LUSDDebt left in Default Pool is: 75 
-    
+    LUSDDebt left in Default Pool is: 75
+
     DeciMath, no error correction:
     --Subtraction Overflow
 
@@ -169,11 +169,11 @@ contract('TroveManager', async accounts => {
     console.log(`ETH left in Default Pool is: ${ETH_DefaultPool}`)
     console.log(`LUSDDebt left in Default Pool is: ${LUSDDebt_DefaultPool}`)
   })
-  
+
   /* ABDK64, no error correction:
     ETH left in Default Pool is: 100
-    LUSDDebt left in Default Pool is: 180 
-    
+    LUSDDebt left in Default Pool is: 180
+
     DeciMath, no error correction:
     --Subtraction Overflow
 
@@ -206,8 +206,8 @@ contract('TroveManager', async accounts => {
   /*
     ABDK64, no error correction:
     ETH left in Default Pool is: 1000
-    LUSDDebt left in Default Pool is: 180: 
-    
+    LUSDDebt left in Default Pool is: 180:
+
     DeciMath, no error correction:
     -- overflow
 
@@ -218,7 +218,7 @@ contract('TroveManager', async accounts => {
 
   // --- Error accumulation from repeated Liquidations  - pure distribution, empty SP  ---
 
-  //  50 Troves added 
+  //  50 Troves added
   //  1 whale, supports TCR
   //  price drops
   //  loop: Troves are liquidated. Coll and debt difference between (activePool - defaultPool) is
@@ -248,19 +248,19 @@ contract('TroveManager', async accounts => {
       totalETHPoolDifference.add(activePoolETH.sub(defaultPoolETH))
       totalLUSDDebtPoolDifference.add(activePoolLUSDDebt.sub(defaultPoolLUSDDebt))
     }
-    
+
     console.log(`Accumulated ETH difference between Default and Active Pools is: ${totalETHPoolDifference}`)
     console.log(`Accumulated LUSDDebt difference between Active and Default Pools is: ${totalLUSDDebtPoolDifference}`)
   })
-  
+
   /* ABDK64, no error correction
     Accumulated ETH difference between Default and Active Pools is: 0
     Accumulated LUSDDebt difference between Active and Default Pools is: 0
-    
+
     DeciMath, no error correction:
     Accumulated ETH difference between Default and Active Pools is: 0
     Accumulated LUSDDebt difference between Active and Default Pools is: 0
-    
+
     Pure division with correction:
     Accumulated ETH difference between Default and Active Pools is: 0
     Accumulated LUSDDebt difference between Active and Default Pools is: 0
@@ -305,12 +305,12 @@ contract('TroveManager', async accounts => {
     ABDK64 WITH correction:
     ETH difference between total pending rewards and DefaultPool: 300
     LUSDDebt difference between total pending rewards and DefaultPool: 400
-    
+
     DeciMath, no error correction:
     ETH difference between total pending rewards and DefaultPool: -100
     LUSDDebt difference between total pending rewards and DefaultPool: -200
 
-    Pure division with correction: 
+    Pure division with correction:
     ETH difference between total pending rewards and DefaultPool: 0
     LUSDDebt difference between total pending rewards and DefaultPool: 0
   */
@@ -346,11 +346,11 @@ contract('TroveManager', async accounts => {
     console.log(`ETH difference between total pending rewards and DefaultPool: ${ETHRewardDifference} `)
     console.log(`LUSDDebt difference between total pending rewards and DefaultPool: ${LUSDDebtRewardDifference} `)
   })
-  
+
   /* ABDK64, no error correction:
     ETH difference between total pending rewards and DefaultPool: 51000
     LUSDDebt difference between total pending rewards and DefaultPool: 55000
-    
+
     ABDK64 WITH correction:
     ETH difference between total pending rewards and DefaultPool: 31000
     LUSDDebt difference between total pending rewards and DefaultPool: 31000
@@ -358,7 +358,7 @@ contract('TroveManager', async accounts => {
     DeciMath, no error correction:
     ETH difference between total pending rewards and DefaultPool: 2000
     LUSDDebt difference between total pending rewards and DefaultPool: -2000
-    
+
     Pure division with correction:
     ETH difference between total pending rewards and DefaultPool: 0
     LUSDDebt difference between total pending rewards and DefaultPool: 0
@@ -403,7 +403,7 @@ contract('TroveManager', async accounts => {
     ABDK64 WITH correction:
     ETH difference between total pending rewards and DefaultPool: 300
     LUSDDebt difference between total pending rewards and DefaultPool: 300
-      
+
     DeciMath, no error correction:
     ETH difference between total pending rewards and DefaultPool: 0
     LUSDDebt difference between total pending rewards and DefaultPool: -200
@@ -453,11 +453,11 @@ contract('TroveManager', async accounts => {
     ABDK64 WITH correction:
     ETH difference between total pending rewards and DefaultPool: 31300
     LUSDDebt difference between total pending rewards and DefaultPool: 30000
-    
+
     DeciMath, no error correction:
     ETH difference between total pending rewards and DefaultPool: -4300
     LUSDDebt difference between total pending rewards and DefaultPool: -8000
-  
+
     Pure division with correction:
     ETH difference between total pending rewards and DefaultPool: 400
     LUSDDebt difference between total pending rewards and DefaultPool: 1000
@@ -469,7 +469,7 @@ contract('TroveManager', async accounts => {
    // Acct 99 opens trove with 100 LUSD
     await borrowerOperations.openTrove(0, 0,  accounts[99], { from: accounts[99], value: dec(100, 'ether') })
     await borrowerOperations.withdrawLUSD(0, dec(100, 18), accounts[99], {from: accounts[99]})
-    
+
     await th.openTrove_allAccounts(accounts.slice(0, 11), contracts, dec(1, 'ether'), dec(170, 18))
 
     await priceFeed.setPrice(dec(100, 18))
@@ -503,11 +503,11 @@ contract('TroveManager', async accounts => {
   /* ABDK64, no error correction
     ETH difference between total pending distribution rewards and DefaultPool: 550
     LUSDDebt difference between total pending distribution rewards and DefaultPool: 600
-    
+
     DeciMath, no error correction:
     ETH difference between total pending distribution rewards and DefaultPool: 150
     LUSDDebt difference between total pending distribution rewards and DefaultPool: -200
-    
+
     Pure division with error correction:
     ETH difference between total pending distribution rewards and DefaultPool: 50
     LUSDDebt difference between total pending distribution rewards and DefaultPool: 0
@@ -517,12 +517,12 @@ contract('TroveManager', async accounts => {
     // Acct 99 opens trove with 100 LUSD
      await borrowerOperations.openTrove(0, 0,  accounts[999], { from: accounts[999], value: dec(100, 'ether') })
      await borrowerOperations.withdrawLUSD(0, dec(100, 18), accounts[999], {from: accounts[999]})
-     
+
      await th.openTrove_allAccounts(accounts.slice(0, 101), contracts, dec(1, 'ether'), dec(170, 18))
- 
+
      await priceFeed.setPrice(dec(100, 18))
      await troveManager.liquidate(accounts[0])
- 
+
      // On loop: Account[99] adds 10 LUSD to pool -> a trove gets liquidated and partially offset against SP, emptying the SP
      for (account of accounts.slice(1, 101)) {
        await stabilityPool.provideToSP(dec(10, 18),ZERO_ADDRESS, {from: account[99]})
@@ -531,31 +531,31 @@ contract('TroveManager', async accounts => {
      // check (DefaultPool - totalRewards from distribution)
      const L_ETH = await troveManager.L_ETH()
      const L_LUSDDebt = await troveManager.L_LUSDDebt()
- 
+
      const totalColl = await activePool.getETH()
- 
+
      const _1e18_BN = web3.utils.toBN(dec(1, 18))
      const totalETHRewards_Distribution = (totalColl.mul(L_ETH)).div(_1e18_BN)
      const totalLUSDRewards_Distribution = (totalColl.mul(L_LUSDDebt)).div(_1e18_BN)
- 
+
      const defaultPoolETH = await defaultPool.getETH()
      const defaultPoolLUSDDebt = await defaultPool.getLUSDDebt()
- 
+
      const ETHRewardDifference = defaultPoolETH.sub(totalETHRewards_Distribution)
      const LUSDDebtRewardDifference = defaultPoolLUSDDebt.sub(totalLUSDRewards_Distribution)
- 
+
      console.log(`ETH difference between total pending distribution rewards and DefaultPool: ${ETHRewardDifference} `)
      console.log(`LUSDDebt difference between total pending distribution rewards and DefaultPool: ${LUSDDebtRewardDifference} `)
    })
 
   /* ABDK64, no error correction
-    ETH difference between total pending distribution rewards and DefaultPool: 7600 
+    ETH difference between total pending distribution rewards and DefaultPool: 7600
     LUSDDebt difference between total pending distribution rewards and DefaultPool: 8900
-    
+
     DeciMath, no error correction:
     ETH difference between total pending distribution rewards and DefaultPool: -700
     LUSDDebt difference between total pending distribution rewards and DefaultPool: 200
-    
+
     Pure division with error correction:
     ETH difference between total pending distribution rewards and DefaultPool: 0
     LUSDDebt difference between total pending distribution rewards and DefaultPool: 0
@@ -567,30 +567,30 @@ contract('TroveManager', async accounts => {
     // Acct 99 opens trove with 100 LUSD
      await borrowerOperations.openTrove(0, 0,  accounts[999], { from: accounts[999], value: dec(100, 'ether') })
      await borrowerOperations.withdrawLUSD(0, dec(100, 18), accounts[999], {from: accounts[999]})
-     
+
      // Account 0 (to be liquidated) opens a trove
      await borrowerOperations.openTrove(0, dec(100, 18), accounts[0],{from: accounts[0], value: dec(1, 'ether')})
 
      // 9 Accounts open troves and provide to SP
      await th.openTrove_allAccounts(accounts.slice(1, 11), contracts, dec(1, 'ether'), dec(100, 18))
      await th.provideToSP_allAccounts(accounts.slice(1,11), stabilityPool, dec(50, 18))
-     
+
      await priceFeed.setPrice(dec(100, 18))
      await troveManager.liquidate(accounts[0])
- 
+
      // All but one depositors withdraw their deposit
      for (account of accounts.slice(2, 11)) {
        await stabilityPool.withdrawFromSP(dec(50, 18), {from: account})
      }
 
-    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail. 
+    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
     await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
-    
+
     await stabilityPool.withdrawFromSP(dec(50, 18), {from: accounts[1]} )
     const SP_ETH = await stabilityPool.getETH()
-    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()  
+    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()
 
     const SP_LUSD_Insufficiency = web3.utils.toBN(whaleSPDeposit).sub(SP_LUSD)
 
@@ -606,7 +606,7 @@ contract('TroveManager', async accounts => {
       Error in ETH gain accumulates in the Pool.
       Surplus ETH left in in Stability Pool is 530
       LUSD insufficiency in Stability Pool is 530
-      
+
       DeciMath, no error correction:
       Surplus ETH left in in Stability Pool is 0
       LUSD insufficiency in Stability Pool is 0
@@ -620,30 +620,30 @@ contract('TroveManager', async accounts => {
     // Acct 99 opens trove with 100 LUSD
      await borrowerOperations.openTrove(0, 0,  accounts[999], { from: accounts[999], value: dec(100, 'ether') })
      await borrowerOperations.withdrawLUSD(0, dec(100, 18), accounts[999], {from: accounts[999]})
-     
+
      // Account 0 (to be liquidated) opens a trove
      await borrowerOperations.openTrove(0, dec(100, 18), accounts[0],{from: accounts[0], value: dec(1, 'ether')})
 
      // 10 Accounts open troves and provide to SP
      await th.openTrove_allAccounts(accounts.slice(1, 101), contracts, dec(1, 'ether'), dec(100, 18))
      await th.provideToSP_allAccounts(accounts.slice(1,101), stabilityPool, dec(50, 18))
-     
+
      await priceFeed.setPrice(dec(100, 18))
      await troveManager.liquidate(accounts[0])
- 
+
      // All but one depositors withdraw their deposit
      for (account of accounts.slice(2, 101)) {
        await stabilityPool.withdrawFromSP(dec(50, 18), {from: account})
      }
 
-    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail. 
+    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
     await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
-    
+
     await stabilityPool.withdrawFromSP(dec(50, 18), {from: accounts[1]} )
     const SP_ETH = await stabilityPool.getETH()
-    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()  
+    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()
 
     const SP_LUSD_Insufficiency = web3.utils.toBN(whaleSPDeposit).sub(SP_LUSD)
 
@@ -655,7 +655,7 @@ contract('TroveManager', async accounts => {
    /* ABDK64, no error correction
     Surplus ETH left in in Stability Pool is 5300
     LUSD insufficiency in Stability Pool is 5300
-      
+
     DeciMath, no error correction:
     Surplus ETH left in in Stability Pool is 0
     LUSD insufficiency in Stability Pool is 0
@@ -669,7 +669,7 @@ contract('TroveManager', async accounts => {
     // Acct 99 opens trove with 100 LUSD
      await borrowerOperations.openTrove(0, 0,  accounts[999], { from: accounts[999], value: dec(100, 'ether') })
      await borrowerOperations.withdrawLUSD(0, dec(100, 18), accounts[999], {from: accounts[999]})
-     
+
      // Account 0 (to be liquidated) opens a trove
      await borrowerOperations.openTrove(0, dec(100, 18), accounts[0],{from: accounts[0], value: dec(1, 'ether')})
 
@@ -679,24 +679,24 @@ contract('TroveManager', async accounts => {
 
      const account1SPDeposit = dec(50, 18)
      await stabilityPool.provideToSP(account1SPDeposit, ZERO_ADDRESS, {from: accounts[1]} )
-     
+
      await priceFeed.setPrice(dec(100, 18))
      await troveManager.liquidate(accounts[0])
- 
+
      // All but one depositors withdraw their deposit
-     
+
      for (account of accounts.slice(2, 11)) {
        await stabilityPool.withdrawFromSP(dec(100, 18), {from: account})
      }
 
-    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail. 
+    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
     await stabilityPool.provideToSP(whaleSPDeposit, ZERO_ADDRESS, {from: accounts[999]} )
-    
+
     await stabilityPool.withdrawFromSP(account1SPDeposit, {from: accounts[1]} )
     const SP_ETH = await stabilityPool.getETH()
-    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()  
+    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()
 
     const SP_LUSD_Insufficiency = web3.utils.toBN(whaleSPDeposit).sub(SP_LUSD)
 
@@ -729,7 +729,7 @@ contract('TroveManager', async accounts => {
     // Acct 99 opens trove with 100 LUSD
      await borrowerOperations.openTrove(0, 0,  accounts[999], { from: accounts[999], value: dec(100, 'ether') })
      await borrowerOperations.withdrawLUSD(0, dec(100, 18), accounts[999], {from: accounts[999]})
-     
+
      // Account 0 (to be liquidated) opens a trove
      await borrowerOperations.openTrove(0, dec(100, 18), accounts[0],{from: accounts[0], value: dec(1, 'ether')})
 
@@ -739,24 +739,24 @@ contract('TroveManager', async accounts => {
 
      const account1SPDeposit = dec(50, 18)
      await stabilityPool.provideToSP(account1SPDeposit,ZERO_ADDRESS, {from: accounts[1]} )
-     
+
      await priceFeed.setPrice(dec(100, 18))
      await troveManager.liquidate(accounts[0])
- 
+
      // All but one depositors withdraw their deposit
      for (account of accounts.slice(2, 101)) {
        await stabilityPool.withdrawFromSP(dec(100, 18), {from: account})
      }
 
-    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail. 
+    /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
     await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
-    
+
     await stabilityPool.withdrawFromSP(account1SPDeposit, {from: accounts[1]} )
 
     const SP_ETH = await stabilityPool.getETH()
-    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()  
+    const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()
 
     const SP_LUSD_Insufficiency = web3.utils.toBN(whaleSPDeposit).sub(SP_LUSD)
 
@@ -780,13 +780,13 @@ contract('TroveManager', async accounts => {
     Pure division with error correction:
     Surplus ETH left in in Stability Pool is 3072
     LUSD insufficiency in Stability Pool is 452
-  */ 
+  */
 
  it("501 accounts. 500 Borrowers add to SP, random LUSD amounts. 1 liquidation, 500 Borrowers withdraw all their SP funds", async () => {
   // Acct 99 opens trove with 100 LUSD
    await borrowerOperations.openTrove(0, 0, accounts[999], { from: accounts[999], value: dec(100, 'ether') })
    await borrowerOperations.withdrawLUSD(0, dec(100, 18), accounts[999], {from: accounts[999]})
-   
+
    // Account 0 (to be liquidated) opens a trove
    await borrowerOperations.openTrove(0, dec(100, 18), accounts[0],{from: accounts[0], value: dec(1, 'ether')})
 
@@ -796,7 +796,7 @@ contract('TroveManager', async accounts => {
 
    const account1SPDeposit = dec(50, 18)
    await stabilityPool.provideToSP(account1SPDeposit, ZERO_ADDRESS, {from: accounts[1]} )
-   
+
    await priceFeed.setPrice(dec(100, 18))
    await troveManager.liquidate(accounts[0])
 
@@ -805,15 +805,15 @@ contract('TroveManager', async accounts => {
      await stabilityPool.withdrawFromSP(dec(100, 18), {from: account})
    }
 
-  /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail. 
+  /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
   So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
   const whaleSPDeposit = dec(100, 18)
   await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
-  
+
   await stabilityPool.withdrawFromSP(account1SPDeposit, {from: accounts[1]} )
 
   const SP_ETH = await stabilityPool.getETH()
-  const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()  
+  const SP_LUSD = await stabilityPool.getTotalLUSDDeposits()
 
   const SP_LUSD_Insufficiency = web3.utils.toBN(whaleSPDeposit).sub(SP_LUSD)
 
@@ -834,14 +834,14 @@ contract('TroveManager', async accounts => {
     Pure division with error correction:
     Surplus ETH left in in Stability Pool is 1573
     LUSD insufficiency in Stability Pool is 6037
-  */ 
+  */
 
  it("10 accounts. 10x liquidate -> addColl. Check stake and totalStakes (On-chain data vs off-chain simulation)", async () => {
   await borrowerOperations.openTrove(0, 0,  accounts[999], { from: accounts[999], value: dec(1000, 'ether') })
   await th.openTrove_allAccounts(accounts.slice(1, 11), contracts, dec(1, 'ether'), dec(170, 18))
 
   await priceFeed.setPrice(dec(100, 18))
- 
+
   // Starting values for parallel off-chain computation
   let offchainTotalStakes = await troveManager.totalStakes()
   let offchainTotalColl = await activePool.getETH()
@@ -852,26 +852,26 @@ contract('TroveManager', async accounts => {
   // Loop over account range, alternately liquidating a Trove and opening a new trove
   for (i = 1; i < 10; i++) {
     const stakeOfTroveToLiquidate = (await troveManager.Troves(accounts[i]))[2]
-    
+
     const newEntrantColl = web3.utils.toBN(dec(2, 18))
-    
-    /* Off-chain computation of new stake.  
+
+    /* Off-chain computation of new stake.
     Remove the old stake from total, calculate the new stake, add new stake to total. */
     offchainTotalStakes = offchainTotalStakes.sub(stakeOfTroveToLiquidate)
     offchainTotalColl = offchainTotalColl
-    // New trove opening creates a new stake, then adds 
+    // New trove opening creates a new stake, then adds
     offchainStake = (newEntrantColl.mul(offchainTotalStakes)).div(offchainTotalColl)
     offchainTotalStakes = offchainTotalStakes.add(offchainStake)
     offchainTotalColl = offchainTotalColl.add(newEntrantColl)
-   
+
     // Liquidate Trove 'i', and open trove from account '999 - i'
     await troveManager.liquidate(accounts[i], {from: accounts[0]})
     await borrowerOperations.addColl(accounts[999 - i], accounts[999 - i], {from: accounts[999 - i], value: newEntrantColl })
-  
+
     // Grab new stake and totalStakes on-chain
-    const newStake = (await troveManager.Troves(accounts[999 - i]))[2] 
+    const newStake = (await troveManager.Troves(accounts[999 - i]))[2]
     const totalStakes = await troveManager.totalStakes()
-    
+
     stakeDifference = offchainStake.sub(newStake)
     totalStakesDifference = offchainTotalStakes.sub(totalStakes)
   }
@@ -897,7 +897,7 @@ contract('TroveManager', async accounts => {
   await th.openTrove_allAccounts(accounts.slice(1, 11), contracts, dec(1, 'ether'), dec(170, 18))
 
   await priceFeed.setPrice(dec(100, 18))
- 
+
   // Starting values for parallel off-chain computation
   let offchainTotalStakes = await troveManager.totalStakes()
   let offchainTotalColl = await activePool.getETH()
@@ -908,26 +908,26 @@ contract('TroveManager', async accounts => {
   // Loop over account range, alternately liquidating a Trove and opening a new trove
   for (i = 1; i < 10; i++) {
     const stakeOfTroveToLiquidate = (await troveManager.Troves(accounts[i]))[2]
-    
+
     const newEntrantColl = web3.utils.toBN(randAmountInWei(1, 100))
-    
-    /* Off-chain computation of new stake.  
+
+    /* Off-chain computation of new stake.
     Remove the old stake from total, calculate the new stake, add new stake to total. */
     offchainTotalStakes = offchainTotalStakes.sub(stakeOfTroveToLiquidate)
     offchainTotalColl = offchainTotalColl
-    // New trove opening creates a new stake, then adds 
+    // New trove opening creates a new stake, then adds
     offchainStake = (newEntrantColl.mul(offchainTotalStakes)).div(offchainTotalColl)
     offchainTotalStakes = offchainTotalStakes.add(offchainStake)
     offchainTotalColl = offchainTotalColl.add(newEntrantColl)
-   
+
     // Liquidate Trove 'i', and open trove from account '999 - i'
     await troveManager.liquidate(accounts[i], {from: accounts[0]})
     await borrowerOperations.addColl(accounts[999 - i], accounts[999 - i], {from: accounts[999 - i], value: newEntrantColl })
-  
+
     // Grab new stake and totalStakes on-chain
-    const newStake = (await troveManager.Troves(accounts[999 - i]))[2] 
+    const newStake = (await troveManager.Troves(accounts[999 - i]))[2]
     const totalStakes = await troveManager.totalStakes()
-    
+
     stakeDifference = offchainStake.sub(newStake)
     totalStakesDifference = offchainTotalStakes.sub(totalStakes)
   }
@@ -954,7 +954,7 @@ it("100 accounts. 100x liquidate -> addColl. Random coll. Check stake and totalS
   await th.openTrove_allAccounts(accounts.slice(1, 101), contracts, dec(1, 'ether'), dec(170, 18))
 
   await priceFeed.setPrice(dec(100, 18))
- 
+
   // Starting values for parallel off-chain computation
   let offchainTotalStakes = await troveManager.totalStakes()
   let offchainTotalColl = await activePool.getETH()
@@ -965,26 +965,26 @@ it("100 accounts. 100x liquidate -> addColl. Random coll. Check stake and totalS
   // Loop over account range, alternately liquidating a Trove and opening a new trove
   for (i = 1; i < 100; i++) {
     const stakeOfTroveToLiquidate = (await troveManager.Troves(accounts[i]))[2]
-    
+
     const newEntrantColl = web3.utils.toBN(randAmountInWei(12, 73422))
-    
-    /* Off-chain computation of new stake.  
+
+    /* Off-chain computation of new stake.
     Remove the old stake from total, calculate the new stake, add new stake to total. */
     offchainTotalStakes = offchainTotalStakes.sub(stakeOfTroveToLiquidate)
     offchainTotalColl = offchainTotalColl
-    // New trove opening creates a new stake, then adds 
+    // New trove opening creates a new stake, then adds
     offchainStake = (newEntrantColl.mul(offchainTotalStakes)).div(offchainTotalColl)
     offchainTotalStakes = offchainTotalStakes.add(offchainStake)
     offchainTotalColl = offchainTotalColl.add(newEntrantColl)
-   
+
     // Liquidate Trove 'i', and open trove from account '999 - i'
     await troveManager.liquidate(accounts[i], {from: accounts[0]})
     await borrowerOperations.addColl(accounts[999 - i], accounts[999 - i], {from: accounts[999 - i], value: newEntrantColl })
-  
+
     // Grab new stake and totalStakes on-chain
-    const newStake = (await troveManager.Troves(accounts[999 - i]))[2] 
+    const newStake = (await troveManager.Troves(accounts[999 - i]))[2]
     const totalStakes = await troveManager.totalStakes()
-    
+
     stakeDifference = offchainStake.sub(newStake)
     totalStakesDifference = offchainTotalStakes.sub(totalStakes)
   }
@@ -1060,7 +1060,7 @@ it("101 accounts with random large coll, magnitude ~1e8 ether. 1 liquidation. 50
     // apply rewards
     borrowerOperations.addColl(account, account, { from: account, value: 1 })
   }
- 
+
   await borrowerOperations.addColl(accounts[999], accounts[999], { from: accounts[999], value: 1 })
   // check DefaultPool
   const ETH_DefaultPool = await defaultPool.getETH()
@@ -1113,8 +1113,8 @@ it("11 accounts with random ETH and proportional LUSD (180:1). 10 liquidations. 
   console.log(`ETH difference between total pending rewards and DefaultPool: ${ETHRewardDifference} `)
   console.log(`LUSDDebt difference between total pending rewards and DefaultPool: ${LUSDDebtRewardDifference} `)
 })
- 
-/* 
+
+/*
   Pure division, no error correction:
   ETH difference between total pending rewards and DefaultPool: 9000000000
   LUSDDebt difference between total pending rewards and DefaultPool: 12000000000
@@ -1170,15 +1170,15 @@ it("11 accounts with random ETH and proportional LUSD (180:1). 10 liquidations. 
 })
 
   /* --- TODO:
- 
- - Stakes computations. Errors occur in stake = totalColl/totalStakes.  
- 
+
+ - Stakes computations. Errors occur in stake = totalColl/totalStakes.
+
  Two contributions to accumulated error:
 
  -Truncation in division (-)
  -Previous error baked in to totalStakes, reducing the denominator (+)
 
- Test to see if error is stable or grows. 
+ Test to see if error is stable or grows.
 
   -----
   Findings with ABDK64 throughout:
@@ -1191,7 +1191,7 @@ it("11 accounts with random ETH and proportional LUSD (180:1). 10 liquidations. 
   2) Liquidations accumulate ETH and LUSDDebt error in DefaultPool
 
   3) Liquidations with partial offset send slightly too little to StabilityPool, and redistribute slightly too much
-  
+
   4) StabilityPool Withdrawals accumulate ETH error in the StabilityPool
 
   5) StabilityPool Withdrawals can accumulate LUSDLoss in the StabilityPool (i.e. they distribute too much LUSD), and can block

@@ -57,7 +57,7 @@ module.exports = {
         hardhat: {
             accounts: accountsList,
             gas: 10000000,  // tx gas limit
-            blockGasLimit: 12500000, 
+            blockGasLimit: 12500000,
             gasPrice: process.env.GAS_PRICE ? parseInt(process.env.GAS_PRICE) : 20000000000,
             forking: {
                 url: alchemyUrl(),

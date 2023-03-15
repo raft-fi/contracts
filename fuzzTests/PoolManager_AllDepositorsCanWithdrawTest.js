@@ -130,17 +130,17 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
   }
 
   const clearAllUndercollateralizedTroves = async (price) => {
-    /* Somewhat arbitrary way to clear under-collateralized troves: 
+    /* Somewhat arbitrary way to clear under-collateralized troves:
     *
-    * - If system is in Recovery Mode and contains troves with ICR < 100, whale draws the lowest trove's debt amount 
+    * - If system is in Recovery Mode and contains troves with ICR < 100, whale draws the lowest trove's debt amount
     * and sends to lowest trove owner, who then closes their trove.
     *
-    * - If system contains troves with ICR < 110, whale simply draws and makes an SP deposit 
+    * - If system contains troves with ICR < 110, whale simply draws and makes an SP deposit
     * equal to the debt of the last 50 troves, before a liquidateTroves tx hits the last 50 troves.
     *
-    * The intent is to avoid the system entering an endless loop where the SP is empty and debt is being forever liquidated/recycled 
+    * The intent is to avoid the system entering an endless loop where the SP is empty and debt is being forever liquidated/recycled
     * between active troves, and the existence of some under-collateralized troves blocks all SP depositors from withdrawing.
-    * 
+    *
     * Since the purpose of the fuzz test is to see if SP depositors can indeed withdraw *when they should be able to*,
     * we first need to put the system in a state with no under-collateralized troves (which are supposed to block SP withdrawals).
     */
@@ -154,12 +154,12 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
     while (await systemContainsTroveUnder110(price)) {
       const debtLowest50Troves = await getTotalDebtFromUndercollateralizedTroves(50, price)
-      
+
       if (debtLowest50Troves.gt(ZERO)) {
         await borrowerOperations.adjustTrove(0, 0 , debtLowest50Troves, true, whale, {from: whale})
         await stabilityPool.provideToSP(debtLowest50Troves, {from: whale})
       }
-      
+
       await troveManager.liquidateTroves(50)
     }
   }
@@ -191,11 +191,11 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
                      initial deposit: ${initialDeposit}
                      ETH gain: ${ETHGain}
                      ETH in SP: ${ETHinSP}
-                     compounded deposit: ${finalDeposit} 
+                     compounded deposit: ${finalDeposit}
                      LUSD in SP: ${LUSDinSP}
-                    
+
                     --After withdrawal--
-                     Withdrawal tx success: ${withdrawalTx.receipt.status} 
+                     Withdrawal tx success: ${withdrawalTx.receipt.status}
                      Deposit after: ${depositAfter}
                      ETH remaining in SP: ${ETHinSPAfter}
                      SP LUSD deposits tracker after: ${LUSDinSPAfter}

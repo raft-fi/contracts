@@ -20,10 +20,10 @@ const PERMIT_TYPEHASH = keccak256(
 
 // Gets the EIP712 domain separator
 const getDomainSeparator = (name, contractAddress, chainId, version)  => {
-  return keccak256(defaultAbiCoder.encode(['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'], 
-  [ 
+  return keccak256(defaultAbiCoder.encode(['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
+  [
     keccak256(toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')),
-    keccak256(toUtf8Bytes(name)), 
+    keccak256(toUtf8Bytes(name)),
     keccak256(toUtf8Bytes(version)),
     parseInt(chainId), contractAddress.toLowerCase()
   ]))
@@ -32,12 +32,12 @@ const getDomainSeparator = (name, contractAddress, chainId, version)  => {
 // Returns the EIP712 hash which should be signed by the user
 // in order to make a call to `permit`
 const getPermitDigest = ( name, address, chainId, version,
-                          owner, spender, value , 
+                          owner, spender, value ,
                           nonce, deadline ) => {
 
   const DOMAIN_SEPARATOR = getDomainSeparator(name, address, chainId, version)
   return keccak256(pack(['bytes1', 'bytes1', 'bytes32', 'bytes32'],
-    ['0x19', '0x01', DOMAIN_SEPARATOR, 
+    ['0x19', '0x01', DOMAIN_SEPARATOR,
       keccak256(defaultAbiCoder.encode(
         ['bytes32', 'address', 'address', 'uint256', 'uint256', 'uint256'],
         [PERMIT_TYPEHASH, owner, spender, value, nonce, deadline])),

@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 class ModelParams:
     def __init__(self):
         self.D = 0.1 # base fee decay factor
-        
+
         self.A = 1.5 # weighting for price change in token demand
         self.B = 1.5 # weighting for momentum change in token demand
-       
+
         self.T = 5 # weighting for price change in trove issuance
         self.F = 5 # weighting for momentum change in trove issuance
 
@@ -18,7 +18,7 @@ class ModelParams:
 
         self.max_redemption_fraction = 0.5 # Maximum fraction of supply that can be redeemed in a timestep
 
-# time series data 
+# time series data
 class Data:
     def __init__(self):
         self.ETH_price = [500.0]
@@ -30,8 +30,8 @@ class Data:
         self.trove_issuance = [100.0]
         self.token_supply = [100.0]
         self.innate_token_demand = 100.0
-  
-        
+
+
 ### Functions
 def get_new_momentum(data, params, ETH_price):
     lookback = params.lookback
@@ -45,7 +45,7 @@ def get_new_momentum(data, params, ETH_price):
 
 def get_past_ETH_price(data, params):
     length = len(data.ETH_price)
-    
+
     ETH_price_past = None
     if (params.lookback > length):
         ETH_price_past = data.ETH_price[0]
@@ -57,7 +57,7 @@ def get_past_ETH_price(data, params):
     return ETH_price_past
 
 def get_new_redeemed_amount(data, params):
-    max_redeemable  = data.token_supply[-1] * params.max_redemption_fraction 
+    max_redeemable  = data.token_supply[-1] * params.max_redemption_fraction
     if max_redeemable == 0:
         return 0
 
@@ -77,9 +77,9 @@ def get_new_base_fee(data, redeemed_amount):
     return base_fee
 
 # return the innate component of market demand for holding LQTY tokens.  Could be a function of:
-# - demand for a safe-haven $1-pegged asset  
+# - demand for a safe-haven $1-pegged asset
 # - trader needs for liquidity
-# - 
+# -
 def get_innate_token_demand():
     return 100.0
 
@@ -92,8 +92,8 @@ def get_new_token_price(data, params, redeemed_amount, momentum):
 
     factor = - 1 /(A + T)
     print(f'factor: {factor}')
-    # price = (data.trove_issuance[-1] - data.token_demand[-1] - ((A + T) * data.token_price[-1]) + ((B + F) * momentum) - redeemed_amount) * factor 
-    price = (data.trove_issuance[-1] - data.innate_token_demand - (A * data.token_price[-1] )  -T + ((B + F) * momentum) - redeemed_amount) * factor 
+    # price = (data.trove_issuance[-1] - data.token_demand[-1] - ((A + T) * data.token_price[-1]) + ((B + F) * momentum) - redeemed_amount) * factor
+    price = (data.trove_issuance[-1] - data.innate_token_demand - (A * data.token_price[-1] )  -T + ((B + F) * momentum) - redeemed_amount) * factor
 
     if price < 0:
         return 0
@@ -107,14 +107,14 @@ def get_new_token_demand(data, params, token_price, momentum):
     demand = data.innate_token_demand - params.A*(token_price - data.token_price[-1]) - params.B*(momentum)
     if demand < 0:
         return 0
-    else: 
+    else:
         return demand
 
 def get_new_trove_issuance(data, params, token_price, momentum ):
     trove_issuance = data.trove_issuance[-1] + params.T*(token_price - 1) + params.F*(momentum)
     if trove_issuance < 0:
         return 0
-    else: 
+    else:
         return trove_issuance
 
 def get_new_token_supply(trove_issuance, redeemed):
@@ -122,9 +122,9 @@ def get_new_token_supply(trove_issuance, redeemed):
 
     if new_supply < 0:
         return 0
-    else: 
+    else:
         return new_supply
-  
+
 ### Various ETH price functions
 
 def constant_ETH_price(last_price):
@@ -137,10 +137,10 @@ def randomwalk_ETH_price(last_price):
 
     if (big_event_chance > 1.5) or (big_event_chance < -1.5):
         big_event = big_event_chance * 20
- 
+
     new_price  = last_price + np.random.normal(scale=5) + big_event
-    
-    if new_price < 0: 
+
+    if new_price < 0:
         return 0
     else:
         return new_price
@@ -159,11 +159,11 @@ def quadratic_ETH_price(scale, i):
 
 def sublinear_ETH_price(last_price, steepness, i):
     return last_price + 1/(2*np.sqrt(steepness*(i+1)))
-    
+
 
 # ### Script
 
-params = ModelParams() 
+params = ModelParams()
 data = Data() # initialize data timeseries
 
 for i in range(1, 100):
@@ -177,7 +177,7 @@ for i in range(1, 100):
     # ETH_price = linear_increasing_ETH_price(last_ETH_price, 100)
     # ETH_price = linear_decreasing_ETH_price(last_ETH_price, 1)
     ETH_price = sublinear_ETH_price(last_ETH_price, 10, i)
-    
+
     # print(ETH_price)
 
     momentum = get_new_momentum(data, params, ETH_price)
@@ -192,7 +192,7 @@ for i in range(1, 100):
     token_demand = get_new_token_demand(data, params, token_price, momentum)
     trove_issuance = get_new_trove_issuance(data, params, token_price, momentum)
     token_supply = get_new_token_supply(trove_issuance, redeemed_amount)
-    
+
     # display all new data
     print(f'step: {i}')
     print(f'ETH price: {ETH_price}')
