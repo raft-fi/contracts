@@ -100,7 +100,6 @@ contract('TroveManager', async accounts => {
 
     // liquidate 1 trove at ~50% total system collateral
     await priceFeed.setPrice(dec(50, 18))
-    assert.isTrue(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
     await troveManager.liquidate(A)
 
     console.log(`totalStakesSnapshot after L1: ${await troveManager.totalStakesSnapshot()}`)

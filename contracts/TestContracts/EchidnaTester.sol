@@ -25,7 +25,7 @@ contract EchidnaTester {
     uint constant private NUMBER_OF_ACTORS = 100;
     uint constant private INITIAL_BALANCE = 1e24;
     uint private MCR;
-    uint private CCR;
+    uint constant private CCR = 1500000000000000000; // 150% TODO: delete when doing https://github.com/tempusfinance/raft/issues/17
     uint private LUSD_GAS_COMPENSATION;
 
     TroveManager public troveManager;
@@ -94,10 +94,8 @@ contract EchidnaTester {
         }
 
         MCR = borrowerOperations.MCR();
-        CCR = borrowerOperations.CCR();
         LUSD_GAS_COMPENSATION = borrowerOperations.LUSD_GAS_COMPENSATION();
         require(MCR > 0);
-        require(CCR > 0);
 
         // TODO:
         priceFeedTestnet.setPrice(1e22);
