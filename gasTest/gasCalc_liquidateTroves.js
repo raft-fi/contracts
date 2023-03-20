@@ -85,15 +85,9 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' troves fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     // Account 500 is liquidated, creates pending distribution rewards for all
     await troveManager.liquidateTroves(1, { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     const tx = await troveManager.liquidateTroves(1, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
@@ -131,9 +125,6 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidateTroves(1, { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.liquidateTroves(2, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -169,9 +160,6 @@ contract('Gas cost tests', async accounts => {
     // Account 500 is liquidated, creates pending distribution rewards for all
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     const tx = await troveManager.liquidateTroves(3, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
@@ -209,9 +197,6 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.liquidateTroves(5, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -247,9 +232,6 @@ contract('Gas cost tests', async accounts => {
     // Account 500 is liquidated, creates pending distribution rewards for all
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     const tx = await troveManager.liquidateTroves(10, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
@@ -287,9 +269,6 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.liquidateTroves(20, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -325,9 +304,6 @@ contract('Gas cost tests', async accounts => {
     // Account 500 is liquidated, creates pending distribution rewards for all
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     const tx = await troveManager.liquidateTroves(30, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
@@ -365,9 +341,6 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.liquidateTroves(40, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -403,9 +376,6 @@ contract('Gas cost tests', async accounts => {
     // Account 500 is liquidated, creates pending distribution rewards for all
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     const tx = await troveManager.liquidateTroves(45, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
@@ -446,9 +416,6 @@ contract('Gas cost tests', async accounts => {
     const TCR = await troveManager.getTCR(await priceFeed.getPrice())
     console.log(`TCR: ${TCR}`)
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.liquidateTroves(50, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -486,9 +453,6 @@ contract('Gas cost tests', async accounts => {
 
     const TCR = await troveManager.getTCR(await priceFeed.getPrice())
     console.log(`TCR: ${TCR}`)
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     const tx = await troveManager.liquidateTroves(60, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
@@ -529,9 +493,6 @@ contract('Gas cost tests', async accounts => {
     const TCR = await troveManager.getTCR(await priceFeed.getPrice())
     console.log(`TCR: ${TCR}`)
     // 1451258961356880573
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.liquidateTroves(65, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -568,9 +529,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -605,9 +563,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -644,9 +599,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -681,9 +633,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -720,9 +669,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -757,9 +703,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -797,9 +740,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -834,9 +774,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -873,9 +810,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -910,9 +844,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -963,9 +894,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1011,9 +939,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1061,9 +986,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1109,9 +1031,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1159,9 +1078,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1207,9 +1123,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1257,9 +1170,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1305,9 +1215,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1356,9 +1263,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1405,9 +1309,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1449,9 +1350,6 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.batchLiquidateTroves(_10_Defaulters, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -1487,9 +1385,6 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidate(accounts[500], { from: accounts[0] })
     assert.isFalse(await sortedTroves.contains(accounts[500]))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     const tx = await troveManager.batchLiquidateTroves(_50_Defaulters, { from: accounts[0] })
     assert.isTrue(tx.receipt.status)
 
@@ -1524,9 +1419,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1560,9 +1452,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters falls below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1612,9 +1501,6 @@ contract('Gas cost tests', async accounts => {
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
-
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
     // Liquidate troves
@@ -1659,9 +1545,6 @@ contract('Gas cost tests', async accounts => {
 
     // Price drops, defaulters' ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
-
-    // Check Recovery Mode is false
-    assert.isFalse(await troveManager.checkRecoveryMode(await priceFeed.getPrice()))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 

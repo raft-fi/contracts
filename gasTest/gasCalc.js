@@ -2061,25 +2061,3 @@ contract('Gas cost tests', async accounts => {
   })
 
 })
-
-
-/* TODO:
--Liquidations in Recovery Mode
----
-Parameters to vary for gas tests:
-- Number of accounts
-- Function call parameters - low, high, random, average of many random
-  -Pre-existing state:
-  --- Rewards accumulated (or not)
-  --- LUSD in StabilityPool (or not)
-  --- State variables non-zero e.g. Trove already opened, stake already made, etc
-  - Steps in the the operation:
-  --- number of liquidations to perform
-  --- number of troves to redeem from
-  --- number of trials to run
-  Extremes/edges:
-  - Lowest or highest ICR
-  - empty list, max size list
-  - the only Trove, the newest Trove
-  etc.
-*/

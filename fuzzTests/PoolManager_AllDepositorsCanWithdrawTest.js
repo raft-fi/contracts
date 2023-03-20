@@ -60,7 +60,6 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
       liquidatedAccountsDict[randomDefaulter] = true
       remainingDefaulters.splice(randomDefaulterIndex, 1)
     }
-    if (await troveManager.checkRecoveryMode(price)) { console.log("recovery mode: TRUE") }
 
     console.log(`Liquidation. addr: ${th.squeezeAddr(randomDefaulter)} ICR: ${ICRPercent}% coll: ${liquidatedETH} debt: ${liquidatedLUSD} SP LUSD before: ${LUSDinPoolBefore} SP LUSD after: ${LUSDinPoolAfter} tx success: ${liquidatedTx.receipt.status}`)
   }
@@ -132,9 +131,6 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
   const clearAllUndercollateralizedTroves = async (price) => {
     /* Somewhat arbitrary way to clear under-collateralized troves:
     *
-    * - If system is in Recovery Mode and contains troves with ICR < 100, whale draws the lowest trove's debt amount
-    * and sends to lowest trove owner, who then closes their trove.
-    *
     * - If system contains troves with ICR < 110, whale simply draws and makes an SP deposit
     * equal to the debt of the last 50 troves, before a liquidateTroves tx hits the last 50 troves.
     *
@@ -144,13 +140,6 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
     * Since the purpose of the fuzz test is to see if SP depositors can indeed withdraw *when they should be able to*,
     * we first need to put the system in a state with no under-collateralized troves (which are supposed to block SP withdrawals).
     */
-    while(await systemContainsTroveUnder100(price) && await troveManager.checkRecoveryMode()) {
-      const lowestTrove = await sortedTroves.getLast()
-      const lastTroveDebt = (await troveManager.getEntireDebtAndColl(trove))[0]
-      await borrowerOperations.adjustTrove(0, 0 , lastTroveDebt, true, whale, {from: whale})
-      await lusdToken.transfer(lowestTrove, lowestTroveDebt, {from: whale})
-      await borrowerOperations.closeTrove({from: lowestTrove})
-    }
 
     while (await systemContainsTroveUnder110(price)) {
       const debtLowest50Troves = await getTotalDebtFromUndercollateralizedTroves(50, price)

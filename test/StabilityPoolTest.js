@@ -771,7 +771,6 @@ contract('StabilityPool', async accounts => {
 
       // Price drops, defaulter is liquidated, A, B and C earn ETH
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 
@@ -914,7 +913,6 @@ contract('StabilityPool', async accounts => {
 
       // Perform a liquidation to make 0 < P < 1, and S > 0
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 
@@ -1051,7 +1049,6 @@ contract('StabilityPool', async accounts => {
 
       // Price drops, defaulter is liquidated, A, B, C, D earn ETH
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 
@@ -1313,7 +1310,6 @@ contract('StabilityPool', async accounts => {
 
       // perform a liquidation to make 0 < P < 1, and S > 0
       await priceFeed.setPrice(dec(100, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 
@@ -2124,8 +2120,6 @@ contract('StabilityPool', async accounts => {
       // Price drops
       await priceFeed.setPrice(dec(105, 18))
 
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
       // Defaulter 1 liquidated, full offset
       await troveManager.liquidate(defaulter_1)
 
@@ -2263,114 +2257,6 @@ contract('StabilityPool', async accounts => {
       const expectedLUSDinSP = (LUSDinSP_Before.sub(bob_Deposit_Before)).toString()
       const LUSDinSP_After = (await stabilityPool.getTotalLUSDDeposits()).toString()
       assert.equal(LUSDinSP_After, expectedLUSDinSP)
-    })
-
-    it("withdrawFromSP(): caller can withdraw full deposit and ETH gain during Recovery Mode", async () => {
-      // --- SETUP ---
-
-      // Price doubles
-      await priceFeed.setPrice(dec(400, 18))
-      await openTrove({ extraLUSDAmount: toBN(dec(1000000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
-      // Price halves
-      await priceFeed.setPrice(dec(200, 18))
-
-      // A, B, C open troves and make Stability Pool deposits
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(4, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(4, 18)), extraParams: { from: bob } })
-      await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(4, 18)), extraParams: { from: carol } })
-
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(10000, 18)), defaulter_1, defaulter_1, { from: defaulter_1, value: dec(100, 'ether') })
-
-      // A, B, C provides 10000, 5000, 3000 LUSD to SP
-      const A_GAS_Used = th.gasUsed(await stabilityPool.provideToSP(dec(10000, 18), frontEnd_1, { from: alice, gasPrice: GAS_PRICE }))
-      const B_GAS_Used = th.gasUsed(await stabilityPool.provideToSP(dec(5000, 18), frontEnd_1, { from: bob, gasPrice: GAS_PRICE }))
-      const C_GAS_Used = th.gasUsed(await stabilityPool.provideToSP(dec(3000, 18), frontEnd_1, { from: carol, gasPrice: GAS_PRICE }))
-
-      // Price drops
-      await priceFeed.setPrice(dec(105, 18))
-      const price = await priceFeed.getPrice()
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Liquidate defaulter 1
-      await troveManager.liquidate(defaulter_1)
-      assert.isFalse(await sortedTroves.contains(defaulter_1))
-
-      const alice_LUSD_Balance_Before = await lusdToken.balanceOf(alice)
-      const bob_LUSD_Balance_Before = await lusdToken.balanceOf(bob)
-      const carol_LUSD_Balance_Before = await lusdToken.balanceOf(carol)
-
-      const alice_ETH_Balance_Before = web3.utils.toBN(await web3.eth.getBalance(alice))
-      const bob_ETH_Balance_Before = web3.utils.toBN(await web3.eth.getBalance(bob))
-      const carol_ETH_Balance_Before = web3.utils.toBN(await web3.eth.getBalance(carol))
-
-      const alice_Deposit_Before = await stabilityPool.getCompoundedLUSDDeposit(alice)
-      const bob_Deposit_Before = await stabilityPool.getCompoundedLUSDDeposit(bob)
-      const carol_Deposit_Before = await stabilityPool.getCompoundedLUSDDeposit(carol)
-
-      const alice_ETHGain_Before = await stabilityPool.getDepositorETHGain(alice)
-      const bob_ETHGain_Before = await stabilityPool.getDepositorETHGain(bob)
-      const carol_ETHGain_Before = await stabilityPool.getDepositorETHGain(carol)
-
-      const LUSDinSP_Before = await stabilityPool.getTotalLUSDDeposits()
-
-      // Price rises
-      await priceFeed.setPrice(dec(220, 18))
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // A, B, C withdraw their full deposits from the Stability Pool
-      const A_GAS_Deposit = th.gasUsed(await stabilityPool.withdrawFromSP(dec(10000, 18), { from: alice, gasPrice: GAS_PRICE  }))
-      const B_GAS_Deposit = th.gasUsed(await stabilityPool.withdrawFromSP(dec(5000, 18), { from: bob, gasPrice: GAS_PRICE  }))
-      const C_GAS_Deposit = th.gasUsed(await stabilityPool.withdrawFromSP(dec(3000, 18), { from: carol, gasPrice: GAS_PRICE  }))
-
-      // Check LUSD balances of A, B, C have risen by the value of their compounded deposits, respectively
-      const alice_expectedLUSDBalance = (alice_LUSD_Balance_Before.add(alice_Deposit_Before)).toString()
-
-      const bob_expectedLUSDBalance = (bob_LUSD_Balance_Before.add(bob_Deposit_Before)).toString()
-      const carol_expectedLUSDBalance = (carol_LUSD_Balance_Before.add(carol_Deposit_Before)).toString()
-
-      const alice_LUSD_Balance_After = (await lusdToken.balanceOf(alice)).toString()
-
-      const bob_LUSD_Balance_After = (await lusdToken.balanceOf(bob)).toString()
-      const carol_LUSD_Balance_After = (await lusdToken.balanceOf(carol)).toString()
-
-
-
-      assert.equal(alice_LUSD_Balance_After, alice_expectedLUSDBalance)
-      assert.equal(bob_LUSD_Balance_After, bob_expectedLUSDBalance)
-      assert.equal(carol_LUSD_Balance_After, carol_expectedLUSDBalance)
-
-      // Check ETH balances of A, B, C have increased by the value of their ETH gain from liquidations, respectively
-      const alice_expectedETHBalance = (alice_ETH_Balance_Before.add(alice_ETHGain_Before)).toString()
-      const bob_expectedETHBalance = (bob_ETH_Balance_Before.add(bob_ETHGain_Before)).toString()
-      const carol_expectedETHBalance = (carol_ETH_Balance_Before.add(carol_ETHGain_Before)).toString()
-
-      const alice_ETHBalance_After = (await web3.eth.getBalance(alice)).toString()
-      const bob_ETHBalance_After = (await web3.eth.getBalance(bob)).toString()
-      const carol_ETHBalance_After = (await web3.eth.getBalance(carol)).toString()
-
-      // ETH balances before minus gas used
-      const alice_ETHBalance_After_Gas = alice_ETHBalance_After- A_GAS_Used;
-      const bob_ETHBalance_After_Gas = bob_ETHBalance_After- B_GAS_Used;
-      const carol_ETHBalance_After_Gas = carol_ETHBalance_After- C_GAS_Used;
-
-      assert.equal(alice_expectedETHBalance, alice_ETHBalance_After_Gas)
-      assert.equal(bob_expectedETHBalance, bob_ETHBalance_After_Gas)
-      assert.equal(carol_expectedETHBalance, carol_ETHBalance_After_Gas)
-
-      // Check LUSD in Stability Pool has been reduced by A, B and C's compounded deposit
-      const expectedLUSDinSP = (LUSDinSP_Before
-        .sub(alice_Deposit_Before)
-        .sub(bob_Deposit_Before)
-        .sub(carol_Deposit_Before))
-        .toString()
-      const LUSDinSP_After = (await stabilityPool.getTotalLUSDDeposits()).toString()
-      assert.equal(LUSDinSP_After, expectedLUSDinSP)
-
-      // Check ETH in SP has reduced to zero
-      const ETHinSP_After = (await stabilityPool.getETH()).toString()
-      assert.isAtMost(th.getDifference(ETHinSP_After, '0'), 100000)
     })
 
     it("getDepositorETHGain(): depositor does not earn further ETH gains from liquidations while their compounded deposit == 0: ", async () => {
@@ -2660,7 +2546,6 @@ contract('StabilityPool', async accounts => {
 
       // perform a liquidation to make 0 < P < 1, and S > 0
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 
@@ -2785,7 +2670,6 @@ contract('StabilityPool', async accounts => {
 
       // perform a liquidation to make 0 < P < 1, and S > 0
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 
@@ -2870,7 +2754,6 @@ contract('StabilityPool', async accounts => {
 
       // perform a liquidation to make 0 < P < 1, and S > 0
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 
@@ -2946,7 +2829,6 @@ contract('StabilityPool', async accounts => {
 
       // perform a liquidation to make 0 < P < 1, and S > 0
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
@@ -2991,7 +2873,6 @@ contract('StabilityPool', async accounts => {
       // Defaulter opens a trove, price drops, defaulter gets liquidated
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
@@ -3324,7 +3205,6 @@ contract('StabilityPool', async accounts => {
       // Defaulter opens a trove, price drops, defaulter gets liquidated
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
@@ -3372,7 +3252,6 @@ contract('StabilityPool', async accounts => {
       // Defaulter opens a trove, price drops, defaulter gets liquidated
       await openTrove({  ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
@@ -3418,7 +3297,6 @@ contract('StabilityPool', async accounts => {
       // Defaulter opens a trove, price drops, defaulter gets liquidated
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
@@ -3468,7 +3346,6 @@ contract('StabilityPool', async accounts => {
       // Defaulter opens a trove, price drops, defaulter gets liquidated
       await openTrove({  ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
      await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
@@ -3522,7 +3399,6 @@ contract('StabilityPool', async accounts => {
       // Defaulter opens a trove, price drops, defaulter gets liquidated
       await openTrove({  ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
@@ -3587,7 +3463,6 @@ contract('StabilityPool', async accounts => {
 
       // perform a liquidation to make 0 < P < 1, and S > 0
       await priceFeed.setPrice(dec(105, 18))
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       await troveManager.liquidate(defaulter_1)
 

@@ -113,7 +113,6 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18))
       const price = await priceFeed.getPrice()
 
-      assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
       const collTopUp = 1  // 1 wei top up
@@ -365,7 +364,6 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18))
       const price = await priceFeed.getPrice()
 
-      assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
       const collWithdrawal = 1  // 1 wei withdrawal
@@ -387,29 +385,6 @@ contract('BorrowerOperations', async accounts => {
       try {
         const txCarol = await borrowerOperations.withdrawColl(dec(1, 'ether'), carol, carol, { from: carol })
         assert.isFalse(txCarol.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-
-    it("withdrawColl(): reverts when system is in Recovery Mode", async () => {
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      // Withdrawal possible when recoveryMode == false
-      const txAlice = await borrowerOperations.withdrawColl(1000, alice, alice, { from: alice })
-      assert.isTrue(txAlice.receipt.status)
-
-      await priceFeed.setPrice('105000000000000000000')
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      //Check withdrawal impossible when recoveryMode == true
-      try {
-        const txBob = await borrowerOperations.withdrawColl(1000, bob, bob, { from: bob })
-        assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
@@ -652,7 +627,6 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18))
       const price = await priceFeed.getPrice()
 
-      assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
       const LUSDwithdrawal = 1  // withdraw 1 wei LUSD
@@ -1165,30 +1139,6 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("withdrawLUSD(): reverts when system is in Recovery Mode", async () => {
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      // Withdrawal possible when recoveryMode == false
-      const txAlice = await borrowerOperations.withdrawLUSD(th._100pct, dec(100, 18), alice, alice, { from: alice })
-      assert.isTrue(txAlice.receipt.status)
-
-      await priceFeed.setPrice('50000000000000000000')
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      //Check LUSD withdrawal impossible when recoveryMode == true
-      try {
-        const txBob = await borrowerOperations.withdrawLUSD(th._100pct, 1, bob, bob, { from: bob })
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-
     it("withdrawLUSD(): reverts when withdrawal would bring the trove's ICR < MCR", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(11, 17)), extraParams: { from: bob } })
@@ -1257,7 +1207,6 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18))
       const price = await priceFeed.getPrice()
 
-      assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
       const LUSDRepayment = 1  // 1 wei repayment
@@ -1413,7 +1362,6 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18))
       const price = await priceFeed.getPrice()
 
-      assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
       const LUSDRepayment = 1  // 1 wei repayment
@@ -1844,39 +1792,6 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("adjustTrove(): A trove with ICR > CCR in Recovery Mode can improve their ICR", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      const CCR = await troveManager.CCR()
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice(dec(105, 18)) // trigger drop in ETH price
-      const price = await priceFeed.getPrice()
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      const initialICR = await troveManager.getCurrentICR(alice, price)
-      // Check initial ICR is above 150%
-      assert.isTrue(initialICR.gt(CCR))
-
-      const aliceDebt = await getTroveEntireDebt(alice)
-      const aliceColl = await getTroveEntireColl(alice)
-      const debtIncrease = toBN(dec(5000, 18))
-      const collIncrease = toBN(dec(150, 'ether'))
-
-      const newICR = await troveManager.computeICR(aliceColl.add(collIncrease), aliceDebt.add(debtIncrease), price)
-
-      // Check new ICR would be > old ICR
-      assert.isTrue(newICR.gt(initialICR))
-
-      const tx = await borrowerOperations.adjustTrove(th._100pct, 0, debtIncrease, true, alice, alice, { from: alice, value: collIncrease })
-      assert.isTrue(tx.receipt.status)
-
-      const actualNewICR = await troveManager.getCurrentICR(alice, price)
-      assert.isTrue(actualNewICR.gt(initialICR))
-    })
-
     it("adjustTrove(): reverts when LUSD repaid is > debt of the trove", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       const bobOpenTx = (await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })).tx
@@ -2301,9 +2216,6 @@ contract('BorrowerOperations', async accounts => {
       const aliceBal = await lusdToken.balanceOf(alice)
       const aliceDebt = await getTroveEntireDebt(alice)
       assert.isTrue(aliceBal.gt(aliceDebt))
-
-      // check Recovery Mode
-      assert.isFalse(await th.checkRecoveryMode(contracts))
 
       // Alice attempts to close her trove
       await assertRevert(borrowerOperations.closeTrove({ from: alice }), "TroveManager: Only one trove in the system")
@@ -3174,47 +3086,13 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(_LUSDFee.eq(expectedFee))
     })
 
-    it("openTrove(): reverts when system is in Recovery Mode and ICR < CCR", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
-      await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      // price drops, and Recovery Mode kicks in
-      await priceFeed.setPrice(dec(105, 18))
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Bob tries to open a trove with 149% ICR during Recovery Mode
-      try {
-        const txBob = await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(149, 16)), extraParams: { from: alice } })
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-
     it("openTrove(): reverts when trove ICR < MCR", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
       await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      // Bob attempts to open a 109% ICR trove in Normal Mode
+      // Bob attempts to open a 109% ICR trove
       try {
         const txBob = (await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(109, 16)), extraParams: { from: bob } })).tx
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-
-      // price drops, and Recovery Mode kicks in
-      await priceFeed.setPrice(dec(105, 18))
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Bob attempts to open a 109% ICR trove in Recovery Mode
-      try {
-        const txBob = await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(109, 16)), extraParams: { from: bob } })
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
@@ -3242,23 +3120,6 @@ contract('BorrowerOperations', async accounts => {
       } catch (err) {
         assert.include(err.message, 'revert')
       }
-    })
-
-    it("openTrove(): Reverts opening a trove with min debt when system is in Recovery Mode", async () => {
-      // --- SETUP ---
-      //  Alice and Bob add coll and withdraw such  that the TCR is ~150%
-      await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
-
-      const TCR = (await th.getTCR(contracts)).toString()
-      assert.equal(TCR, '1500000000000000000')
-
-      // price drops to 1ETH:100LUSD, reducing TCR below 150%
-      await priceFeed.setPrice('100000000000000000000');
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      await assertRevert(borrowerOperations.openTrove(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT), carol, carol, { from: carol, value: dec(1, 'ether') }))
     })
 
     it("openTrove(): creates a new Trove and assigns the correct collateral and debt amount", async () => {
@@ -3609,7 +3470,6 @@ contract('BorrowerOperations', async accounts => {
         const openTroveData = th.getTransactionData('openTrove(uint256,uint256,address,address)', [_100pctHex, _1e25Hex, '0x0', '0x0'])
         await nonPayable.forward(borrowerOperations.address, openTroveData, { value: dec(10000, 'ether') })
         assert.equal((await troveManager.getTroveStatus(nonPayable.address)).toString(), '1', 'NonPayable proxy should have a trove')
-        assert.isFalse(await th.checkRecoveryMode(contracts), 'System should not be in Recovery Mode')
         // open trove from NonPayable proxy contract
         const closeTroveData = th.getTransactionData('closeTrove()', [])
         await th.assertRevert(nonPayable.forward(borrowerOperations.address, closeTroveData), 'ActivePool: sending ETH failed')

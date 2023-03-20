@@ -211,10 +211,6 @@ class TroveManagerProxy extends Proxy {
     return this.contract.getCurrentICR(this.getProxyAddressFromUser(user), price)
   }
 
-  async checkRecoveryMode(...params) {
-    return this.proxyFunction('checkRecoveryMode', params)
-  }
-
   async getTroveOwnersCount() {
     return this.proxyFunction('getTroveOwnersCount', [])
   }
