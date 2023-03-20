@@ -123,10 +123,6 @@ class BorrowerOperationsProxy extends Proxy {
     return this.forwardFunction(params, 'claimRedeemedCollateral(address)')
   }
 
-  async getNewTCRFromTroveChange(...params) {
-    return this.proxyFunction('getNewTCRFromTroveChange', params)
-  }
-
   async getNewICRFromTroveChange(...params) {
     return this.proxyFunction('getNewICRFromTroveChange', params)
   }

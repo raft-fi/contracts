@@ -48,7 +48,6 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         uint coll;
         uint oldICR;
         uint newICR;
-        uint newTCR;
         uint LUSDFee;
         uint newDebt;
         uint newColl;
@@ -157,35 +156,25 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         ContractsCache memory contractsCache = ContractsCache(troveManager, activePool, lusdToken);
         LocalVariables_openTrove memory vars;
 
-        vars.price = priceFeed.fetchPrice();
-        bool isRecoveryMode = _checkRecoveryMode(vars.price);
-
-        _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
+        _requireValidMaxFeePercentage(_maxFeePercentage);
         _requireTroveisNotActive(contractsCache.troveManager, msg.sender);
 
         vars.LUSDFee;
         vars.netDebt = _LUSDAmount;
 
-        if (!isRecoveryMode) {
-            vars.LUSDFee = _triggerBorrowingFee(contractsCache.troveManager, contractsCache.lusdToken, _LUSDAmount, _maxFeePercentage);
-            vars.netDebt = vars.netDebt.add(vars.LUSDFee);
-        }
+        vars.LUSDFee = _triggerBorrowingFee(contractsCache.troveManager, contractsCache.lusdToken, _LUSDAmount, _maxFeePercentage);
+        vars.netDebt = vars.netDebt.add(vars.LUSDFee);
         _requireAtLeastMinNetDebt(vars.netDebt);
 
         // ICR is based on the composite debt, i.e. the requested LUSD amount + LUSD borrowing fee + LUSD gas comp.
         vars.compositeDebt = _getCompositeDebt(vars.netDebt);
         assert(vars.compositeDebt > 0);
 
+        vars.price = priceFeed.fetchPrice();
         vars.ICR = LiquityMath._computeCR(msg.value, vars.compositeDebt, vars.price);
         vars.NICR = LiquityMath._computeNominalCR(msg.value, vars.compositeDebt);
 
-        if (isRecoveryMode) {
-            _requireICRisAboveCCR(vars.ICR);
-        } else {
-            _requireICRisAboveMCR(vars.ICR);
-            uint newTCR = _getNewTCRFromTroveChange(msg.value, true, vars.compositeDebt, true, vars.price);  // bools: coll increase, debt increase
-            _requireNewTCRisAboveCCR(newTCR);
-        }
+        _requireICRisAboveMCR(vars.ICR);
 
         // Set the trove struct's properties
         contractsCache.troveManager.setTroveStatus(msg.sender, 1);
@@ -250,11 +239,8 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         ContractsCache memory contractsCache = ContractsCache(troveManager, activePool, lusdToken);
         LocalVariables_adjustTrove memory vars;
 
-        vars.price = priceFeed.fetchPrice();
-        bool isRecoveryMode = _checkRecoveryMode(vars.price);
-
         if (_isDebtIncrease) {
-            _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
+            _requireValidMaxFeePercentage(_maxFeePercentage);
             _requireNonZeroDebtChange(_LUSDChange);
         }
         _requireSingularCollChange(_collWithdrawal);
@@ -272,7 +258,7 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         vars.netDebtChange = _LUSDChange;
 
         // If the adjustment incorporates a debt increase and system is in Normal Mode, then trigger a borrowing fee
-        if (_isDebtIncrease && !isRecoveryMode) {
+        if (_isDebtIncrease) {
             vars.LUSDFee = _triggerBorrowingFee(contractsCache.troveManager, contractsCache.lusdToken, _LUSDChange, _maxFeePercentage);
             vars.netDebtChange = vars.netDebtChange.add(vars.LUSDFee); // The raw debt change includes the fee
         }
@@ -281,12 +267,12 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         vars.coll = contractsCache.troveManager.getTroveColl(_borrower);
 
         // Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
+        vars.price = priceFeed.fetchPrice();
         vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
         vars.newICR = _getNewICRFromTroveChange(vars.coll, vars.debt, vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease, vars.price);
         assert(_collWithdrawal <= vars.coll);
 
-        // Check the adjustment satisfies all conditions for the current system mode
-        _requireValidAdjustmentInCurrentMode(isRecoveryMode, _collWithdrawal, _isDebtIncrease, vars);
+        _requireICRisAboveMCR(vars.newICR);
 
         // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough LUSD
         if (!_isDebtIncrease && _LUSDChange > 0) {
@@ -324,8 +310,6 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         ILUSDToken lusdTokenCached = lusdToken;
 
         _requireTroveisActive(troveManagerCached, msg.sender);
-        uint price = priceFeed.fetchPrice();
-        _requireNotInRecoveryMode(price);
 
         troveManagerCached.applyPendingRewards(msg.sender);
 
@@ -333,9 +317,6 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         uint debt = troveManagerCached.getTroveDebt(msg.sender);
 
         _requireSufficientLUSDBalance(lusdTokenCached, msg.sender, debt.sub(LUSD_GAS_COMPENSATION));
-
-        uint newTCR = _getNewTCRFromTroveChange(coll, false, debt, false, price);
-        _requireNewTCRisAboveCCR(newTCR);
 
         troveManagerCached.removeStake(msg.sender);
         troveManagerCached.closeTrove(msg.sender);
@@ -351,7 +332,7 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
     }
 
     /**
-     * Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
+     * Claim remaining collateral from a redemption
      */
     function claimCollateral() external override {
         // send ETH from CollSurplus Pool to owner
@@ -488,64 +469,8 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         require(_LUSDChange > 0, "BorrowerOps: Debt increase requires non-zero debtChange");
     }
 
-    function _requireNotInRecoveryMode(uint _price) internal view {
-        require(!_checkRecoveryMode(_price), "BorrowerOps: Operation not permitted during Recovery Mode");
-    }
-
-    function _requireNoCollWithdrawal(uint _collWithdrawal) internal pure {
-        require(_collWithdrawal == 0, "BorrowerOps: Collateral withdrawal not permitted Recovery Mode");
-    }
-
-    function _requireValidAdjustmentInCurrentMode
-    (
-        bool _isRecoveryMode,
-        uint _collWithdrawal,
-        bool _isDebtIncrease,
-        LocalVariables_adjustTrove memory _vars
-    )
-        internal
-        view
-    {
-        /*
-        *In Recovery Mode, only allow:
-        *
-        * - Pure collateral top-up
-        * - Pure debt repayment
-        * - Collateral top-up with debt repayment
-        * - A debt increase combined with a collateral top-up which makes the ICR >= 150% and improves the ICR (and by extension improves the TCR).
-        *
-        * In Normal Mode, ensure:
-        *
-        * - The new ICR is above MCR
-        * - The adjustment won't pull the TCR below CCR
-        */
-        if (_isRecoveryMode) {
-            _requireNoCollWithdrawal(_collWithdrawal);
-            if (_isDebtIncrease) {
-                _requireICRisAboveCCR(_vars.newICR);
-                _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
-            }
-        } else { // if Normal Mode
-            _requireICRisAboveMCR(_vars.newICR);
-            _vars.newTCR = _getNewTCRFromTroveChange(_vars.collChange, _vars.isCollIncrease, _vars.netDebtChange, _isDebtIncrease, _vars.price);
-            _requireNewTCRisAboveCCR(_vars.newTCR);
-        }
-    }
-
     function _requireICRisAboveMCR(uint _newICR) internal pure {
         require(_newICR >= MCR, "BorrowerOps: An operation that would result in ICR < MCR is not permitted");
-    }
-
-    function _requireICRisAboveCCR(uint _newICR) internal pure {
-        require(_newICR >= CCR, "BorrowerOps: Operation must leave trove with ICR >= CCR");
-    }
-
-    function _requireNewICRisAboveOldICR(uint _newICR, uint _oldICR) internal pure {
-        require(_newICR >= _oldICR, "BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode");
-    }
-
-    function _requireNewTCRisAboveCCR(uint _newTCR) internal pure {
-        require(_newTCR >= CCR, "BorrowerOps: An operation that would result in TCR < CCR is not permitted");
     }
 
     function _requireAtLeastMinNetDebt(uint _netDebt) internal pure {
@@ -564,14 +489,9 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         require(_lusdToken.balanceOf(_borrower) >= _debtRepayment, "BorrowerOps: Caller doesnt have enough LUSD to make repayment");
     }
 
-    function _requireValidMaxFeePercentage(uint _maxFeePercentage, bool _isRecoveryMode) internal pure {
-        if (_isRecoveryMode) {
-            require(_maxFeePercentage <= DECIMAL_PRECISION,
-                "Max fee percentage must less than or equal to 100%");
-        } else {
-            require(_maxFeePercentage >= BORROWING_FEE_FLOOR && _maxFeePercentage <= DECIMAL_PRECISION,
-                "Max fee percentage must be between 0.5% and 100%");
-        }
+    function _requireValidMaxFeePercentage(uint _maxFeePercentage) internal pure {
+        require(_maxFeePercentage >= BORROWING_FEE_FLOOR && _maxFeePercentage <= DECIMAL_PRECISION,
+            "Max fee percentage must be between 0.5% and 100%");
     }
 
     // --- ICR and TCR getters ---
@@ -636,28 +556,6 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         newDebt = _isDebtIncrease ? _debt.add(_debtChange) : _debt.sub(_debtChange);
 
         return (newColl, newDebt);
-    }
-
-    function _getNewTCRFromTroveChange
-    (
-        uint _collChange,
-        bool _isCollIncrease,
-        uint _debtChange,
-        bool _isDebtIncrease,
-        uint _price
-    )
-        internal
-        view
-        returns (uint)
-    {
-        uint totalColl = getEntireSystemColl();
-        uint totalDebt = getEntireSystemDebt();
-
-        totalColl = _isCollIncrease ? totalColl.add(_collChange) : totalColl.sub(_collChange);
-        totalDebt = _isDebtIncrease ? totalDebt.add(_debtChange) : totalDebt.sub(_debtChange);
-
-        uint newTCR = LiquityMath._computeCR(totalColl, totalDebt, _price);
-        return newTCR;
     }
 
     function getCompositeDebt(uint _debt) external pure override returns (uint) {

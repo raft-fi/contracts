@@ -361,7 +361,9 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     // Bob adds 1 ETH to his trove
     const addedColl1 = toBN(dec(1, 'ether'))
+    await priceFeed.setPrice(dec(200, 18))
     await borrowerOperations.addColl(B, B, { from: B, value: addedColl1 })
+    await priceFeed.setPrice(dec(100, 18))
 
     // Liquidate C
     const txC = await troveManager.liquidate(C)
@@ -384,7 +386,9 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     // Bob adds 1 ETH to his trove
     const addedColl2 = toBN(dec(1, 'ether'))
+    await priceFeed.setPrice(dec(200, 18))
     await borrowerOperations.addColl(B, B, { from: B, value: addedColl2 })
+    await priceFeed.setPrice(dec(100, 18))
 
     // Liquidate E
     const txE = await troveManager.liquidate(E)
@@ -454,7 +458,9 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isAtMost(getDifference(E_expectedPendingETH_1, E_ETHGain_1), 1e8)
 
     // // Bob adds 1 ETH to his trove
+    await priceFeed.setPrice(dec(200, 18))
     await borrowerOperations.addColl(B, B, { from: B, value: dec(1, 'ether') })
+    await priceFeed.setPrice(dec(100, 18))
 
     // Check entireColl for each trove
     const B_entireColl_1 = (await th.getEntireCollAndDebt(contracts, B)).entireColl
@@ -492,7 +498,9 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isAtMost(getDifference(E_expectedPendingETH_2, E_ETHGain_2), 1e8)
 
     // // Bob adds 1 ETH to his trove
+    await priceFeed.setPrice(dec(200, 18))
     await borrowerOperations.addColl(B, B, { from: B, value: dec(1, 'ether') })
+    await priceFeed.setPrice(dec(100, 18))
 
     // Check entireColl for each trove
     const B_entireColl_2 = (await th.getEntireCollAndDebt(contracts, B)).entireColl

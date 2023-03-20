@@ -3279,69 +3279,6 @@ contract('StabilityPool', async accounts => {
       assert.isAtMost(th.getDifference(flynCollAfter.sub(collBefore), expectedCollGain), 10000)
     })
 
-    it("withdrawETHGainToTrove(): caller can withdraw full deposit and ETH gain to their trove during Recovery Mode", async () => {
-      // --- SETUP ---
-
-     // Defaulter opens
-     await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
-
-      // A, B, C open troves
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-
-      // A, B, C provides 10000, 5000, 3000 LUSD to SP
-      await stabilityPool.provideToSP(dec(10000, 18), frontEnd_1, { from: alice })
-      await stabilityPool.provideToSP(dec(5000, 18), frontEnd_1, { from: bob })
-      await stabilityPool.provideToSP(dec(3000, 18), frontEnd_1, { from: carol })
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      // Price drops to 105,
-      await priceFeed.setPrice(dec(105, 18))
-      const price = await priceFeed.getPrice()
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Check defaulter 1 has ICR: 100% < ICR < 110%.
-      assert.isTrue(await th.ICRbetween100and110(defaulter_1, troveManager, price))
-
-      const alice_Collateral_Before = (await troveManager.Troves(alice))[1]
-      const bob_Collateral_Before = (await troveManager.Troves(bob))[1]
-      const carol_Collateral_Before = (await troveManager.Troves(carol))[1]
-
-      // Liquidate defaulter 1
-      assert.isTrue(await sortedTroves.contains(defaulter_1))
-      await troveManager.liquidate(defaulter_1)
-      assert.isFalse(await sortedTroves.contains(defaulter_1))
-
-      const alice_ETHGain_Before = await stabilityPool.getDepositorETHGain(alice)
-      const bob_ETHGain_Before = await stabilityPool.getDepositorETHGain(bob)
-      const carol_ETHGain_Before = await stabilityPool.getDepositorETHGain(carol)
-
-      // A, B, C withdraw their full ETH gain from the Stability Pool to their trove
-      await stabilityPool.withdrawETHGainToTrove(alice, alice, { from: alice })
-      await stabilityPool.withdrawETHGainToTrove(bob, bob, { from: bob })
-      await stabilityPool.withdrawETHGainToTrove(carol, carol, { from: carol })
-
-      // Check collateral of troves A, B, C has increased by the value of their ETH gain from liquidations, respectively
-      const alice_expectedCollateral = (alice_Collateral_Before.add(alice_ETHGain_Before)).toString()
-      const bob_expectedColalteral = (bob_Collateral_Before.add(bob_ETHGain_Before)).toString()
-      const carol_expectedCollateral = (carol_Collateral_Before.add(carol_ETHGain_Before)).toString()
-
-      const alice_Collateral_After = (await troveManager.Troves(alice))[1]
-      const bob_Collateral_After = (await troveManager.Troves(bob))[1]
-      const carol_Collateral_After = (await troveManager.Troves(carol))[1]
-
-      assert.equal(alice_expectedCollateral, alice_Collateral_After)
-      assert.equal(bob_expectedColalteral, bob_Collateral_After)
-      assert.equal(carol_expectedCollateral, carol_Collateral_After)
-
-      // Check ETH in SP has reduced to zero
-      const ETHinSP_After = (await stabilityPool.getETH()).toString()
-      assert.isAtMost(th.getDifference(ETHinSP_After, '0'), 100000)
-    })
-
     it("withdrawETHGainToTrove(): reverts if user has no trove", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
