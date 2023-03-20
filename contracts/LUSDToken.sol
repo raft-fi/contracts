@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "./Interfaces/ILUSDToken.sol";
-import "./Dependencies/SafeMath.sol";
 import "./Dependencies/CheckContract.sol";
-import "./Dependencies/console.sol";
 /*
 *
 * Based upon OpenZeppelin's ERC20 contract:
@@ -25,13 +23,11 @@ import "./Dependencies/console.sol";
 */
 
 contract LUSDToken is CheckContract, ILUSDToken {
-    using SafeMath for uint256;
-
     uint256 private _totalSupply;
-    string constant internal _NAME = "LUSD Stablecoin";
-    string constant internal _SYMBOL = "LUSD";
-    string constant internal _VERSION = "1";
-    uint8 constant internal _DECIMALS = 18;
+    string internal constant _NAME = "LUSD Stablecoin";
+    string internal constant _SYMBOL = "LUSD";
+    string internal constant _VERSION = "1";
+    uint8 internal constant _DECIMALS = 18;
 
     // --- Data for EIP2612 ---
 
@@ -48,28 +44,18 @@ contract LUSDToken is CheckContract, ILUSDToken {
     bytes32 private immutable _HASHED_NAME;
     bytes32 private immutable _HASHED_VERSION;
 
-    mapping (address => uint256) private _nonces;
+    mapping(address => uint256) private _nonces;
 
     // User data for LUSD token
-    mapping (address => uint256) private _balances;
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
 
     // --- Addresses ---
     address public immutable troveManagerAddress;
     address public immutable stabilityPoolAddress;
     address public immutable borrowerOperationsAddress;
 
-    // --- Events ---
-    event TroveManagerAddressChanged(address _troveManagerAddress);
-    event StabilityPoolAddressChanged(address _newStabilityPoolAddress);
-    event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
-
-    constructor
-    (
-        address _troveManagerAddress,
-        address _stabilityPoolAddress,
-        address _borrowerOperationsAddress
-    )
+    constructor(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress)
         public
     {
         checkContract(_troveManagerAddress);
@@ -106,7 +92,7 @@ contract LUSDToken is CheckContract, ILUSDToken {
         _burn(_account, _amount);
     }
 
-    function sendToPool(address _sender,  address _poolAddress, uint256 _amount) external override {
+    function sendToPool(address _sender, address _poolAddress, uint256 _amount) external override {
         _requireCallerIsStabilityPool();
         _transfer(_sender, _poolAddress, _amount);
     }
@@ -144,23 +130,23 @@ contract LUSDToken is CheckContract, ILUSDToken {
     function transferFrom(address sender, address recipient, uint256 amount) external override returns (bool) {
         _requireValidRecipient(recipient);
         _transfer(sender, recipient, amount);
-        _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        _approve(sender, msg.sender, _allowances[sender][msg.sender] - amount);
         return true;
     }
 
-    function increaseAllowance(address spender, uint256 addedValue) external override returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].add(addedValue));
+    function increaseAllowance(address spender, uint256 addedValue) external returns (bool) {
+        _approve(msg.sender, spender, _allowances[msg.sender][spender] + addedValue);
         return true;
     }
 
-    function decreaseAllowance(address spender, uint256 subtractedValue) external override returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
+    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool) {
+        _approve(msg.sender, spender, _allowances[msg.sender][spender] - subtractedValue);
         return true;
     }
 
     // --- EIP 2612 Functionality ---
 
-    function domainSeparator() public view override returns (bytes32) {
+    function domainSeparator() public view returns (bytes32) {
         if (_chainID() == _CACHED_CHAIN_ID) {
             return _CACHED_DOMAIN_SEPARATOR;
         } else {
@@ -168,36 +154,30 @@ contract LUSDToken is CheckContract, ILUSDToken {
         }
     }
 
-    function permit
-    (
-        address owner,
-        address spender,
-        uint amount,
-        uint deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
+    function permit(address owner, address spender, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         external
-        override
     {
-        require(deadline >= now, 'LUSD: expired deadline');
-        bytes32 digest = keccak256(abi.encodePacked('\x19\x01',
-                         domainSeparator(), keccak256(abi.encode(
-                         _PERMIT_TYPEHASH, owner, spender, amount,
-                         _nonces[owner]++, deadline))));
+        require(deadline >= block.timestamp, "LUSD: expired deadline");
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                domainSeparator(),
+                keccak256(abi.encode(_PERMIT_TYPEHASH, owner, spender, amount, _nonces[owner]++, deadline))
+            )
+        );
         address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress == owner, 'LUSD: invalid signature');
+        require(recoveredAddress == owner, "LUSD: invalid signature");
         _approve(owner, spender, amount);
     }
 
-    function nonces(address owner) external view override returns (uint256) { // FOR EIP 2612
+    function nonces(address owner) external view returns (uint256) {
+        // FOR EIP 2612
         return _nonces[owner];
     }
 
     // --- Internal operations ---
 
-    function _chainID() private pure returns (uint256 chainID) {
+    function _chainID() private view returns (uint256 chainID) {
         assembly {
             chainID := chainid()
         }
@@ -214,24 +194,24 @@ contract LUSDToken is CheckContract, ILUSDToken {
         assert(sender != address(0));
         assert(recipient != address(0));
 
-        _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
-        _balances[recipient] = _balances[recipient].add(amount);
+        _balances[sender] -= amount;
+        _balances[recipient] += amount;
         emit Transfer(sender, recipient, amount);
     }
 
     function _mint(address account, uint256 amount) internal {
         assert(account != address(0));
 
-        _totalSupply = _totalSupply.add(amount);
-        _balances[account] = _balances[account].add(amount);
+        _totalSupply += amount;
+        _balances[account] += amount;
         emit Transfer(address(0), account, amount);
     }
 
     function _burn(address account, uint256 amount) internal {
         assert(account != address(0));
 
-        _balances[account] = _balances[account].sub(amount, "ERC20: burn amount exceeds balance");
-        _totalSupply = _totalSupply.sub(amount);
+        _balances[account] -= amount;
+        _totalSupply -= amount;
         emit Transfer(account, address(0), amount);
     }
 
@@ -247,14 +227,12 @@ contract LUSDToken is CheckContract, ILUSDToken {
 
     function _requireValidRecipient(address _recipient) internal view {
         require(
-            _recipient != address(0) &&
-            _recipient != address(this),
+            _recipient != address(0) && _recipient != address(this),
             "LUSD: Cannot transfer tokens directly to the LUSD token contract or the zero address"
         );
         require(
-            _recipient != stabilityPoolAddress &&
-            _recipient != troveManagerAddress &&
-            _recipient != borrowerOperationsAddress,
+            _recipient != stabilityPoolAddress && _recipient != troveManagerAddress
+                && _recipient != borrowerOperationsAddress,
             "LUSD: Cannot transfer tokens directly to the StabilityPool, TroveManager or BorrowerOps"
         );
     }
@@ -265,9 +243,8 @@ contract LUSDToken is CheckContract, ILUSDToken {
 
     function _requireCallerIsBOorTroveMorSP() internal view {
         require(
-            msg.sender == borrowerOperationsAddress ||
-            msg.sender == troveManagerAddress ||
-            msg.sender == stabilityPoolAddress,
+            msg.sender == borrowerOperationsAddress || msg.sender == troveManagerAddress
+                || msg.sender == stabilityPoolAddress,
             "LUSD: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
         );
     }
@@ -279,28 +256,29 @@ contract LUSDToken is CheckContract, ILUSDToken {
     function _requireCallerIsTroveMorSP() internal view {
         require(
             msg.sender == troveManagerAddress || msg.sender == stabilityPoolAddress,
-            "LUSD: Caller is neither TroveManager nor StabilityPool");
+            "LUSD: Caller is neither TroveManager nor StabilityPool"
+        );
     }
 
     // --- Optional functions ---
 
-    function name() external view override returns (string memory) {
+    function name() external view returns (string memory) {
         return _NAME;
     }
 
-    function symbol() external view override returns (string memory) {
+    function symbol() external view returns (string memory) {
         return _SYMBOL;
     }
 
-    function decimals() external view override returns (uint8) {
+    function decimals() external view returns (uint8) {
         return _DECIMALS;
     }
 
-    function version() external view override returns (string memory) {
+    function version() external view returns (string memory) {
         return _VERSION;
     }
 
-    function permitTypeHash() external view override returns (bytes32) {
+    function permitTypeHash() external view returns (bytes32) {
         return _PERMIT_TYPEHASH;
     }
 }

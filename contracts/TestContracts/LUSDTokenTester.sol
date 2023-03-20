@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "../LUSDToken.sol";
 
 contract LUSDTokenTester is LUSDToken {
-
     bytes32 private immutable _PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
-    constructor(
-        address _troveManagerAddress,
-        address _stabilityPoolAddress,
-        address _borrowerOperationsAddress
-    ) public LUSDToken(_troveManagerAddress,
-                      _stabilityPoolAddress,
-                      _borrowerOperationsAddress) {}
+    constructor(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress)
+        public
+        LUSDToken(_troveManagerAddress, _stabilityPoolAddress, _borrowerOperationsAddress)
+    {}
 
     function unprotectedMint(address _account, uint256 _amount) external {
         // No check on caller here
@@ -22,19 +18,19 @@ contract LUSDTokenTester is LUSDToken {
         _mint(_account, _amount);
     }
 
-    function unprotectedBurn(address _account, uint _amount) external {
+    function unprotectedBurn(address _account, uint256 _amount) external {
         // No check on caller here
 
         _burn(_account, _amount);
     }
 
-    function unprotectedSendToPool(address _sender,  address _poolAddress, uint256 _amount) external {
+    function unprotectedSendToPool(address _sender, address _poolAddress, uint256 _amount) external {
         // No check on caller here
 
         _transfer(_sender, _poolAddress, _amount);
     }
 
-    function unprotectedReturnFromPool(address _poolAddress, address _receiver, uint256 _amount ) external {
+    function unprotectedReturnFromPool(address _poolAddress, address _receiver, uint256 _amount) external {
         // No check on caller here
 
         _transfer(_poolAddress, _receiver, _amount);
@@ -44,15 +40,20 @@ contract LUSDTokenTester is LUSDToken {
         _approve(owner, spender, amount);
     }
 
-    function getChainId() external pure returns (uint256 chainID) {
+    function getChainId() external view returns (uint256 chainID) {
         //return _chainID(); // it’s private
         assembly {
             chainID := chainid()
         }
     }
 
-    function getDigest(address owner, address spender, uint amount, uint nonce, uint deadline) external view returns (bytes32) {
-        return keccak256(abi.encodePacked(
+    function getDigest(address owner, address spender, uint256 amount, uint256 nonce, uint256 deadline)
+        external
+        view
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encodePacked(
                 uint16(0x1901),
                 domainSeparator(),
                 keccak256(abi.encode(_PERMIT_TYPEHASH, owner, spender, amount, nonce, deadline))

@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "../Dependencies/CheckContract.sol";
-import "../Dependencies/SafeMath.sol";
 import "../Dependencies/Ownable.sol";
 import "../Interfaces/ILockupContractFactory.sol";
 import "./LockupContract.sol";
-import "../Dependencies/console.sol";
 
 /*
 * The LockupContractFactory deploys LockupContracts - its main purpose is to keep a registry of valid deployed
@@ -24,21 +22,14 @@ import "../Dependencies/console.sol";
 */
 
 contract LockupContractFactory is ILockupContractFactory, Ownable, CheckContract {
-    using SafeMath for uint;
-
     // --- Data ---
-    string constant public NAME = "LockupContractFactory";
+    string public constant NAME = "LockupContractFactory";
 
-    uint constant public SECONDS_IN_ONE_YEAR = 31536000;
+    uint256 public constant SECONDS_IN_ONE_YEAR = 31536000;
 
     address public lqtyTokenAddress;
 
-    mapping (address => address) public lockupContractToDeployer;
-
-    // --- Events ---
-
-    event LQTYTokenAddressSet(address _lqtyTokenAddress);
-    event LockupContractDeployedThroughFactory(address _lockupContractAddress, address _beneficiary, uint _unlockTime, address _deployer);
+    mapping(address => address) public lockupContractToDeployer;
 
     // --- Functions ---
 
@@ -51,7 +42,7 @@ contract LockupContractFactory is ILockupContractFactory, Ownable, CheckContract
         _renounceOwnership();
     }
 
-    function deployLockupContract(address _beneficiary, uint _unlockTime) external override {
+    function deployLockupContract(address _beneficiary, uint256 _unlockTime) external override {
         address lqtyTokenAddressCached = lqtyTokenAddress;
         _requireLQTYAddressIsSet(lqtyTokenAddressCached);
         LockupContract lockupContract = new LockupContract(

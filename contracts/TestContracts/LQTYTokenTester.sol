@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "../LQTY/LQTYToken.sol";
 
 contract LQTYTokenTester is LQTYToken {
-    constructor
-    (
+    constructor(
         address _communityIssuanceAddress,
         address _lqtyStakingAddress,
         address _lockupFactoryAddress,
@@ -15,15 +14,14 @@ contract LQTYTokenTester is LQTYToken {
         address _multisigAddress
     )
         public
-        LQTYToken
-    (
-        _communityIssuanceAddress,
-        _lqtyStakingAddress,
-        _lockupFactoryAddress,
-        _bountyAddress,
-        _lpRewardsAddress,
-        _multisigAddress
-    )
+        LQTYToken(
+            _communityIssuanceAddress,
+            _lqtyStakingAddress,
+            _lockupFactoryAddress,
+            _bountyAddress,
+            _lpRewardsAddress,
+            _multisigAddress
+        )
     {}
 
     function unprotectedMint(address account, uint256 amount) external {
@@ -35,7 +33,7 @@ contract LQTYTokenTester is LQTYToken {
     function unprotectedSendToLQTYStaking(address _sender, uint256 _amount) external {
         // No check for the caller here
 
-        if (_isFirstYear()) {_requireSenderIsNotMultisig(_sender);}
+        if (_isFirstYear()) _requireSenderIsNotMultisig(_sender);
         _transfer(_sender, lqtyStakingAddress, _amount);
     }
 
@@ -47,7 +45,7 @@ contract LQTYTokenTester is LQTYToken {
         _transfer(sender, recipient, amount);
     }
 
-    function getChainId() external pure returns (uint256 chainID) {
+    function getChainId() external view returns (uint256 chainID) {
         //return _chainID(); // it’s private
         assembly {
             chainID := chainid()

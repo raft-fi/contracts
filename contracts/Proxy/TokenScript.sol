@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../Dependencies/CheckContract.sol";
-import "../Dependencies/IERC20.sol";
-
 
 contract TokenScript is CheckContract {
-    string constant public NAME = "TokenScript";
+    string public constant NAME = "TokenScript";
 
     IERC20 immutable token;
 
@@ -30,13 +29,5 @@ contract TokenScript is CheckContract {
 
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
         token.transferFrom(sender, recipient, amount);
-    }
-
-    function increaseAllowance(address spender, uint256 addedValue) external returns (bool) {
-        token.increaseAllowance(spender, addedValue);
-    }
-
-    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool) {
-        token.decreaseAllowance(spender, subtractedValue);
     }
 }
