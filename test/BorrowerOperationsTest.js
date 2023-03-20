@@ -15,6 +15,7 @@ const timeValues = testHelpers.TimeValues
 
 const ZERO_ADDRESS = th.ZERO_ADDRESS
 const assertRevert = th.assertRevert
+const DEFAULT_PRICE = dec(200, 18);
 
 /* NOTE: Some of the borrowing tests do not test for specific LUSD fee values. They only test that the
  * fees are non-zero when they should occur, and that they decay over time.
@@ -217,6 +218,8 @@ contract('BorrowerOperations', async accounts => {
       // Liquidate Carol's Trove,
       const tx = await troveManager.liquidate(carol, { from: owner });
 
+      await priceFeed.setPrice(DEFAULT_PRICE);
+
       assert.isFalse(await sortedTroves.contains(carol))
 
       const L_ETH = await troveManager.L_ETH()
@@ -351,23 +354,6 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it('addColl(): can add collateral in Recovery Mode', async () => {
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      const aliceCollBefore = await getTroveEntireColl(alice)
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice('105000000000000000000')
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      const collTopUp = toBN(dec(1, 'ether'))
-      await borrowerOperations.addColl(alice, alice, { from: alice, value: collTopUp })
-
-      // Check Alice's collateral
-      const aliceCollAfter = (await troveManager.Troves(alice))[1]
-      assert.isTrue(aliceCollAfter.eq(aliceCollBefore.add(collTopUp)))
-    })
-
     // --- withdrawColl() ---
 
     it("withdrawColl(): reverts when withdrawal would leave trove with ICR < MCR", async () => {
@@ -463,30 +449,6 @@ contract('BorrowerOperations', async accounts => {
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
-      }
-    })
-
-    it("withdrawColl(): reverts if system is in Recovery Mode", async () => {
-      // --- SETUP ---
-
-      // A and B open troves at 150% ICR
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-
-      const TCR = (await th.getTCR(contracts)).toString()
-      assert.equal(TCR, '1500000000000000000')
-
-      // --- TEST ---
-
-      // price drops to 1ETH:150LUSD, reducing TCR below 150%
-      await priceFeed.setPrice('150000000000000000000');
-
-      //Alice tries to withdraw collateral during Recovery Mode
-      try {
-        const txData = await borrowerOperations.withdrawColl('1', alice, alice, { from: alice })
-        assert.isFalse(txData.receipt.status)
-      } catch (err) {
-        assert.include(err.message, 'revert')
       }
     })
 
@@ -1240,46 +1202,6 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("withdrawLUSD(): reverts when a withdrawal would cause the TCR of the system to fall below the CCR", async () => {
-      await priceFeed.setPrice(dec(100, 18))
-      const price = await priceFeed.getPrice()
-
-      // Alice and Bob creates troves with 150% ICR.  System TCR = 150%.
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
-
-      var TCR = (await th.getTCR(contracts)).toString()
-      assert.equal(TCR, '1500000000000000000')
-
-      // Bob attempts to withdraw 1 LUSD.
-      // System TCR would be: ((3+3) * 100 ) / (200+201) = 600/401 = 149.62%, i.e. below CCR of 150%.
-      try {
-        const txBob = await borrowerOperations.withdrawLUSD(th._100pct, dec(1, 18), bob, bob, { from: bob })
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-
-    it("withdrawLUSD(): reverts if system is in Recovery Mode", async () => {
-      // --- SETUP ---
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
-
-      // --- TEST ---
-
-      // price drops to 1ETH:150LUSD, reducing TCR below 150%
-      await priceFeed.setPrice('150000000000000000000');
-      assert.isTrue((await th.getTCR(contracts)).lt(toBN(dec(15, 17))))
-
-      try {
-        const txData = await borrowerOperations.withdrawLUSD(th._100pct, '200', alice, alice, { from: alice })
-        assert.isFalse(txData.receipt.status)
-      } catch (err) {
-        assert.include(err.message, 'revert')
-      }
-    })
-
     it("withdrawLUSD(): increases the Trove's LUSD debt by the correct amount", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
@@ -1460,26 +1382,6 @@ contract('BorrowerOperations', async accounts => {
       th.assertIsApproximatelyEqual(alice_LUSDTokenBalance_After, alice_LUSDTokenBalance_Before.sub(aliceDebtBefore.div(toBN(10))))
     })
 
-    it('repayLUSD(): can repay debt in Recovery Mode', async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      const aliceDebtBefore = await getTroveEntireDebt(alice)
-      assert.isTrue(aliceDebtBefore.gt(toBN('0')))
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice('105000000000000000000')
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      const tx = await borrowerOperations.repayLUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })
-      assert.isTrue(tx.receipt.status)
-
-      // Check Alice's debt: 110 (initial) - 50 (repaid)
-      const aliceDebtAfter = await getTroveEntireDebt(alice)
-      th.assertIsApproximatelyEqual(aliceDebtAfter, aliceDebtBefore.mul(toBN(9)).div(toBN(10)))
-    })
-
     it("repayLUSD(): Reverts if borrower has insufficient LUSD balance to cover his debt repayment", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
@@ -1527,23 +1429,6 @@ contract('BorrowerOperations', async accounts => {
       await assertRevert(borrowerOperations.adjustTrove(0, 0, dec(1, 18), true, A, A, { from: A, value: dec(2, 16) }), "Max fee percentage must be between 0.5% and 100%")
       await assertRevert(borrowerOperations.adjustTrove(1, 0, dec(1, 18), true, A, A, { from: A, value: dec(2, 16) }), "Max fee percentage must be between 0.5% and 100%")
       await assertRevert(borrowerOperations.adjustTrove('4999999999999999', 0, dec(1, 18), true, A, A, { from: A, value: dec(2, 16) }), "Max fee percentage must be between 0.5% and 100%")
-    })
-
-    it("adjustTrove(): allows max fee < 0.5% in Recovery mode", async () => {
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: whale, value: toBN(dec(100, 'ether')) } })
-
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-
-      await priceFeed.setPrice(dec(120, 18))
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      await borrowerOperations.adjustTrove(0, 0, dec(1, 9), true, A, A, { from: A, value: dec(300, 18) })
-      await priceFeed.setPrice(dec(1, 18))
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-      await borrowerOperations.adjustTrove(1, 0, dec(1, 9), true, A, A, { from: A, value: dec(30000, 18) })
-      await priceFeed.setPrice(dec(1, 16))
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-      await borrowerOperations.adjustTrove('4999999999999999', 0, dec(1, 9), true, A, A, { from: A, value: dec(3000000, 18) })
     })
 
     it("adjustTrove(): decays a non-zero base rate", async () => {
@@ -1959,170 +1844,6 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("adjustTrove(): reverts in Recovery Mode when the adjustment would reduce the TCR", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      const txAlice = await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 18), true, alice, alice, { from: alice, value: dec(1, 'ether') })
-      assert.isTrue(txAlice.receipt.status)
-
-      await priceFeed.setPrice(dec(120, 18)) // trigger drop in ETH price
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      try { // collateral withdrawal should also fail
-        const txAlice = await borrowerOperations.adjustTrove(th._100pct, dec(1, 'ether'), 0, false, alice, alice, { from: alice })
-        assert.isFalse(txAlice.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-
-      try { // debt increase should fail
-        const txBob = await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 18), true, bob, bob, { from: bob })
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-
-      try { // debt increase that's also a collateral increase should also fail, if ICR will be worse off
-        const txBob = await borrowerOperations.adjustTrove(th._100pct, 0, dec(111, 18), true, bob, bob, { from: bob, value: dec(1, 'ether') })
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-
-    it("adjustTrove(): collateral withdrawal reverts in Recovery Mode", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice(dec(120, 18)) // trigger drop in ETH price
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Alice attempts an adjustment that repays half her debt BUT withdraws 1 wei collateral, and fails
-      await assertRevert(borrowerOperations.adjustTrove(th._100pct, 1, dec(5000, 18), false, alice, alice, { from: alice }),
-        "BorrowerOps: Collateral withdrawal not permitted Recovery Mode")
-    })
-
-    it("adjustTrove(): debt increase that would leave ICR < 150% reverts in Recovery Mode", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      const CCR = await troveManager.CCR()
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice(dec(120, 18)) // trigger drop in ETH price
-      const price = await priceFeed.getPrice()
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      const ICR_A = await troveManager.getCurrentICR(alice, price)
-
-      const aliceDebt = await getTroveEntireDebt(alice)
-      const aliceColl = await getTroveEntireColl(alice)
-      const debtIncrease = toBN(dec(50, 18))
-      const collIncrease = toBN(dec(1, 'ether'))
-
-      // Check the new ICR would be an improvement, but less than the CCR (150%)
-      const newICR = await troveManager.computeICR(aliceColl.add(collIncrease), aliceDebt.add(debtIncrease), price)
-
-      assert.isTrue(newICR.gt(ICR_A) && newICR.lt(CCR))
-
-      await assertRevert(borrowerOperations.adjustTrove(th._100pct, 0, debtIncrease, true, alice, alice, { from: alice, value: collIncrease }),
-        "BorrowerOps: Operation must leave trove with ICR >= CCR")
-    })
-
-    it("adjustTrove(): debt increase that would reduce the ICR reverts in Recovery Mode", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      const CCR = await troveManager.CCR()
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice(dec(105, 18)) // trigger drop in ETH price
-      const price = await priceFeed.getPrice()
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      //--- Alice with ICR > 150% tries to reduce her ICR ---
-
-      const ICR_A = await troveManager.getCurrentICR(alice, price)
-
-      // Check Alice's initial ICR is above 150%
-      assert.isTrue(ICR_A.gt(CCR))
-
-      const aliceDebt = await getTroveEntireDebt(alice)
-      const aliceColl = await getTroveEntireColl(alice)
-      const aliceDebtIncrease = toBN(dec(150, 18))
-      const aliceCollIncrease = toBN(dec(1, 'ether'))
-
-      const newICR_A = await troveManager.computeICR(aliceColl.add(aliceCollIncrease), aliceDebt.add(aliceDebtIncrease), price)
-
-      // Check Alice's new ICR would reduce but still be greater than 150%
-      assert.isTrue(newICR_A.lt(ICR_A) && newICR_A.gt(CCR))
-
-      await assertRevert(borrowerOperations.adjustTrove(th._100pct, 0, aliceDebtIncrease, true, alice, alice, { from: alice, value: aliceCollIncrease }),
-        "BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode")
-
-      //--- Bob with ICR < 150% tries to reduce his ICR ---
-
-      const ICR_B = await troveManager.getCurrentICR(bob, price)
-
-      // Check Bob's initial ICR is below 150%
-      assert.isTrue(ICR_B.lt(CCR))
-
-      const bobDebt = await getTroveEntireDebt(bob)
-      const bobColl = await getTroveEntireColl(bob)
-      const bobDebtIncrease = toBN(dec(450, 18))
-      const bobCollIncrease = toBN(dec(1, 'ether'))
-
-      const newICR_B = await troveManager.computeICR(bobColl.add(bobCollIncrease), bobDebt.add(bobDebtIncrease), price)
-
-      // Check Bob's new ICR would reduce
-      assert.isTrue(newICR_B.lt(ICR_B))
-
-      await assertRevert(borrowerOperations.adjustTrove(th._100pct, 0, bobDebtIncrease, true, bob, bob, { from: bob, value: bobCollIncrease }),
-        " BorrowerOps: Operation must leave trove with ICR >= CCR")
-    })
-
-    it("adjustTrove(): A trove with ICR < CCR in Recovery Mode can adjust their trove to ICR > CCR", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      const CCR = await troveManager.CCR()
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice(dec(100, 18)) // trigger drop in ETH price
-      const price = await priceFeed.getPrice()
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      const ICR_A = await troveManager.getCurrentICR(alice, price)
-      // Check initial ICR is below 150%
-      assert.isTrue(ICR_A.lt(CCR))
-
-      const aliceDebt = await getTroveEntireDebt(alice)
-      const aliceColl = await getTroveEntireColl(alice)
-      const debtIncrease = toBN(dec(5000, 18))
-      const collIncrease = toBN(dec(150, 'ether'))
-
-      const newICR = await troveManager.computeICR(aliceColl.add(collIncrease), aliceDebt.add(debtIncrease), price)
-
-      // Check new ICR would be > 150%
-      assert.isTrue(newICR.gt(CCR))
-
-      const tx = await borrowerOperations.adjustTrove(th._100pct, 0, debtIncrease, true, alice, alice, { from: alice, value: collIncrease })
-      assert.isTrue(tx.receipt.status)
-
-      const actualNewICR = await troveManager.getCurrentICR(alice, price)
-      assert.isTrue(actualNewICR.gt(CCR))
-    })
-
     it("adjustTrove(): A trove with ICR > CCR in Recovery Mode can improve their ICR", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: alice } })
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
@@ -2154,57 +1875,6 @@ contract('BorrowerOperations', async accounts => {
 
       const actualNewICR = await troveManager.getCurrentICR(alice, price)
       assert.isTrue(actualNewICR.gt(initialICR))
-    })
-
-    it("adjustTrove(): debt increase in Recovery Mode charges no fee", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(200000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      await priceFeed.setPrice(dec(120, 18)) // trigger drop in ETH price
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // B stakes LQTY
-      await lqtyToken.unprotectedMint(bob, dec(100, 18))
-      await lqtyStaking.stake(dec(100, 18), { from: bob })
-
-      const lqtyStakingLUSDBalanceBefore = await lusdToken.balanceOf(lqtyStaking.address)
-      assert.isTrue(lqtyStakingLUSDBalanceBefore.gt(toBN('0')))
-
-      const txAlice = await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 18), true, alice, alice, { from: alice, value: dec(100, 'ether') })
-      assert.isTrue(txAlice.receipt.status)
-
-      // Check emitted fee = 0
-      const emittedFee = toBN(await th.getEventArgByName(txAlice, 'LUSDBorrowingFeePaid', '_LUSDFee'))
-      assert.isTrue(emittedFee.eq(toBN('0')))
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Check no fee was sent to staking contract
-      const lqtyStakingLUSDBalanceAfter = await lusdToken.balanceOf(lqtyStaking.address)
-      assert.equal(lqtyStakingLUSDBalanceAfter.toString(), lqtyStakingLUSDBalanceBefore.toString())
-    })
-
-    it("adjustTrove(): reverts when change would cause the TCR of the system to fall below the CCR", async () => {
-      await priceFeed.setPrice(dec(100, 18))
-
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
-
-      // Check TCR and Recovery Mode
-      const TCR = (await th.getTCR(contracts)).toString()
-      assert.equal(TCR, '1500000000000000000')
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      // Bob attempts an operation that would bring the TCR below the CCR
-      try {
-        const txBob = await borrowerOperations.adjustTrove(th._100pct, 0, dec(1, 18), true, bob, bob, { from: bob })
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
     })
 
     it("adjustTrove(): reverts when LUSD repaid is > debt of the trove", async () => {
@@ -2608,23 +2278,6 @@ contract('BorrowerOperations', async accounts => {
 
     // --- closeTrove() ---
 
-    it("closeTrove(): reverts when it would lower the TCR below CCR", async () => {
-      await openTrove({ ICR: toBN(dec(300, 16)), extraParams:{ from: alice } })
-      await openTrove({ ICR: toBN(dec(120, 16)), extraLUSDAmount: toBN(dec(300, 18)), extraParams:{ from: bob } })
-
-      const price = await priceFeed.getPrice()
-
-      // to compensate borrowing fees
-      await lusdToken.transfer(alice, dec(300, 18), { from: bob })
-
-      assert.isFalse(await troveManager.checkRecoveryMode(price))
-
-      await assertRevert(
-        borrowerOperations.closeTrove({ from: alice }),
-        "BorrowerOps: An operation that would result in TCR < CCR is not permitted"
-      )
-    })
-
     it("closeTrove(): reverts when calling address does not have active trove", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
@@ -2636,31 +2289,6 @@ contract('BorrowerOperations', async accounts => {
       } catch (err) {
         assert.include(err.message, "revert")
       }
-    })
-
-    it("closeTrove(): reverts when system is in Recovery Mode", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-
-      // Alice transfers her LUSD to Bob and Carol so they can cover fees
-      const aliceBal = await lusdToken.balanceOf(alice)
-      await lusdToken.transfer(bob, aliceBal.div(toBN(2)), { from: alice })
-      await lusdToken.transfer(carol, aliceBal.div(toBN(2)), { from: alice })
-
-      // check Recovery Mode
-      assert.isFalse(await th.checkRecoveryMode(contracts))
-
-      // Bob successfully closes his trove
-      const txBob = await borrowerOperations.closeTrove({ from: bob })
-      assert.isTrue(txBob.receipt.status)
-
-      await priceFeed.setPrice(dec(100, 18))
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Carol attempts to close her trove during Recovery Mode
-      await assertRevert(borrowerOperations.closeTrove({ from: carol }), "BorrowerOps: Operation not permitted during Recovery Mode")
     })
 
     it("closeTrove(): reverts when trove is the only one in the system", async () => {
@@ -3251,21 +2879,6 @@ contract('BorrowerOperations', async accounts => {
       await assertRevert(borrowerOperations.openTrove('4999999999999999', dec(195000, 18), B, B, { from: B, value: dec(1200, 'ether') }), "Max fee percentage must be between 0.5% and 100%")
     })
 
-    it("openTrove(): allows max fee < 0.5% in Recovery Mode", async () => {
-      await borrowerOperations.openTrove(th._100pct, dec(195000, 18), A, A, { from: A, value: dec(2000, 'ether') })
-
-      await priceFeed.setPrice(dec(100, 18))
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      await borrowerOperations.openTrove(0, dec(19500, 18), B, B, { from: B, value: dec(3100, 'ether') })
-      await priceFeed.setPrice(dec(50, 18))
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-      await borrowerOperations.openTrove(1, dec(19500, 18), C, C, { from: C, value: dec(3100, 'ether') })
-      await priceFeed.setPrice(dec(25, 18))
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-      await borrowerOperations.openTrove('4999999999999999', dec(19500, 18), D, D, { from: D, value: dec(3100, 'ether') })
-    })
-
     it("openTrove(): reverts if fee exceeds max fee percentage", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
       await openTrove({ extraLUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
@@ -3608,25 +3221,6 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("openTrove(): reverts when opening the trove would cause the TCR of the system to fall below the CCR", async () => {
-      await priceFeed.setPrice(dec(100, 18))
-
-      // Alice creates trove with 150% ICR.  System TCR = 150%.
-      await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-
-      const TCR = await th.getTCR(contracts)
-      assert.equal(TCR, dec(150, 16))
-
-      // Bob attempts to open a trove with ICR = 149%
-      // System TCR would fall below 150%
-      try {
-        const txBob = await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(149, 16)), extraParams: { from: bob } })
-        assert.isFalse(txBob.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-
     it("openTrove(): reverts if trove is already active", async () => {
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
@@ -3648,33 +3242,6 @@ contract('BorrowerOperations', async accounts => {
       } catch (err) {
         assert.include(err.message, 'revert')
       }
-    })
-
-    it("openTrove(): Can open a trove with ICR >= CCR when system is in Recovery Mode", async () => {
-      // --- SETUP ---
-      //  Alice and Bob add coll and withdraw such  that the TCR is ~150%
-      await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
-
-      const TCR = (await th.getTCR(contracts)).toString()
-      assert.equal(TCR, '1500000000000000000')
-
-      // price drops to 1ETH:100LUSD, reducing TCR below 150%
-      await priceFeed.setPrice('100000000000000000000');
-      const price = await priceFeed.getPrice()
-
-      assert.isTrue(await th.checkRecoveryMode(contracts))
-
-      // Carol opens at 150% ICR in Recovery Mode
-      const txCarol = (await openTrove({ extraLUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: carol } })).tx
-      assert.isTrue(txCarol.receipt.status)
-      assert.isTrue(await sortedTroves.contains(carol))
-
-      const carol_TroveStatus = await troveManager.getTroveStatus(carol)
-      assert.equal(carol_TroveStatus, 1)
-
-      const carolICR = await troveManager.getCurrentICR(carol, price)
-      assert.isTrue(carolICR.gt(toBN(dec(150, 16))))
     })
 
     it("openTrove(): Reverts opening a trove with min debt when system is in Recovery Mode", async () => {
@@ -3721,7 +3288,9 @@ contract('BorrowerOperations', async accounts => {
       // check coll and debt after
       assert.isTrue(coll_After.gt('0'))
       assert.isTrue(debt_After.gt('0'))
-
+      console.log(debt_After.toString())
+      console.log(expectedDebt.toString())
+      console.log(coll_After.toString())
       assert.isTrue(debt_After.eq(expectedDebt))
 
       // check active status
@@ -3811,6 +3380,8 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(L_ETH.gt(toBN('0')))
       assert.isTrue(L_LUSD.gt(toBN('0')))
 
+
+      await priceFeed.setPrice(DEFAULT_PRICE);
       // Bob opens trove
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
@@ -4020,279 +3591,6 @@ contract('BorrowerOperations', async accounts => {
 
       const res3 = await borrowerOperations.getCompositeDebt(dec(24423422357345049, 12))
       th.assertIsApproximatelyEqual(res3, LUSD_GAS_COMPENSATION.add(toBN(dec(24423422357345049, 12))))
-    })
-
-    //  --- getNewTCRFromTroveChange  - (external wrapper in Tester contract calls internal function) ---
-
-    describe("getNewTCRFromTroveChange() returns the correct TCR", async () => {
-
-      // 0, 0
-      it("collChange = 0, debtChange = 0", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-
-        // --- TEST ---
-        const collChange = 0
-        const debtChange = 0
-        const newTCR = await borrowerOperations.getNewTCRFromTroveChange(collChange, true, debtChange, true, price)
-
-        const expectedTCR = (troveColl.add(liquidatedColl)).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // 0, +ve
-      it("collChange = 0, debtChange is positive", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-
-        // --- TEST ---
-        const collChange = 0
-        const debtChange = dec(200, 18)
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, true, debtChange, true, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl)).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt).add(toBN(debtChange)))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // 0, -ve
-      it("collChange = 0, debtChange is negative", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-        // --- TEST ---
-        const collChange = 0
-        const debtChange = dec(100, 18)
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, true, debtChange, false, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl)).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt).sub(toBN(dec(100, 18))))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // +ve, 0
-      it("collChange is positive, debtChange is 0", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-        // --- TEST ---
-        const collChange = dec(2, 'ether')
-        const debtChange = 0
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, true, debtChange, true, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl).add(toBN(collChange))).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // -ve, 0
-      it("collChange is negative, debtChange is 0", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-
-        // --- TEST ---
-        const collChange = dec(1, 18)
-        const debtChange = 0
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, false, debtChange, true, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl).sub(toBN(dec(1, 'ether')))).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // -ve, -ve
-      it("collChange is negative, debtChange is negative", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-
-        // --- TEST ---
-        const collChange = dec(1, 18)
-        const debtChange = dec(100, 18)
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, false, debtChange, false, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl).sub(toBN(dec(1, 'ether')))).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt).sub(toBN(dec(100, 18))))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // +ve, +ve
-      it("collChange is positive, debtChange is positive", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-
-        // --- TEST ---
-        const collChange = dec(1, 'ether')
-        const debtChange = dec(100, 18)
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, true, debtChange, true, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl).add(toBN(dec(1, 'ether')))).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt).add(toBN(dec(100, 18))))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // +ve, -ve
-      it("collChange is positive, debtChange is negative", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-
-        // --- TEST ---
-        const collChange = dec(1, 'ether')
-        const debtChange = dec(100, 18)
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, true, debtChange, false, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl).add(toBN(dec(1, 'ether')))).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt).sub(toBN(dec(100, 18))))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
-
-      // -ve, +ve
-      it("collChange is negative, debtChange is positive", async () => {
-        // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
-        const troveColl = toBN(dec(1000, 'ether'))
-        const troveTotalDebt = toBN(dec(100000, 18))
-        const troveLUSDAmount = await getOpenTroveLUSDAmount(troveTotalDebt)
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, alice, alice, { from: alice, value: troveColl })
-        await borrowerOperations.openTrove(th._100pct, troveLUSDAmount, bob, bob, { from: bob, value: troveColl })
-
-        await priceFeed.setPrice(dec(100, 18))
-
-        const liquidationTx = await troveManager.liquidate(bob)
-        assert.isFalse(await sortedTroves.contains(bob))
-
-        const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
-
-        await priceFeed.setPrice(dec(200, 18))
-        const price = await priceFeed.getPrice()
-
-        // --- TEST ---
-        const collChange = dec(1, 18)
-        const debtChange = await getNetBorrowingAmount(dec(200, 18))
-        const newTCR = (await borrowerOperations.getNewTCRFromTroveChange(collChange, false, debtChange, true, price))
-
-        const expectedTCR = (troveColl.add(liquidatedColl).sub(toBN(collChange))).mul(price)
-          .div(troveTotalDebt.add(liquidatedDebt).add(toBN(debtChange)))
-
-        assert.isTrue(newTCR.eq(expectedTCR))
-      })
     })
 
     if (!withProxy) {
