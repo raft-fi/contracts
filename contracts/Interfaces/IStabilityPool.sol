@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 /*
  * The Stability Pool holds LUSD tokens deposited by Stability Pool depositors.

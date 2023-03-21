@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Interfaces/ILUSDToken.sol";
@@ -21,8 +21,6 @@ import "./Dependencies/CheckContract.sol";
 */
 
 contract LUSDToken is ERC20, CheckContract, ILUSDToken {
-    using SafeMath for uint256;
-
     string constant internal _VERSION = "1";
 
     // --- Data for EIP2612 ---
@@ -123,7 +121,7 @@ contract LUSDToken is ERC20, CheckContract, ILUSDToken {
         external
         override
     {
-        require(deadline >= now, 'LUSD: expired deadline');
+        require(deadline >= block.timestamp, 'LUSD: expired deadline');
         bytes32 digest = keccak256(abi.encodePacked('\x19\x01',
                          domainSeparator(), keccak256(abi.encode(
                          _PERMIT_TYPEHASH, owner, spender, amount,
@@ -139,7 +137,7 @@ contract LUSDToken is ERC20, CheckContract, ILUSDToken {
 
     // --- Internal operations ---
 
-    function _chainID() private pure returns (uint256 chainID) {
+    function _chainID() private view returns (uint256 chainID) {
         assembly {
             chainID := chainid()
         }

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/IPriceFeed.sol";
 import "./Interfaces/ITellorCaller.sol";
 import "./Dependencies/AggregatorV3Interface.sol";
@@ -21,8 +20,6 @@ import "./Dependencies/LiquityMath.sol";
 * Chainlink oracle.
 */
 contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
-    using SafeMath for uint256;
-
     string constant public NAME = "PriceFeed";
 
     AggregatorV3Interface public priceAggregator;  // Mainnet Chainlink aggregator
@@ -350,7 +347,7 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
     }
 
     function _chainlinkIsFrozen(ChainlinkResponse memory _response) internal view returns (bool) {
-        return block.timestamp.sub(_response.timestamp) > TIMEOUT;
+        return (block.timestamp - _response.timestamp) > TIMEOUT;
     }
 
     function _chainlinkPriceChangeAboveMax(ChainlinkResponse memory _currentResponse, ChainlinkResponse memory _prevResponse) internal pure returns (bool) {
@@ -365,7 +362,7 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
         * - If price decreased, the percentage deviation is in relation to the the previous price.
         * - If price increased, the percentage deviation is in relation to the current price.
         */
-        uint percentDeviation = maxPrice.sub(minPrice).mul(DECIMAL_PRECISION).div(maxPrice);
+        uint percentDeviation = (maxPrice - minPrice) * DECIMAL_PRECISION / maxPrice;
 
         // Return true if price has more than doubled, or more than halved.
         return percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
@@ -383,7 +380,7 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
     }
 
      function _tellorIsFrozen(TellorResponse  memory _tellorResponse) internal view returns (bool) {
-        return block.timestamp.sub(_tellorResponse.timestamp) > TIMEOUT;
+        return (block.timestamp - _tellorResponse.timestamp) > TIMEOUT;
     }
 
     function _bothOraclesLiveAndUnbrokenAndSimilarPrice
@@ -418,7 +415,7 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
         // Get the relative price difference between the oracles. Use the lower price as the denominator, i.e. the reference for the calculation.
         uint minPrice = Math.min(scaledTellorPrice, scaledChainlinkPrice);
         uint maxPrice = Math.max(scaledTellorPrice, scaledChainlinkPrice);
-        uint percentPriceDifference = maxPrice.sub(minPrice).mul(DECIMAL_PRECISION).div(minPrice);
+        uint percentPriceDifference = (maxPrice - minPrice) * DECIMAL_PRECISION / minPrice;
 
         /*
         * Return true if the relative price difference is <= 3%: if so, we assume both oracles are probably reporting
@@ -437,17 +434,17 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
         uint price;
         if (_answerDigits >= TARGET_DIGITS) {
             // Scale the returned price value down to Liquity's target precision
-            price = _price.div(10 ** (_answerDigits - TARGET_DIGITS));
+            price = _price / (10 ** (_answerDigits - TARGET_DIGITS));
         }
         else if (_answerDigits < TARGET_DIGITS) {
             // Scale the returned price value up to Liquity's target precision
-            price = _price.mul(10 ** (TARGET_DIGITS - _answerDigits));
+            price = _price * (10 ** (TARGET_DIGITS - _answerDigits));
         }
         return price;
     }
 
     function _scaleTellorPriceByDigits(uint _price) internal pure returns (uint) {
-        return _price.mul(10**(TARGET_DIGITS - TELLOR_DIGITS));
+        return _price * (10 ** (TARGET_DIGITS - TELLOR_DIGITS));
     }
 
     function _changeStatus(Status _status) internal {
@@ -534,6 +531,10 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
         * NOTE: Chainlink only offers a current decimals() value - there is no way to obtain the decimal precision used in a
         * previous round.  We assume the decimals used in the previous round are the same as the current round.
         */
+
+        if (_currentRoundId == 0) {
+            return prevChainlinkResponse;
+        }
 
         // Try to get the price data from the previous round:
         try priceAggregator.getRoundData(_currentRoundId - 1) returns

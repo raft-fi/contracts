@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "../TroveManager.sol";
 import "../BorrowerOperations.sol";
@@ -19,8 +19,6 @@ import "./EchidnaProxy.sol";
 // ~/.local/bin/echidna-test contracts/TestContracts/EchidnaTester.sol --contract EchidnaTester --config fuzzTests/echidna_config.yaml
 
 contract EchidnaTester {
-    using SafeMath for uint;
-
     uint constant private NUMBER_OF_ACTORS = 100;
     uint constant private INITIAL_BALANCE = 1e24;
     uint private MCR;
@@ -134,7 +132,7 @@ contract EchidnaTester {
     function getAdjustedETH(uint actorBalance, uint _ETH, uint ratio) internal view returns (uint) {
         uint price = priceFeedTestnet.getPrice();
         require(price > 0);
-        uint minETH = ratio.mul(LUSD_GAS_COMPENSATION).div(price);
+        uint minETH = ratio * LUSD_GAS_COMPENSATION / price;
         require(actorBalance > minETH);
         uint ETH = minETH + _ETH % (actorBalance - minETH);
         return ETH;
@@ -143,11 +141,11 @@ contract EchidnaTester {
     function getAdjustedLUSD(uint ETH, uint _LUSDAmount, uint ratio) internal view returns (uint) {
         uint price = priceFeedTestnet.getPrice();
         uint LUSDAmount = _LUSDAmount;
-        uint compositeDebt = LUSDAmount.add(LUSD_GAS_COMPENSATION);
+        uint compositeDebt = LUSDAmount + LUSD_GAS_COMPENSATION;
         uint ICR = LiquityMath._computeCR(ETH, compositeDebt, price);
         if (ICR < ratio) {
-            compositeDebt = ETH.mul(price).div(ratio);
-            LUSDAmount = compositeDebt.sub(LUSD_GAS_COMPENSATION);
+            compositeDebt = ETH * price / ratio;
+            LUSDAmount = compositeDebt - LUSD_GAS_COMPENSATION;
         }
         return LUSDAmount;
     }
