@@ -150,7 +150,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint collToSendToSP;
         uint debtToRedistribute;
         uint collToRedistribute;
-        uint collSurplus;
     }
 
     struct LiquidationTotals {
@@ -162,7 +161,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint totalCollToSendToSP;
         uint totalDebtToRedistribute;
         uint totalCollToRedistribute;
-        uint totalCollSurplus;
     }
 
     struct ContractsCache {
@@ -375,15 +373,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // Move liquidated ETH and LUSD to the appropriate pools
         stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
         _redistributeDebtAndColl(contractsCache.activePool, contractsCache.defaultPool, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
-        if (totals.totalCollSurplus > 0) {
-            contractsCache.activePool.sendETH(address(collSurplusPool), totals.totalCollSurplus);
-        }
 
         // Update system snapshots
         _updateSystemSnapshots_excludeCollRemainder(contractsCache.activePool, totals.totalCollGasCompensation);
 
         vars.liquidatedDebt = totals.totalDebtInSequence;
-        vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation).sub(totals.totalCollSurplus);
+        vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation);
         emit Liquidation(vars.liquidatedDebt, vars.liquidatedColl, totals.totalCollGasCompensation, totals.totalLUSDGasCompensation);
 
         // Send gas compensation to caller
@@ -446,15 +441,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // Move liquidated ETH and LUSD to the appropriate pools
         stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
         _redistributeDebtAndColl(activePoolCached, defaultPoolCached, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
-        if (totals.totalCollSurplus > 0) {
-            activePoolCached.sendETH(address(collSurplusPool), totals.totalCollSurplus);
-        }
 
         // Update system snapshots
         _updateSystemSnapshots_excludeCollRemainder(activePoolCached, totals.totalCollGasCompensation);
 
         vars.liquidatedDebt = totals.totalDebtInSequence;
-        vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation).sub(totals.totalCollSurplus);
+        vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation);
         emit Liquidation(vars.liquidatedDebt, vars.liquidatedColl, totals.totalCollGasCompensation, totals.totalLUSDGasCompensation);
 
         // Send gas compensation to caller
@@ -505,7 +497,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         newTotals.totalCollToSendToSP = oldTotals.totalCollToSendToSP.add(singleLiquidation.collToSendToSP);
         newTotals.totalDebtToRedistribute = oldTotals.totalDebtToRedistribute.add(singleLiquidation.debtToRedistribute);
         newTotals.totalCollToRedistribute = oldTotals.totalCollToRedistribute.add(singleLiquidation.collToRedistribute);
-        newTotals.totalCollSurplus = oldTotals.totalCollSurplus.add(singleLiquidation.collSurplus);
 
         return newTotals;
     }
