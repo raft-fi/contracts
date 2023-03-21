@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../Dependencies/IERC2612.sol";
 
-interface ILUSDToken is IERC20, IERC2612 {
+interface ILUSDToken is IERC20, IERC20Permit {
 
     // --- Events ---
 
