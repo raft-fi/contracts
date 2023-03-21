@@ -3,6 +3,7 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/CheckContract.sol";
@@ -122,7 +123,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         _updateUserSnapshots(msg.sender);
 
         if (_LQTYamount > 0) {
-            uint LQTYToWithdraw = LiquityMath._min(_LQTYamount, currentStake);
+            uint LQTYToWithdraw = Math.min(_LQTYamount, currentStake);
 
             uint newStake = currentStake.sub(LQTYToWithdraw);
 

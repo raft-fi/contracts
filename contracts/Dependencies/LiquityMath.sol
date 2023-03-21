@@ -20,14 +20,6 @@ library LiquityMath {
      */
     uint internal constant NICR_PRECISION = 1e20;
 
-    function _min(uint _a, uint _b) internal pure returns (uint) {
-        return (_a < _b) ? _a : _b;
-    }
-
-    function _max(uint _a, uint _b) internal pure returns (uint) {
-        return (_a >= _b) ? _a : _b;
-    }
-
     /*
     * Multiply two decimal numbers and use normal rounding rules:
     * -round product up if 19'th mantissa digit >= 5
