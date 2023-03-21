@@ -14,7 +14,6 @@ import "./Dependencies/SafeMath.sol";
 import "./Dependencies/LiquitySafeMath128.sol";
 import "./Dependencies/Ownable.sol";
 import "./Dependencies/CheckContract.sol";
-import "./Dependencies/console.sol";
 
 /*
  * The Stability Pool holds LUSD tokens deposited by Stability Pool depositors.

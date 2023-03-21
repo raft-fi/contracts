@@ -13,7 +13,6 @@ import "../LUSDToken.sol";
 import "./PriceFeedTestnet.sol";
 import "../SortedTroves.sol";
 import "./EchidnaProxy.sol";
-//import "../Dependencies/console.sol";
 
 // Run with:
 // rm -f fuzzTests/corpus/* # (optional)

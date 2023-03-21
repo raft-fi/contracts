@@ -3,7 +3,6 @@
 pragma solidity 0.6.11;
 
 import "../Dependencies/AggregatorV3Interface.sol";
-import "../Dependencies/console.sol";
 
 contract MockAggregator is AggregatorV3Interface {
 
