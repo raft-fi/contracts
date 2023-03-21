@@ -275,8 +275,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // --- Inner single liquidation functions ---
 
-    // Liquidate one trove, in Normal Mode.
-    function _liquidateNormalMode(
+    // Liquidate one trove
+    function _liquidate(
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         address _borrower,
@@ -368,7 +368,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         vars.LUSDInStabPool = stabilityPoolCached.getTotalLUSDDeposits();
 
         // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
-        LiquidationTotals memory totals = _getTotalsFromLiquidateTrovesSequence_NormalMode(contractsCache.activePool, contractsCache.defaultPool, vars.price, vars.LUSDInStabPool, _n);
+        LiquidationTotals memory totals = _getTotalsFromLiquidateTrovesSequence(contractsCache.activePool, contractsCache.defaultPool, vars.price, vars.LUSDInStabPool, _n);
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
@@ -387,7 +387,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _sendGasCompensation(contractsCache.activePool, msg.sender, totals.totalLUSDGasCompensation, totals.totalCollGasCompensation);
     }
 
-    function _getTotalsFromLiquidateTrovesSequence_NormalMode
+    function _getTotalsFromLiquidateTrovesSequence
     (
         IActivePool _activePool,
         IDefaultPool _defaultPool,
@@ -409,7 +409,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidateNormalMode(_activePool, _defaultPool, vars.user, vars.remainingLUSDInStabPool);
+                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.remainingLUSDInStabPool);
 
                 vars.remainingLUSDInStabPool -= singleLiquidation.debtToOffset;
 
@@ -436,7 +436,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         vars.LUSDInStabPool = stabilityPoolCached.getTotalLUSDDeposits();
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
-        LiquidationTotals memory totals = _getTotalsFromBatchLiquidate_NormalMode(activePoolCached, defaultPoolCached, vars.price, vars.LUSDInStabPool, _troveArray);
+        LiquidationTotals memory totals = _getTotalsFromBatchLiquidate(activePoolCached, defaultPoolCached, vars.price, vars.LUSDInStabPool, _troveArray);
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
@@ -455,7 +455,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _sendGasCompensation(activePoolCached, msg.sender, totals.totalLUSDGasCompensation, totals.totalCollGasCompensation);
     }
 
-    function _getTotalsFromBatchLiquidate_NormalMode
+    function _getTotalsFromBatchLiquidate
     (
         IActivePool _activePool,
         IDefaultPool _defaultPool,
@@ -476,7 +476,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidateNormalMode(_activePool, _defaultPool, vars.user, vars.remainingLUSDInStabPool);
+                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.remainingLUSDInStabPool);
                 vars.remainingLUSDInStabPool = vars.remainingLUSDInStabPool - singleLiquidation.debtToOffset;
 
                 // Add liquidation values to their respective running totals

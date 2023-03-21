@@ -1873,7 +1873,7 @@ contract('Gas cost tests', async accounts => {
     th.appendData({ gas: gas }, message, data)
   })
 
-  // With pending dist. rewards and SP gains (still closes) - partial offset (Highest gas cost scenario in Normal Mode)
+  // With pending dist. rewards and SP gains (still closes) - partial offset (Highest gas cost scenario)
   it("", async () => {
     const message = 'liquidate() 1 Trove, liquidated Trove has pending SP rewards and redistribution rewards, offset + redistribution.'
     // 10 accts each open Trove with 10 ether
@@ -1933,7 +1933,7 @@ contract('Gas cost tests', async accounts => {
 
   // pure offset
   it("", async () => {
-    const message = 'liquidate() 1 Trove Normal Mode, 30 active Troves, no ETH gain in pool, pure offset with SP'
+    const message = 'liquidate() 1 Trove, 30 active Troves, no ETH gain in pool, pure offset with SP'
     // 30 accts each open Trove with 10 ether, withdraw 180 LUSD, and provide 180 LUSD to Stability Pool
     await th.openTrove_allAccounts(accounts.slice(100, 130), contracts, dec(10, 'ether'), 0)
     await th.withdrawLUSD_allAccounts(accounts.slice(100, 130), contracts, dec(130, 18))
