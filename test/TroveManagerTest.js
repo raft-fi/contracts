@@ -877,7 +877,6 @@ contract('TroveManager', async accounts => {
     const bob_rawICR = bob_Coll.mul(toBN(dec(100, 18))).div(bob_Debt)
     assert.isTrue(bob_rawICR.gte(mv._MCR))
 
-    // Whale enters system, pulling it into Normal Mode
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
     // Liquidate Alice, Bob, Carol
     await assertRevert(troveManager.liquidate(alice), "TroveManager: nothing to liquidate")
@@ -1247,7 +1246,6 @@ contract('TroveManager', async accounts => {
     const bob_rawICR = bob_Coll.mul(toBN(dec(100, 18))).div(bob_Debt)
     assert.isTrue(bob_rawICR.gte(mv._MCR))
 
-    // Whale enters system, pulling it into Normal Mode
     await openTrove({ ICR: toBN(dec(10, 18)), extraLUSDAmount: dec(1, 24), extraParams: { from: whale } })
 
     //liquidate A, B, C
