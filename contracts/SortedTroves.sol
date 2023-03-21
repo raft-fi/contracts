@@ -48,11 +48,6 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
 
     string constant public NAME = "SortedTroves";
 
-    event TroveManagerAddressChanged(address _troveManagerAddress);
-    event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
-    event NodeAdded(address _id, uint _NICR);
-    event NodeRemoved(address _id);
-
     address public borrowerOperationsAddress;
 
     ITroveManager public troveManager;

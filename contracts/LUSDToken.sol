@@ -59,11 +59,6 @@ contract LUSDToken is CheckContract, ILUSDToken {
     address public immutable stabilityPoolAddress;
     address public immutable borrowerOperationsAddress;
 
-    // --- Events ---
-    event TroveManagerAddressChanged(address _troveManagerAddress);
-    event StabilityPoolAddressChanged(address _newStabilityPoolAddress);
-    event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
-
     constructor
     (
         address _troveManagerAddress,

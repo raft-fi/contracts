@@ -7,6 +7,7 @@ interface ISortedTroves {
 
     // --- Events ---
 
+    event TroveManagerAddressChanged(address _troveManagerAddress);
     event SortedTrovesAddressChanged(address _sortedDoublyLLAddress);
     event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
     event NodeAdded(address _id, uint _NICR);

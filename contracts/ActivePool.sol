@@ -27,13 +27,6 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
     uint256 internal ETH;  // deposited ether tracker
     uint256 internal LUSDDebt;
 
-    // --- Events ---
-
-    event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
-    event TroveManagerAddressChanged(address _newTroveManagerAddress);
-    event ActivePoolLUSDDebtUpdated(uint _LUSDDebt);
-    event ActivePoolETHBalanceUpdated(uint _ETH);
-
     // --- Contract setters ---
 
     function setAddresses(

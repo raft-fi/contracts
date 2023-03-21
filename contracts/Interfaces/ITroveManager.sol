@@ -11,6 +11,11 @@ import "./ILQTYStaking.sol";
 
 // Common interface for the Trove Manager.
 interface ITroveManager is ILiquityBase {
+    enum TroveManagerOperation {
+        applyPendingRewards,
+        liquidate,
+        redeemCollateral
+    }
 
     // --- Events ---
 
@@ -28,8 +33,8 @@ interface ITroveManager is ILiquityBase {
 
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _LUSDGasCompensation);
     event Redemption(uint _attemptedLUSDAmount, uint _actualLUSDAmount, uint _ETHSent, uint _ETHFee);
-    event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint stake, uint8 operation);
-    event TroveLiquidated(address indexed _borrower, uint _debt, uint _coll, uint8 operation);
+    event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, TroveManagerOperation _operation);
+    event TroveLiquidated(address indexed _borrower, uint _debt, uint _coll, TroveManagerOperation _operation);
     event BaseRateUpdated(uint _baseRate);
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
     event TotalStakesUpdated(uint _newTotalStakes);
