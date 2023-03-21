@@ -2,9 +2,9 @@
 
 pragma solidity 0.6.11;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Dependencies/SafeMath.sol";
-import "./Dependencies/Ownable.sol";
 import "./Dependencies/CheckContract.sol";
 
 
@@ -45,7 +45,7 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
 
-        _renounceOwnership();
+        renounceOwnership();
     }
 
     /* Returns the ETH state variable at ActivePool address.
