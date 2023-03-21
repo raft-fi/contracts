@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.11;
 
-import "./SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 library LiquityMath {
     using SafeMath for uint;

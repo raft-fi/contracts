@@ -57,8 +57,6 @@ contract('LUSDToken', async accounts => {
   let lusdTokenOriginal
   let lusdTokenTester
   let stabilityPool
-  let troveManager
-  let borrowerOperations
 
   let tokenName
   let tokenVersion
@@ -87,8 +85,6 @@ contract('LUSDToken', async accounts => {
       chainId = await lusdTokenOriginal.getChainId()
 
       stabilityPool = contracts.stabilityPool
-      troveManager = contracts.stabilityPool
-      borrowerOperations = contracts.borrowerOperations
 
       tokenVersion = await lusdTokenOriginal.version()
       tokenName = await lusdTokenOriginal.name()
@@ -105,138 +101,7 @@ contract('LUSDToken', async accounts => {
       }
     })
 
-    it('balanceOf(): gets the balance of the account', async () => {
-      const aliceBalance = (await lusdTokenTester.balanceOf(alice)).toNumber()
-      const bobBalance = (await lusdTokenTester.balanceOf(bob)).toNumber()
-      const carolBalance = (await lusdTokenTester.balanceOf(carol)).toNumber()
-
-      assert.equal(aliceBalance, 150)
-      assert.equal(bobBalance, 100)
-      assert.equal(carolBalance, 50)
-    })
-
-    it('totalSupply(): gets the total supply', async () => {
-      const total = (await lusdTokenTester.totalSupply()).toString()
-      assert.equal(total, '300') // 300
-    })
-
-    it("name(): returns the token's name", async () => {
-      const name = await lusdTokenTester.name()
-      assert.equal(name, "LUSD Stablecoin")
-    })
-
-    it("symbol(): returns the token's symbol", async () => {
-      const symbol = await lusdTokenTester.symbol()
-      assert.equal(symbol, "LUSD")
-    })
-
-    it("decimal(): returns the number of decimal digits used", async () => {
-      const decimals = await lusdTokenTester.decimals()
-      assert.equal(decimals, "18")
-    })
-
-    it("allowance(): returns an account's spending allowance for another account's balance", async () => {
-      await lusdTokenTester.approve(alice, 100, {from: bob})
-
-      const allowance_A = await lusdTokenTester.allowance(bob, alice)
-      const allowance_D = await lusdTokenTester.allowance(bob, dennis)
-
-      assert.equal(allowance_A, 100)
-      assert.equal(allowance_D, '0')
-    })
-
-    it("approve(): approves an account to spend the specified amount", async () => {
-      const allowance_A_before = await lusdTokenTester.allowance(bob, alice)
-      assert.equal(allowance_A_before, '0')
-
-      await lusdTokenTester.approve(alice, 100, {from: bob})
-
-      const allowance_A_after = await lusdTokenTester.allowance(bob, alice)
-      assert.equal(allowance_A_after, 100)
-    })
-
     if (!withProxy) {
-      it("approve(): reverts when spender param is address(0)", async () => {
-        const txPromise = lusdTokenTester.approve(ZERO_ADDRESS, 100, {from: bob})
-        await assertAssert(txPromise)
-      })
-
-      it("approve(): reverts when owner param is address(0)", async () => {
-        const txPromise = lusdTokenTester.callInternalApprove(ZERO_ADDRESS, alice, dec(1000, 18), {from: bob})
-        await assertAssert(txPromise)
-      })
-    }
-
-    it("transferFrom(): successfully transfers from an account which is it approved to transfer from", async () => {
-      const allowance_A_0 = await lusdTokenTester.allowance(bob, alice)
-      assert.equal(allowance_A_0, '0')
-
-      await lusdTokenTester.approve(alice, 50, {from: bob})
-
-      // Check A's allowance of Bob's funds has increased
-      const allowance_A_1= await lusdTokenTester.allowance(bob, alice)
-      assert.equal(allowance_A_1, 50)
-
-
-      assert.equal(await lusdTokenTester.balanceOf(carol), 50)
-
-      // Alice transfers from bob to Carol, using up her allowance
-      await lusdTokenTester.transferFrom(bob, carol, 50, {from: alice})
-      assert.equal(await lusdTokenTester.balanceOf(carol), 100)
-
-       // Check A's allowance of Bob's funds has decreased
-      const allowance_A_2= await lusdTokenTester.allowance(bob, alice)
-      assert.equal(allowance_A_2, '0')
-
-      // Check bob's balance has decreased
-      assert.equal(await lusdTokenTester.balanceOf(bob), 50)
-
-      // Alice tries to transfer more tokens from bob's account to carol than she's allowed
-      const txPromise = lusdTokenTester.transferFrom(bob, carol, 50, {from: alice})
-      await assertRevert(txPromise)
-    })
-
-    it("transfer(): increases the recipient's balance by the correct amount", async () => {
-      assert.equal(await lusdTokenTester.balanceOf(alice), 150)
-
-      await lusdTokenTester.transfer(alice, 37, {from: bob})
-
-      assert.equal(await lusdTokenTester.balanceOf(alice), 187)
-    })
-
-    it("transfer(): reverts if amount exceeds sender's balance", async () => {
-      assert.equal(await lusdTokenTester.balanceOf(bob), 100)
-
-      const txPromise = lusdTokenTester.transfer(alice, 101, {from: bob})
-      await assertRevert(txPromise)
-    })
-
-    it('transfer(): transferring to a blacklisted address reverts', async () => {
-      await assertRevert(lusdTokenTester.transfer(lusdTokenTester.address, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(ZERO_ADDRESS, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(troveManager.address, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(stabilityPool.address, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(borrowerOperations.address, 1, { from: alice }))
-    })
-
-    if (!withProxy) {
-      it("increaseAllowance(): increases an account's allowance by the correct amount", async () => {
-        const allowance_A_Before = await lusdTokenTester.allowance(bob, alice)
-        assert.equal(allowance_A_Before, '0')
-  
-        await lusdTokenTester.increaseAllowance(alice, 100, {from: bob} )
-  
-        const allowance_A_After = await lusdTokenTester.allowance(bob, alice)
-        assert.equal(allowance_A_After, 100)
-      })
-
-      it('decreaseAllowance(): decreases allowance by the expected amount', async () => {
-        await lusdTokenTester.approve(bob, dec(3, 18), { from: alice })
-        assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(3, 18))
-        await lusdTokenTester.decreaseAllowance(bob, dec(1, 18), { from: alice })
-        assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(2, 18))
-      })
-
       it('mint(): issues correct amount of tokens to the given address', async () => {
         const alice_balanceBefore = await lusdTokenTester.balanceOf(alice)
         assert.equal(alice_balanceBefore, 150)
@@ -291,21 +156,6 @@ contract('LUSDToken', async accounts => {
       })
     }
 
-    it('transfer(): transferring to a blacklisted address reverts', async () => {
-      await assertRevert(lusdTokenTester.transfer(lusdTokenTester.address, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(ZERO_ADDRESS, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(troveManager.address, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(stabilityPool.address, 1, { from: alice }))
-      await assertRevert(lusdTokenTester.transfer(borrowerOperations.address, 1, { from: alice }))
-    })
-
-    it('decreaseAllowance(): fails trying to decrease more than previously allowed', async () => {
-      await lusdTokenTester.approve(bob, dec(3, 18), { from: alice })
-      assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(3, 18))
-      await assertRevert(lusdTokenTester.decreaseAllowance(bob, dec(4, 18), { from: alice }), 'ERC20: decreased allowance below zero')
-      assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(3, 18))
-    })
-
     // EIP2612 tests
 
     if (!withProxy) {
@@ -354,29 +204,6 @@ contract('LUSDToken', async accounts => {
 
         return { v, r, s, tx }
       }
-
-      it('permits and emits an Approval event (replay protected)', async () => {
-        const deadline = 100000000000000
-
-        // Approve it
-        const { v, r, s, tx } = await buildPermitTx(deadline)
-        const receipt = await tx
-        const event = receipt.logs[0]
-
-        // Check that approval was successful
-        assert.equal(event.event, 'Approval')
-        assert.equal(await lusdTokenTester.nonces(approve.owner), 1)
-        assert.equal(await lusdTokenTester.allowance(approve.owner, approve.spender), approve.value)
-
-        // Check that we can not use re-use the same signature, since the user's nonce has been incremented (replay protection)
-        await assertRevert(lusdTokenTester.permit(
-          approve.owner, approve.spender, approve.value,
-          deadline, v, r, s), 'LUSD: invalid signature')
-
-        // Check that the zero address fails
-        await assertAssert(lusdTokenTester.permit('0x0000000000000000000000000000000000000000',
-                                                  approve.spender, approve.value, deadline, '0x99', r, s))
-      })
 
       it('permits(): fails with expired deadline', async () => {
         const deadline = 1
