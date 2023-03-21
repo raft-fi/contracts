@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.11;
 
-import "../../Dependencies/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../Dependencies/SafeMath.sol";
 import "./Address.sol";
 

@@ -219,17 +219,24 @@ contract('LUSDToken', async accounts => {
       await assertRevert(lusdTokenTester.transfer(borrowerOperations.address, 1, { from: alice }))
     })
 
-    it("increaseAllowance(): increases an account's allowance by the correct amount", async () => {
-      const allowance_A_Before = await lusdTokenTester.allowance(bob, alice)
-      assert.equal(allowance_A_Before, '0')
-
-      await lusdTokenTester.increaseAllowance(alice, 100, {from: bob} )
-
-      const allowance_A_After = await lusdTokenTester.allowance(bob, alice)
-      assert.equal(allowance_A_After, 100)
-    })
-
     if (!withProxy) {
+      it("increaseAllowance(): increases an account's allowance by the correct amount", async () => {
+        const allowance_A_Before = await lusdTokenTester.allowance(bob, alice)
+        assert.equal(allowance_A_Before, '0')
+  
+        await lusdTokenTester.increaseAllowance(alice, 100, {from: bob} )
+  
+        const allowance_A_After = await lusdTokenTester.allowance(bob, alice)
+        assert.equal(allowance_A_After, 100)
+      })
+
+      it('decreaseAllowance(): decreases allowance by the expected amount', async () => {
+        await lusdTokenTester.approve(bob, dec(3, 18), { from: alice })
+        assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(3, 18))
+        await lusdTokenTester.decreaseAllowance(bob, dec(1, 18), { from: alice })
+        assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(2, 18))
+      })
+
       it('mint(): issues correct amount of tokens to the given address', async () => {
         const alice_balanceBefore = await lusdTokenTester.balanceOf(alice)
         assert.equal(alice_balanceBefore, 150)
@@ -290,13 +297,6 @@ contract('LUSDToken', async accounts => {
       await assertRevert(lusdTokenTester.transfer(troveManager.address, 1, { from: alice }))
       await assertRevert(lusdTokenTester.transfer(stabilityPool.address, 1, { from: alice }))
       await assertRevert(lusdTokenTester.transfer(borrowerOperations.address, 1, { from: alice }))
-    })
-
-    it('decreaseAllowance(): decreases allowance by the expected amount', async () => {
-      await lusdTokenTester.approve(bob, dec(3, 18), { from: alice })
-      assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(3, 18))
-      await lusdTokenTester.decreaseAllowance(bob, dec(1, 18), { from: alice })
-      assert.equal((await lusdTokenTester.allowance(alice, bob)).toString(), dec(2, 18))
     })
 
     it('decreaseAllowance(): fails trying to decrease more than previously allowed', async () => {
