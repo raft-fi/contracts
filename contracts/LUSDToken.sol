@@ -5,7 +5,6 @@ pragma solidity 0.6.11;
 import "./Interfaces/ILUSDToken.sol";
 import "./Dependencies/SafeMath.sol";
 import "./Dependencies/CheckContract.sol";
-import "./Dependencies/console.sol";
 /*
 *
 * Based upon OpenZeppelin's ERC20 contract:
