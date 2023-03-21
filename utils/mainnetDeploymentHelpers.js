@@ -180,19 +180,6 @@ class MainnetDeploymentHelper {
     return LQTYContracts
   }
 
-  async deployUnipoolMainnet(deploymentState) {
-    const unipoolFactory = await this.getFactory("Unipool")
-    const unipool = await this.loadOrDeploy(unipoolFactory, 'unipool', deploymentState)
-
-    if (!this.configParams.ETHERSCAN_BASE_URL) {
-      console.log('No Etherscan Url defined, skipping verification')
-    } else {
-      await this.verifyContract('unipool', deploymentState)
-    }
-
-    return unipool
-  }
-
   async deployMultiTroveGetterMainnet(liquityCore, deploymentState) {
     const multiTroveGetterFactory = await this.getFactory("MultiTroveGetter")
     const multiTroveGetterParams = [

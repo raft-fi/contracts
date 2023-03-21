@@ -41,31 +41,6 @@ async function mainnetDeploy(configParams) {
   const liquityCore = await mdh.deployLiquityCoreMainnet(configParams.externalAddrs.TELLOR_MASTER, deploymentState)
   await mdh.logContractObjects(liquityCore)
 
-  // Check Uniswap Pair LUSD-ETH pair before pair creation
-  let LUSDWETHPairAddr = await uniswapV2Factory.getPair(liquityCore.lusdToken.address, configParams.externalAddrs.WETH_ERC20)
-  let WETHLUSDPairAddr = await uniswapV2Factory.getPair(configParams.externalAddrs.WETH_ERC20, liquityCore.lusdToken.address)
-  assert.equal(LUSDWETHPairAddr, WETHLUSDPairAddr)
-
-
-  if (LUSDWETHPairAddr == th.ZERO_ADDRESS) {
-    // Deploy Unipool for LUSD-WETH
-    await mdh.sendAndWaitForTransaction(uniswapV2Factory.createPair(
-      configParams.externalAddrs.WETH_ERC20,
-      liquityCore.lusdToken.address,
-      { gasPrice }
-    ))
-
-    // Check Uniswap Pair LUSD-WETH pair after pair creation (forwards and backwards should have same address)
-    LUSDWETHPairAddr = await uniswapV2Factory.getPair(liquityCore.lusdToken.address, configParams.externalAddrs.WETH_ERC20)
-    assert.notEqual(LUSDWETHPairAddr, th.ZERO_ADDRESS)
-    WETHLUSDPairAddr = await uniswapV2Factory.getPair(configParams.externalAddrs.WETH_ERC20, liquityCore.lusdToken.address)
-    console.log(`LUSD-WETH pair contract address after Uniswap pair creation: ${LUSDWETHPairAddr}`)
-    assert.equal(WETHLUSDPairAddr, LUSDWETHPairAddr)
-  }
-
-  // Deploy Unipool
-  const unipool = await mdh.deployUnipoolMainnet(deploymentState)
-
   // Deploy LQTY Contracts
   const LQTYContracts = await mdh.deployLQTYContractsMainnet(
     configParams.liquityAddrs.GENERAL_SAFE, // bounty address
@@ -82,13 +57,8 @@ async function mainnetDeploy(configParams) {
   // Deploy a read-only multi-trove getter
   const multiTroveGetter = await mdh.deployMultiTroveGetterMainnet(liquityCore, deploymentState)
 
-  // Connect Unipool to LQTYToken and the LUSD-WETH pair address, with a 6 week duration
-  const LPRewardsDuration = timeVals.SECONDS_IN_SIX_WEEKS
-  await mdh.connectUnipoolMainnet(unipool, LQTYContracts, LUSDWETHPairAddr, LPRewardsDuration)
-
-  // Log LQTY and Unipool addresses
+  // Log LQTY address
   await mdh.logContractObjects(LQTYContracts)
-  console.log(`Unipool address: ${unipool.address}`)
 
   // let latestBlock = await ethers.provider.getBlockNumber()
   let deploymentStartTime = await LQTYContracts.lqtyToken.getDeploymentStartTime()

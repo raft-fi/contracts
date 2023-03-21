@@ -16,8 +16,6 @@ const LQTYToken = artifacts.require("./LQTYToken.sol")
 const LockupContractFactory = artifacts.require("./LockupContractFactory.sol")
 const CommunityIssuance = artifacts.require("./CommunityIssuance.sol")
 
-const Unipool =  artifacts.require("./Unipool.sol")
-
 const LQTYTokenTester = artifacts.require("./LQTYTokenTester.sol")
 const CommunityIssuanceTester = artifacts.require("./CommunityIssuanceTester.sol")
 const StabilityPoolTester = artifacts.require("./StabilityPoolTester.sol")
