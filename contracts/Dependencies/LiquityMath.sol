@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
-
-import "@openzeppelin/contracts/math/SafeMath.sol";
+pragma solidity 0.8.19;
 
 library LiquityMath {
-    using SafeMath for uint;
-
     uint internal constant DECIMAL_PRECISION = 1e18;
 
     /* Precision for Nominal ICR (independent of price). Rationale for the value:
@@ -28,9 +24,9 @@ library LiquityMath {
     * Used only inside the exponentiation, _decPow().
     */
     function decMul(uint x, uint y) internal pure returns (uint decProd) {
-        uint prod_xy = x.mul(y);
+        uint prod_xy = x * y;
 
-        decProd = prod_xy.add(DECIMAL_PRECISION / 2).div(DECIMAL_PRECISION);
+        decProd = (prod_xy + DECIMAL_PRECISION / 2) / DECIMAL_PRECISION;
     }
 
     /*
@@ -63,26 +59,23 @@ library LiquityMath {
 
         // Exponentiation-by-squaring
         while (n > 1) {
-            if (n % 2 == 0) {
-                x = decMul(x, x);
-                n = n.div(2);
-            } else { // if (n % 2 != 0)
+            if (n % 2 != 0) {
                 y = decMul(x, y);
-                x = decMul(x, x);
-                n = (n.sub(1)).div(2);
             }
+            x = decMul(x, x);
+            n /= 2;
         }
 
         return decMul(x, y);
   }
 
     function _getAbsoluteDifference(uint _a, uint _b) internal pure returns (uint) {
-        return (_a >= _b) ? _a.sub(_b) : _b.sub(_a);
+        return (_a >= _b) ? _a - _b : _b - _a;
     }
 
     function _computeNominalCR(uint _coll, uint _debt) internal pure returns (uint) {
         if (_debt > 0) {
-            return _coll.mul(NICR_PRECISION).div(_debt);
+            return _coll * NICR_PRECISION / _debt;
         }
         // Return the maximal value for uint256 if the Trove has a debt of 0. Represents "infinite" CR.
         else { // if (_debt == 0)
@@ -92,7 +85,7 @@ library LiquityMath {
 
     function _computeCR(uint _coll, uint _debt, uint _price) internal pure returns (uint) {
         if (_debt > 0) {
-            uint newCollRatio = _coll.mul(_price).div(_debt);
+            uint newCollRatio = _coll * _price / _debt;
 
             return newCollRatio;
         }

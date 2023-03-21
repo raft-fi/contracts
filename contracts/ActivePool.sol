@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Interfaces/IActivePool.sol";
 import "./Dependencies/CheckContract.sol";
 
@@ -15,8 +14,6 @@ import "./Dependencies/CheckContract.sol";
  *
  */
 contract ActivePool is Ownable, CheckContract, IActivePool {
-    using SafeMath for uint256;
-
     string constant public NAME = "ActivePool";
 
     address public borrowerOperationsAddress;
@@ -74,7 +71,7 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
 
     function sendETH(address _account, uint _amount) external override {
         _requireCallerIsBOorTroveMorSP();
-        ETH = ETH.sub(_amount);
+        ETH -= _amount;
         emit ActivePoolETHBalanceUpdated(ETH);
         emit EtherSent(_account, _amount);
 
@@ -84,14 +81,14 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
 
     function increaseLUSDDebt(uint _amount) external override {
         _requireCallerIsBOorTroveM();
-        LUSDDebt  = LUSDDebt.add(_amount);
-        ActivePoolLUSDDebtUpdated(LUSDDebt);
+        LUSDDebt += _amount;
+        emit ActivePoolLUSDDebtUpdated(LUSDDebt);
     }
 
     function decreaseLUSDDebt(uint _amount) external override {
         _requireCallerIsBOorTroveMorSP();
-        LUSDDebt = LUSDDebt.sub(_amount);
-        ActivePoolLUSDDebtUpdated(LUSDDebt);
+        LUSDDebt -= _amount;
+        emit ActivePoolLUSDDebtUpdated(LUSDDebt);
     }
 
     // --- 'require' functions ---
@@ -122,7 +119,7 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
 
     receive() external payable {
         _requireCallerIsBorrowerOperationsOrDefaultPool();
-        ETH = ETH.add(msg.value);
+        ETH += msg.value;
         emit ActivePoolETHBalanceUpdated(ETH);
     }
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "../LQTY/LQTYToken.sol";
 
@@ -47,7 +47,7 @@ contract LQTYTokenTester is LQTYToken {
         _transfer(sender, recipient, amount);
     }
 
-    function getChainId() external pure returns (uint256 chainID) {
+    function getChainId() external view returns (uint256 chainID) {
         //return _chainID(); // it’s private
         assembly {
             chainID := chainid()

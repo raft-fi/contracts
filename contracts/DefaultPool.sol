@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import './Interfaces/IDefaultPool.sol';
 import "./Dependencies/CheckContract.sol";
 
@@ -15,8 +14,6 @@ import "./Dependencies/CheckContract.sol";
  * from the Default Pool to the Active Pool.
  */
 contract DefaultPool is Ownable, CheckContract, IDefaultPool {
-    using SafeMath for uint256;
-
     string constant public NAME = "DefaultPool";
 
     address public troveManagerAddress;
@@ -65,7 +62,7 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
     function sendETHToActivePool(uint _amount) external override {
         _requireCallerIsTroveManager();
         address activePool = activePoolAddress; // cache to save an SLOAD
-        ETH = ETH.sub(_amount);
+        ETH -= _amount;
         emit DefaultPoolETHBalanceUpdated(ETH);
         emit EtherSent(activePool, _amount);
 
@@ -75,13 +72,13 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 
     function increaseLUSDDebt(uint _amount) external override {
         _requireCallerIsTroveManager();
-        LUSDDebt = LUSDDebt.add(_amount);
+        LUSDDebt += _amount;
         emit DefaultPoolLUSDDebtUpdated(LUSDDebt);
     }
 
     function decreaseLUSDDebt(uint _amount) external override {
         _requireCallerIsTroveManager();
-        LUSDDebt = LUSDDebt.sub(_amount);
+        LUSDDebt -= _amount;
         emit DefaultPoolLUSDDebtUpdated(LUSDDebt);
     }
 
@@ -99,7 +96,7 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 
     receive() external payable {
         _requireCallerIsActivePool();
-        ETH = ETH.add(msg.value);
+        ETH += msg.value;
         emit DefaultPoolETHBalanceUpdated(ETH);
     }
 }

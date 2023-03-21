@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/CheckContract.sol";
 import "../Interfaces/ILQTYToken.sol";
@@ -13,8 +12,6 @@ import "../Dependencies/LiquityMath.sol";
 import "../Interfaces/ILUSDToken.sol";
 
 contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
-    using SafeMath for uint;
-
     // --- Data ---
     string constant public NAME = "LQTYStaking";
 
@@ -90,11 +87,11 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
 
        _updateUserSnapshots(msg.sender);
 
-        uint newStake = currentStake.add(_LQTYamount);
+        uint newStake = currentStake + _LQTYamount;
 
         // Increase user’s stake and total LQTY staked
         stakes[msg.sender] = newStake;
-        totalLQTYStaked = totalLQTYStaked.add(_LQTYamount);
+        totalLQTYStaked += _LQTYamount;
         emit TotalLQTYStakedUpdated(totalLQTYStaked);
 
         // Transfer LQTY from caller to this contract
@@ -125,11 +122,11 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         if (_LQTYamount > 0) {
             uint LQTYToWithdraw = Math.min(_LQTYamount, currentStake);
 
-            uint newStake = currentStake.sub(LQTYToWithdraw);
+            uint newStake = currentStake - LQTYToWithdraw;
 
             // Decrease user's stake and total LQTY staked
             stakes[msg.sender] = newStake;
-            totalLQTYStaked = totalLQTYStaked.sub(LQTYToWithdraw);
+            totalLQTYStaked = totalLQTYStaked - LQTYToWithdraw;
             emit TotalLQTYStakedUpdated(totalLQTYStaked);
 
             // Transfer unstaked LQTY to user
@@ -151,9 +148,9 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         _requireCallerIsTroveManager();
         uint ETHFeePerLQTYStaked;
 
-        if (totalLQTYStaked > 0) {ETHFeePerLQTYStaked = _ETHFee.mul(DECIMAL_PRECISION).div(totalLQTYStaked);}
+        if (totalLQTYStaked > 0) {ETHFeePerLQTYStaked = _ETHFee * DECIMAL_PRECISION / totalLQTYStaked;}
 
-        F_ETH = F_ETH.add(ETHFeePerLQTYStaked);
+        F_ETH += ETHFeePerLQTYStaked;
         emit F_ETHUpdated(F_ETH);
     }
 
@@ -161,9 +158,9 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
         _requireCallerIsBorrowerOperations();
         uint LUSDFeePerLQTYStaked;
 
-        if (totalLQTYStaked > 0) {LUSDFeePerLQTYStaked = _LUSDFee.mul(DECIMAL_PRECISION).div(totalLQTYStaked);}
+        if (totalLQTYStaked > 0) {LUSDFeePerLQTYStaked = _LUSDFee * DECIMAL_PRECISION / totalLQTYStaked;}
 
-        F_LUSD = F_LUSD.add(LUSDFeePerLQTYStaked);
+        F_LUSD += LUSDFeePerLQTYStaked;
         emit F_LUSDUpdated(F_LUSD);
     }
 
@@ -175,7 +172,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
 
     function _getPendingETHGain(address _user) internal view returns (uint) {
         uint F_ETH_Snapshot = snapshots[_user].F_ETH_Snapshot;
-        uint ETHGain = stakes[_user].mul(F_ETH.sub(F_ETH_Snapshot)).div(DECIMAL_PRECISION);
+        uint ETHGain = stakes[_user] * (F_ETH - F_ETH_Snapshot) / DECIMAL_PRECISION;
         return ETHGain;
     }
 
@@ -185,7 +182,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
 
     function _getPendingLUSDGain(address _user) internal view returns (uint) {
         uint F_LUSD_Snapshot = snapshots[_user].F_LUSD_Snapshot;
-        uint LUSDGain = stakes[_user].mul(F_LUSD.sub(F_LUSD_Snapshot)).div(DECIMAL_PRECISION);
+        uint LUSDGain = stakes[_user] * (F_LUSD - F_LUSD_Snapshot) / DECIMAL_PRECISION;
         return LUSDGain;
     }
 

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Dependencies/LiquityMath.sol";
 import "../Interfaces/IBorrowerOperations.sol";
 import "../Interfaces/ITroveManager.sol";
@@ -16,8 +15,6 @@ import "./LQTYStakingScript.sol";
 
 
 contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, LQTYStakingScript {
-    using SafeMath for uint;
-
     string constant public NAME = "BorrowerWrappersScript";
 
     ITroveManager immutable troveManager;
@@ -72,7 +69,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         // already checked in CollSurplusPool
         assert(balanceAfter > balanceBefore);
 
-        uint totalCollateral = balanceAfter.sub(balanceBefore).add(msg.value);
+        uint totalCollateral = balanceAfter - balanceBefore + msg.value;
 
         // Open trove with obtained collateral, plus collateral sent by user
         borrowerOperations.openTrove{ value: totalCollateral }(_maxFee, _LUSDAmount, _upperHint, _lowerHint);
@@ -87,7 +84,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
         uint collBalanceAfter = address(this).balance;
         uint lqtyBalanceAfter = lqtyToken.balanceOf(address(this));
-        uint claimedCollateral = collBalanceAfter.sub(collBalanceBefore);
+        uint claimedCollateral = collBalanceAfter - collBalanceBefore;
 
         // Add claimed ETH to trove, get more LUSD and stake it into the Stability Pool
         if (claimedCollateral > 0) {
@@ -101,7 +98,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         }
 
         // Stake claimed LQTY
-        uint claimedLQTY = lqtyBalanceAfter.sub(lqtyBalanceBefore);
+        uint claimedLQTY = lqtyBalanceAfter - lqtyBalanceBefore;
         if (claimedLQTY > 0) {
             lqtyStaking.stake(claimedLQTY);
         }
@@ -115,8 +112,8 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         // Claim gains
         lqtyStaking.unstake(0);
 
-        uint gainedCollateral = address(this).balance.sub(collBalanceBefore); // stack too deep issues :'(
-        uint gainedLUSD = lusdToken.balanceOf(address(this)).sub(lusdBalanceBefore);
+        uint gainedCollateral = address(this).balance - collBalanceBefore; // stack too deep issues :'(
+        uint gainedLUSD = lusdToken.balanceOf(address(this)) - lusdBalanceBefore;
 
         uint netLUSDAmount;
         // Top up trove and get more LUSD, keeping ICR constant
@@ -126,13 +123,13 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
             borrowerOperations.adjustTrove{ value: gainedCollateral }(_maxFee, 0, netLUSDAmount, true, _upperHint, _lowerHint);
         }
 
-        uint totalLUSD = gainedLUSD.add(netLUSDAmount);
+        uint totalLUSD = gainedLUSD + netLUSDAmount;
         if (totalLUSD > 0) {
             stabilityPool.provideToSP(totalLUSD, address(0));
 
             // Providing to Stability Pool also triggers LQTY claim, so stake it if any
             uint lqtyBalanceAfter = lqtyToken.balanceOf(address(this));
-            uint claimedLQTY = lqtyBalanceAfter.sub(lqtyBalanceBefore);
+            uint claimedLQTY = lqtyBalanceAfter - lqtyBalanceBefore;
             if (claimedLQTY > 0) {
                 lqtyStaking.stake(claimedLQTY);
             }
@@ -144,9 +141,9 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         uint price = priceFeed.fetchPrice();
         uint ICR = troveManager.getCurrentICR(address(this), price);
 
-        uint LUSDAmount = _collateral.mul(price).div(ICR);
+        uint LUSDAmount = _collateral * price / ICR;
         uint borrowingRate = troveManager.getBorrowingRateWithDecay();
-        uint netDebt = LUSDAmount.mul(LiquityMath.DECIMAL_PRECISION).div(LiquityMath.DECIMAL_PRECISION.add(borrowingRate));
+        uint netDebt = LUSDAmount * LiquityMath.DECIMAL_PRECISION / (LiquityMath.DECIMAL_PRECISION + borrowingRate);
 
         return netDebt;
     }

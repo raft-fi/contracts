@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
@@ -43,8 +42,6 @@ import "./Dependencies/CheckContract.sol";
 * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
 */
 contract SortedTroves is Ownable, CheckContract, ISortedTroves {
-    using SafeMath for uint256;
-
     string constant public NAME = "SortedTroves";
 
     address public borrowerOperationsAddress;
@@ -72,7 +69,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
     // --- Dependency setters ---
 
     function setParams(uint256 _size, address _troveManagerAddress, address _borrowerOperationsAddress) external override onlyOwner {
-        require(_size > 0, "SortedTroves: Size can’t be zero");
+        require(_size > 0, "SortedTroves: Size cannot be zero");
         checkContract(_troveManagerAddress);
         checkContract(_borrowerOperationsAddress);
 
@@ -145,7 +142,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
             data.nodes[nextId].prevId = _id;
         }
 
-        data.size = data.size.add(1);
+        ++data.size;
         emit NodeAdded(_id, _NICR);
     }
 
@@ -191,8 +188,8 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         }
 
         delete data.nodes[_id];
-        data.size = data.size.sub(1);
-        NodeRemoved(_id);
+        --data.size;
+        emit NodeRemoved(_id);
     }
 
     /*

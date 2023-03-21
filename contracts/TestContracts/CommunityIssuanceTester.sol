@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity 0.8.19;
 
 import "../LQTY/CommunityIssuance.sol";
 
@@ -16,8 +16,8 @@ contract CommunityIssuanceTester is CommunityIssuance {
     function unprotectedIssueLQTY() external returns (uint) {
         // No checks on caller address
 
-        uint latestTotalLQTYIssued = LQTYSupplyCap.mul(_getCumulativeIssuanceFraction()).div(DECIMAL_PRECISION);
-        uint issuance = latestTotalLQTYIssued.sub(totalLQTYIssued);
+        uint latestTotalLQTYIssued = LQTYSupplyCap * _getCumulativeIssuanceFraction() / DECIMAL_PRECISION;
+        uint issuance = latestTotalLQTYIssued - totalLQTYIssued;
 
         totalLQTYIssued = latestTotalLQTYIssued;
         return issuance;
