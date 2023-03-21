@@ -28,8 +28,6 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     uint constant public PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
-    uint constant public BORROWING_FEE_FLOOR = DECIMAL_PRECISION / 1000 * 5; // 0.5%
-
     IActivePool public activePool;
 
     IDefaultPool public defaultPool;

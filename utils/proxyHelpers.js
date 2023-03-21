@@ -138,10 +138,6 @@ class BorrowerOperationsProxy extends Proxy {
   async MIN_NET_DEBT(...params) {
     return this.proxyFunction('MIN_NET_DEBT', params)
   }
-
-  async BORROWING_FEE_FLOOR(...params) {
-    return this.proxyFunction('BORROWING_FEE_FLOOR', params)
-  }
 }
 
 class BorrowerWrappersProxy extends Proxy {
@@ -215,6 +211,10 @@ class TroveManagerProxy extends Proxy {
     return this.proxyFunction('getTroveOwnersCount', [])
   }
 
+  async borrowingSpread() {
+    return this.proxyFunction('borrowingSpread', [])
+  }
+
   async baseRate() {
     return this.proxyFunction('baseRate', [])
   }
@@ -245,6 +245,10 @@ class TroveManagerProxy extends Proxy {
 
   async getRedemptionFeeWithDecay(...params) {
     return this.proxyFunction('getRedemptionFeeWithDecay', params)
+  }
+
+  async setBorrowingSpread(...params) {
+    return this.forwardFunction(params, 'setBorrowingSpread(uint256)')
   }
 
   async getBorrowingRate() {

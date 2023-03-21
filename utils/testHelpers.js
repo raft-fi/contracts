@@ -327,7 +327,13 @@ class TestHelper {
   // Subtracts the borrowing fee
   static async getNetBorrowingAmount(contracts, debtWithFee) {
     const borrowingRate = await contracts.troveManager.getBorrowingRateWithDecay()
-    return this.toBN(debtWithFee).mul(MoneyValues._1e18BN).div(MoneyValues._1e18BN.add(borrowingRate))
+    const result = this.toBN(debtWithFee).mul(MoneyValues._1e18BN).div(MoneyValues._1e18BN.add(borrowingRate))
+
+    if (borrowingRate.umod(MoneyValues._1e18BN).isZero()) {
+      return result
+    }
+
+    return result.add(this.toBN('1'))
   }
 
   // Adds the borrowing fee
@@ -662,9 +668,7 @@ class TestHelper {
     if (!upperHint) upperHint = this.ZERO_ADDRESS
     if (!lowerHint) lowerHint = this.ZERO_ADDRESS
 
-    const MIN_DEBT = (
-      await this.getNetBorrowingAmount(contracts, await contracts.borrowerOperations.MIN_NET_DEBT())
-    ).add(this.toBN(1)) // add 1 to avoid rounding issues
+    const MIN_DEBT = await this.getNetBorrowingAmount(contracts, await contracts.borrowerOperations.MIN_NET_DEBT())
     const lusdAmount = MIN_DEBT.add(extraLUSDAmount)
 
     if (!ICR && !extraParams.value) ICR = this.toBN(this.dec(15, 17)) // 150%

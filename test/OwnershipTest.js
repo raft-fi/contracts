@@ -81,6 +81,18 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
       await testSetAddresses(troveManager, 11)
     })
+
+    it("setBorrowingSpread(): reverts when called by non-owner, or with wrong values", async () => {
+      // Attempt call from alice
+      await th.assertRevert(troveManager.setBorrowingSpread(100, { from: alice }))
+
+      // Attempt to set spread above max
+      await th.assertRevert(troveManager.setBorrowingSpread(th.toBN(th.dec(10, 18)), { from: owner }))
+
+      // Owner can successfully set spread
+      const txOwner = await troveManager.setBorrowingSpread(100, { from: owner })
+      assert.isTrue(txOwner.receipt.status)
+    })
   })
 
   describe('BorrowerOperations', async accounts => {
