@@ -218,7 +218,7 @@ contract LQTYToken is CheckContract, ILQTYToken {
 
     // --- EIP 2612 functionality ---
 
-    function domainSeparator() public view override returns (bytes32) {
+    function DOMAIN_SEPARATOR() public view override returns (bytes32) {
         if (_chainID() == _CACHED_CHAIN_ID) {
             return _CACHED_DOMAIN_SEPARATOR;
         } else {
@@ -241,7 +241,7 @@ contract LQTYToken is CheckContract, ILQTYToken {
     {
         require(deadline >= block.timestamp, 'LQTY: expired deadline');
         bytes32 digest = keccak256(abi.encodePacked('\x19\x01',
-                         domainSeparator(), keccak256(abi.encode(
+                         DOMAIN_SEPARATOR(), keccak256(abi.encode(
                          _PERMIT_TYPEHASH, owner, spender, amount,
                          _nonces[owner]++, deadline))));
         address recoveredAddress = ecrecover(digest, v, r, s);
@@ -346,11 +346,11 @@ contract LQTYToken is CheckContract, ILQTYToken {
         return _DECIMALS;
     }
 
-    function version() external view override returns (string memory) {
+    function version() external view returns (string memory) {
         return _VERSION;
     }
 
-    function permitTypeHash() external view override returns (bytes32) {
+    function permitTypeHash() external view returns (bytes32) {
         return _PERMIT_TYPEHASH;
     }
 }
