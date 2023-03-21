@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.11;
 
-import "../Dependencies/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Interfaces/ILQTYToken.sol";
 
 /*

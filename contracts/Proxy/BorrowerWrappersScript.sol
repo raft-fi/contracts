@@ -3,7 +3,7 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../Dependencies/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Dependencies/LiquityMath.sol";
 import "../Interfaces/IBorrowerOperations.sol";
 import "../Interfaces/ITroveManager.sol";

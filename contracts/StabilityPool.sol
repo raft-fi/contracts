@@ -3,6 +3,7 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import './Interfaces/IBorrowerOperations.sol';
 import './Interfaces/IStabilityPool.sol';
 import './Interfaces/IBorrowerOperations.sol';
@@ -11,7 +12,6 @@ import './Interfaces/ILUSDToken.sol';
 import './Interfaces/ISortedTroves.sol';
 import "./Interfaces/ICommunityIssuance.sol";
 import "./Dependencies/LiquityBase.sol";
-import "./Dependencies/SafeMath.sol";
 import "./Dependencies/LiquitySafeMath128.sol";
 import "./Dependencies/CheckContract.sol";
 

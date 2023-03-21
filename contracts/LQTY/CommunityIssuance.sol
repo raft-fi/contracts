@@ -3,12 +3,12 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Interfaces/ILQTYToken.sol";
 import "../Interfaces/ICommunityIssuance.sol";
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/LiquityMath.sol";
 import "../Dependencies/CheckContract.sol";
-import "../Dependencies/SafeMath.sol";
 
 
 contract CommunityIssuance is ICommunityIssuance, Ownable, CheckContract, BaseMath {

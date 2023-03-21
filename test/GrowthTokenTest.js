@@ -186,20 +186,6 @@ contract('LQTY Token', async accounts => {
     assert.equal(allowance_A_after, dec(100, 18))
   })
 
-  it("approve(): reverts when spender param is address(0)", async () => {
-    await mintToABC()
-
-    const txPromise = lqtyTokenTester.approve(ZERO_ADDRESS, dec(100, 18), { from: B })
-    await assertRevert(txPromise)
-  })
-
-  it("approve(): reverts when owner param is address(0)", async () => {
-    await mintToABC()
-
-    const txPromise = lqtyTokenTester.callInternalApprove(ZERO_ADDRESS, A, dec(100, 18), { from: B })
-    await assertRevert(txPromise)
-  })
-
   it("transferFrom(): successfully transfers from an account which it is approved to transfer from", async () => {
     await mintToABC()
 

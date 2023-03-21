@@ -3,8 +3,8 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Interfaces/IActivePool.sol";
-import "./Dependencies/SafeMath.sol";
 import "./Dependencies/CheckContract.sol";
 
 /*

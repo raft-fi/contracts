@@ -3,10 +3,10 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
-import "./Dependencies/SafeMath.sol";
 import "./Dependencies/CheckContract.sol";
 
 /*
