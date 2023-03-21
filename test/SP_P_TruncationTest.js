@@ -35,7 +35,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
   const getOpenTroveLUSDAmount = async (totalDebt) => th.getOpenTroveLUSDAmount(contracts, totalDebt)
   const openTrove = async (params) => th.openTrove(contracts, params)
-  const getLUSDAmountForDesiredDebt = async (desiredDebt) => (await getOpenTroveLUSDAmount(dec(desiredDebt, 18))).add(th.toBN(1))
+  const getLUSDAmountForDesiredDebt = async (desiredDebt) => await getOpenTroveLUSDAmount(dec(desiredDebt, 18))
 
 
   describe("Scale Factor issue tests", async () => {

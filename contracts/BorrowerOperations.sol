@@ -135,7 +135,7 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         LocalVariables_openTrove memory vars;
 
         _requireValidMaxFeePercentage(_maxFeePercentage);
-        _requireTroveisNotActive(contractsCache.troveManager, msg.sender);
+        _requireTroveIsNotActive(contractsCache.troveManager, msg.sender);
 
         vars.LUSDFee;
         vars.netDebt = _LUSDAmount;
@@ -223,7 +223,7 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         }
         _requireSingularCollChange(_collWithdrawal);
         _requireNonZeroAdjustment(_collWithdrawal, _LUSDChange);
-        _requireTroveisActive(contractsCache.troveManager, _borrower);
+        _requireTroveIsActive(contractsCache.troveManager, _borrower);
 
         // Confirm the operation is either a borrower adjusting their own trove, or a pure ETH transfer from the Stability Pool to a trove
         assert(msg.sender == _borrower || (msg.sender == stabilityPoolAddress && msg.value > 0 && _LUSDChange == 0));
@@ -287,7 +287,7 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         IActivePool activePoolCached = activePool;
         ILUSDToken lusdTokenCached = lusdToken;
 
-        _requireTroveisActive(troveManagerCached, msg.sender);
+        _requireTroveIsActive(troveManagerCached, msg.sender);
 
         troveManagerCached.applyPendingRewards(msg.sender);
 
@@ -433,12 +433,12 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         require(msg.value != 0 || _collWithdrawal != 0 || _LUSDChange != 0, "BorrowerOps: There must be either a collateral change or a debt change");
     }
 
-    function _requireTroveisActive(ITroveManager _troveManager, address _borrower) internal view {
+    function _requireTroveIsActive(ITroveManager _troveManager, address _borrower) internal view {
         uint status = _troveManager.getTroveStatus(_borrower);
         require(status == 1, "BorrowerOps: Trove does not exist or is closed");
     }
 
-    function _requireTroveisNotActive(ITroveManager _troveManager, address _borrower) internal view {
+    function _requireTroveIsNotActive(ITroveManager _troveManager, address _borrower) internal view {
         uint status = _troveManager.getTroveStatus(_borrower);
         require(status != 1, "BorrowerOps: Trove is active");
     }
@@ -467,9 +467,8 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         require(_lusdToken.balanceOf(_borrower) >= _debtRepayment, "BorrowerOps: Caller doesnt have enough LUSD to make repayment");
     }
 
-    function _requireValidMaxFeePercentage(uint _maxFeePercentage) internal pure {
-        require(_maxFeePercentage >= BORROWING_FEE_FLOOR && _maxFeePercentage <= DECIMAL_PRECISION,
-            "Max fee percentage must be between 0.5% and 100%");
+    function _requireValidMaxFeePercentage(uint256 _maxFeePercentage) internal view {
+        require(_maxFeePercentage >= troveManager.borrowingSpread() && _maxFeePercentage <= DECIMAL_PRECISION, "Max fee percentage must be between borrowing spread and 100%");
     }
 
     // --- ICR and TCR getters ---

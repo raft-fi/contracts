@@ -35,6 +35,7 @@ interface ITroveManager is ILiquityBase {
     event Redemption(uint _attemptedLUSDAmount, uint _actualLUSDAmount, uint _ETHSent, uint _ETHFee);
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, TroveManagerOperation _operation);
     event TroveLiquidated(address indexed _borrower, uint _debt, uint _coll, TroveManagerOperation _operation);
+    event BorrowingSpreadUpdated(uint256 _borrowingSpread);
     event BaseRateUpdated(uint _baseRate);
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
     event TotalStakesUpdated(uint _newTotalStakes);
@@ -116,6 +117,9 @@ interface ITroveManager is ILiquityBase {
     function getRedemptionRateWithDecay() external view returns (uint);
 
     function getRedemptionFeeWithDecay(uint _ETHDrawn) external view returns (uint);
+
+    function borrowingSpread() external view returns (uint256);
+    function setBorrowingSpread(uint256 _borrowingSpread) external;
 
     function getBorrowingRate() external view returns (uint);
     function getBorrowingRateWithDecay() external view returns (uint);

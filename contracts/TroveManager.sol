@@ -43,9 +43,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      * Half-life of 12h. 12h = 720 min
      * (1/2) = d^720 => d = (1/2)^(1/720)
      */
-    uint constant public MINUTE_DECAY_FACTOR = 999037758833783000;
-    uint constant public REDEMPTION_FEE_FLOOR = DECIMAL_PRECISION / 1000 * 5; // 0.5%
-    uint constant public MAX_BORROWING_FEE = DECIMAL_PRECISION / 100 * 5; // 5%
+    uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
+    uint256 public constant REDEMPTION_FEE_FLOOR = DECIMAL_PRECISION / 1000 * 5; // 0.5%
+    uint256 public constant MAX_BORROWING_SPREAD = DECIMAL_PRECISION / 100; // 1%
+    uint256 public constant MAX_BORROWING_FEE = DECIMAL_PRECISION / 100 * 5; // 5%
 
     // During bootsrap period redemptions are not allowed
     uint constant public BOOTSTRAP_PERIOD = 14 days;
@@ -56,7 +57,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     */
     uint constant public BETA = 2;
 
-    uint public baseRate;
+    uint256 public override borrowingSpread;
+    uint256 public baseRate;
 
     // The timestamp of the latest fee operation (redemption or new LUSD issuance)
     uint public lastFeeOperationTime;
@@ -111,6 +113,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Error trackers for the trove redistribution calculation
     uint public lastETHError_Redistribution;
     uint public lastLUSDDebtError_Redistribution;
+
+    bool private _addressesSet;
 
     /*
     * --- Variable container structs for liquidations ---
@@ -206,11 +210,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _sortedTrovesAddress,
         address _lqtyTokenAddress,
         address _lqtyStakingAddress
-    )
-        external
-        override
-        onlyOwner
-    {
+    ) external override onlyOwner {
+        require(!_addressesSet, "TroveManager: addresses already set");
+
         checkContract(_borrowerOperationsAddress);
         checkContract(_activePoolAddress);
         checkContract(_defaultPoolAddress);
@@ -235,6 +237,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         lqtyToken = ILQTYToken(_lqtyTokenAddress);
         lqtyStaking = ILQTYStaking(_lqtyStakingAddress);
 
+        _addressesSet = true;
+
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
@@ -246,8 +250,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit LQTYTokenAddressChanged(_lqtyTokenAddress);
         emit LQTYStakingAddressChanged(_lqtyStakingAddress);
-
-        renounceOwnership();
     }
 
     // --- Getters ---
@@ -1096,6 +1098,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // --- Borrowing fee functions ---
 
+    function setBorrowingSpread(uint256 _borrowingSpread) external override onlyOwner {
+        require(_borrowingSpread <= MAX_BORROWING_SPREAD, "TroveManager: Borrowing spread exceeds maximum");
+        borrowingSpread = _borrowingSpread;
+        emit BorrowingSpreadUpdated(_borrowingSpread);
+    }
+
     function getBorrowingRate() public view override returns (uint) {
         return _calcBorrowingRate(baseRate);
     }
@@ -1104,11 +1112,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcBorrowingRate(_calcDecayedBaseRate());
     }
 
-    function _calcBorrowingRate(uint _baseRate) internal pure returns (uint) {
-        return Math.min(
-            BORROWING_FEE_FLOOR + _baseRate,
-            MAX_BORROWING_FEE
-        );
+    function _calcBorrowingRate(uint256 _baseRate) internal view returns (uint256) {
+        return Math.min(borrowingSpread + _baseRate, MAX_BORROWING_FEE);
     }
 
     function getBorrowingFee(uint _LUSDDebt) external view override returns (uint) {
