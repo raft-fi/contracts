@@ -95,12 +95,6 @@ contract LQTYToken is CheckContract, ILQTYToken {
 
     ILockupContractFactory public immutable lockupContractFactory;
 
-    // --- Events ---
-
-    event CommunityIssuanceAddressSet(address _communityIssuanceAddress);
-    event LQTYStakingAddressSet(address _lqtyStakingAddress);
-    event LockupContractFactoryAddressSet(address _lockupContractFactoryAddress);
-
     // --- Functions ---
 
     constructor

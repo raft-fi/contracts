@@ -84,13 +84,6 @@ contract Unipool is LPTokenWrapper, Ownable, CheckContract, IUnipool {
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
 
-    event LQTYTokenAddressChanged(address _lqtyTokenAddress);
-    event UniTokenAddressChanged(address _uniTokenAddress);
-    event RewardAdded(uint256 reward);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
-
     // initialization function
     function setParams(
         address _lqtyTokenAddress,
