@@ -3,6 +3,7 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/Math.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
@@ -93,7 +94,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
 
             if (netLUSDDebt > remainingLUSD) {
                 if (netLUSDDebt > MIN_NET_DEBT) {
-                    uint maxRedeemableLUSD = LiquityMath._min(remainingLUSD, netLUSDDebt.sub(MIN_NET_DEBT));
+                    uint maxRedeemableLUSD = Math.min(remainingLUSD, netLUSDDebt.sub(MIN_NET_DEBT));
 
                     uint ETH = troveManager.getTroveColl(currentTroveuser)
                         .add(troveManager.getPendingETHReward(currentTroveuser));

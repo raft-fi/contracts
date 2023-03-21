@@ -3,6 +3,7 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/Math.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
@@ -333,7 +334,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
         *
         */
-            debtToOffset = LiquityMath._min(_debt, _LUSDInStabPool);
+            debtToOffset = Math.min(_debt, _LUSDInStabPool);
             collToSendToSP = _coll.mul(debtToOffset).div(_debt);
             debtToRedistribute = _debt.sub(debtToOffset);
             collToRedistribute = _coll.sub(collToSendToSP);
@@ -541,7 +542,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         internal returns (SingleRedemptionValues memory singleRedemption)
     {
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
-        singleRedemption.LUSDLot = LiquityMath._min(_maxLUSDamount, Troves[_borrower].debt.sub(LUSD_GAS_COMPENSATION));
+        singleRedemption.LUSDLot = Math.min(_maxLUSDamount, Troves[_borrower].debt.sub(LUSD_GAS_COMPENSATION));
 
         // Get the ETHLot of equivalent value in USD
         singleRedemption.ETHLot = singleRedemption.LUSDLot.mul(DECIMAL_PRECISION).div(_price);
@@ -1060,7 +1061,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint redeemedLUSDFraction = _ETHDrawn.mul(_price).div(_totalLUSDSupply);
 
         uint newBaseRate = decayedBaseRate.add(redeemedLUSDFraction.div(BETA));
-        newBaseRate = LiquityMath._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
+        newBaseRate = Math.min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
         //assert(newBaseRate <= DECIMAL_PRECISION); // This is already enforced in the line above
         assert(newBaseRate > 0); // Base rate is always non-zero after redemption
 
@@ -1082,7 +1083,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _calcRedemptionRate(uint _baseRate) internal pure returns (uint) {
-        return LiquityMath._min(
+        return Math.min(
             REDEMPTION_FEE_FLOOR.add(_baseRate),
             DECIMAL_PRECISION // cap at a maximum of 100%
         );
@@ -1113,7 +1114,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _calcBorrowingRate(uint _baseRate) internal pure returns (uint) {
-        return LiquityMath._min(
+        return Math.min(
             BORROWING_FEE_FLOOR.add(_baseRate),
             MAX_BORROWING_FEE
         );
