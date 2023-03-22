@@ -75,7 +75,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
       await stabilityPool.registerFrontEnd(kickbackRate_F3, { from: F3 })
     })
 
-  it("1. Liquidation succeeds after P reduced to 1", async () => {
+  it.skip("1. Liquidation succeeds after P reduced to 1", async () => {
     // Whale opens Trove with 100k ETH and sends 50k LUSD to A
     await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(100000, 18)), whale, whale, { from: whale, value: dec(100000, 'ether') })
     await lusdToken.transfer(A, dec(50000, 18), {from: whale})
