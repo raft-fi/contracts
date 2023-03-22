@@ -98,7 +98,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
             borrowerOperations.adjustTrove(_maxFee, 0, LUSDAmount, true, _upperHint, _lowerHint, claimedCollateral);
             // Provide withdrawn LUSD to Stability Pool
             if (LUSDAmount > 0) {
-                stabilityPool.provideToSP(LUSDAmount, address(0));
+                stabilityPool.provideToSP(LUSDAmount);
             }
         }
 
@@ -130,7 +130,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
         uint totalLUSD = gainedLUSD + netLUSDAmount;
         if (totalLUSD > 0) {
-            stabilityPool.provideToSP(totalLUSD, address(0));
+            stabilityPool.provideToSP(totalLUSD);
 
             // Providing to Stability Pool also triggers LQTY claim, so stake it if any
             uint lqtyBalanceAfter = lqtyToken.balanceOf(address(this));

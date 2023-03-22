@@ -1157,7 +1157,7 @@ contract('Gas cost tests', async accounts => {
 
     // >>FF time and one account tops up, triggers LQTY gains for all
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-    await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
+    await stabilityPool.provideToSP(dec(1, 18), { from: _10_Accounts[0] })
 
     // Check the other accounts have LQTY gain
     for (account of _10_Accounts.slice(1)) {
@@ -1183,7 +1183,7 @@ contract('Gas cost tests', async accounts => {
 
   //   // >> FF time and one account tops up, triggers LQTY gains for all
   //   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-  //   await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
+  //   await stabilityPool.provideToSP(dec(1, 18), { from: _10_Accounts[0] })
 
   //   // Check the other accounts have LQTY gain
   //   for (account of _10_Accounts.slice(1)) {
@@ -1209,7 +1209,7 @@ contract('Gas cost tests', async accounts => {
 
     // >>FF time and one account tops up, triggers LQTY gains for all
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-    await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
+    await stabilityPool.provideToSP(dec(1, 18), { from: _10_Accounts[0] })
 
     // Check the other accounts have LQTY gain
     for (account of _10_Accounts.slice(1)) {
@@ -1344,7 +1344,7 @@ contract('Gas cost tests', async accounts => {
 
   //   // >>FF time and one account tops up, triggers LQTY gains for all
   //   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-  //   await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
+  //   await stabilityPool.provideToSP(dec(1, 18), { from: _10_Accounts[0] })
 
   //   // Check the other accounts have LQTY gain
   //   for (account of _10_Accounts.slice(1)) {
@@ -1368,7 +1368,7 @@ contract('Gas cost tests', async accounts => {
 
     // >>FF time and one account tops up, triggers LQTY gains for all
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-    await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
+    await stabilityPool.provideToSP(dec(1, 18), { from: _10_Accounts[0] })
 
     // Check the other accounts have LQTY gain
     for (account of _10_Accounts.slice(1)) {
@@ -1726,7 +1726,7 @@ contract('Gas cost tests', async accounts => {
 
     // Account 100 provides 600 LUSD to pool
     await borrowerOperations.withdrawLUSD(_100pct, dec(600, 18), accounts[100], ZERO_ADDRESS, { from: accounts[100] })
-    await stabilityPool.provideToSP(dec(600, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(600, 18), { from: accounts[100] })
 
     // Initial liquidations - full offset - makes SP reward terms and SP non-zero
     await troveManager.liquidate(accounts[2], { from: accounts[0] })
@@ -1764,7 +1764,7 @@ contract('Gas cost tests', async accounts => {
 
     // Account 100 provides 360 LUSD to SP
     await borrowerOperations.withdrawLUSD(_100pct, dec(600, 18), accounts[100], ZERO_ADDRESS, { from: accounts[100] })
-    await stabilityPool.provideToSP(dec(360, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(360, 18), { from: accounts[100] })
 
     // Initial liquidations - full offset - makes SP reward terms and SP non-zero
     await troveManager.liquidate(accounts[2], { from: accounts[0] })
@@ -1774,7 +1774,7 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidate(accounts[4], { from: accounts[0] })
 
     // Account 5 provides another 200 to the SP
-    await stabilityPool.provideToSP(dec(200, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(200, 18), { from: accounts[100] })
 
     const hasPendingRewards = await troveManager.hasPendingRewards(accounts[1])
     console.log("Liquidee has pending rewards: " + hasPendingRewards)
@@ -1806,14 +1806,14 @@ contract('Gas cost tests', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
 
     // Set up some "previous" liquidations triggering partial offsets, and pending rewards for all troves
-    await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(100, 18), { from: accounts[100] })
     await troveManager.liquidate(accounts[2], { from: accounts[0] })
 
-    await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: accounts[101] })
+    await stabilityPool.provideToSP(dec(100, 18), { from: accounts[101] })
     await troveManager.liquidate(accounts[3], { from: accounts[0] })
 
     // pool refilled with 100 LUSD
-    await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: accounts[102] })
+    await stabilityPool.provideToSP(dec(100, 18), { from: accounts[102] })
 
     const hasPendingRewards = await troveManager.hasPendingRewards(accounts[1])
     console.log("Liquidee has pending rewards: " + hasPendingRewards)
@@ -1845,14 +1845,14 @@ contract('Gas cost tests', async accounts => {
 
     // Set up some "previous" liquidations that trigger partial offsets,
     //and create pending rewards for all troves
-    await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(100, 18), { from: accounts[100] })
     await troveManager.liquidate(accounts[2], { from: accounts[0] })
 
-    await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: accounts[101] })
+    await stabilityPool.provideToSP(dec(100, 18), { from: accounts[101] })
     await troveManager.liquidate(accounts[3], { from: accounts[0] })
 
     // Pool refilled with 50 LUSD
-    await stabilityPool.provideToSP(dec(50, 18), ZERO_ADDRESS, { from: accounts[102] })
+    await stabilityPool.provideToSP(dec(50, 18), { from: accounts[102] })
 
     // Account 1 opens trove
     await borrowerOperations.openTrove(_100pct, dec(30, 18), accounts[1], ZERO_ADDRESS, { from: accounts[1], value: dec(1, 'ether') })
@@ -1886,7 +1886,7 @@ contract('Gas cost tests', async accounts => {
     await borrowerOperations.withdrawLUSD(_100pct, dec(130, 18), accounts[98], ZERO_ADDRESS, { from: accounts[98] })
 
     // Acct 99 deposits 1 LUSD to SP
-    await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: accounts[99] })
+    await stabilityPool.provideToSP(dec(1, 18), { from: accounts[99] })
 
     //Account 97 opens Trove with 1 ether and withdraws 180 LUSD (inc gas comp)
     await th.openTrove_allAccounts([accounts[97]], contracts, dec(1, 'ether'), 0)
@@ -1894,7 +1894,7 @@ contract('Gas cost tests', async accounts => {
 
     // Acct 100 withdraws 1800 LUSD and deposits it to the SP
     await borrowerOperations.withdrawLUSD(_100pct, dec(1750, 18), accounts[100], ZERO_ADDRESS, { from: accounts[100] })
-    await stabilityPool.provideToSP(dec(1750, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(1750, 18), { from: accounts[100] })
 
     // Price drops too $100, accounts 99 and 100 ICR fall below MCR
     await priceFeed.setPrice(dec(100, 18))
@@ -1918,7 +1918,7 @@ contract('Gas cost tests', async accounts => {
     await troveManager.liquidate(accounts[98], { from: accounts[0] })
 
     // Account 7 deposits 1 LUSD in the Stability Pool
-    await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(1, 18), { from: accounts[100] })
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1938,7 +1938,7 @@ contract('Gas cost tests', async accounts => {
     await th.openTrove_allAccounts(accounts.slice(100, 130), contracts, dec(10, 'ether'), 0)
     await th.withdrawLUSD_allAccounts(accounts.slice(100, 130), contracts, dec(130, 18))
 
-    await stabilityPool.provideToSP(dec(130, 18), ZERO_ADDRESS, { from: accounts[100] })
+    await stabilityPool.provideToSP(dec(130, 18), { from: accounts[100] })
 
     //1 acct open Trove with 1 ether and withdraws 180 LUSD (inc gas comp)
     await th.openTrove_allAccounts([accounts[1]], contracts, dec(1, 'ether'), 0)

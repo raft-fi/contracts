@@ -73,7 +73,7 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
     const randomLUSDAmount = th.randAmountInWei(1, maxLUSDDeposit)
 
-    const depositTx = await stabilityPool.provideToSP(randomLUSDAmount, ZERO_ADDRESS, { from: randomDepositor })
+    const depositTx = await stabilityPool.provideToSP(randomLUSDAmount, { from: randomDepositor })
 
     assert.isTrue(depositTx.receipt.status)
 
@@ -161,7 +161,7 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
     console.log(`Depositors count: ${currentDepositors.length}`)
 
     for (depositor of currentDepositors) {
-      const initialDeposit = (await stabilityPool.deposits(depositor))[0]
+      const initialDeposit = await stabilityPool.deposits(depositor)
       const finalDeposit = await stabilityPool.getCompoundedLUSDDeposit(depositor)
       const ETHGain = await stabilityPool.getDepositorETHGain(depositor)
       const ETHinSP = (await stabilityPool.getETH()).toString()

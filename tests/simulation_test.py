@@ -197,7 +197,7 @@ def test_run_simulation(add_accounts, contracts, print_expectations):
     whale_coll = 30000.0
     contracts.borrowerOperations.openTrove(MAX_FEE, Wei(10e24), ZERO_ADDRESS, ZERO_ADDRESS,
                                            { 'from': accounts[0], 'value': floatToWei(whale_coll) })
-    contracts.stabilityPool.provideToSP(floatToWei(stability_initial), ZERO_ADDRESS, { 'from': accounts[0] })
+    contracts.stabilityPool.provideToSP(floatToWei(stability_initial), { 'from': accounts[0] })
 
     active_accounts = []
     inactive_accounts = [*range(1, len(accounts))]

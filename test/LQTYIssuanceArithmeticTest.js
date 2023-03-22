@@ -8,15 +8,6 @@ const th = testHelpers.TestHelper
 const timeValues = testHelpers.TimeValues
 const dec = th.dec
 
-
-const logLQTYBalanceAndError = (LQTYBalance_A, expectedLQTYBalance_A) => {
-  console.log(
-    `Expected final balance: ${expectedLQTYBalance_A}, \n
-    Actual final balance: ${LQTYBalance_A}, \n
-    Abs. error: ${expectedLQTYBalance_A.sub(LQTYBalance_A)}`
-  )
-}
-
 const repeatedlyIssueLQTY = async (stabilityPool, timeBetweenIssuances, duration) => {
   const startTimestamp = th.toBN(await th.getLatestBlockTimestamp(web3))
   let timePassed = 0
@@ -41,7 +32,7 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
   let stabilityPool
   let wstETHTokenMock
 
-  const [alice, frontEnd_1] = accounts;
+  const [, alice] = accounts;
 
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
@@ -67,9 +58,7 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
     await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 
-    await th.fillAccountsWithWstETH(contracts, [
-      alice, frontEnd_1
-    ])
+    await th.fillAccountsWithWstETH(contracts, [alice])
   })
 
   // Accuracy tests
@@ -778,12 +767,9 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
 
   // TODO: Convert to 25mil issuance schedule
   it.skip("Frequent token issuance: issuance event every year, for 30 years", async () => {
-    // Register front end with kickback rate = 100%
-    await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
-
     // Alice opens trove and deposits to SP
     await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
-    await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
+    await stabilityPool.provideToSP(dec(1, 18), { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForLQTY(alice))
 
@@ -813,12 +799,9 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
 
     // TODO: Convert to 25mil issuance schedule
   it.skip("Frequent token issuance: issuance event every day, for 30 years", async () => {
-    // Register front end with kickback rate = 100%
-    await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
-
     // Alice opens trove and deposits to SP
     await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
-    await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
+    await stabilityPool.provideToSP(dec(1, 18), { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForLQTY(alice))
 
@@ -847,12 +830,9 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
 
   // TODO: Convert to 25mil issuance schedule
   it.skip("Frequent token issuance: issuance event every minute, for 1 month", async () => {
-    // Register front end with kickback rate = 100%
-    await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
-
     // Alice opens trove and deposits to SP
     await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
-    await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
+    await stabilityPool.provideToSP(dec(1, 18), { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForLQTY(alice))
 
@@ -882,12 +862,9 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
 
   // TODO: Convert to 25mil issuance schedule
   it.skip("Frequent token issuance: issuance event every minute, for 1 year", async () => {
-    // Register front end with kickback rate = 100%
-    await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
-
     // Alice opens trove and deposits to SP
     await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
-    await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
+    await stabilityPool.provideToSP(dec(1, 18), { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForLQTY(alice))
 

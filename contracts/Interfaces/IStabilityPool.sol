@@ -25,10 +25,8 @@ pragma solidity 0.8.19;
  *
  * An LQTY issuance event occurs at every deposit operation, and every liquidation.
  *
- * Each deposit is tagged with the address of the front end through which it was made.
- *
  * All deposits earn a share of the issued LQTY in proportion to the deposit as a share of total deposits. The LQTY earned
- * by a given deposit, is split between the depositor and the front end through which the deposit was made, based on the front end's kickbackRate.
+ * by a given deposit, is earned by the depositor.
  *
  * Please see the system Readme for an overview:
  * https://github.com/liquity/dev/blob/main/README.md#lqty-issuance-to-stability-providers
@@ -37,7 +35,7 @@ interface IStabilityPool {
 
     // --- Events ---
     event CollateralTokenAddressSet(address _collateralToken);
-    
+
     event StabilityPoolETHBalanceUpdated(uint _newBalance);
     event StabilityPoolLUSDBalanceUpdated(uint _newBalance);
 
@@ -56,17 +54,11 @@ interface IStabilityPool {
     event EpochUpdated(uint128 _currentEpoch);
     event ScaleUpdated(uint128 _currentScale);
 
-    event FrontEndRegistered(address indexed _frontEnd, uint _kickbackRate);
-    event FrontEndTagSet(address indexed _depositor, address indexed _frontEnd);
-
     event DepositSnapshotUpdated(address indexed _depositor, uint _P, uint _S, uint _G);
-    event FrontEndSnapshotUpdated(address indexed _frontEnd, uint _P, uint _G);
     event UserDepositChanged(address indexed _depositor, uint _newDeposit);
-    event FrontEndStakeChanged(address indexed _frontEnd, uint _newFrontEndStake, address _depositor);
 
     event ETHGainWithdrawn(address indexed _depositor, uint _ETH, uint _LUSDLoss);
     event LQTYPaidToDepositor(address indexed _depositor, uint _LQTY);
-    event LQTYPaidToFrontEnd(address indexed _frontEnd, uint _LQTY);
     event EtherSent(address _to, uint _amount);
 
     // --- Functions ---
@@ -89,8 +81,6 @@ interface IStabilityPool {
 
     /*
      * Initial checks:
-     * - Frontend is registered or zero address
-     * - Sender is not a registered frontend
      * - _amount is not zero
      * ---
      * - Triggers a LQTY issuance, based on time passed since the last issuance. The LQTY issuance is shared between *all* depositors and front ends
@@ -99,7 +89,7 @@ interface IStabilityPool {
      * - Sends the tagged front end's accumulated LQTY gains to the tagged front end
      * - Increases deposit and tagged front end's stake, and takes new snapshots for each.
      */
-    function provideToSP(uint _amount, address _frontEndTag) external;
+    function provideToSP(uint _amount) external;
 
     /*
      * Initial checks:
@@ -133,16 +123,6 @@ interface IStabilityPool {
 
     /*
      * Initial checks:
-     * - Frontend (sender) not already registered
-     * - User (sender) has no deposit
-     * - _kickbackRate is in the range [0, 100%]
-     * ---
-     * Front end makes a one-time selection of kickback rate upon registering
-     */
-    function registerFrontEnd(uint _kickbackRate) external;
-
-    /*
-     * Initial checks:
      * - Caller is TroveManager
      * ---
      * Cancels out the specified debt against the LUSD contained in the Stability Pool (as far as possible)
@@ -169,28 +149,14 @@ interface IStabilityPool {
 
     /*
      * Calculate the LQTY gain earned by a deposit since its last snapshots were taken.
-     * If not tagged with a front end, the depositor gets a 100% cut of what their deposit earned.
-     * Otherwise, their cut of the deposit's earnings is equal to the kickbackRate, set by the front end through
-     * which they made their deposit.
+     * The depositor gets a 100% cut of what their deposit earned.
      */
     function getDepositorLQTYGain(address _depositor) external view returns (uint);
-
-    /*
-     * Return the LQTY gain earned by the front end.
-     */
-    function getFrontEndLQTYGain(address _frontEnd) external view returns (uint);
 
     /*
      * Return the user's compounded deposit.
      */
     function getCompoundedLUSDDeposit(address _depositor) external view returns (uint);
-
-    /*
-     * Return the front end's compounded stake.
-     *
-     * The front end's compounded stake is equal to the sum of its depositors' compounded deposits.
-     */
-    function getCompoundedFrontEndStake(address _frontEnd) external view returns (uint);
 
     function depositCollateral(address _from, uint _amount) external;
 }

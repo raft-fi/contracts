@@ -81,8 +81,8 @@ contract EchidnaProxy {
     }
 
     // Pool Manager
-    function provideToSPPrx(uint _amount, address _frontEndTag) external {
-        stabilityPool.provideToSP(_amount, _frontEndTag);
+    function provideToSPPrx(uint _amount) external {
+        stabilityPool.provideToSP(_amount);
     }
 
     function withdrawFromSPPrx(uint _amount) external {

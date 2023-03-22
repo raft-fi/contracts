@@ -16,8 +16,8 @@ contract StabilityPoolScript is CheckContract {
         stabilityPool = _stabilityPool;
     }
 
-    function provideToSP(uint _amount, address _frontEndTag) external {
-        stabilityPool.provideToSP(_amount, _frontEndTag);
+    function provideToSP(uint _amount) external {
+        stabilityPool.provideToSP(_amount);
     }
 
     function withdrawFromSP(uint _amount) external {

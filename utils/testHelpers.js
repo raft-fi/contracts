@@ -1084,13 +1084,6 @@ class TestHelper {
     return LC
   }
 
-
-  static async registerFrontEnds(frontEnds, stabilityPool) {
-    for (const frontEnd of frontEnds) {
-      await stabilityPool.registerFrontEnd(this.dec(5, 17), { from: frontEnd })  // default kickback rate of 50%
-    }
-  }
-
   // --- Time functions ---
 
   static async fastForwardTime(seconds, currentWeb3Provider) {

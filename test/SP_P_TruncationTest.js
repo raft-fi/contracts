@@ -11,12 +11,10 @@ const getDifference = th.getDifference
 const TroveManagerTester = artifacts.require("TroveManagerTester")
 const LUSDToken = artifacts.require("LUSDToken")
 
-const GAS_PRICE = 10000000
-
 contract('StabilityPool Scale Factor issue tests', async accounts => {
   const [owner,
     whale,
-    A, B, C, D, E, F, F1, F2, F3
+    A, B, C, D, E, F
   ] = accounts;
 
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
@@ -69,19 +67,10 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
       await priceFeed.setPrice(dec(200, 18))
 
-      // Register 3 front ends
-      const kickbackRate_F1 = toBN(dec(5, 17)) // F1 kicks 50% back to depositor
-      const kickbackRate_F2 = toBN(dec(80, 16)) // F2 kicks 80% back to depositor
-      const kickbackRate_F3 = toBN(dec(1, 18)) // F2 kicks 100% back to depositor
-
-      await stabilityPool.registerFrontEnd(kickbackRate_F1, { from: F1 })
-      await stabilityPool.registerFrontEnd(kickbackRate_F2, { from: F2 })
-      await stabilityPool.registerFrontEnd(kickbackRate_F3, { from: F3 })
-
       await th.fillAccountsWithWstETH(contracts, [
         owner,
         whale,
-        A, B, C, D, E, F, F1, F2, F3,
+        A, B, C, D, E,
         bountyAddress, lpRewardsAddress, multisig
       ])
     })
@@ -99,7 +88,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A  deposits to SP - i.e. minimum needed to reduce P to 1e9 from a 2000 debt liquidation
     const deposit_0 = th.toBN("2000000000000000002001")
-    await stabilityPool.provideToSP(deposit_0, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_0, {from: A})
 
     console.log("P0:")
     const P_0 = await stabilityPool.P()
@@ -120,7 +109,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP back up to deposit 0 level, i.e. just enough to reduce P by 1e9 from a 2k debt liq.
     const deposit_1 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_1, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -136,7 +125,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP to same pre-liq level again
     const deposit_2 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_2, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -162,7 +151,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A  deposits to SP - i.e. minimum needed to reduce P to 1e9 from a 2000 debt liquidation
     const deposit_0 = th.toBN("2000000000000000002001")
-    await stabilityPool.provideToSP(deposit_0, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_0, {from: A})
 
     console.log("P0:")
     const P_0 = await stabilityPool.P()
@@ -183,7 +172,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP back up to deposit 0 level, i.e. just enough to reduce P by 1e9 from a 2k debt liq.
     const deposit_1 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_1, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -199,16 +188,15 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP to same pre-liq level again
     const deposit_2 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_2, {from: A})
 
     // Whale gives LUSD to D,E,F
     const newDeposits =  [th.toBN(1), th.toBN(dec(10000, 18)), th.toBN(dec(20000, 18))]
     const newDepositors = [D,E,F]
-    const frontEnds = [ZERO_ADDRESS, F1, F2]
 
     for (let i=0; i < 3; i ++) {
       await lusdToken.transfer(newDepositors[i], newDeposits[i], {from: whale})
-      await stabilityPool.provideToSP(newDeposits[i], frontEnds[i], {from: newDepositors[i]})
+      await stabilityPool.provideToSP(newDeposits[i], {from: newDepositors[i]})
       assert.isTrue((await stabilityPool.getCompoundedLUSDDeposit(newDepositors[i])).eq(newDeposits[i]))
     }
   })
@@ -228,7 +216,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A  deposits to SP - i.e. minimum needed to reduce P to 1e9 from a 2000 debt liquidation
     const deposit_0 = th.toBN("2000000000000000002001")
-    await stabilityPool.provideToSP(deposit_0, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_0, {from: A})
 
     console.log("P0:")
     const P_0 = await stabilityPool.P()
@@ -258,7 +246,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP back up to deposit 0 level, i.e. just enough to reduce P by 1e9 from a 2k debt liq.
     const deposit_1 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_1, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -280,7 +268,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     // A re-fills SP to ~1.000000001x pre-liq level, i.e. to trigger a newProductFactor == 1e9,
     // (and trigger scale change)
     const deposit_2 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits()).add(th.toBN(dec(2,12)))
-    await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_2, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -316,7 +304,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A  deposits to SP - i.e. minimum needed to reduce P to 1e9 from a 2000 debt liquidation
     const deposit_0 = th.toBN("2000000000000000002001")
-    await stabilityPool.provideToSP(deposit_0, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_0, {from: A})
 
     console.log("P0:")
     const P_0 = await stabilityPool.P()
@@ -346,7 +334,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP back up to deposit 0 level, i.e. just enough to reduce P by 1e9 from a 2k debt liq.
     const deposit_1 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_1, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
      await priceFeed.setPrice(dec(140, 18))
@@ -368,7 +356,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     // A re-fills SP to ~2x pre-liq level, i.e. to trigger a newProductFactor > 1e9,
     // and trigger scale change and *increase* raw value of P again.
     const deposit_2 = deposit_0.mul(th.toBN(2)).sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_2, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -406,7 +394,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A  deposits to SP - i.e. minimum needed to reduce P to 1e9 from a 2000 debt liquidation
     const deposit_0 = th.toBN("2000000000000000002001")
-    await stabilityPool.provideToSP(deposit_0, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_0, {from: A})
 
     console.log("P0:")
     const P_0 = await stabilityPool.P()
@@ -436,7 +424,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP back up to deposit 0 level, i.e. just enough to reduce P by 1e9 from a 2k debt liq.
     const deposit_1 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_1, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -458,12 +446,12 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     // D makes deposit of 1000 LUSD
     const D_deposit = dec(1, 21)
     await lusdToken.transfer(D, dec(1, 21), {from: whale})
-    await stabilityPool.provideToSP(D_deposit, ZERO_ADDRESS, {from: D})
+    await stabilityPool.provideToSP(D_deposit, {from: D})
 
     // A re-fills SP to ~1.000000001x pre-liq level, i.e. to trigger a newProductFactor == 1e9,
     // (and trigger scale change)
     const deposit_2 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits()).add(th.toBN(dec(2,12)))
-    await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_2, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -505,7 +493,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A  deposits to SP - i.e. minimum needed to reduce P to 1e9 from a 2000 debt liquidation
     const deposit_0 = th.toBN("2000000000000000002001")
-    await stabilityPool.provideToSP(deposit_0, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_0, {from: A})
 
     console.log("P0:")
     const P_0 = await stabilityPool.P()
@@ -535,7 +523,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
 
     // A re-fills SP back up to deposit 0 level, i.e. just enough to reduce P by 1e9 from a 2k debt liq.
     const deposit_1 = deposit_0.sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_1, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
     await priceFeed.setPrice(dec(140, 18))
@@ -557,12 +545,12 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     // D makes deposit of 1000 LUSD
     const D_deposit = dec(1, 21)
     await lusdToken.transfer(D, dec(1, 21), {from: whale})
-    await stabilityPool.provideToSP(D_deposit, ZERO_ADDRESS, {from: D})
+    await stabilityPool.provideToSP(D_deposit, {from: D})
 
     // A re-fills SP to ~2x pre-liq level, i.e. to trigger a newProductFactor > 1e9,
     // and trigger scale change and *increase* raw value of P again.
     const deposit_2 = deposit_0.mul(th.toBN(2)).sub(await stabilityPool.getTotalLUSDDeposits())
-    await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
+    await stabilityPool.provideToSP(deposit_2, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
     await priceFeed.setPrice(dec(140, 18))
