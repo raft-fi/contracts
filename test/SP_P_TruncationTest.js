@@ -96,7 +96,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     assert.equal(P_0, dec(1,18))
 
     // Price drop -> liquidate Trove A -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(A, { from: owner });
     assert.equal(await troveManager.getTroveStatus(A), 3) // status: closed by liq
     await priceFeed.setPrice(dec(200, 18))
@@ -112,7 +112,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(B, { from: owner });
     assert.equal(await troveManager.getTroveStatus(B), 3) // status: closed by liq
     await priceFeed.setPrice(dec(200, 18))
@@ -128,7 +128,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(C, { from: owner });
     assert.equal(await troveManager.getTroveStatus(C), 3) // status: closed by liq
     await priceFeed.setPrice(dec(200, 18))
@@ -157,7 +157,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     assert.equal(P_0, dec(1,18))
 
     // Price drop -> liquidate Trove A -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(A, { from: owner });
     assert.equal(await troveManager.getTroveStatus(A), 3) // status: closed by liq
     await priceFeed.setPrice(dec(200, 18))
@@ -173,7 +173,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(B, { from: owner });
     assert.equal(await troveManager.getTroveStatus(B), 3) // status: closed by liq
     await priceFeed.setPrice(dec(200, 18))
@@ -225,7 +225,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     console.log(scale)
 
     // Price drop -> liquidate Trove A -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(A, { from: owner });
     console.log("LIQ 1")
     assert.equal(await troveManager.getTroveStatus(A), 3) // status: closed by liq
@@ -246,7 +246,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(B, { from: owner });
     console.log("LIQ 2")
     assert.equal(await troveManager.getTroveStatus(B), 3) // status: closed by liq
@@ -268,7 +268,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(C, { from: owner });
     console.log("LIQ 3")
     assert.equal(await troveManager.getTroveStatus(C), 3) // status: closed by liq
@@ -311,7 +311,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     console.log(scale)
 
     // Price drop -> liquidate Trove A -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(A, { from: owner });
     console.log("LIQ 1")
     assert.equal(await troveManager.getTroveStatus(A), 3) // status: closed by liq
@@ -332,7 +332,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+     await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(B, { from: owner });
     console.log("LIQ 2")
     assert.equal(await troveManager.getTroveStatus(B), 3) // status: closed by liq
@@ -354,7 +354,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(C, { from: owner });
     console.log("LIQ 3")
     assert.equal(await troveManager.getTroveStatus(C), 3) // status: closed by liq
@@ -399,7 +399,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     console.log(scale)
 
     // Price drop -> liquidate Trove A -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(A, { from: owner });
     console.log("LIQ 1")
     assert.equal(await troveManager.getTroveStatus(A), 3) // status: closed by liq
@@ -420,7 +420,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(B, { from: owner });
     console.log("LIQ 2")
     assert.equal(await troveManager.getTroveStatus(B), 3) // status: closed by liq
@@ -447,7 +447,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(C, { from: owner });
     console.log("LIQ 3")
     assert.equal(await troveManager.getTroveStatus(C), 3) // status: closed by liq
@@ -496,7 +496,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     console.log(scale)
 
     // Price drop -> liquidate Trove A -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(A, { from: owner });
     console.log("LIQ 1")
     assert.equal(await troveManager.getTroveStatus(A), 3) // status: closed by liq
@@ -517,7 +517,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_1, ZERO_ADDRESS, {from: A})
 
      // Price drop -> liquidate Trove B -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(B, { from: owner });
     console.log("LIQ 2")
     assert.equal(await troveManager.getTroveStatus(B), 3) // status: closed by liq
@@ -544,7 +544,7 @@ contract('StabilityPool Scale Factor issue tests', async accounts => {
     await stabilityPool.provideToSP(deposit_2, ZERO_ADDRESS, {from: A})
 
     // Price drop -> liquidate Trove C -> price rises
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(140, 18))
     await troveManager.liquidate(C, { from: owner });
     console.log("LIQ 3")
     assert.equal(await troveManager.getTroveStatus(C), 3) // status: closed by liq

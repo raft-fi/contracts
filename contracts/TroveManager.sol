@@ -280,6 +280,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         address _borrower,
+        uint _ICR,
         uint _LUSDInStabPool
     )
         internal
@@ -299,10 +300,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         singleLiquidation.LUSDGasCompensation = LUSD_GAS_COMPENSATION;
         uint collToLiquidate = singleLiquidation.entireTroveColl - singleLiquidation.collGasCompensation;
 
-        (singleLiquidation.debtToOffset,
-        singleLiquidation.collToSendToSP,
-        singleLiquidation.debtToRedistribute,
-        singleLiquidation.collToRedistribute) = _getOffsetAndRedistributionVals(singleLiquidation.entireTroveDebt, collToLiquidate, _LUSDInStabPool);
+        if (_ICR <= _100pct) {
+            singleLiquidation.debtToOffset = 0;
+            singleLiquidation.collToSendToSP = 0;
+            singleLiquidation.debtToRedistribute = singleLiquidation.entireTroveDebt;
+            singleLiquidation.collToRedistribute = collToLiquidate;
+        }
+        else {
+            (singleLiquidation.debtToOffset,
+            singleLiquidation.collToSendToSP,
+            singleLiquidation.debtToRedistribute,
+            singleLiquidation.collToRedistribute) = _getOffsetAndRedistributionVals(singleLiquidation.entireTroveDebt, collToLiquidate, _LUSDInStabPool);   
+        }
 
         _closeTrove(_borrower, Status.closedByLiquidation);
         emit TroveLiquidated(_borrower, singleLiquidation.entireTroveDebt, singleLiquidation.entireTroveColl, TroveManagerOperation.liquidate);
@@ -409,7 +418,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.remainingLUSDInStabPool);
+                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR, vars.remainingLUSDInStabPool);
 
                 vars.remainingLUSDInStabPool -= singleLiquidation.debtToOffset;
 
@@ -476,7 +485,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.remainingLUSDInStabPool);
+                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR, vars.remainingLUSDInStabPool);
                 vars.remainingLUSDInStabPool = vars.remainingLUSDInStabPool - singleLiquidation.debtToOffset;
 
                 // Add liquidation values to their respective running totals

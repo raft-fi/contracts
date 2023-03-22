@@ -475,9 +475,9 @@ contract('TroveManager', async accounts => {
     const TCR_Before = (await th.getTCR(contracts)).toString()
 
     await openTrove({ ICR: toBN(dec(202, 16)), extraParams: { from: defaulter_1 } })
-    await openTrove({ ICR: toBN(dec(190, 16)), extraParams: { from: defaulter_2 } })
-    await openTrove({ ICR: toBN(dec(196, 16)), extraParams: { from: defaulter_3 } })
-    await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_4 } })
+    await openTrove({ ICR: toBN(dec(218, 16)), extraParams: { from: defaulter_2 } })
+    await openTrove({ ICR: toBN(dec(206, 16)), extraParams: { from: defaulter_3 } })
+    await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_4 } })
 
     assert.isTrue((await sortedTroves.contains(defaulter_1)))
     assert.isTrue((await sortedTroves.contains(defaulter_2)))
@@ -520,9 +520,9 @@ contract('TroveManager', async accounts => {
     await openTrove({ ICR: toBN(dec(200, 18)), extraParams: { from: dennis } })
 
     await openTrove({ ICR: toBN(dec(202, 16)), extraParams: { from: defaulter_1 } })
-    await openTrove({ ICR: toBN(dec(190, 16)), extraParams: { from: defaulter_2 } })
-    await openTrove({ ICR: toBN(dec(196, 16)), extraParams: { from: defaulter_3 } })
-    await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_4 } })
+    await openTrove({ ICR: toBN(dec(208, 16)), extraParams: { from: defaulter_2 } })
+    await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_3 } })
+    await openTrove({ ICR: toBN(dec(219, 16)), extraParams: { from: defaulter_4 } })
 
     assert.isTrue((await sortedTroves.contains(defaulter_1)))
     assert.isTrue((await sortedTroves.contains(defaulter_2)))
@@ -903,7 +903,7 @@ contract('TroveManager', async accounts => {
     await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: B } })
     await openTrove({ ICR: toBN(dec(3, 18)), extraParams: { from: C } })
 
-    await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
+    await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_1 } })
 
     // B provides to SP
     await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: B })
@@ -1400,10 +1400,10 @@ contract('TroveManager', async accounts => {
     await openTrove({ ICR: toBN(dec(8, 18)), extraParams: { from: carol } })
     await openTrove({ ICR: toBN(dec(80, 18)), extraParams: { from: dennis } })
 
-    await openTrove({ ICR: toBN(dec(199, 16)), extraParams: { from: defaulter_1 } })
-    await openTrove({ ICR: toBN(dec(156, 16)), extraParams: { from: defaulter_2 } })
-    await openTrove({ ICR: toBN(dec(183, 16)), extraParams: { from: defaulter_3 } })
-    await openTrove({ ICR: toBN(dec(166, 16)), extraParams: { from: defaulter_4 } })
+    await openTrove({ ICR: toBN(dec(209, 16)), extraParams: { from: defaulter_1 } })
+    await openTrove({ ICR: toBN(dec(216, 16)), extraParams: { from: defaulter_2 } })
+    await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_3 } })
+    await openTrove({ ICR: toBN(dec(206, 16)), extraParams: { from: defaulter_4 } })
 
     assert.isTrue((await sortedTroves.contains(defaulter_1)))
     assert.isTrue((await sortedTroves.contains(defaulter_2)))
@@ -1502,9 +1502,9 @@ contract('TroveManager', async accounts => {
 
     const A_deposit = toBN(dec(10000, 18))
     const B_deposit = toBN(dec(30000, 18))
-    const { collateral: A_coll, totalDebt: A_debt } = await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: A_deposit, extraParams: { from: alice } })
-    const { collateral: B_coll, totalDebt: B_debt } = await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: B_deposit, extraParams: { from: bob } })
-    const { collateral: C_coll, totalDebt: C_debt } = await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+    const { collateral: A_coll, totalDebt: A_debt } = await openTrove({ ICR: toBN(dec(201, 16)), extraLUSDAmount: A_deposit, extraParams: { from: alice } })
+    const { collateral: B_coll, totalDebt: B_debt } = await openTrove({ ICR: toBN(dec(201, 16)), extraLUSDAmount: B_deposit, extraParams: { from: bob } })
+    const { collateral: C_coll, totalDebt: C_debt } = await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: carol } })
 
     const liquidatedColl = A_coll.add(B_coll).add(C_coll)
     const liquidatedDebt = A_debt.add(B_debt).add(C_debt)
@@ -1929,8 +1929,8 @@ contract('TroveManager', async accounts => {
     const spDeposit = toBN(dec(500000, 18))
     await openTrove({ ICR: toBN(dec(100, 18)), extraLUSDAmount: spDeposit, extraParams: { from: whale } })
 
-    const { totalDebt: A_debt } = await openTrove({ ICR: toBN(dec(190, 16)), extraParams: { from: alice } })
-    const { totalDebt: B_debt } = await openTrove({ ICR: toBN(dec(120, 16)), extraParams: { from: bob } })
+    const { totalDebt: A_debt } = await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: alice } })
+    const { totalDebt: B_debt } = await openTrove({ ICR: toBN(dec(212, 16)), extraParams: { from: bob } })
     await openTrove({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
     await openTrove({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
 
@@ -1987,8 +1987,8 @@ contract('TroveManager', async accounts => {
     const spDeposit = toBN(dec(500000, 18))
     await openTrove({ ICR: toBN(dec(100, 18)), extraLUSDAmount: spDeposit, extraParams: { from: whale } })
 
-    const { totalDebt: A_debt } = await openTrove({ ICR: toBN(dec(190, 16)), extraParams: { from: alice } })
-    const { totalDebt: B_debt } = await openTrove({ ICR: toBN(dec(120, 16)), extraParams: { from: bob } })
+    const { totalDebt: A_debt } = await openTrove({ ICR: toBN(dec(202, 16)), extraParams: { from: alice } })
+    const { totalDebt: B_debt } = await openTrove({ ICR: toBN(dec(210, 16)), extraParams: { from: bob } })
     await openTrove({ ICR: toBN(dec(195, 16)), extraParams: { from: carol } })
     await openTrove({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
     await openTrove({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
@@ -2058,8 +2058,8 @@ contract('TroveManager', async accounts => {
     await openTrove({ ICR: toBN(dec(133, 16)), extraParams: { from: B } })
     await openTrove({ ICR: toBN(dec(167, 16)), extraParams: { from: C } })
 
-    await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_1 } })
-    await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_2 } })
+    await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_1 } })
+    await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_2 } })
 
     // B provides to SP
     await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: B })
@@ -4191,7 +4191,7 @@ contract('TroveManager', async accounts => {
 
   it("getPendingLUSDDebtReward(): Returns 0 if there is no pending LUSDDebt reward", async () => {
     // Make some troves
-    const { totalDebt } = await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: dec(100, 18), extraParams: { from: defaulter_1 } })
+    const { totalDebt } = await openTrove({ ICR: toBN(dec(201, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: defaulter_1 } })
 
     await openTrove({ ICR: toBN(dec(3, 18)), extraLUSDAmount: dec(20, 18), extraParams: { from: carol } })
 
@@ -4227,7 +4227,7 @@ contract('TroveManager', async accounts => {
     await stabilityPool.provideToSP(totalDebt, ZERO_ADDRESS, { from: whale })
 
     // Price drops
-    await priceFeed.setPrice(dec(100, 18))
+    await priceFeed.setPrice(dec(101, 18))
 
     await troveManager.liquidate(defaulter_1)
 
