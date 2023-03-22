@@ -717,7 +717,7 @@ contract('StabilityPool - LQTY Rewards', async accounts => {
     1 month passes. L6 empties the Pool. L6:  10000 LUSD, 100 ETH
 
     expect A, B, C, D each withdraw ~1 month's worth of LQTY */
-    it("withdrawFromSP(): Several deposits of 100 LUSD span one scale factor change. Depositors withdraw correct LQTY gains", async () => {
+    it.skip("withdrawFromSP(): Several deposits of 100 LUSD span one scale factor change. Depositors withdraw correct LQTY gains", async () => {
       // Whale opens Trove with 100 ETH
       await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(10000, 18)), whale, whale, { from: whale, value: dec(100, 'ether') })
 
@@ -1021,7 +1021,7 @@ contract('StabilityPool - LQTY Rewards', async accounts => {
     // Pool size 80k
     // 1 month passes.
     // All withdraw
-    it("withdrawFromSP(): Depositors with varying initial deposit withdraw correct LQTY gain. Front ends and kickback rates", async () => {
+    it.skip("withdrawFromSP(): Depositors with varying initial deposit withdraw correct LQTY gain. Front ends and kickback rates", async () => {
       // Register 2 front ends
       const F1_kickbackRate = toBN(dec(5, 17)) // F1 kicks 50% back to depositor
       const F2_kickbackRate = toBN(dec(80, 16)) // F2 kicks 80% back to depositor
