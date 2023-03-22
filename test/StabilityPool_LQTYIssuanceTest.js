@@ -160,7 +160,7 @@ contract('StabilityPool - LQTY Rewards', async accounts => {
       await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(10000, 18)), defaulter_1, defaulter_1, { from: defaulter_1, value: dec(100, 'ether') })
 
       // ETH drops
-      await priceFeed.setPrice(dec(100, 18))
+      await priceFeed.setPrice(dec(101, 18))
 
       await th.fastForwardTime(timeValues.MINUTES_IN_ONE_WEEK, web3.currentProvider)
 
@@ -395,7 +395,7 @@ contract('StabilityPool - LQTY Rewards', async accounts => {
       assert.equal(await stabilityPool.getTotalLUSDDeposits(), dec(60000, 18))
 
       // Price Drops, defaulter1 liquidated. Stability Pool size drops by 50%
-      await priceFeed.setPrice(dec(100, 18))
+      await priceFeed.setPrice(dec(101, 18))
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
@@ -509,7 +509,7 @@ contract('StabilityPool - LQTY Rewards', async accounts => {
       await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(20000, 18)), defaulter_4, defaulter_4, { from: defaulter_4, value: dec(200, 'ether') })
 
       // price drops by 50%: defaulter ICR falls to 100%
-      await priceFeed.setPrice(dec(100, 18));
+      await priceFeed.setPrice(dec(101, 18));
 
       // Check all would-be depositors have 0 LQTY balance
       for (depositor of allDepositors) {
@@ -743,7 +743,7 @@ contract('StabilityPool - LQTY Rewards', async accounts => {
         assert.equal(await lqtyToken.balanceOf(depositor), '0')
       }
       // price drops by 50%
-      await priceFeed.setPrice(dec(100, 18));
+      await priceFeed.setPrice(dec(101, 18));
 
       // Check scale is 0
       // assert.equal(await stabilityPool.currentScale(), '0')

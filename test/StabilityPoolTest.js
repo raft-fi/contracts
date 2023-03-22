@@ -1290,7 +1290,7 @@ contract('StabilityPool', async accounts => {
       // D opens trove
       await openTrove({ extraLUSDAmount: toBN(dec(1000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
+      await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_1 } })
 
       // --- SETUP ---
 
@@ -1716,7 +1716,7 @@ contract('StabilityPool', async accounts => {
       await stabilityPool.provideToSP(dec(185000, 18), frontEnd_1, { from: whale })
 
       // 1 defaulter opens
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
+      await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_1 } })
 
       // --- TEST ---
 
@@ -3028,7 +3028,7 @@ contract('StabilityPool', async accounts => {
       await stabilityPool.provideToSP(dec(185000, 18), frontEnd_1, { from: whale })
 
       // defaulter opened
-      await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: defaulter_1 } })
+      await openTrove({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_1 } })
 
       // --- TEST ---
 
