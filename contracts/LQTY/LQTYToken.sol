@@ -128,8 +128,8 @@ contract LQTYToken is CheckContract, ILQTYToken {
         uint bountyEntitlement = _1_MILLION * 2; // Allocate 2 million for bounties/hackathons
         _mint(_bountyAddress, bountyEntitlement);
 
-        uint depositorsAndFrontEndsEntitlement = _1_MILLION * 32; // Allocate 32 million to the algorithmic issuance schedule
-        _mint(_communityIssuanceAddress, depositorsAndFrontEndsEntitlement);
+        uint depositorsEntitlement = _1_MILLION * 32; // Allocate 32 million to the algorithmic issuance schedule
+        _mint(_communityIssuanceAddress, depositorsEntitlement);
 
         uint _lpRewardsEntitlement = _1_MILLION * 4 / 3;  // Allocate 1.33 million for LP rewards
         lpRewardsEntitlement = _lpRewardsEntitlement;
@@ -138,7 +138,7 @@ contract LQTYToken is CheckContract, ILQTYToken {
         // Allocate the remainder to the LQTY Multisig: (100 - 2 - 32 - 1.33) million = 64.66 million
         uint multisigEntitlement = _1_MILLION * 100
             - bountyEntitlement
-            - depositorsAndFrontEndsEntitlement
+            - depositorsEntitlement
             - _lpRewardsEntitlement;
 
         _mint(_multisigAddress, multisigEntitlement);

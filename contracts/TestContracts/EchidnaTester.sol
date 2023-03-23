@@ -235,9 +235,9 @@ contract EchidnaTester {
 
     // Pool Manager
 
-    function provideToSPExt(uint _i, uint _amount, address _frontEndTag) external {
+    function provideToSPExt(uint _i, uint _amount) external {
         uint actor = _i % NUMBER_OF_ACTORS;
-        echidnaProxies[actor].provideToSPPrx(_amount, _frontEndTag);
+        echidnaProxies[actor].provideToSPPrx(_amount);
     }
 
     function withdrawFromSPExt(uint _i, uint _amount) external {

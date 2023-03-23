@@ -30,13 +30,9 @@ contract('BorrowerOperations', async accounts => {
 
   const [
     owner, alice, bob, carol, dennis, whale,
-    A, B, C, D, E, F, G, H,
-    // defaulter_1, defaulter_2,
-    frontEnd_1, frontEnd_2, frontEnd_3] = accounts;
+    A, B, C, D, E, F, G, H] = accounts;
 
     const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
-
-  // const frontEnds = [frontEnd_1, frontEnd_2, frontEnd_3]
 
   let priceFeed
   let lusdToken
@@ -106,8 +102,6 @@ contract('BorrowerOperations', async accounts => {
       await th.fillAccountsWithWstETH(contracts, [
         owner, alice, bob, carol, dennis, whale,
         A, B, C, D, E, F, G, H,
-        // defaulter_1, defaulter_2,
-        frontEnd_1, frontEnd_2, frontEnd_3,
         bountyAddress, lpRewardsAddress, multisig
       ])
     })

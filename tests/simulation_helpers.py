@@ -735,7 +735,7 @@ def stability_update(accounts, contracts, active_accounts, return_stability, ind
           balance = contracts.lusdToken.balanceOf(account) / 1e18
           deposit = min(balance, remaining)
           if deposit > 0:
-              contracts.stabilityPool.provideToSP(floatToWei(deposit), ZERO_ADDRESS, { 'from': account, 'gas_limit': 8000000, 'allow_revert': True })
+              contracts.stabilityPool.provideToSP(floatToWei(deposit), { 'from': account, 'gas_limit': 8000000, 'allow_revert': True })
               remaining = remaining - deposit
           i = i + 1
     else:

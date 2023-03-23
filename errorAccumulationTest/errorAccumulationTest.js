@@ -477,7 +477,7 @@ contract('TroveManager', async accounts => {
 
     // On loop: Account[99] adds 10 LUSD to pool -> a trove gets liquidated and partially offset against SP, emptying the SP
     for (account of accounts.slice(1, 11)) {
-      await stabilityPool.provideToSP(dec(10, 18), ZERO_ADDRESS, {from: account[99]})
+      await stabilityPool.provideToSP(dec(10, 18), {from: account[99]})
       await troveManager.liquidate(account)
     }
     // check (DefaultPool - totalRewards from distribution)
@@ -525,7 +525,7 @@ contract('TroveManager', async accounts => {
 
      // On loop: Account[99] adds 10 LUSD to pool -> a trove gets liquidated and partially offset against SP, emptying the SP
      for (account of accounts.slice(1, 101)) {
-       await stabilityPool.provideToSP(dec(10, 18),ZERO_ADDRESS, {from: account[99]})
+       await stabilityPool.provideToSP(dec(10, 18), {from: account[99]})
        await troveManager.liquidate(account)
      }
      // check (DefaultPool - totalRewards from distribution)
@@ -586,7 +586,7 @@ contract('TroveManager', async accounts => {
     /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
-    await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
+    await stabilityPool.provideToSP(whaleSPDeposit, {from: accounts[999]} )
 
     await stabilityPool.withdrawFromSP(dec(50, 18), {from: accounts[1]} )
     const SP_ETH = await stabilityPool.getETH()
@@ -639,7 +639,7 @@ contract('TroveManager', async accounts => {
     /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
-    await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
+    await stabilityPool.provideToSP(whaleSPDeposit, {from: accounts[999]} )
 
     await stabilityPool.withdrawFromSP(dec(50, 18), {from: accounts[1]} )
     const SP_ETH = await stabilityPool.getETH()
@@ -678,7 +678,7 @@ contract('TroveManager', async accounts => {
      await th.th.provideToSP_allAccounts_randomAmount(10, 90, accounts.slice(2,11), stabilityPool)
 
      const account1SPDeposit = dec(50, 18)
-     await stabilityPool.provideToSP(account1SPDeposit, ZERO_ADDRESS, {from: accounts[1]} )
+     await stabilityPool.provideToSP(account1SPDeposit, {from: accounts[1]} )
 
      await priceFeed.setPrice(dec(100, 18))
      await troveManager.liquidate(accounts[0])
@@ -692,7 +692,7 @@ contract('TroveManager', async accounts => {
     /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
-    await stabilityPool.provideToSP(whaleSPDeposit, ZERO_ADDRESS, {from: accounts[999]} )
+    await stabilityPool.provideToSP(whaleSPDeposit, {from: accounts[999]} )
 
     await stabilityPool.withdrawFromSP(account1SPDeposit, {from: accounts[1]} )
     const SP_ETH = await stabilityPool.getETH()
@@ -738,7 +738,7 @@ contract('TroveManager', async accounts => {
      await th.th.provideToSP_allAccounts_randomAmount(10, 90, accounts.slice(2,101), stabilityPool)
 
      const account1SPDeposit = dec(50, 18)
-     await stabilityPool.provideToSP(account1SPDeposit,ZERO_ADDRESS, {from: accounts[1]} )
+     await stabilityPool.provideToSP(account1SPDeposit, {from: accounts[1]} )
 
      await priceFeed.setPrice(dec(100, 18))
      await troveManager.liquidate(accounts[0])
@@ -751,7 +751,7 @@ contract('TroveManager', async accounts => {
     /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
     So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
     const whaleSPDeposit = dec(100, 18)
-    await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
+    await stabilityPool.provideToSP(whaleSPDeposit, {from: accounts[999]} )
 
     await stabilityPool.withdrawFromSP(account1SPDeposit, {from: accounts[1]} )
 
@@ -795,7 +795,7 @@ contract('TroveManager', async accounts => {
    await th.th.provideToSP_allAccounts_randomAmount(10, 90, accounts.slice(2,501), stabilityPool)
 
    const account1SPDeposit = dec(50, 18)
-   await stabilityPool.provideToSP(account1SPDeposit, ZERO_ADDRESS, {from: accounts[1]} )
+   await stabilityPool.provideToSP(account1SPDeposit, {from: accounts[1]} )
 
    await priceFeed.setPrice(dec(100, 18))
    await troveManager.liquidate(accounts[0])
@@ -808,7 +808,7 @@ contract('TroveManager', async accounts => {
   /* Sometimes, the error causes the last LUSD withdrawal from SP to underflow and fail.
   So provideToSP from the whale, so that the last 'rewarded' depositor, account[1] can withdraw */
   const whaleSPDeposit = dec(100, 18)
-  await stabilityPool.provideToSP(whaleSPDeposit,ZERO_ADDRESS, {from: accounts[999]} )
+  await stabilityPool.provideToSP(whaleSPDeposit, {from: accounts[999]} )
 
   await stabilityPool.withdrawFromSP(account1SPDeposit, {from: accounts[1]} )
 
