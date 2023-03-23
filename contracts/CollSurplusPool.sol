@@ -3,12 +3,15 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Dependencies/CheckContract.sol";
 
 
 contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
     string constant public NAME = "CollSurplusPool";
+
+    address immutable public override collateralToken;
 
     address public borrowerOperationsAddress;
     address public troveManagerAddress;
@@ -18,6 +21,15 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
     uint256 internal ETH;
     // Collateral surplus claimable by trove owners
     mapping (address => uint) internal balances;
+
+    // --- Constructor ---
+    constructor(address _collateralToken) public {
+        checkContract(_collateralToken);
+
+        collateralToken = _collateralToken;
+
+        emit CollateralTokenAddressSet(_collateralToken);
+    }
 
     // --- Contract setters ---
 
@@ -57,6 +69,12 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
 
     // --- Pool functionality ---
 
+    function depositCollateral(address _from, uint _amount) external override {
+        _requireCallerIsActivePoolOrTroveManager();
+        IERC20(collateralToken).transferFrom(_from, address(this), _amount);
+        ETH += _amount;
+    }
+
     function accountSurplus(address _account, uint _amount) external override {
         _requireCallerIsTroveManager();
 
@@ -77,8 +95,7 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
         ETH -= claimableColl;
         emit EtherSent(_account, claimableColl);
 
-        (bool success, ) = _account.call{ value: claimableColl }("");
-        require(success, "CollSurplusPool: sending ETH failed");
+        IERC20(collateralToken).transfer(_account, claimableColl);
     }
 
     // --- 'require' functions ---
@@ -95,16 +112,9 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
             "CollSurplusPool: Caller is not TroveManager");
     }
 
-    function _requireCallerIsActivePool() internal view {
-        require(
-            msg.sender == activePoolAddress,
+    function _requireCallerIsActivePoolOrTroveManager() internal view {
+        require(msg.sender == activePoolAddress ||
+            msg.sender == troveManagerAddress,
             "CollSurplusPool: Caller is not Active Pool");
-    }
-
-    // --- Fallback function ---
-
-    receive() external payable {
-        _requireCallerIsActivePool();
-        ETH += msg.value;
     }
 }

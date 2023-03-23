@@ -13,6 +13,7 @@ import "../LUSDToken.sol";
 import "./PriceFeedTestnet.sol";
 import "../SortedTroves.sol";
 import "./EchidnaProxy.sol";
+import { WstETHTokenMock } from "./WstETHTokenMock.sol";
 
 // Run with:
 // rm -f fuzzTests/corpus/* # (optional)
@@ -33,6 +34,7 @@ contract EchidnaTester {
     GasPool public gasPool;
     CollSurplusPool public collSurplusPool;
     LUSDToken public lusdToken;
+    WstETHTokenMock public collateralToken;
     PriceFeedTestnet priceFeedTestnet;
     SortedTroves sortedTroves;
 
@@ -40,12 +42,13 @@ contract EchidnaTester {
 
     uint private numberOfTroves;
 
-    constructor() public payable {
+    constructor() public {
         troveManager = new TroveManager();
         borrowerOperations = new BorrowerOperations();
-        activePool = new ActivePool();
-        defaultPool = new DefaultPool();
-        stabilityPool = new StabilityPool();
+        collateralToken = new WstETHTokenMock();
+        activePool = new ActivePool(address(collateralToken));
+        defaultPool = new DefaultPool(address(collateralToken));
+        stabilityPool = new StabilityPool(address(collateralToken));
         gasPool = new GasPool();
         lusdToken = new LUSDToken(
             address(troveManager),
@@ -53,7 +56,7 @@ contract EchidnaTester {
             address(borrowerOperations)
         );
 
-        collSurplusPool = new CollSurplusPool();
+        collSurplusPool = new CollSurplusPool(address(collateralToken));
         priceFeedTestnet = new PriceFeedTestnet();
 
         sortedTroves = new SortedTroves();
@@ -150,7 +153,7 @@ contract EchidnaTester {
         return LUSDAmount;
     }
 
-    function openTroveExt(uint _i, uint _ETH, uint _LUSDAmount) public payable {
+    function openTroveExt(uint _i, uint _ETH, uint _LUSDAmount) public {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
         uint actorBalance = address(echidnaProxy).balance;
@@ -170,12 +173,12 @@ contract EchidnaTester {
         //assert(numberOfTroves == 0);
     }
 
-    function openTroveRawExt(uint _i, uint _ETH, uint _LUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) public payable {
+    function openTroveRawExt(uint _i, uint _ETH, uint _LUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) public {
         uint actor = _i % NUMBER_OF_ACTORS;
         echidnaProxies[actor].openTrovePrx(_ETH, _LUSDAmount, _upperHint, _lowerHint, _maxFee);
     }
 
-    function addCollExt(uint _i, uint _ETH) external payable {
+    function addCollExt(uint _i, uint _ETH) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
         uint actorBalance = address(echidnaProxy).balance;
@@ -185,7 +188,7 @@ contract EchidnaTester {
         echidnaProxy.addCollPrx(ETH, address(0), address(0));
     }
 
-    function addCollRawExt(uint _i, uint _ETH, address _upperHint, address _lowerHint) external payable {
+    function addCollRawExt(uint _i, uint _ETH, address _upperHint, address _lowerHint) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         echidnaProxies[actor].addCollPrx(_ETH, _upperHint, _lowerHint);
     }
@@ -210,7 +213,7 @@ contract EchidnaTester {
         echidnaProxies[actor].closeTrovePrx();
     }
 
-    function adjustTroveExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease) external payable {
+    function adjustTroveExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
         uint actorBalance = address(echidnaProxy).balance;
@@ -225,7 +228,7 @@ contract EchidnaTester {
         echidnaProxy.adjustTrovePrx(ETH, _collWithdrawal, debtChange, _isDebtIncrease, address(0), address(0), 0);
     }
 
-    function adjustTroveRawExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external payable {
+    function adjustTroveRawExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         echidnaProxies[actor].adjustTrovePrx(_ETH, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFee);
     }

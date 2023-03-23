@@ -6,8 +6,7 @@ import "../StabilityPool.sol";
 
 contract StabilityPoolTester is StabilityPool {
 
-    function unprotectedPayable() external payable {
-        ETH += msg.value;
+    constructor(address _collateralToken) StabilityPool(_collateralToken) public {
     }
 
     function setCurrentScale(uint128 _currentScale) external {

@@ -38,9 +38,8 @@ contract('SortedTroves', async accounts => {
   }
 
   const [
-    owner,
-    alice, bob, carol, dennis, erin, flyn, graham, harriet, ida,
-    defaulter_1, defaulter_2, defaulter_3, defaulter_4,
+    alice, bob, carol, dennis, erin,
+    defaulter_1,
     A, B, C, D, E, F, G, H, I, J, whale] = accounts;
 
   let priceFeed
@@ -48,6 +47,7 @@ contract('SortedTroves', async accounts => {
   let troveManager
   let borrowerOperations
   let lusdToken
+  let wstETHTokenMock
 
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
@@ -72,10 +72,17 @@ contract('SortedTroves', async accounts => {
       troveManager = contracts.troveManager
       borrowerOperations = contracts.borrowerOperations
       lusdToken = contracts.lusdToken
+      wstETHTokenMock = contracts.wstETHTokenMock
 
       await deploymentHelper.connectLQTYContracts(LQTYContracts)
       await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
       await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+
+      await th.fillAccountsWithWstETH(contracts, [
+        alice, bob, carol, dennis, erin,
+        defaulter_1,
+        A, B, C, D, E, F, G, H, I, J, whale
+      ])
     })
 
     it('contains(): returns true for addresses that have opened troves', async () => {

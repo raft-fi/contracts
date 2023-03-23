@@ -25,6 +25,7 @@ const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
 const LUSDTokenTester = artifacts.require("./LUSDTokenTester.sol")
+const WstETHTokenMock = artifacts.require("./WstETHTokenMock.sol")
 
 // Proxy scripts
 const BorrowerOperationsScript = artifacts.require('BorrowerOperationsScript')
@@ -87,11 +88,12 @@ class DeploymentHelper {
     const priceFeedTestnet = await PriceFeedTestnet.new()
     const sortedTroves = await SortedTroves.new()
     const troveManager = await TroveManager.new()
-    const activePool = await ActivePool.new()
-    const stabilityPool = await StabilityPool.new()
+    const wstETHTokenMock = await WstETHTokenMock.new()
+    const activePool = await ActivePool.new(wstETHTokenMock.address)
+    const stabilityPool = await StabilityPool.new(wstETHTokenMock.address)
     const gasPool = await GasPool.new()
-    const defaultPool = await DefaultPool.new()
-    const collSurplusPool = await CollSurplusPool.new()
+    const defaultPool = await DefaultPool.new(wstETHTokenMock.address)
+    const collSurplusPool = await CollSurplusPool.new(wstETHTokenMock.address)
     const functionCaller = await FunctionCaller.new()
     const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
@@ -118,6 +120,7 @@ class DeploymentHelper {
       lusdToken,
       sortedTroves,
       troveManager,
+      wstETHTokenMock,
       activePool,
       stabilityPool,
       gasPool,
@@ -136,13 +139,14 @@ class DeploymentHelper {
     // Contract without testers (yet)
     testerContracts.priceFeedTestnet = await PriceFeedTestnet.new()
     testerContracts.sortedTroves = await SortedTroves.new()
+    testerContracts.wstETHTokenMock = await WstETHTokenMock.new();
     // Actual tester contracts
     testerContracts.communityIssuance = await CommunityIssuanceTester.new()
-    testerContracts.activePool = await ActivePoolTester.new()
-    testerContracts.defaultPool = await DefaultPoolTester.new()
-    testerContracts.stabilityPool = await StabilityPoolTester.new()
+    testerContracts.activePool = await ActivePoolTester.new(testerContracts.wstETHTokenMock.address)
+    testerContracts.defaultPool = await DefaultPoolTester.new(testerContracts.wstETHTokenMock.address)
+    testerContracts.stabilityPool = await StabilityPoolTester.new(testerContracts.wstETHTokenMock.address)
     testerContracts.gasPool = await GasPool.new()
-    testerContracts.collSurplusPool = await CollSurplusPool.new()
+    testerContracts.collSurplusPool = await CollSurplusPool.new(testerContracts.wstETHTokenMock.address)
     testerContracts.math = await LiquityMathTester.new()
     testerContracts.borrowerOperations = await BorrowerOperationsTester.new()
     testerContracts.troveManager = await TroveManagerTester.new()
@@ -157,7 +161,8 @@ class DeploymentHelper {
   }
 
   static async deployLQTYContractsHardhat(bountyAddress, lpRewardsAddress, multisigAddress) {
-    const lqtyStaking = await LQTYStaking.new()
+    const wstETHTokenMock = await WstETHTokenMock.new()
+    const lqtyStaking = await LQTYStaking.new(wstETHTokenMock.address)
     const lockupContractFactory = await LockupContractFactory.new()
     const communityIssuance = await CommunityIssuance.new()
 
@@ -186,7 +191,8 @@ class DeploymentHelper {
   }
 
   static async deployLQTYTesterContractsHardhat(bountyAddress, lpRewardsAddress, multisigAddress) {
-    const lqtyStaking = await LQTYStaking.new()
+    const wstETHTokenMock = await WstETHTokenMock.new()
+    const lqtyStaking = await LQTYStaking.new(wstETHTokenMock.address)
     const lockupContractFactory = await LockupContractFactory.new()
     const communityIssuance = await CommunityIssuanceTester.new()
 

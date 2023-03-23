@@ -14,11 +14,10 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
   const [
     owner,
-    alice, bob, carol, dennis, erin, freddy, greta, harry, ida,
-    A, B, C, D, E,
-    whale, defaulter_1, defaulter_2, defaulter_3, defaulter_4] = accounts;
+    alice, bob, carol, dennis, erin, freddy,
+    A, B, C, D, E ] = accounts;
 
-    const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
+  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
   let priceFeed
   let lusdToken
@@ -57,10 +56,18 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     defaultPool = contracts.defaultPool
     functionCaller = contracts.functionCaller
     borrowerOperations = contracts.borrowerOperations
+    wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
     await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+
+    await th.fillAccountsWithWstETH(contracts, [
+      owner,
+      alice, bob, carol, dennis, erin, freddy,
+      A, B, C, D, E,
+      bountyAddress, lpRewardsAddress, multisig
+    ])
   })
 
   it("redistribution: A, B Open. B Liquidated. C, D Open. D Liquidated. Distributes correct rewards", async () => {
@@ -350,7 +357,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     // Bob adds 1 ETH to his trove
     const addedColl1 = toBN(dec(1, 'ether'))
     await priceFeed.setPrice(dec(200, 18))
-    await borrowerOperations.addColl(B, B, { from: B, value: addedColl1 })
+    wstETHTokenMock.approve(activePool.address, addedColl1, { from: B})
+    await borrowerOperations.addColl(B, B, addedColl1, { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
     // Liquidate C
@@ -375,7 +383,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     // Bob adds 1 ETH to his trove
     const addedColl2 = toBN(dec(1, 'ether'))
     await priceFeed.setPrice(dec(200, 18))
-    await borrowerOperations.addColl(B, B, { from: B, value: addedColl2 })
+    wstETHTokenMock.approve(activePool.address, addedColl2, { from: B})
+    await borrowerOperations.addColl(B, B, addedColl2, { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
     // Liquidate E
@@ -447,7 +456,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     // // Bob adds 1 ETH to his trove
     await priceFeed.setPrice(dec(200, 18))
-    await borrowerOperations.addColl(B, B, { from: B, value: dec(1, 'ether') })
+    wstETHTokenMock.approve(activePool.address, dec(1, 'ether'), { from: B})
+    await borrowerOperations.addColl(B, B, dec(1, 'ether'), { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
     // Check entireColl for each trove
@@ -487,7 +497,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     // // Bob adds 1 ETH to his trove
     await priceFeed.setPrice(dec(200, 18))
-    await borrowerOperations.addColl(B, B, { from: B, value: dec(1, 'ether') })
+    wstETHTokenMock.approve(activePool.address, dec(1, 'ether'), { from: B})
+    await borrowerOperations.addColl(B, B, dec(1, 'ether'), { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
     // Check entireColl for each trove
@@ -539,7 +550,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     //Bob adds ETH to his trove
     const addedColl = toBN(dec(1, 'ether'))
-    await borrowerOperations.addColl(bob, bob, { from: bob, value: addedColl })
+    wstETHTokenMock.approve(activePool.address, addedColl, { from: bob})
+    await borrowerOperations.addColl(bob, bob, addedColl, { from: bob })
 
     // Alice withdraws LUSD
     await borrowerOperations.withdrawLUSD(th._100pct, await getNetBorrowingAmount(A_totalDebt), alice, alice, { from: alice })
@@ -589,7 +601,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     //Bob adds ETH to his trove
     const addedColl = toBN(dec(1, 'ether'))
-    await borrowerOperations.addColl(bob, bob, { from: bob, value: addedColl })
+    wstETHTokenMock.approve(activePool.address, addedColl, { from: bob})
+    await borrowerOperations.addColl(bob, bob, addedColl, { from: bob })
 
     // D opens trove
     const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis } })
@@ -661,8 +674,10 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     // A, B, C, D open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), extraParams: { from: carol, value: _998_Ether } })
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis, value: dec(1000, 'ether') } })
+    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: carol})
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -691,14 +706,16 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     //Carol adds 1 ETH to her trove, brings it to 1992.01 total coll
     const C_addedColl = toBN(dec(1, 'ether'))
-    await borrowerOperations.addColl(carol, carol, { from: carol, value: dec(1, 'ether') })
+    wstETHTokenMock.approve(activePool.address, dec(1, 'ether'), { from: carol})
+    await borrowerOperations.addColl(carol, carol, dec(1, 'ether'), { from: carol })
 
     //Expect 1996 ETH in system now
     const entireSystemColl_2 = (await activePool.getETH()).add(await defaultPool.getETH())
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).add(C_addedColl))
 
     // E opens with another 1996 ETH
-    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: erin, value: entireSystemColl_2 } })
+    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -759,8 +776,10 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     // A, B, C open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), extraParams: { from: carol, value: _998_Ether } })
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis, value: dec(1000, 'ether') } })
+    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -791,16 +810,20 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     bringing them to 2.995, 2.995, 1992.01 total coll each. */
 
     const addedColl = toBN(dec(1, 'ether'))
-    await borrowerOperations.addColl(alice, alice, { from: alice, value: addedColl })
-    await borrowerOperations.addColl(bob, bob, { from: bob, value: addedColl })
-    await borrowerOperations.addColl(carol, carol, { from: carol, value: addedColl })
+    wstETHTokenMock.approve(activePool.address, addedColl, { from: alice})
+    await borrowerOperations.addColl(alice, alice, addedColl, { from: alice })
+    wstETHTokenMock.approve(activePool.address, addedColl, { from: bob})
+    await borrowerOperations.addColl(bob, bob, addedColl, { from: bob })
+    wstETHTokenMock.approve(activePool.address, addedColl, { from: carol})
+    await borrowerOperations.addColl(carol, carol, addedColl, { from: carol })
 
     //Expect 1998 ETH in system now
     const entireSystemColl_2 = (await activePool.getETH()).add(await defaultPool.getETH()).toString()
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).add(addedColl.mul(toBN(3))))
 
     // E opens with another 1998 ETH
-    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: erin, value: entireSystemColl_2 } })
+    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -1008,8 +1031,10 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     // A, B, C, D open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), extraParams: { from: carol, value: _998_Ether } })
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis, value: dec(1000, 'ether') } })
+    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -1045,7 +1070,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).sub(C_withdrawnColl))
 
     // E opens with another 1994 ETH
-    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: erin, value: entireSystemColl_2 } })
+    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -1106,8 +1132,10 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     // A, B, C, D open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), extraParams: { from: carol, value: _998_Ether } })
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis, value: dec(1000, 'ether') } })
+    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -1163,7 +1191,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).sub(withdrawnColl.mul(toBN(3))))
 
     // E opens with another 1993.5 ETH
-    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: erin, value: entireSystemColl_2 } })
+    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -1254,7 +1283,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     //Bob adds 1 ETH to his trove
     const B_addedColl = toBN(dec(1, 'ether'))
-    await borrowerOperations.addColl(bob, bob, { from: bob, value: B_addedColl })
+    wstETHTokenMock.approve(activePool.address, B_addedColl, { from: bob})
+    await borrowerOperations.addColl(bob, bob, B_addedColl, { from: bob })
 
     //Carol  withdraws 1 ETH from her trove
     const C_withdrawnColl = toBN(dec(1, 'ether'))
@@ -1292,7 +1322,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
-    await borrowerOperations.addColl(dennis, dennis, { from: dennis, value: D_addedColl })
+    wstETHTokenMock.approve(activePool.address, D_addedColl, { from: dennis})
+    await borrowerOperations.addColl(dennis, dennis, D_addedColl, { from: dennis })
 
     // Price drops to 1
     await priceFeed.setPrice(dec(1, 18))
@@ -1355,9 +1386,12 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     B: 8901 ETH
     C: 23.902 ETH
     */
-    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(90000, 16)), extraParams: { from: alice, value: toBN('450000000000000000000') } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(1800000, 16)), extraParams: { from: bob, value: toBN('8901000000000000000000') } })
-    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(4600, 16)), extraParams: { from: carol, value: toBN('23902000000000000000') } })
+    wstETHTokenMock.approve(activePool.address, toBN('450000000000000000000'), { from: alice})
+    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(90000, 16)), amount: toBN('450000000000000000000'), extraParams: { from: alice } })
+    wstETHTokenMock.approve(activePool.address, toBN('8901000000000000000000'), { from: bob})
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(1800000, 16)), amount: toBN('8901000000000000000000'), extraParams: { from: bob } })
+    wstETHTokenMock.approve(activePool.address, toBN('23902000000000000000'), { from: carol})
+    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(4600, 16)), amount: toBN('23902000000000000000'), extraParams: { from: carol } })
 
     // Price drops
     await priceFeed.setPrice('1')
@@ -1382,11 +1416,13 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     await priceFeed.setPrice(dec(1, 27))
 
     // D opens trove: 0.035 ETH
-    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), extraParams: { from: dennis, value: toBN(dec(35, 15)) } })
+    wstETHTokenMock.approve(activePool.address, toBN(dec(35, 15)), { from: dennis})
+    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), amount: toBN(dec(35, 15)), extraParams: { from: dennis } })
 
     // Bob adds 11.33909 ETH to his trove
     const B_addedColl = toBN('11339090000000000000')
-    await borrowerOperations.addColl(bob, bob, { from: bob, value: B_addedColl })
+    wstETHTokenMock.approve(activePool.address, B_addedColl, { from: bob})
+    await borrowerOperations.addColl(bob, bob, B_addedColl, { from: bob })
 
     // Carol withdraws 15 ETH from her trove
     const C_withdrawnColl = toBN(dec(15, 'ether'))
@@ -1423,12 +1459,15 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     E: 10000 ETH
     F: 0.0007 ETH
     */
-    const { collateral: E_coll, totalDebt: E_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), extraParams: { from: erin, value: toBN(dec(1, 22)) } })
-    const { collateral: F_coll, totalDebt: F_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), extraParams: { from: freddy, value: toBN('700000000000000') } })
+    wstETHTokenMock.approve(activePool.address, toBN(dec(1, 22)), { from: erin})
+    const { collateral: E_coll, totalDebt: E_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), amount: toBN(dec(1, 22)), extraParams: { from: erin } })
+    wstETHTokenMock.approve(activePool.address, toBN('700000000000000'), { from: erin})
+    const { collateral: F_coll, totalDebt: F_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), amount: toBN('700000000000000'), extraParams: { from: freddy } })
 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
-    await borrowerOperations.addColl(dennis, dennis, { from: dennis, value: D_addedColl })
+    wstETHTokenMock.approve(activePool.address, D_addedColl, { from: dennis})
+    await borrowerOperations.addColl(dennis, dennis, D_addedColl, { from: dennis })
 
     const D_collAfterL2 = D_coll.add(D_pendingRewardsAfterL2).add(D_addedColl)
 

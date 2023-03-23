@@ -36,7 +36,8 @@ pragma solidity 0.8.19;
 interface IStabilityPool {
 
     // --- Events ---
-
+    event CollateralTokenAddressSet(address _collateralToken);
+    
     event StabilityPoolETHBalanceUpdated(uint _newBalance);
     event StabilityPoolLUSDBalanceUpdated(uint _newBalance);
 
@@ -83,6 +84,8 @@ interface IStabilityPool {
         address _priceFeedAddress,
         address _communityIssuanceAddress
     ) external;
+
+    function collateralToken() external view returns(address);
 
     /*
      * Initial checks:
@@ -189,9 +192,5 @@ interface IStabilityPool {
      */
     function getCompoundedFrontEndStake(address _frontEnd) external view returns (uint);
 
-    /*
-     * Fallback function
-     * Only callable by Active Pool, it just accounts for ETH received
-     * receive() external payable;
-     */
+    function depositCollateral(address _from, uint _amount) external;
 }

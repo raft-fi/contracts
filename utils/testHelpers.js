@@ -660,6 +660,7 @@ class TestHelper {
     upperHint,
     lowerHint,
     ICR,
+    amount,
     extraParams
   }) {
     if (!maxFeePercentage) maxFeePercentage = this._100pct
@@ -671,7 +672,7 @@ class TestHelper {
     const MIN_DEBT = await this.getNetBorrowingAmount(contracts, await contracts.borrowerOperations.MIN_NET_DEBT())
     const lusdAmount = MIN_DEBT.add(extraLUSDAmount)
 
-    if (!ICR && !extraParams.value) ICR = this.toBN(this.dec(15, 17)) // 150%
+    if (!ICR && !amount) ICR = this.toBN(this.dec(15, 17)) // 150%
     else if (typeof ICR == 'string') ICR = this.toBN(ICR)
 
     const totalDebt = await this.getOpenTroveTotalDebt(contracts, lusdAmount)
@@ -679,17 +680,18 @@ class TestHelper {
 
     if (ICR) {
       const price = await contracts.priceFeedTestnet.getPrice()
-      extraParams.value = ICR.mul(totalDebt).div(price)
+      amount = ICR.mul(totalDebt).div(price)
     }
 
-    const tx = await contracts.borrowerOperations.openTrove(maxFeePercentage, lusdAmount, upperHint, lowerHint, extraParams)
+    await contracts.wstETHTokenMock.approve(contracts.activePool.address, amount, extraParams)
+    const tx = await contracts.borrowerOperations.openTrove(maxFeePercentage, lusdAmount, upperHint, lowerHint, amount, extraParams)
 
     return {
       lusdAmount,
       netDebt,
       totalDebt,
       ICR,
-      collateral: extraParams.value,
+      collateral: amount,
       tx
     }
   }
@@ -1197,6 +1199,12 @@ class TestHelper {
      */
     return web3.utils.sha3(signatureString).slice(0,10) +
       params.reduce((acc, p) => acc + this.formatParam(p), '')
+  }
+
+  static async fillAccountsWithWstETH(contracts, accounts) {
+    for (const account of accounts) {
+      await contracts.wstETHTokenMock.mint(account, "1000000000000000000000000000000000000")
+    }
   }
 }
 

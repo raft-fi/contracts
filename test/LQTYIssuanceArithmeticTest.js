@@ -39,8 +39,9 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
   let communityIssuanceTester
   let lqtyToken
   let stabilityPool
+  let wstETHTokenMock
 
-  const [owner, alice, frontEnd_1] = accounts;
+  const [alice, frontEnd_1] = accounts;
 
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
@@ -50,8 +51,10 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
+    wstETHTokenMock = contracts.wstETHTokenMock;
+
     const LQTYContracts = await deploymentHelper.deployLQTYTesterContractsHardhat(bountyAddress, lpRewardsAddress, multisig)
-    contracts.stabilityPool = await StabilityPool.new()
+    contracts.stabilityPool = await StabilityPool.new(wstETHTokenMock.address)
     contracts = await deploymentHelper.deployLUSDToken(contracts)
 
     stabilityPool = contracts.stabilityPool
@@ -63,6 +66,10 @@ contract('LQTY community issuance arithmetic tests', async accounts => {
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
     await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+
+    await th.fillAccountsWithWstETH(contracts, [
+      alice, frontEnd_1
+    ])
   })
 
   // Accuracy tests

@@ -21,6 +21,7 @@ contract('HintHelpers', async accounts => {
   let borrowerOperations
   let hintHelpers
   let priceFeed
+  let wstETHTokenMock
 
   let contracts
 
@@ -47,7 +48,8 @@ contract('HintHelpers', async accounts => {
  const openTrove = async (account, index) => {
    const amountFinney = 2000 + index * 10
    const coll = web3.utils.toWei((amountFinney.toString()), 'finney')
-   await borrowerOperations.openTrove(th._100pct, 0, account, account, { from: account, value: coll })
+   await wstETHTokenMock.approve(contracts.activePool.address, coll, { from: account} )
+   await borrowerOperations.openTrove(th._100pct, 0, account, account, coll, { from: account })
  }
 
  const withdrawLUSDfromTrove = async (account) => {
@@ -57,6 +59,7 @@ contract('HintHelpers', async accounts => {
  // Sequentially add coll and withdraw LUSD, 1 account at a time
   const makeTrovesInSequence = async (accounts, n) => {
     activeAccounts = accounts.slice(0,n)
+    await th.fillAccountsWithWstETH(contracts, activeAccounts)
     // console.log(`number of accounts used is: ${activeAccounts.length}`)
 
     let ICR = 200
@@ -86,6 +89,7 @@ contract('HintHelpers', async accounts => {
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
     priceFeed = contracts.priceFeedTestnet
+    wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
@@ -96,6 +100,11 @@ contract('HintHelpers', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
     await makeTrovesInSequence(accounts, numAccounts)
     // await makeTrovesInParallel(accounts, numAccounts)
+
+    await th.fillAccountsWithWstETH(contracts, [
+      owner,
+      bountyAddress, lpRewardsAddress, multisig
+    ])
   })
 
   it("setup: makes accounts with nominal ICRs increasing by 1% consecutively", async () => {

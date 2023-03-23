@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import './Interfaces/IDefaultPool.sol';
 import "./Dependencies/CheckContract.sol";
 
@@ -16,10 +17,21 @@ import "./Dependencies/CheckContract.sol";
 contract DefaultPool is Ownable, CheckContract, IDefaultPool {
     string constant public NAME = "DefaultPool";
 
+    address immutable public override collateralToken;
+
     address public troveManagerAddress;
     address public activePoolAddress;
     uint256 internal ETH;  // deposited ETH tracker
     uint256 internal LUSDDebt;  // debt
+
+    // --- Constructor ---
+    constructor(address _collateralToken) public {
+        checkContract(_collateralToken);
+
+        collateralToken = _collateralToken;
+
+        emit CollateralTokenAddressSet(_collateralToken);
+    }
 
     // --- Dependency setters ---
 
@@ -59,15 +71,21 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 
     // --- Pool functionality ---
 
-    function sendETHToActivePool(uint _amount) external override {
+    function depositCollateral(address _from, uint _amount) external override {
+        _requireCallerIsActivePoolOrTroveManager();
+
+        IERC20(collateralToken).transferFrom(_from, address(this), _amount);
+        ETH += _amount;
+
+        emit DefaultPoolETHBalanceUpdated(ETH);
+    }
+
+    function sendETH(address _to, uint _amount) external override {
         _requireCallerIsTroveManager();
-        address activePool = activePoolAddress; // cache to save an SLOAD
         ETH -= _amount;
         emit DefaultPoolETHBalanceUpdated(ETH);
-        emit EtherSent(activePool, _amount);
-
-        (bool success, ) = activePool.call{ value: _amount }("");
-        require(success, "DefaultPool: sending ETH failed");
+        emit EtherSent(_to, _amount);
+        IERC20(collateralToken).transfer(_to, _amount);
     }
 
     function increaseLUSDDebt(uint _amount) external override {
@@ -84,19 +102,12 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 
     // --- 'require' functions ---
 
-    function _requireCallerIsActivePool() internal view {
-        require(msg.sender == activePoolAddress, "DefaultPool: Caller is not the ActivePool");
+    function _requireCallerIsActivePoolOrTroveManager() internal view {
+        require(msg.sender == activePoolAddress ||
+            msg.sender == troveManagerAddress, "DefaultPool: Caller is not the ActivePool");
     }
 
     function _requireCallerIsTroveManager() internal view {
         require(msg.sender == troveManagerAddress, "DefaultPool: Caller is not the TroveManager");
-    }
-
-    // --- Fallback function ---
-
-    receive() external payable {
-        _requireCallerIsActivePool();
-        ETH += msg.value;
-        emit DefaultPoolETHBalanceUpdated(ETH);
     }
 }

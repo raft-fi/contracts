@@ -31,6 +31,7 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
   let defaultPool
   let functionCaller
   let borrowerOperations
+  let wstETHTokenMock
 
   let lqtyStaking
   let lqtyToken
@@ -43,6 +44,8 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     coreContracts = await deploymentHelper.deployLUSDTokenTester(coreContracts)
     const LQTYContracts = await deploymentHelper.deployLQTYTesterContractsHardhat(bountyAddress, lpRewardsAddress, multisig)
 
+    await th.fillAccountsWithWstETH(coreContracts, accounts)
+
     priceFeed = coreContracts.priceFeed
     lusdToken = coreContracts.lusdToken
     sortedTroves = coreContracts.sortedTroves
@@ -53,6 +56,7 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     defaultPool = coreContracts.defaultPool
     functionCaller = coreContracts.functionCaller
     borrowerOperations = coreContracts.borrowerOperations
+    wstETHTokenMock = coreContracts.wstETHTokenMock
 
     lqtyStaking = LQTYContracts.lqtyStaking
     lqtyToken = LQTYContracts.lqtyToken
@@ -64,7 +68,7 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, coreContracts)
 
     for (account of accounts.slice(0, 10)) {
-      await th.openTrove(coreContracts, { extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: account } })
+      await th.openTrove(coreContracts, { extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), amount: 0, extraParams: { from: account } })
     }
 
     const expectedCISupplyCap = '32000000000000000000000000' // 32mil
@@ -78,7 +82,7 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     it("moveETHGainToTrove(): reverts when called by an account that is not StabilityPool", async () => {
       // Attempt call from alice
       try {
-        const tx1= await borrowerOperations.moveETHGainToTrove(bob, bob, bob, { from: bob })
+        const tx1= await borrowerOperations.moveETHGainToTrove(bob, bob, bob, 0, { from: bob })
       } catch (err) {
          assert.include(err.message, "revert")
         // assert.include(err.message, "BorrowerOps: Caller is not Stability Pool")
@@ -258,24 +262,25 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     })
 
     // fallback (payment)
-    it("fallback(): reverts when called by an account that is not Borrower Operations nor Default Pool", async () => {
+    it("depositCollateral(): reverts when called by an account that is not Borrower Operations nor Default Pool", async () => {
       // Attempt call from alice
       try {
-        const txAlice = await web3.eth.sendTransaction({ from: alice, to: activePool.address, value: 100 })
+        wstETHTokenMock.approve(activePool.address, 100, { from: alice})
+        await activePool.depositCollateral(alice, 100, { from: alice })
 
       } catch (err) {
         assert.include(err.message, "revert")
-        assert.include(err.message, "ActivePool: Caller is neither BO nor Default Pool")
+        assert.include(err.message, "ActivePool: Caller is neither BorrowerOperations nor TroveManage")
       }
     })
   })
 
   describe('DefaultPool', async accounts => {
-    // sendETHToActivePool
-    it("sendETHToActivePool(): reverts when called by an account that is not TroveManager", async () => {
+    // sendETH
+    it("sendETH(): reverts when called by an account that is not TroveManager", async () => {
       // Attempt call from alice
       try {
-        const txAlice = await defaultPool.sendETHToActivePool(100, { from: alice })
+        const txAlice = await defaultPool.sendETH(alice, 100, { from: alice })
 
       } catch (err) {
         assert.include(err.message, "revert")
@@ -307,12 +312,11 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
       }
     })
 
-    // fallback (payment)
-    it("fallback(): reverts when called by an account that is not the Active Pool", async () => {
+    // depositCollateral (payment)
+    it("depositCollateral: reverts when called by an account that is not the Active Pool", async () => {
       // Attempt call from alice
       try {
-        const txAlice = await web3.eth.sendTransaction({ from: alice, to: defaultPool.address, value: 100 })
-
+        defaultPool.depositCollateral(alice, 100);
       } catch (err) {
         assert.include(err.message, "revert")
         assert.include(err.message, "DefaultPool: Caller is not the ActivePool")
@@ -338,11 +342,10 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     // --- onlyActivePool ---
 
     // fallback (payment)
-    it("fallback(): reverts when called by an account that is not the Active Pool", async () => {
+    it("depositCollateral(): reverts when called by an account that is not the Active Pool", async () => {
       // Attempt call from alice
       try {
-        const txAlice = await web3.eth.sendTransaction({ from: alice, to: stabilityPool.address, value: 100 })
-
+        defaultPool.depositCollateral(alice, 100);
       } catch (err) {
         assert.include(err.message, "revert")
         assert.include(err.message, "StabilityPool: Caller is not ActivePool")

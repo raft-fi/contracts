@@ -25,10 +25,6 @@ contract EchidnaProxy {
         lusdToken = _lusdToken;
     }
 
-    receive() external payable {
-        // do nothing
-    }
-
     // TroveManager
 
     function liquidatePrx(address _user) external {
@@ -56,12 +52,12 @@ contract EchidnaProxy {
     }
 
     // Borrower Operations
-    function openTrovePrx(uint _ETH, uint _LUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) external payable {
-        borrowerOperations.openTrove{value: _ETH}(_maxFee, _LUSDAmount, _upperHint, _lowerHint);
+    function openTrovePrx(uint _ETH, uint _LUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) external {
+        borrowerOperations.openTrove(_maxFee, _LUSDAmount, _upperHint, _lowerHint, _ETH);
     }
 
-    function addCollPrx(uint _ETH, address _upperHint, address _lowerHint) external payable {
-        borrowerOperations.addColl{value: _ETH}(_upperHint, _lowerHint);
+    function addCollPrx(uint _ETH, address _upperHint, address _lowerHint) external {
+        borrowerOperations.addColl(_upperHint, _lowerHint, _ETH);
     }
 
     function withdrawCollPrx(uint _amount, address _upperHint, address _lowerHint) external {
@@ -80,8 +76,8 @@ contract EchidnaProxy {
         borrowerOperations.closeTrove();
     }
 
-    function adjustTrovePrx(uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external payable {
-        borrowerOperations.adjustTrove{value: _ETH}(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint);
+    function adjustTrovePrx(uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
+        borrowerOperations.adjustTrove(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _ETH);
     }
 
     // Pool Manager
