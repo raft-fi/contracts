@@ -6,11 +6,7 @@ import "../DefaultPool.sol";
 
 contract DefaultPoolTester is DefaultPool {
 
-    function unprotectedIncreaseLUSDDebt(uint _amount) external {
-        LUSDDebt += _amount;
-    }
+    constructor(address _collateralToken) DefaultPool(_collateralToken) public {
 
-    function unprotectedPayable() external payable {
-        ETH += msg.value;
     }
 }

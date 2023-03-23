@@ -43,6 +43,7 @@ yarn-error.log
 
 # echidna
 /crytic-export
+/fuzzTests
 
 # brownie
 __pycache__

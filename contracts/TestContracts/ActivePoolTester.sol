@@ -6,11 +6,10 @@ import "../ActivePool.sol";
 
 contract ActivePoolTester is ActivePool {
 
-    function unprotectedIncreaseLUSDDebt(uint _amount) external {
-        LUSDDebt  = LUSDDebt + _amount;
+    constructor(address _collateralToken) ActivePool(_collateralToken) public {
     }
 
-    function unprotectedPayable() external payable {
-        ETH = ETH + msg.value;
+    function unprotectedIncreaseLUSDDebt(uint _amount) external {
+        LUSDDebt  = LUSDDebt + _amount;
     }
 }

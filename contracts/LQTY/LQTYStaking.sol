@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/CheckContract.sol";
@@ -14,6 +15,8 @@ import "../Interfaces/ILUSDToken.sol";
 contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
     // --- Data ---
     string constant public NAME = "LQTYStaking";
+
+    address immutable public override collateralToken;
 
     mapping( address => uint) public stakes;
     uint public totalLQTYStaked;
@@ -35,6 +38,15 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
     address public troveManagerAddress;
     address public borrowerOperationsAddress;
     address public activePoolAddress;
+
+    // --- Constructor ---
+    constructor(address _collateralToken) public {
+        checkContract(_collateralToken);
+
+        collateralToken = _collateralToken;
+
+        emit CollateralTokenAddressSet(_collateralToken);
+    }
 
     // --- Functions ---
 
@@ -196,8 +208,7 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
 
     function _sendETHGainToUser(uint ETHGain) internal {
         emit EtherSent(msg.sender, ETHGain);
-        (bool success, ) = msg.sender.call{value: ETHGain}("");
-        require(success, "LQTYStaking: Failed to send accumulated ETHGain");
+        IERC20(collateralToken).transfer(msg.sender, ETHGain);
     }
 
     // --- 'require' functions ---
@@ -220,9 +231,5 @@ contract LQTYStaking is ILQTYStaking, Ownable, CheckContract, BaseMath {
 
     function _requireNonZeroAmount(uint _amount) internal pure {
         require(_amount > 0, 'LQTYStaking: Amount must be non-zero');
-    }
-
-    receive() external payable {
-        _requireCallerIsActivePool();
     }
 }

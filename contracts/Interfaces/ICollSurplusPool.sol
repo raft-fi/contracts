@@ -6,6 +6,7 @@ pragma solidity 0.8.19;
 interface ICollSurplusPool {
     // --- Events ---
 
+    event CollateralTokenAddressSet(address _collateralToken);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
@@ -21,6 +22,8 @@ interface ICollSurplusPool {
         address _activePoolAddress
     ) external;
 
+    function collateralToken() external view returns(address);
+
     function getETH() external view returns (uint);
 
     function getCollateral(address _account) external view returns (uint);
@@ -28,4 +31,6 @@ interface ICollSurplusPool {
     function accountSurplus(address _account, uint _amount) external;
 
     function claimColl(address _account) external;
+
+    function depositCollateral(address _from, uint _amount) external;
 }

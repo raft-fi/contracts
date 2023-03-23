@@ -526,7 +526,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _movePendingTroveRewardsToActivePool(IActivePool _activePool, IDefaultPool _defaultPool, uint _LUSD, uint _ETH) internal {
         _defaultPool.decreaseLUSDDebt(_LUSD);
         _activePool.increaseLUSDDebt(_LUSD);
-        _defaultPool.sendETHToActivePool(_ETH);
+
+        _defaultPool.sendETH(address(this), _ETH);
+        IERC20(_defaultPool.collateralToken()).approve(address(_activePool), _ETH);
+        _activePool.depositCollateral(address(this), _ETH);
     }
 
     // --- Redemption functions ---
@@ -605,7 +608,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         // send ETH from Active Pool to CollSurplus Pool
         _contractsCache.collSurplusPool.accountSurplus(_borrower, _ETH);
-        _contractsCache.activePool.sendETH(address(_contractsCache.collSurplusPool), _ETH);
+
+        _contractsCache.activePool.sendETH(address(this), _ETH);
+        IERC20(_contractsCache.activePool.collateralToken()).approve(address(_contractsCache.collSurplusPool), _ETH);
+        _contractsCache.collSurplusPool.depositCollateral(address(this), _ETH);
     }
 
     function _isValidFirstRedemptionHint(ISortedTroves _sortedTroves, address _firstRedemptionHint, uint _price) internal view returns (bool) {
@@ -952,7 +958,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // Transfer coll and debt from ActivePool to DefaultPool
         _activePool.decreaseLUSDDebt(_debt);
         _defaultPool.increaseLUSDDebt(_debt);
-        _activePool.sendETH(address(_defaultPool), _coll);
+        _activePool.sendETH(address(this), _coll);
+        IERC20(_activePool.collateralToken()).approve(address(_defaultPool), _coll);
+        _defaultPool.depositCollateral(address(this), _coll);
     }
 
     function closeTrove(address _borrower) external override {

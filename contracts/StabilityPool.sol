@@ -146,6 +146,8 @@ import "./Dependencies/CheckContract.sol";
 contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
     string constant public NAME = "StabilityPool";
 
+    address immutable public override collateralToken;
+
     IBorrowerOperations public borrowerOperations;
 
     ITroveManager public troveManager;
@@ -229,6 +231,15 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
     // Error trackers for the error correction in the offset calculation
     uint public lastETHError_Offset;
     uint public lastLUSDLossError_Offset;
+
+    // --- Constructor ---
+    constructor(address _collateralToken) public {
+        checkContract(_collateralToken);
+
+        collateralToken = _collateralToken;
+
+        emit CollateralTokenAddressSet(_collateralToken);
+    }
 
     // --- Contract setters ---
 
@@ -420,7 +431,7 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
         emit StabilityPoolETHBalanceUpdated(ETH);
         emit EtherSent(msg.sender, depositorETHGain);
 
-        borrowerOperations.moveETHGainToTrove{ value: depositorETHGain }(msg.sender, _upperHint, _lowerHint);
+        borrowerOperations.moveETHGainToTrove(msg.sender, _upperHint, _lowerHint, depositorETHGain);
     }
 
     // --- LQTY issuance functions ---
@@ -595,6 +606,7 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
         lusdToken.burn(address(this), _debtToOffset);
 
         activePoolCached.sendETH(address(this), _collToAdd);
+        ETH += _collToAdd;
     }
 
     function _decreaseLUSD(uint _amount) internal {
@@ -799,8 +811,7 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
         emit StabilityPoolETHBalanceUpdated(newETH);
         emit EtherSent(msg.sender, _amount);
 
-        (bool success, ) = msg.sender.call{ value: _amount }("");
-        require(success, "StabilityPool: sending ETH failed");
+        IERC20(collateralToken).transfer(msg.sender, _amount);
     }
 
     // Send LUSD to user and decrease LUSD in Pool
@@ -951,11 +962,12 @@ contract StabilityPool is LiquityBase, Ownable, CheckContract, IStabilityPool {
         require (_kickbackRate <= DECIMAL_PRECISION, "StabilityPool: Kickback rate must be in range [0,1]");
     }
 
-    // --- Fallback function ---
-
-    receive() external payable {
+    function depositCollateral(address _from, uint _amount) external override {
         _requireCallerIsActivePool();
-        ETH += msg.value;
+
+        IERC20(collateralToken).transferFrom(_from, address(this), _amount);
+        ETH += _amount;
+
         emit StabilityPoolETHBalanceUpdated(ETH);
     }
 }

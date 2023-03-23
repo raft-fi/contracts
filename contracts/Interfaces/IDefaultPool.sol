@@ -12,5 +12,5 @@ interface IDefaultPool is IPool {
     event DefaultPoolETHBalanceUpdated(uint _ETH);
 
     // --- Functions ---
-    function sendETHToActivePool(uint _amount) external;
+    function sendETH(address _to, uint _amount) external;
 }

@@ -6,6 +6,7 @@ interface ILQTYStaking {
 
     // --- Events --
 
+    event CollateralTokenAddressSet(address _collateralToken);
     event LQTYTokenAddressSet(address _lqtyTokenAddress);
     event LUSDTokenAddressSet(address _lusdTokenAddress);
     event TroveManagerAddressSet(address _troveManager);
@@ -30,6 +31,8 @@ interface ILQTYStaking {
         address _borrowerOperationsAddress,
         address _activePoolAddress
     )  external;
+
+    function collateralToken() external view returns(address);
 
     function stake(uint _LQTYamount) external;
 
