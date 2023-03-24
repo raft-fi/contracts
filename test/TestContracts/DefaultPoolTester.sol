@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../DefaultPool.sol";
+import "../../contracts/DefaultPool.sol";
 
 contract DefaultPoolTester is DefaultPool {
 

@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../LQTY/LQTYStaking.sol";
+import "../../contracts/LQTY/LQTYStaking.sol";
 
 
 contract LQTYStakingTester is LQTYStaking {

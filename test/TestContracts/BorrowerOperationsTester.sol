@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../BorrowerOperations.sol";
+import "../../contracts/BorrowerOperations.sol";
 
 /* Tester contract inherits from BorrowerOperations, and provides external functions
 for testing the parent's internal functions. */

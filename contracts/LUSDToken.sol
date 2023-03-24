@@ -2,76 +2,90 @@
 
 pragma solidity 0.8.19;
 
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
 import "./Interfaces/ILUSDToken.sol";
-import "./Dependencies/CheckContract.sol";
 
 /*
-*
-* --- Functionality added specific to the LUSDToken ---
-*
-* 1) Transfer protection: blacklist of addresses that are invalid recipients (i.e. core Liquity contracts) in external
-* transfer() and transferFrom() calls. The purpose is to protect users from losing tokens by mistakenly sending LUSD directly to a Liquity
-* core contract, when they should rather call the right function.
-*
-* 2) sendToPool() and returnFromPool(): functions callable only Liquity core contracts, which move LUSD tokens between Liquity <-> user.
+* Functionality on top of regular OZ implementation
+* - returnFromPool(): functions callable only by Liquity core contracts, which move LUSD tokens between Liquity <-> user.
 */
 
-contract LUSDToken is ERC20Permit, CheckContract, ILUSDToken {
+contract LUSDToken is Ownable2Step, ERC20Permit, ERC20FlashMint, ILUSDToken {
     // --- Addresses ---
-    address public immutable troveManagerAddress;
-    address public immutable borrowerOperationsAddress;
+    address public immutable override troveManager;
+    address public immutable override borrowerOperations;
+    address public override flashMintFeeRecipient;
 
-    constructor
-    (
-        address _troveManagerAddress,
-        address _borrowerOperationsAddress
-    )
-        ERC20Permit("LUSD Stablecoin")
-        ERC20("LUSD Stablecoin", "LUSD")
-    {
-        checkContract(_troveManagerAddress);
-        checkContract(_borrowerOperationsAddress);
+    uint256 public override flashMintFeePercentage;
 
-        troveManagerAddress = _troveManagerAddress;
-        emit TroveManagerAddressChanged(_troveManagerAddress);
+    uint256 public constant override MAX_FLASH_MINT_FEE_PERCENTAGE = 500;
+    uint256 public constant override PERCENTAGE_BASE = 10_000;
 
-        borrowerOperationsAddress = _borrowerOperationsAddress;
-        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+    constructor(
+        address _troveManager, 
+        address _borrowerOperations
+    ) ERC20Permit("LUSD Stablecoin") ERC20("LUSD Stablecoin", "LUSD") {
+        if (_troveManager == address(0) &&  _borrowerOperations == address(0)) {
+            revert InvalidAddressInput();
+        }
+
+        troveManager = _troveManager;
+        borrowerOperations = _borrowerOperations;
+        flashMintFeeRecipient = msg.sender;
+        flashMintFeePercentage = 0;
+
+        emit LUSDDeployed(_borrowerOperations, _troveManager, msg.sender);
     }
 
-    // --- Functions for intra-Liquity calls ---
-
     function mint(address _account, uint256 _amount) external override {
-        _requireCallerIsBorrowerOperations();
+        if (msg.sender != borrowerOperations) {
+            revert UnauthorizedCall(msg.sender);
+        }
         _mint(_account, _amount);
     }
 
     function burn(address _account, uint256 _amount) external override {
-        _requireCallerIsBOorTroveM();
+        if (msg.sender != borrowerOperations && msg.sender != troveManager) {
+            revert UnauthorizedCall(msg.sender);
+        }
         _burn(_account, _amount);
     }
 
     function returnFromPool(address _poolAddress, address _receiver, uint256 _amount) external override {
-        _requireCallerIsTroveManager();
+        if(msg.sender != troveManager) {
+            revert UnauthorizedCall(msg.sender);
+        }
         _transfer(_poolAddress, _receiver, _amount);
     }
 
-    function _requireCallerIsBorrowerOperations() internal view {
-        require(msg.sender == borrowerOperationsAddress, "LUSDToken: Caller is not BorrowerOperations");
+    function maxFlashLoan(
+        address token
+    ) public view virtual override(ERC20FlashMint, IERC3156FlashLender) returns (uint256) {
+        return token == address(this) ? Math.min(totalSupply() / 10, ERC20FlashMint.maxFlashLoan(address(this))) : 0;
     }
 
-    function _requireCallerIsBOorTroveM() internal view {
-        require(
-            msg.sender == borrowerOperationsAddress ||
-            msg.sender == troveManagerAddress,
-            "LUSD: Caller is neither BorrowerOperations nor TroveManager"
-        );
+    function setFlashFeeRecipient(address _feeRecipient) public override onlyOwner {
+        if (_feeRecipient == address(0)) {
+            revert InvalidAddressInput();
+        }
+        flashMintFeeRecipient = _feeRecipient;
     }
 
-    function _requireCallerIsTroveManager() internal view {
-        require(
-            msg.sender == troveManagerAddress,
-            "LUSD: Caller is not TroveManager");
+    function _flashFeeReceiver() internal view virtual override returns (address) {
+        return flashMintFeeRecipient;
+    }
+
+    function _flashFee(address token, uint256 amount) internal view virtual override returns (uint256) {
+        return token == address(this) ? amount * flashMintFeePercentage / PERCENTAGE_BASE : 0;
+    }
+
+    function setFlashMintFeePercentage(uint256 _feePercentage) public override onlyOwner {
+        if (_feePercentage > MAX_FLASH_MINT_FEE_PERCENTAGE) {
+            revert FlashFeePercentageTooBig(_feePercentage);
+        }
+        flashMintFeePercentage = _feePercentage;
     }
 }

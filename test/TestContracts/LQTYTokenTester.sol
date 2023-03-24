@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../LQTY/LQTYToken.sol";
+import "../../contracts/LQTY/LQTYToken.sol";
 
 contract LQTYTokenTester is LQTYToken {
     constructor

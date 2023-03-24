@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../LUSDToken.sol";
+import "../../contracts/LUSDToken.sol";
 
 contract LUSDTokenTester is LUSDToken {
 

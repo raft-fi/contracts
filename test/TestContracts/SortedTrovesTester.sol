@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../Interfaces/ISortedTroves.sol";
+import "../../contracts/Interfaces/ISortedTroves.sol";
 
 
 contract SortedTrovesTester {

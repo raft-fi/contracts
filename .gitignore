@@ -53,3 +53,8 @@ __pycache__
 build/
 reports/
 tests/simulation.csv
+
+#foundry
+forge-cache/
+out/
+

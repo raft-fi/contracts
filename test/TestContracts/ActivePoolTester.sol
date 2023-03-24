@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../ActivePool.sol";
+import "../../contracts/ActivePool.sol";
 
 contract ActivePoolTester is ActivePool {
 
