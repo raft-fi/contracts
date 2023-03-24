@@ -8,7 +8,6 @@ contract('LUSDToken', async accounts => {
   let lusdTokenTester
   let stabilityPool
 
-  const testCorpus = ({ withProxy = false }) => {
     beforeEach(async () => {
 
       const contracts = await deploymentHelper.deployTesterContractsHardhat()
@@ -78,12 +77,7 @@ contract('LUSDToken', async accounts => {
       assert.equal(stabilityPool_BalanceAfter, 25)
       assert.equal(bob_BalanceAfter, 175)
     })
-  }
-
-  describe('Basic token functions, without Proxy', async () => {
-    testCorpus({ withProxy: false })
   })
-})
 
 
 
