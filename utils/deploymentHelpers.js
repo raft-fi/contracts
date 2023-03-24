@@ -4,7 +4,6 @@ const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const LUSDToken = artifacts.require("./LUSDToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
-const StabilityPool = artifacts.require("./StabilityPool.sol")
 const GasPool = artifacts.require("./GasPool.sol")
 const CollSurplusPool = artifacts.require("./CollSurplusPool.sol")
 const FunctionCaller = artifacts.require("./TestContracts/FunctionCaller.sol")
@@ -18,7 +17,6 @@ const CommunityIssuance = artifacts.require("./CommunityIssuance.sol")
 
 const LQTYTokenTester = artifacts.require("./LQTYTokenTester.sol")
 const CommunityIssuanceTester = artifacts.require("./CommunityIssuanceTester.sol")
-const StabilityPoolTester = artifacts.require("./StabilityPoolTester.sol")
 const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
 const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
@@ -26,6 +24,8 @@ const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.s
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
 const LUSDTokenTester = artifacts.require("./LUSDTokenTester.sol")
 const WstETHTokenMock = artifacts.require("./WstETHTokenMock.sol")
+
+const th = require("./testHelpers.js").TestHelper
 
 /* "Liquity core" consists of all contracts in the core Liquity system.
 
@@ -70,7 +70,6 @@ class DeploymentHelper {
     const troveManager = await TroveManager.new()
     const wstETHTokenMock = await WstETHTokenMock.new()
     const activePool = await ActivePool.new(wstETHTokenMock.address)
-    const stabilityPool = await StabilityPool.new(wstETHTokenMock.address)
     const gasPool = await GasPool.new()
     const defaultPool = await DefaultPool.new(wstETHTokenMock.address)
     const collSurplusPool = await CollSurplusPool.new(wstETHTokenMock.address)
@@ -79,7 +78,6 @@ class DeploymentHelper {
     const hintHelpers = await HintHelpers.new()
     const lusdToken = await LUSDToken.new(
       troveManager.address,
-      stabilityPool.address,
       borrowerOperations.address
     )
     LUSDToken.setAsDeployed(lusdToken)
@@ -88,13 +86,12 @@ class DeploymentHelper {
     SortedTroves.setAsDeployed(sortedTroves)
     TroveManager.setAsDeployed(troveManager)
     ActivePool.setAsDeployed(activePool)
-    StabilityPool.setAsDeployed(stabilityPool)
     GasPool.setAsDeployed(gasPool)
     CollSurplusPool.setAsDeployed(collSurplusPool)
     FunctionCaller.setAsDeployed(functionCaller)
     BorrowerOperations.setAsDeployed(borrowerOperations)
     HintHelpers.setAsDeployed(hintHelpers)
-
+      
     const coreContracts = {
       priceFeedTestnet,
       lusdToken,
@@ -102,7 +99,6 @@ class DeploymentHelper {
       troveManager,
       wstETHTokenMock,
       activePool,
-      stabilityPool,
       gasPool,
       defaultPool,
       collSurplusPool,
@@ -111,6 +107,23 @@ class DeploymentHelper {
       hintHelpers
     }
     return coreContracts
+  }
+
+  static async mintLUSD(lusdToken, to = null, amount = null) {
+    to = to || (await ethers.getSigners())[0].address;
+    amount = amount ? ethers.BigNumber.from(amount) : ethers.BigNumber.from("1000000000000000000000000")
+    
+    const borrowerOperationsAddress = await lusdToken.borrowerOperationsAddress();
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [borrowerOperationsAddress]
+    })
+    await lusdToken.mint(to, amount, { from: borrowerOperationsAddress, gasPrice: 0 })
+    
+    await hre.network.provider.request({
+      method: "hardhat_stopImpersonatingAccount",
+      params: [borrowerOperationsAddress]
+    })
   }
 
   static async deployTesterContractsHardhat() {
@@ -124,7 +137,6 @@ class DeploymentHelper {
     testerContracts.communityIssuance = await CommunityIssuanceTester.new()
     testerContracts.activePool = await ActivePoolTester.new(testerContracts.wstETHTokenMock.address)
     testerContracts.defaultPool = await DefaultPoolTester.new(testerContracts.wstETHTokenMock.address)
-    testerContracts.stabilityPool = await StabilityPoolTester.new(testerContracts.wstETHTokenMock.address)
     testerContracts.gasPool = await GasPool.new()
     testerContracts.collSurplusPool = await CollSurplusPool.new(testerContracts.wstETHTokenMock.address)
     testerContracts.math = await LiquityMathTester.new()
@@ -134,7 +146,6 @@ class DeploymentHelper {
     testerContracts.hintHelpers = await HintHelpers.new()
     testerContracts.lusdToken =  await LUSDTokenTester.new(
       testerContracts.troveManager.address,
-      testerContracts.stabilityPool.address,
       testerContracts.borrowerOperations.address
     )
     return testerContracts
@@ -149,7 +160,6 @@ class DeploymentHelper {
     LQTYStaking.setAsDeployed(lqtyStaking)
     LockupContractFactory.setAsDeployed(lockupContractFactory)
     CommunityIssuance.setAsDeployed(communityIssuance)
-
     // Deploy LQTY Token, passing Community Issuance and Factory addresses to the constructor
     const lqtyToken = await LQTYToken.new(
       communityIssuance.address,
@@ -205,7 +215,6 @@ class DeploymentHelper {
     const sortedTroves = await SortedTroves.new()
     const troveManager = await TroveManager.new()
     const activePool = await ActivePool.new()
-    const stabilityPool = await StabilityPool.new()
     const gasPool = await GasPool.new()
     const defaultPool = await DefaultPool.new()
     const collSurplusPool = await CollSurplusPool.new()
@@ -214,7 +223,6 @@ class DeploymentHelper {
     const hintHelpers = await HintHelpers.new()
     const lusdToken = await LUSDToken.new(
       troveManager.address,
-      stabilityPool.address,
       borrowerOperations.address
     )
     const coreContracts = {
@@ -223,7 +231,6 @@ class DeploymentHelper {
       sortedTroves,
       troveManager,
       activePool,
-      stabilityPool,
       gasPool,
       defaultPool,
       collSurplusPool,
@@ -262,7 +269,6 @@ class DeploymentHelper {
   static async deployLUSDToken(contracts) {
     contracts.lusdToken = await LUSDToken.new(
       contracts.troveManager.address,
-      contracts.stabilityPool.address,
       contracts.borrowerOperations.address
     )
     return contracts
@@ -271,7 +277,6 @@ class DeploymentHelper {
   static async deployLUSDTokenTester(contracts) {
     contracts.lusdToken = await LUSDTokenTester.new(
       contracts.troveManager.address,
-      contracts.stabilityPool.address,
       contracts.borrowerOperations.address
     )
     return contracts
@@ -296,7 +301,6 @@ class DeploymentHelper {
       contracts.borrowerOperations.address,
       contracts.activePool.address,
       contracts.defaultPool.address,
-      contracts.stabilityPool.address,
       contracts.gasPool.address,
       contracts.collSurplusPool.address,
       contracts.priceFeedTestnet.address,
@@ -311,7 +315,6 @@ class DeploymentHelper {
       contracts.troveManager.address,
       contracts.activePool.address,
       contracts.defaultPool.address,
-      contracts.stabilityPool.address,
       contracts.gasPool.address,
       contracts.collSurplusPool.address,
       contracts.priceFeedTestnet.address,
@@ -321,20 +324,9 @@ class DeploymentHelper {
     )
 
     // set contracts in the Pools
-    await contracts.stabilityPool.setAddresses(
-      contracts.borrowerOperations.address,
-      contracts.troveManager.address,
-      contracts.activePool.address,
-      contracts.lusdToken.address,
-      contracts.sortedTroves.address,
-      contracts.priceFeedTestnet.address,
-      LQTYContracts.communityIssuance.address
-    )
-
     await contracts.activePool.setAddresses(
       contracts.borrowerOperations.address,
       contracts.troveManager.address,
-      contracts.stabilityPool.address,
       contracts.defaultPool.address
     )
 
@@ -371,7 +363,7 @@ class DeploymentHelper {
 
     await LQTYContracts.communityIssuance.setAddresses(
       LQTYContracts.lqtyToken.address,
-      coreContracts.stabilityPool.address
+      th.ZERO_ADDRESS /// TODO: fix
     )
   }
 

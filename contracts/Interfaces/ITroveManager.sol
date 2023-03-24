@@ -3,7 +3,6 @@
 pragma solidity 0.8.19;
 
 import "./ILiquityBase.sol";
-import "./IStabilityPool.sol";
 import "./ILUSDToken.sol";
 import "./ILQTYToken.sol";
 import "./ILQTYStaking.sol";
@@ -24,7 +23,6 @@ interface ITroveManager is ILiquityBase {
     event LUSDTokenAddressChanged(address _newLUSDTokenAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event StabilityPoolAddressChanged(address _stabilityPoolAddress);
     event GasPoolAddressChanged(address _gasPoolAddress);
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
@@ -50,7 +48,6 @@ interface ITroveManager is ILiquityBase {
         address _borrowerOperationsAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _stabilityPoolAddress,
         address _gasPoolAddress,
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
@@ -60,7 +57,6 @@ interface ITroveManager is ILiquityBase {
         address _lqtyStakingAddress
     ) external;
 
-    function stabilityPool() external view returns (IStabilityPool);
     function lusdToken() external view returns (ILUSDToken);
     function lqtyToken() external view returns (ILQTYToken);
     function lqtyStaking() external view returns (ILQTYStaking);

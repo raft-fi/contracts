@@ -13,7 +13,6 @@ interface IBorrowerOperations {
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event StabilityPoolAddressChanged(address _stabilityPoolAddress);
     event GasPoolAddressChanged(address _gasPoolAddress);
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event PriceFeedAddressChanged(address  _newPriceFeedAddress);
@@ -31,7 +30,6 @@ interface IBorrowerOperations {
         address _troveManagerAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _stabilityPoolAddress,
         address _gasPoolAddress,
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
@@ -43,8 +41,6 @@ interface IBorrowerOperations {
     function openTrove(uint _maxFee, uint _LUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
 
     function addColl(address _upperHint, address _lowerHint, uint _amount) external;
-
-    function moveETHGainToTrove(address _user, address _upperHint, address _lowerHint, uint _amount) external;
 
     function withdrawColl(uint _amount, address _upperHint, address _lowerHint) external;
 

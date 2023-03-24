@@ -20,27 +20,21 @@ import "./Dependencies/CheckContract.sol";
 contract LUSDToken is ERC20Permit, CheckContract, ILUSDToken {
     // --- Addresses ---
     address public immutable troveManagerAddress;
-    address public immutable stabilityPoolAddress;
     address public immutable borrowerOperationsAddress;
 
     constructor
     (
         address _troveManagerAddress,
-        address _stabilityPoolAddress,
         address _borrowerOperationsAddress
     )
         ERC20Permit("LUSD Stablecoin")
         ERC20("LUSD Stablecoin", "LUSD")
     {
         checkContract(_troveManagerAddress);
-        checkContract(_stabilityPoolAddress);
         checkContract(_borrowerOperationsAddress);
 
         troveManagerAddress = _troveManagerAddress;
         emit TroveManagerAddressChanged(_troveManagerAddress);
-
-        stabilityPoolAddress = _stabilityPoolAddress;
-        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
 
         borrowerOperationsAddress = _borrowerOperationsAddress;
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
@@ -54,17 +48,12 @@ contract LUSDToken is ERC20Permit, CheckContract, ILUSDToken {
     }
 
     function burn(address _account, uint256 _amount) external override {
-        _requireCallerIsBOorTroveMorSP();
+        _requireCallerIsBOorTroveM();
         _burn(_account, _amount);
     }
 
-    function sendToPool(address _sender,  address _poolAddress, uint256 _amount) external override {
-        _requireCallerIsStabilityPool();
-        _transfer(_sender, _poolAddress, _amount);
-    }
-
     function returnFromPool(address _poolAddress, address _receiver, uint256 _amount) external override {
-        _requireCallerIsTroveMorSP();
+        _requireCallerIsTroveManager();
         _transfer(_poolAddress, _receiver, _amount);
     }
 
@@ -72,22 +61,17 @@ contract LUSDToken is ERC20Permit, CheckContract, ILUSDToken {
         require(msg.sender == borrowerOperationsAddress, "LUSDToken: Caller is not BorrowerOperations");
     }
 
-    function _requireCallerIsBOorTroveMorSP() internal view {
+    function _requireCallerIsBOorTroveM() internal view {
         require(
             msg.sender == borrowerOperationsAddress ||
-            msg.sender == troveManagerAddress ||
-            msg.sender == stabilityPoolAddress,
-            "LUSD: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
+            msg.sender == troveManagerAddress,
+            "LUSD: Caller is neither BorrowerOperations nor TroveManager"
         );
     }
 
-    function _requireCallerIsStabilityPool() internal view {
-        require(msg.sender == stabilityPoolAddress, "LUSD: Caller is not the StabilityPool");
-    }
-
-    function _requireCallerIsTroveMorSP() internal view {
+    function _requireCallerIsTroveManager() internal view {
         require(
-            msg.sender == troveManagerAddress || msg.sender == stabilityPoolAddress,
-            "LUSD: Caller is neither TroveManager nor StabilityPool");
+            msg.sender == troveManagerAddress,
+            "LUSD: Caller is not TroveManager");
     }
 }

@@ -5,7 +5,6 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/ITroveManager.sol";
-import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/ILUSDToken.sol";
 import "./Interfaces/ISortedTroves.sol";
@@ -20,8 +19,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // --- Connected contract declarations ---
 
     address public borrowerOperationsAddress;
-
-    IStabilityPool public override stabilityPool;
 
     address gasPoolAddress;
 
@@ -125,7 +122,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     struct LocalVariables_OuterLiquidationFunction {
         uint price;
-        uint LUSDInStabPool;
         uint liquidatedDebt;
         uint liquidatedColl;
     }
@@ -137,7 +133,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     struct LocalVariables_LiquidationSequence {
-        uint remainingLUSDInStabPool;
         uint i;
         uint ICR;
         address user;
@@ -151,7 +146,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint collGasCompensation;
         uint LUSDGasCompensation;
         uint debtToOffset;
-        uint collToSendToSP;
+        uint collToSendToLiquidator;
         uint debtToRedistribute;
         uint collToRedistribute;
     }
@@ -162,7 +157,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint totalCollGasCompensation;
         uint totalLUSDGasCompensation;
         uint totalDebtToOffset;
-        uint totalCollToSendToSP;
+        uint totalCollToSendToLiquidator;
         uint totalDebtToRedistribute;
         uint totalCollToRedistribute;
     }
@@ -197,12 +192,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
 
     // --- Dependency setter ---
-
     function setAddresses(
         address _borrowerOperationsAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _stabilityPoolAddress,
         address _gasPoolAddress,
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
@@ -216,7 +209,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         checkContract(_borrowerOperationsAddress);
         checkContract(_activePoolAddress);
         checkContract(_defaultPoolAddress);
-        checkContract(_stabilityPoolAddress);
         checkContract(_gasPoolAddress);
         checkContract(_collSurplusPoolAddress);
         checkContract(_priceFeedAddress);
@@ -228,7 +220,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         borrowerOperationsAddress = _borrowerOperationsAddress;
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        stabilityPool = IStabilityPool(_stabilityPoolAddress);
         gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
@@ -242,7 +233,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
         emit GasPoolAddressChanged(_gasPoolAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
@@ -280,8 +270,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         address _borrower,
-        uint _ICR,
-        uint _LUSDInStabPool
+        uint _ICR
     )
         internal
         returns (LiquidationValues memory singleLiquidation)
@@ -302,57 +291,21 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         if (_ICR <= _100pct) {
             singleLiquidation.debtToOffset = 0;
-            singleLiquidation.collToSendToSP = 0;
+            singleLiquidation.collToSendToLiquidator = 0;
             singleLiquidation.debtToRedistribute = singleLiquidation.entireTroveDebt;
             singleLiquidation.collToRedistribute = collToLiquidate;
         }
         else {
-            (singleLiquidation.debtToOffset,
-            singleLiquidation.collToSendToSP,
-            singleLiquidation.debtToRedistribute,
-            singleLiquidation.collToRedistribute) = _getOffsetAndRedistributionVals(singleLiquidation.entireTroveDebt, collToLiquidate, _LUSDInStabPool);   
+            singleLiquidation.debtToOffset = singleLiquidation.entireTroveDebt;
+            singleLiquidation.collToSendToLiquidator = collToLiquidate;
+            singleLiquidation.debtToRedistribute = 0;
+            singleLiquidation.collToRedistribute = 0;
         }
 
         _closeTrove(_borrower, Status.closedByLiquidation);
         emit TroveLiquidated(_borrower, singleLiquidation.entireTroveDebt, singleLiquidation.entireTroveColl, TroveManagerOperation.liquidate);
         emit TroveUpdated(_borrower, 0, 0, 0, TroveManagerOperation.liquidate);
         return singleLiquidation;
-    }
-
-    /* In a full liquidation, returns the values for a trove's coll and debt to be offset, and coll and debt to be
-    * redistributed to active troves.
-    */
-    function _getOffsetAndRedistributionVals
-    (
-        uint _debt,
-        uint _coll,
-        uint _LUSDInStabPool
-    )
-        internal
-        pure
-        returns (uint debtToOffset, uint collToSendToSP, uint debtToRedistribute, uint collToRedistribute)
-    {
-        if (_LUSDInStabPool > 0) {
-            /*
-            * Offset as much debt & collateral as possible against the Stability Pool, and redistribute the remainder
-            * between all active troves.
-            *
-            *  If the trove's debt is larger than the deposited LUSD in the Stability Pool:
-            *
-            *  - Offset an amount of the trove's debt equal to the LUSD in the Stability Pool
-            *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
-            *
-            */
-            debtToOffset = Math.min(_debt, _LUSDInStabPool);
-            collToSendToSP = _coll * debtToOffset / _debt;
-            debtToRedistribute = _debt - debtToOffset;
-            collToRedistribute = _coll - collToSendToSP;
-        } else {
-            debtToOffset = 0;
-            collToSendToSP = 0;
-            debtToRedistribute = _debt;
-            collToRedistribute = _coll;
-        }
     }
 
     /*
@@ -369,20 +322,16 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             ICollSurplusPool(address(0)),
             address(0)
         );
-        IStabilityPool stabilityPoolCached = stabilityPool;
-
         LocalVariables_OuterLiquidationFunction memory vars;
 
         vars.price = priceFeed.fetchPrice();
-        vars.LUSDInStabPool = stabilityPoolCached.getTotalLUSDDeposits();
 
         // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
-        LiquidationTotals memory totals = _getTotalsFromLiquidateTrovesSequence(contractsCache.activePool, contractsCache.defaultPool, vars.price, vars.LUSDInStabPool, _n);
+        LiquidationTotals memory totals = _getTotalsFromLiquidateTrovesSequence(contractsCache.activePool, contractsCache.defaultPool, vars.price, _n);
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
-        // Move liquidated ETH and LUSD to the appropriate pools
-        stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
+        _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
         _redistributeDebtAndColl(contractsCache.activePool, contractsCache.defaultPool, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
 
         // Update system snapshots
@@ -401,7 +350,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         uint _price,
-        uint _LUSDInStabPool,
         uint _n
     )
         internal
@@ -411,16 +359,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         LiquidationValues memory singleLiquidation;
         ISortedTroves sortedTrovesCached = sortedTroves;
 
-        vars.remainingLUSDInStabPool = _LUSDInStabPool;
-
         for (vars.i = 0; vars.i < _n; vars.i++) {
             vars.user = sortedTrovesCached.getLast();
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR, vars.remainingLUSDInStabPool);
-
-                vars.remainingLUSDInStabPool -= singleLiquidation.debtToOffset;
+                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR);
 
                 // Add liquidation values to their respective running totals
                 totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
@@ -437,20 +381,17 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         IActivePool activePoolCached = activePool;
         IDefaultPool defaultPoolCached = defaultPool;
-        IStabilityPool stabilityPoolCached = stabilityPool;
 
         LocalVariables_OuterLiquidationFunction memory vars;
 
         vars.price = priceFeed.fetchPrice();
-        vars.LUSDInStabPool = stabilityPoolCached.getTotalLUSDDeposits();
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
-        LiquidationTotals memory totals = _getTotalsFromBatchLiquidate(activePoolCached, defaultPoolCached, vars.price, vars.LUSDInStabPool, _troveArray);
+        LiquidationTotals memory totals = _getTotalsFromBatchLiquidate(activePoolCached, defaultPoolCached, vars.price, _troveArray);
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
-        // Move liquidated ETH and LUSD to the appropriate pools
-        stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
+        _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
         _redistributeDebtAndColl(activePoolCached, defaultPoolCached, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
 
         // Update system snapshots
@@ -464,12 +405,19 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _sendGasCompensation(activePoolCached, msg.sender, totals.totalLUSDGasCompensation, totals.totalCollGasCompensation);
     }
 
+    function _offset(address liquidator, uint256 debtToBurn, uint256 collToSendToLiquidator) internal {
+        if (debtToBurn == 0) { return; }
+
+        activePool.decreaseLUSDDebt(debtToBurn);
+        lusdToken.burn(liquidator, debtToBurn);
+        activePool.sendETH(liquidator, collToSendToLiquidator);
+    }
+
     function _getTotalsFromBatchLiquidate
     (
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         uint _price,
-        uint _LUSDInStabPool,
         address[] memory _troveArray
     )
         internal
@@ -478,15 +426,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
 
-        vars.remainingLUSDInStabPool = _LUSDInStabPool;
-
         for (vars.i = 0; vars.i < _troveArray.length; vars.i++) {
             vars.user = _troveArray[vars.i];
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR, vars.remainingLUSDInStabPool);
-                vars.remainingLUSDInStabPool = vars.remainingLUSDInStabPool - singleLiquidation.debtToOffset;
+                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR);
 
                 // Add liquidation values to their respective running totals
                 totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
@@ -505,7 +450,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         newTotals.totalDebtInSequence = oldTotals.totalDebtInSequence + singleLiquidation.entireTroveDebt;
         newTotals.totalCollInSequence = oldTotals.totalCollInSequence + singleLiquidation.entireTroveColl;
         newTotals.totalDebtToOffset = oldTotals.totalDebtToOffset + singleLiquidation.debtToOffset;
-        newTotals.totalCollToSendToSP = oldTotals.totalCollToSendToSP + singleLiquidation.collToSendToSP;
+        newTotals.totalCollToSendToLiquidator = oldTotals.totalCollToSendToLiquidator + singleLiquidation.collToSendToLiquidator;
         newTotals.totalDebtToRedistribute = oldTotals.totalDebtToRedistribute + singleLiquidation.debtToRedistribute;
         newTotals.totalCollToRedistribute = oldTotals.totalCollToRedistribute + singleLiquidation.collToRedistribute;
 

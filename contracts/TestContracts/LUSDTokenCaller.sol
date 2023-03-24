@@ -19,10 +19,6 @@ contract LUSDTokenCaller {
         LUSD.burn(_account, _amount);
     }
 
-    function lusdSendToPool(address _sender,  address _poolAddress, uint256 _amount) external {
-        LUSD.sendToPool(_sender, _poolAddress, _amount);
-    }
-
     function lusdReturnFromPool(address _poolAddress, address _receiver, uint256 _amount ) external {
         LUSD.returnFromPool(_poolAddress, _receiver, _amount);
     }

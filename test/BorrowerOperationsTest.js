@@ -2300,20 +2300,6 @@ contract('BorrowerOperations', async accounts => {
       await assertRevert(repayLUSDPromise_B, "revert")
     })
 
-    // --- Internal _adjustTrove() ---
-
-    it("Internal _adjustTrove(): reverts when op is a withdrawal and _borrower param is not the msg.sender", async () => {
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
-
-      const txPromise_A = borrowerOperations.callInternalAdjustLoan(alice, dec(1, 18), dec(1, 18), true, alice, alice, 0, { from: bob })
-      await assertRevert(txPromise_A, "BorrowerOps: Caller must be the borrower for a withdrawal")
-      const txPromise_B = borrowerOperations.callInternalAdjustLoan(bob, dec(1, 18), dec(1, 18), true, alice, alice, 0, { from: owner })
-      await assertRevert(txPromise_B, "BorrowerOps: Caller must be the borrower for a withdrawal")
-      const txPromise_C = borrowerOperations.callInternalAdjustLoan(carol, dec(1, 18), dec(1, 18), true, alice, alice, 0, { from: bob })
-      await assertRevert(txPromise_C, "BorrowerOps: Caller must be the borrower for a withdrawal")
-    })
-
     // --- closeTrove() ---
 
     it("closeTrove(): reverts when calling address does not have active trove", async () => {

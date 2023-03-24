@@ -10,7 +10,7 @@ import "../Interfaces/IPriceFeed.sol";
 import "../Interfaces/ILiquityBase.sol";
 
 /*
-* Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
+* Base contract for TroveManager and BorrowerOperations. Contains global system constants and
 * common functions.
 */
 contract LiquityBase is BaseMath, ILiquityBase {
@@ -28,9 +28,9 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     uint constant public PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
-    IActivePool public activePool;
+    IActivePool public override activePool;
 
-    IDefaultPool public defaultPool;
+    IDefaultPool public override defaultPool;
 
     IPriceFeed public override priceFeed;
 
