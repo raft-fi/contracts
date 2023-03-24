@@ -6,7 +6,6 @@ contract('LUSDToken', async accounts => {
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
   let lusdTokenTester
-  let stabilityPool
 
     beforeEach(async () => {
 
@@ -18,8 +17,6 @@ contract('LUSDToken', async accounts => {
       await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 
       lusdTokenTester = contracts.lusdToken
-
-      stabilityPool = contracts.stabilityPool
 
       await lusdTokenTester.unprotectedMint(alice, 150)
       await lusdTokenTester.unprotectedMint(bob, 100)
@@ -43,39 +40,6 @@ contract('LUSDToken', async accounts => {
       await lusdTokenTester.unprotectedBurn(alice, 70)
       const alice_BalanceAfter = await lusdTokenTester.balanceOf(alice)
       assert.equal(alice_BalanceAfter, 80)
-    })
-
-    // TODO: Rewrite this test - it should check the actual lusdTokenTester's balance.
-    it('sendToPool(): changes balances of Stability pool and user by the correct amounts', async () => {
-      const stabilityPool_BalanceBefore = await lusdTokenTester.balanceOf(stabilityPool.address)
-      const bob_BalanceBefore = await lusdTokenTester.balanceOf(bob)
-      assert.equal(stabilityPool_BalanceBefore, 0)
-      assert.equal(bob_BalanceBefore, 100)
-
-      await lusdTokenTester.unprotectedSendToPool(bob, stabilityPool.address, 75)
-
-      const stabilityPool_BalanceAfter = await lusdTokenTester.balanceOf(stabilityPool.address)
-      const bob_BalanceAfter = await lusdTokenTester.balanceOf(bob)
-      assert.equal(stabilityPool_BalanceAfter, 75)
-      assert.equal(bob_BalanceAfter, 25)
-    })
-
-    it('returnFromPool(): changes balances of Stability pool and user by the correct amounts', async () => {
-      /// --- SETUP --- give pool 100 LUSD
-      await lusdTokenTester.unprotectedMint(stabilityPool.address, 100)
-
-      /// --- TEST ---
-      const stabilityPool_BalanceBefore = await lusdTokenTester.balanceOf(stabilityPool.address)
-      const  bob_BalanceBefore = await lusdTokenTester.balanceOf(bob)
-      assert.equal(stabilityPool_BalanceBefore, 100)
-      assert.equal(bob_BalanceBefore, 100)
-
-      await lusdTokenTester.unprotectedReturnFromPool(stabilityPool.address, bob, 75)
-
-      const stabilityPool_BalanceAfter = await lusdTokenTester.balanceOf(stabilityPool.address)
-      const bob_BalanceAfter = await lusdTokenTester.balanceOf(bob)
-      assert.equal(stabilityPool_BalanceAfter, 25)
-      assert.equal(bob_BalanceAfter, 175)
     })
   })
 

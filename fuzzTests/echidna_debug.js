@@ -5,7 +5,6 @@ const TroveManager = artifacts.require('TroveManager')
 const LUSDToken = artifacts.require('LUSDToken')
 const ActivePool = artifacts.require('ActivePool')
 const DefaultPool = artifacts.require('DefaultPool')
-const StabilityPool = artifacts.require('StabilityPool')
 
 // run with:
 // npx hardhat --config hardhat.config.echidna.js test fuzzTests/echidna_debug.js
@@ -16,7 +15,6 @@ contract('Echidna debugger', async accounts => {
   let lusdToken
   let activePool
   let defaultPool
-  let stabilityPool
   let GAS_POOL_ADDRESS
 
   before(async () => {
@@ -25,7 +23,6 @@ contract('Echidna debugger', async accounts => {
     lusdToken = await LUSDToken.at(await echidnaTester.lusdToken())
     activePool = await ActivePool.at(await echidnaTester.activePool())
     defaultPool = await DefaultPool.at(await echidnaTester.defaultPool())
-    stabilityPool = await StabilityPool.at(await echidnaTester.stabilityPool())
     GAS_POOL_ADDRESS = await troveManager.GAS_POOL_ADDRESS();
   })
 
@@ -72,7 +69,6 @@ contract('Echidna debugger', async accounts => {
     const gasPoolBalance = await lusdToken.balanceOf(GAS_POOL_ADDRESS);
     const activePoolBalance = await activePool.getLUSDDebt();
     const defaultPoolBalance = await defaultPool.getLUSDDebt();
-    const stabilityPoolBalance = await stabilityPool.getTotalLUSDDeposits();
     const currentTrove = await echidnaTester.echidnaProxies(0);
     const troveBalance = lusdToken.balanceOf(currentTrove);
 
@@ -80,7 +76,6 @@ contract('Echidna debugger', async accounts => {
     console.log('gasPoolBalance', gasPoolBalance.toString());
     console.log('activePoolBalance', activePoolBalance.toString());
     console.log('defaultPoolBalance', defaultPoolBalance.toString());
-    console.log('stabilityPoolBalance', stabilityPoolBalance.toString());
     console.log('troveBalance', troveBalance.toString());
   })
 })

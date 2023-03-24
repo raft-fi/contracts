@@ -64,7 +64,7 @@ contract CommunityIssuance is ICommunityIssuance, Ownable, CheckContract, BaseMa
         override
     {
         checkContract(_lqtyTokenAddress);
-        checkContract(_stabilityPoolAddress);
+        // checkContract(_stabilityPoolAddress);
 
         lqtyToken = ILQTYToken(_lqtyTokenAddress);
         stabilityPoolAddress = _stabilityPoolAddress;

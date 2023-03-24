@@ -37,7 +37,6 @@ contract('LQTYStaking revenue share tests', async accounts => {
   let sortedTroves
   let troveManager
   let activePool
-  let stabilityPool
   let defaultPool
   let borrowerOperations
   let lqtyStaking
@@ -64,7 +63,6 @@ contract('LQTYStaking revenue share tests', async accounts => {
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
