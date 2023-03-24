@@ -31,6 +31,24 @@ jobs:
         run: yarn test
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+  foundry-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: forge test
 
   coverage:
     runs-on: ubuntu-latest

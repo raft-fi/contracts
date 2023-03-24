@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../Interfaces/IPriceFeed.sol";
+import "../../contracts/Interfaces/IPriceFeed.sol";
 
 /*
 * PriceFeed placeholder for testnet and development. The price is simply set manually and saved in a state

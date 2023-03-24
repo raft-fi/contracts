@@ -113,7 +113,7 @@ class DeploymentHelper {
     to = to || (await ethers.getSigners())[0].address;
     amount = amount ? ethers.BigNumber.from(amount) : ethers.BigNumber.from("1000000000000000000000000")
     
-    const borrowerOperationsAddress = await lusdToken.borrowerOperationsAddress();
+    const borrowerOperationsAddress = await lusdToken.borrowerOperations();
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
       params: [borrowerOperationsAddress]

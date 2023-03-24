@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../PriceFeed.sol";
+import "../../contracts/PriceFeed.sol";
 
 contract PriceFeedTester is PriceFeed {
 
