@@ -78,7 +78,7 @@ contract('TroveManager', async accounts => {
     communityIssuance = LQTYContracts.communityIssuance
     lockupContractFactory = LQTYContracts.lockupContractFactory
 
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 
@@ -1202,7 +1202,7 @@ contract('TroveManager', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
 
     const TCR_Before = await th.getTCR(contracts)
-    
+
     // Liquidate troves
     await troveManager.liquidateTroves(10)
 
@@ -3120,7 +3120,9 @@ contract('TroveManager', async accounts => {
     assert.isTrue(lastFeeOpTime_3.gt(lastFeeOpTime_1))
   })
 
-  it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to LQTY staking contract", async () => {
+  it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to fee recipient contract", async () => {
+    const feeRecipient = await troveManager.feeRecipient()
+
     // time fast-forwards 1 year, and multisig stakes 1 LQTY
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
     await lqtyToken.approve(lqtyStaking.address, dec(1, 18), { from: multisig })
@@ -3135,9 +3137,8 @@ contract('TroveManager', async accounts => {
     // Check baseRate == 0
     assert.equal(await troveManager.baseRate(), '0')
 
-    // Check LQTY Staking contract balance before is zero
-    const lqtyStakingBalance_Before = await wstETHTokenMock.balanceOf(lqtyStaking.address)
-    assert.equal(lqtyStakingBalance_Before, '0')
+    // Check fee recipient's balance before is zero
+    const feeRecipientBefore = await wstETHTokenMock.balanceOf(feeRecipient)
 
     const A_balanceBefore = await lusdToken.balanceOf(A)
 
@@ -3151,9 +3152,9 @@ contract('TroveManager', async accounts => {
     const baseRate_1 = await troveManager.baseRate()
     assert.isTrue(baseRate_1.gt(toBN('0')))
 
-    // Check LQTY Staking contract balance after is non-zero
-    const lqtyStakingBalance_After = toBN(await wstETHTokenMock.balanceOf(lqtyStaking.address))
-    assert.isTrue(lqtyStakingBalance_After.gt(toBN('0')))
+    // Check fee recipient's contract balance after is non-zero
+    const feeRecipientAfter = toBN(await wstETHTokenMock.balanceOf(feeRecipient))
+    assert.isTrue(feeRecipientAfter.gt(feeRecipientBefore))
   })
 
   it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-LQTY-staked in LQTY Staking contract", async () => {
@@ -3171,10 +3172,6 @@ contract('TroveManager', async accounts => {
     // Check baseRate == 0
     assert.equal(await troveManager.baseRate(), '0')
 
-    // Check LQTY Staking ETH-fees-per-LQTY-staked before is zero
-    const F_ETH_Before = await lqtyStaking.F_ETH()
-    assert.equal(F_ETH_Before, '0')
-
     const A_balanceBefore = await lusdToken.balanceOf(A)
 
     // A redeems 10 LUSD
@@ -3186,13 +3183,11 @@ contract('TroveManager', async accounts => {
     // Check baseRate is now non-zero
     const baseRate_1 = await troveManager.baseRate()
     assert.isTrue(baseRate_1.gt(toBN('0')))
-
-    // Check LQTY Staking ETH-fees-per-LQTY-staked after is non-zero
-    const F_ETH_After = await lqtyStaking.F_ETH()
-    assert.isTrue(F_ETH_After.gt('0'))
   })
 
   it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee to LQTY staking contract", async () => {
+    const feeRecipient = await troveManager.feeRecipient()
+
     // time fast-forwards 1 year, and multisig stakes 1 LQTY
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
     await lqtyToken.approve(lqtyStaking.address, dec(1, 18), { from: multisig })
@@ -3220,7 +3215,7 @@ contract('TroveManager', async accounts => {
     const baseRate_1 = await troveManager.baseRate()
     assert.isTrue(baseRate_1.gt(toBN('0')))
 
-    const lqtyStakingBalance_Before = toBN(await wstETHTokenMock.balanceOf(lqtyStaking.address))
+    const lqtyStakingBalance_Before = toBN(await wstETHTokenMock.balanceOf(feeRecipient))
 
     // B redeems 10 LUSD
     await th.redeemCollateral(B, contracts, dec(10, 18), GAS_PRICE)
@@ -3228,13 +3223,13 @@ contract('TroveManager', async accounts => {
     // Check B's balance has decreased by 10 LUSD
     assert.equal(await lusdToken.balanceOf(B), B_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
-    const lqtyStakingBalance_After = toBN(await wstETHTokenMock.balanceOf(lqtyStaking.address))
+    const lqtyStakingBalance_After = toBN(await wstETHTokenMock.balanceOf(feeRecipient))
 
     // check LQTY Staking balance has increased
     assert.isTrue(lqtyStakingBalance_After.gt(lqtyStakingBalance_Before))
   })
 
-  it("redeemCollateral(): a redemption made at a non-zero base rate increases ETH-per-LQTY-staked in the staking contract", async () => {
+  it.skip("redeemCollateral(): a redemption made at a non-zero base rate increases ETH-per-LQTY-staked in the staking contract", async () => {
     // time fast-forwards 1 year, and multisig stakes 1 LQTY
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
     await lqtyToken.approve(lqtyStaking.address, dec(1, 18), { from: multisig })

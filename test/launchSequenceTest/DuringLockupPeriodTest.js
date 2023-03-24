@@ -7,6 +7,7 @@ const { dec, toBN, assertRevert, ZERO_ADDRESS } = th
 
 contract('During the initial lockup period', async accounts => {
   const [
+    owner,
     liquityAG,
     teamMember_1,
     teamMember_2,
@@ -51,12 +52,6 @@ contract('During the initial lockup period', async accounts => {
   const investorInitialEntitlement_2 = dec(5, 24)
   const investorInitialEntitlement_3 = dec(6, 24)
 
-  const LQTYEntitlement_A = dec(1, 24)
-  const LQTYEntitlement_B = dec(2, 24)
-  const LQTYEntitlement_C = dec(3, 24)
-  const LQTYEntitlement_D = dec(4, 24)
-  const LQTYEntitlement_E = dec(5, 24)
-
   let oneYearFromSystemDeployment
   let twoYearsFromSystemDeployment
 
@@ -71,7 +66,7 @@ contract('During the initial lockup period', async accounts => {
     lockupContractFactory = LQTYContracts.lockupContractFactory
 
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(coreContracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(coreContracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, coreContracts)
 
     oneYearFromSystemDeployment = await th.getTimeFromSystemDeployment(lqtyToken, web3, timeValues.SECONDS_IN_ONE_YEAR)

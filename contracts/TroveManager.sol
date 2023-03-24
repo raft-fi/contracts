@@ -9,7 +9,6 @@ import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/ILUSDToken.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ILQTYToken.sol";
-import "./Interfaces/ILQTYStaking.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
 
@@ -28,7 +27,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     ILQTYToken public override lqtyToken;
 
-    ILQTYStaking public override lqtyStaking;
+    address public override feeRecipient;
 
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
     ISortedTroves public sortedTroves;
@@ -166,10 +165,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         IActivePool activePool;
         IDefaultPool defaultPool;
         ILUSDToken lusdToken;
-        ILQTYStaking lqtyStaking;
         ISortedTroves sortedTroves;
         ICollSurplusPool collSurplusPool;
         address gasPoolAddress;
+        address feeRecipient;
     }
     // --- Variable container structs for redemptions ---
 
@@ -190,8 +189,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         bool cancelledPartial;
     }
 
+    // --- Setters ---
 
-    // --- Dependency setter ---
     function setAddresses(
         address _borrowerOperationsAddress,
         address _activePoolAddress,
@@ -202,7 +201,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _lusdTokenAddress,
         address _sortedTrovesAddress,
         address _lqtyTokenAddress,
-        address _lqtyStakingAddress
+        address _feeRecipient
     ) external override onlyOwner {
         require(!_addressesSet, "TroveManager: addresses already set");
 
@@ -215,7 +214,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         checkContract(_lusdTokenAddress);
         checkContract(_sortedTrovesAddress);
         checkContract(_lqtyTokenAddress);
-        checkContract(_lqtyStakingAddress);
 
         borrowerOperationsAddress = _borrowerOperationsAddress;
         activePool = IActivePool(_activePoolAddress);
@@ -226,7 +224,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         lusdToken = ILUSDToken(_lusdTokenAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         lqtyToken = ILQTYToken(_lqtyTokenAddress);
-        lqtyStaking = ILQTYStaking(_lqtyStakingAddress);
+        feeRecipient = _feeRecipient;
 
         _addressesSet = true;
 
@@ -239,7 +237,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit LUSDTokenAddressChanged(_lusdTokenAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit LQTYTokenAddressChanged(_lqtyTokenAddress);
-        emit LQTYStakingAddressChanged(_lqtyStakingAddress);
+        emit FeeRecipientChanged(_feeRecipient);
+    }
+
+    function setFeeRecipient(address _feeRecipient) external override onlyOwner {
+        require(_addressesSet, "TroveManager: addresses not set");
+        feeRecipient = _feeRecipient;
+        emit FeeRecipientChanged(_feeRecipient);
     }
 
     // --- Getters ---
@@ -317,9 +321,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             activePool,
             defaultPool,
             ILUSDToken(address(0)),
-            ILQTYStaking(address(0)),
             sortedTroves,
             ICollSurplusPool(address(0)),
+            address(0),
             address(0)
         );
         LocalVariables_OuterLiquidationFunction memory vars;
@@ -608,10 +612,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             activePool,
             defaultPool,
             lusdToken,
-            lqtyStaking,
             sortedTroves,
             collSurplusPool,
-            gasPoolAddress
+            gasPoolAddress,
+            feeRecipient
         );
         RedemptionTotals memory totals;
 
@@ -677,9 +681,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         _requireUserAcceptsFee(totals.ETHFee, totals.totalETHDrawn, _maxFeePercentage);
 
-        // Send the ETH fee to the LQTY staking contract
-        contractsCache.activePool.sendETH(address(contractsCache.lqtyStaking), totals.ETHFee);
-        contractsCache.lqtyStaking.increaseF_ETH(totals.ETHFee);
+        // Send the ETH fee to the recipient
+        contractsCache.activePool.sendETH(feeRecipient, totals.ETHFee);
 
         totals.ETHToSendToRedeemer = totals.totalETHDrawn - totals.ETHFee;
 

@@ -54,7 +54,7 @@ contract('LQTYStaking revenue share tests', async accounts => {
     const LQTYContracts = await deploymentHelper.deployLQTYTesterContractsHardhat(bountyAddress, lpRewardsAddress, multisig)
 
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 
     nonPayable = await NonPayable.new()

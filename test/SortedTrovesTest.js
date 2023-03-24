@@ -38,7 +38,7 @@ contract('SortedTroves', async accounts => {
   }
 
   const [
-    alice, bob, carol, dennis, erin,
+    owner, alice, bob, carol, dennis, erin,
     defaulter_1,
     A, B, C, D, E, F, G, H, I, J, whale] = accounts;
 
@@ -53,7 +53,6 @@ contract('SortedTroves', async accounts => {
 
   let contracts
 
-  const getOpenTroveLUSDAmount = async (totalDebt) => th.getOpenTroveLUSDAmount(contracts, totalDebt)
   const openTrove = async (params) => th.openTrove(contracts, params)
 
   describe('SortedTroves', () => {
@@ -74,7 +73,7 @@ contract('SortedTroves', async accounts => {
       wstETHTokenMock = contracts.wstETHTokenMock
 
       await deploymentHelper.connectLQTYContracts(LQTYContracts)
-      await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+      await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
       await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 
       await th.fillAccountsWithWstETH(contracts, [

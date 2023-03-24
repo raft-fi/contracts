@@ -56,7 +56,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 
     await th.fillAccountsWithWstETH(contracts, [

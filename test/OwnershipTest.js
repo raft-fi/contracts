@@ -42,31 +42,31 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     lockupContractFactory = LQTYContracts.lockupContractFactory
   })
 
-  const testZeroAddress = async (contract, params, method = 'setAddresses', skip = 0) => {
-    await testWrongAddress(contract, params, th.ZERO_ADDRESS, method, skip, 'Account cannot be zero address')
+  const testZeroAddress = async (contract, params, skipLast = 0) => {
+    await testWrongAddress(contract, params, th.ZERO_ADDRESS, skipLast, 'Account cannot be zero address')
   }
-  const testNonContractAddress = async (contract, params, method = 'setAddresses', skip = 0) => {
-    await testWrongAddress(contract, params, bob, method, skip, 'Account code size cannot be zero')
+  const testNonContractAddress = async (contract, params, skipLast = 0) => {
+    await testWrongAddress(contract, params, bob, skipLast, 'Account code size cannot be zero')
   }
-  const testWrongAddress = async (contract, params, address, method, skip, message) => {
-    for (let i = skip; i < params.length; i++) {
+  const testWrongAddress = async (contract, params, address, skipLast, message) => {
+    for (let i = 0; i < params.length - skipLast; i++) {
       const newParams = [...params]
       newParams[i] = address
-      await th.assertRevert(contract[method](...newParams, { from: owner }), message)
+      await th.assertRevert(contract.setAddresses(...newParams, { from: owner }), message)
     }
   }
 
-  const testSetAddresses = async (contract, numberOfAddresses) => {
+  const testSetAddresses = async (contract, numberOfAddresses, skipLast = 0) => {
     const dumbContract = await GasPool.new()
-    const params = Array(numberOfAddresses).fill(dumbContract.address)
+    const params = [...Array(numberOfAddresses).fill(dumbContract.address)]
 
     // Attempt call from alice
     await th.assertRevert(contract.setAddresses(...params, { from: alice }))
 
     // Attempt to use zero address
-    await testZeroAddress(contract, params)
+    await testZeroAddress(contract, params, skipLast)
     // Attempt to use non contract
-    await testNonContractAddress(contract, params)
+    await testNonContractAddress(contract, params, skipLast)
 
     // Owner can successfully set any address
     const txOwner = await contract.setAddresses(...params, { from: owner })
@@ -77,7 +77,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('TroveManager', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(troveManager, 10)
+      await testSetAddresses(troveManager, 10, 1)
     })
 
     it("setBorrowingSpread(): reverts when called by non-owner, or with wrong values", async () => {
@@ -95,7 +95,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('BorrowerOperations', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(borrowerOperations, 9)
+      await testSetAddresses(borrowerOperations, 9, 1)
     })
   })
 

@@ -16,6 +16,7 @@ contract('Fee arithmetic tests', async accounts => {
   let troveManagerTester
   let mathTester
 
+  const [owner] = accounts
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
   // see: https://docs.google.com/spreadsheets/d/1RbD8VGzq7xFgeK1GOkz_9bbKVIx-xkOz0VsVelnUFdc/edit#gid=0
@@ -343,7 +344,7 @@ contract('Fee arithmetic tests', async accounts => {
     const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress, multisig)
 
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
   })
 

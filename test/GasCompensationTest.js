@@ -78,7 +78,7 @@ contract('Gas compensation tests', async accounts => {
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
   })
 
@@ -591,7 +591,7 @@ contract('Gas compensation tests', async accounts => {
     assert.isAtMost(th.getDifference(SPETHIncrease_A, collRemainder_A), 1000)
 
     await priceFeed.setPrice(dec(222, 18))
-    
+
     /*
    ETH:USD price = 222
    Bob coll = 37.5 ETH. Value: $7500
@@ -1181,7 +1181,7 @@ contract('Gas compensation tests', async accounts => {
   it('Trove ordering: increasing collateral, constant debt. Price successively increases. Troves should maintain ordering by ICR', async () => {
     const _20_accounts = accounts.slice(1, 21)
     await th.fillAccountsWithWstETH(contracts, _20_accounts);
-    
+
     let coll = 50
     // create 20 troves, increasing collateral, constant debt = 100LUSD
     for (const account of _20_accounts) {

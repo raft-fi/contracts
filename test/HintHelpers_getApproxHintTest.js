@@ -90,7 +90,7 @@ contract('HintHelpers', async accounts => {
     priceFeed = contracts.priceFeedTestnet
     wstETHTokenMock = contracts.wstETHTokenMock
 
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 

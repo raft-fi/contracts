@@ -6,9 +6,6 @@ const LUSDTokenTester = artifacts.require("./LUSDTokenTester.sol")
 const th = testHelpers.TestHelper
 const dec = th.dec
 const toBN = th.toBN
-const assertRevert = th.assertRevert
-const mv = testHelpers.MoneyValues
-const timeValues = testHelpers.TimeValues
 
 
 /* NOTE: Some tests involving ETH redemption fees do not test for specific fee values.
@@ -21,7 +18,7 @@ const timeValues = testHelpers.TimeValues
 contract('TroveManager', async accounts => {
 
   const ZERO_ADDRESS = th.ZERO_ADDRESS
-  const [A, B, C, D, E, F] = accounts.slice(0, 7);
+  const [owner, A, B, C, D, E, F] = accounts;
 
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
@@ -30,7 +27,6 @@ contract('TroveManager', async accounts => {
   let sortedTroves
   let troveManager
   let activePool
-  let collSurplusPool
   let defaultPool
   let borrowerOperations
   let hintHelpers
@@ -63,7 +59,6 @@ contract('TroveManager', async accounts => {
     troveManager = contracts.troveManager
     activePool = contracts.activePool
     defaultPool = contracts.defaultPool
-    collSurplusPool = contracts.collSurplusPool
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
     wstETHTokenMock = contracts.wstETHTokenMock
@@ -73,11 +68,10 @@ contract('TroveManager', async accounts => {
     communityIssuance = LQTYContracts.communityIssuance
     lockupContractFactory = LQTYContracts.lockupContractFactory
 
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
 
-    
     await th.fillAccountsWithWstETH(contracts, [
       A, B, C, D, E, F,
       bountyAddress, lpRewardsAddress, multisig
