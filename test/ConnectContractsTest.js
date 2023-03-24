@@ -184,13 +184,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(troveManagerAddress, recordedTroveManagerAddress)
   })
 
-  it('Sets the correct ActivePool address in DefaultPool', async () => {
-    const activePoolAddress = activePool.address
-
-    const recordedActivePoolAddress = await defaultPool.activePoolAddress()
-    assert.equal(activePoolAddress, recordedActivePoolAddress)
-  })
-
   it('Sets the correct TroveManager address in SortedTroves', async () => {
     const borrowerOperationsAddress = borrowerOperations.address
 

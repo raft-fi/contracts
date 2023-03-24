@@ -124,15 +124,14 @@ contract('ActivePool', async accounts => {
 
 contract('DefaultPool', async accounts => {
 
-  let wstETHTokenMock, defaultPool, mockTroveManager, mockActivePool
+  let wstETHTokenMock, defaultPool, mockTroveManager
 
   const [owner, alice] = accounts;
   beforeEach(async () => {
     wstETHTokenMock = await WstETHTokenMock.new()
     defaultPool = await DefaultPool.new(wstETHTokenMock.address)
     mockTroveManager = await NonPayable.new()
-    mockActivePool = await NonPayable.new()
-    await defaultPool.setAddresses(mockTroveManager.address, mockActivePool.address)
+    await defaultPool.setAddresses(mockTroveManager.address)
 
     await th.fillAccountsWithWstETH({wstETHTokenMock: wstETHTokenMock}, [owner, alice])
   })
@@ -177,37 +176,6 @@ contract('DefaultPool', async accounts => {
 
     const recordedLUSD_balanceAfter = await defaultPool.getLUSDDebt()
     assert.equal(recordedLUSD_balanceAfter, 0)
-  })
-
-  // send raw ether
-  it('sendETH(): decreases the recorded ETH balance by the correct amount', async () => {
-    // setup: give pool 2 ether
-    const defaultPool_initialBalance = web3.utils.toBN(await web3.eth.getBalance(defaultPool.address))
-    assert.equal(defaultPool_initialBalance, 0)
-
-    // start pool with 2 ether
-    await wstETHTokenMock.approve(defaultPool.address, dec(2, 'ether'), { from: owner})
-    const depositWstETHData = th.getTransactionData('depositCollateral(address,uint256)', [owner, dec(2, 'ether')])
-    const tx1 = await mockActivePool.forward(defaultPool.address, depositWstETHData, { from: owner })
-    assert.isTrue(tx1.receipt.status)
-
-    const defaultPool_BalanceBeforeTx = web3.utils.toBN(await wstETHTokenMock.balanceOf(defaultPool.address))
-    const activePool_Balance_BeforeTx = web3.utils.toBN(await wstETHTokenMock.balanceOf(mockActivePool.address))
-
-    assert.equal(defaultPool_BalanceBeforeTx, dec(2, 'ether'))
-
-    // send ether from pool to alice
-    const sendETHData = th.getTransactionData('sendETH(address,uint256)', [mockActivePool.address, web3.utils.toHex(dec(1, 'ether'))])
-    const tx2 = await mockTroveManager.forward(defaultPool.address, sendETHData, { from: owner })
-    assert.isTrue(tx2.receipt.status)
-
-    const defaultPool_BalanceAfterTx = web3.utils.toBN(await wstETHTokenMock.balanceOf(defaultPool.address))
-    const activePool_Balance_AfterTx = web3.utils.toBN(await wstETHTokenMock.balanceOf(mockActivePool.address))
-
-    const activePool_BalanceChange = activePool_Balance_AfterTx.sub(activePool_Balance_BeforeTx)
-    const defaultPool_BalanceChange = defaultPool_BalanceAfterTx.sub(defaultPool_BalanceBeforeTx)
-    assert.equal(activePool_BalanceChange, dec(1, 'ether'))
-    assert.equal(defaultPool_BalanceChange, _minus_1_Ether)
   })
 })
 

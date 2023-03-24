@@ -36,8 +36,6 @@ LQTY contracts consist of only those contracts related to the LQTY Token:
 -the LQTYStaking contract
 -the CommunityIssuance contract
 */
-
-const ZERO_ADDRESS = '0x' + '0'.repeat(40)
 const maxBytes32 = '0x' + 'f'.repeat(64)
 
 class DeploymentHelper {
@@ -341,8 +339,7 @@ class DeploymentHelper {
     )
 
     await contracts.defaultPool.setAddresses(
-      contracts.troveManager.address,
-      contracts.activePool.address,
+      contracts.troveManager.address
     )
 
     await contracts.collSurplusPool.setAddresses(
