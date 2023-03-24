@@ -91,7 +91,7 @@ class DeploymentHelper {
     FunctionCaller.setAsDeployed(functionCaller)
     BorrowerOperations.setAsDeployed(borrowerOperations)
     HintHelpers.setAsDeployed(hintHelpers)
-      
+
     const coreContracts = {
       priceFeedTestnet,
       lusdToken,
@@ -112,14 +112,14 @@ class DeploymentHelper {
   static async mintLUSD(lusdToken, to = null, amount = null) {
     to = to || (await ethers.getSigners())[0].address;
     amount = amount ? ethers.BigNumber.from(amount) : ethers.BigNumber.from("1000000000000000000000000")
-    
+
     const borrowerOperationsAddress = await lusdToken.borrowerOperations();
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
       params: [borrowerOperationsAddress]
     })
     await lusdToken.mint(to, amount, { from: borrowerOperationsAddress, gasPrice: 0 })
-    
+
     await hre.network.provider.request({
       method: "hardhat_stopImpersonatingAccount",
       params: [borrowerOperationsAddress]
@@ -283,7 +283,7 @@ class DeploymentHelper {
   }
 
   // Connect contracts to their dependencies
-  static async connectCoreContracts(contracts, LQTYContracts) {
+  static async connectCoreContracts(contracts, LQTYContracts, feeRecipient) {
 
     // set TroveManager addr in SortedTroves
     await contracts.sortedTroves.setParams(
@@ -307,7 +307,7 @@ class DeploymentHelper {
       contracts.lusdToken.address,
       contracts.sortedTroves.address,
       LQTYContracts.lqtyToken.address,
-      LQTYContracts.lqtyStaking.address
+      feeRecipient
     )
 
     // set contracts in BorrowerOperations
@@ -320,7 +320,7 @@ class DeploymentHelper {
       contracts.priceFeedTestnet.address,
       contracts.sortedTroves.address,
       contracts.lusdToken.address,
-      LQTYContracts.lqtyStaking.address
+      feeRecipient
     )
 
     // set contracts in the Pools

@@ -11,9 +11,8 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   let troveManager
   let activePool
   let defaultPool
-  let functionCaller
   let borrowerOperations
-  let lqtyStaking
+  let feeRecipient
   let lqtyToken
   let communityIssuance
   let lockupContractFactory
@@ -30,6 +29,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     defaultPool = coreContracts.defaultPool
     functionCaller = coreContracts.functionCaller
     borrowerOperations = coreContracts.borrowerOperations
+    feeRecipient = owner
 
     lqtyStaking = LQTYContracts.lqtyStaking
     lqtyToken = LQTYContracts.lqtyToken
@@ -37,7 +37,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     lockupContractFactory = LQTYContracts.lockupContractFactory
 
     await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(coreContracts, LQTYContracts)
+    await deploymentHelper.connectCoreContracts(coreContracts, LQTYContracts, feeRecipient)
     await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, coreContracts)
   })
 
@@ -91,12 +91,10 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(defaultPoolAddress, recordedDefaultPoolAddresss)
   })
 
-  // LQTY Staking in TroveM
-  it('Sets the correct LQTYStaking address in TroveManager', async () => {
-    const lqtyStakingAddress = lqtyStaking.address
-
-    const recordedLQTYStakingAddress = await troveManager.lqtyStaking()
-    assert.equal(lqtyStakingAddress, recordedLQTYStakingAddress)
+  // Fee recipient in TroveM
+  it('Sets the correct fee recipient address in TroveManager', async () => {
+    const recordedFeeRecipient = await troveManager.feeRecipient()
+    assert.equal(feeRecipient, recordedFeeRecipient)
   })
 
   // Active Pool
@@ -189,12 +187,10 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(defaultPoolAddress, recordedDefaultPoolAddress)
   })
 
-  // LQTY Staking in BO
-  it('Sets the correct LQTYStaking address in BorrowerOperations', async () => {
-    const lqtyStakingAddress = lqtyStaking.address
-
-    const recordedLQTYStakingAddress = await borrowerOperations.lqtyStakingAddress()
-    assert.equal(lqtyStakingAddress, recordedLQTYStakingAddress)
+  // Fee recipient in BO
+  it('Sets the correct fee recipient address in BorrowerOperations', async () => {
+    const recordedFeeRecipient = await borrowerOperations.feeRecipient()
+    assert.equal(feeRecipient, recordedFeeRecipient)
   })
 
 
