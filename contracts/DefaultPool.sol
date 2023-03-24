@@ -20,7 +20,6 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
     address immutable public override collateralToken;
 
     address public troveManagerAddress;
-    address public activePoolAddress;
     uint256 internal ETH;  // deposited ETH tracker
     uint256 internal LUSDDebt;  // debt
 
@@ -36,20 +35,16 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
     // --- Dependency setters ---
 
     function setAddresses(
-        address _troveManagerAddress,
-        address _activePoolAddress
+        address _troveManagerAddress
     )
         external
         onlyOwner
     {
         checkContract(_troveManagerAddress);
-        checkContract(_activePoolAddress);
 
         troveManagerAddress = _troveManagerAddress;
-        activePoolAddress = _activePoolAddress;
 
         emit TroveManagerAddressChanged(_troveManagerAddress);
-        emit ActivePoolAddressChanged(_activePoolAddress);
 
         renounceOwnership();
     }
@@ -72,7 +67,7 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
     // --- Pool functionality ---
 
     function depositCollateral(address _from, uint _amount) external override {
-        _requireCallerIsActivePoolOrTroveManager();
+        _requireCallerIsTroveManager();
 
         IERC20(collateralToken).transferFrom(_from, address(this), _amount);
         ETH += _amount;
@@ -101,11 +96,6 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
     }
 
     // --- 'require' functions ---
-
-    function _requireCallerIsActivePoolOrTroveManager() internal view {
-        require(msg.sender == activePoolAddress ||
-            msg.sender == troveManagerAddress, "DefaultPool: Caller is not the ActivePool");
-    }
 
     function _requireCallerIsTroveManager() internal view {
         require(msg.sender == troveManagerAddress, "DefaultPool: Caller is not the TroveManager");
