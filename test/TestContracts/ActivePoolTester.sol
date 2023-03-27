@@ -6,7 +6,7 @@ import "../../contracts/ActivePool.sol";
 
 contract ActivePoolTester is ActivePool {
 
-    constructor(address _collateralToken) ActivePool(_collateralToken) public {
+    constructor(address _collateralToken) ActivePool(_collateralToken) {
     }
 
     function unprotectedIncreaseLUSDDebt(uint _amount) external {

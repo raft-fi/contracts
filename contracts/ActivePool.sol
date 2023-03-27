@@ -26,7 +26,7 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
     uint256 internal LUSDDebt;
 
     // --- Constructor ---
-    constructor(address _collateralToken) public {
+    constructor(address _collateralToken) {
         checkContract(_collateralToken);
 
         collateralToken = _collateralToken;
