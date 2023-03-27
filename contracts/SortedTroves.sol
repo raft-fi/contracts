@@ -6,7 +6,9 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
+import "./Dependencies/BorrowerOperationsDependent.sol";
 import "./Dependencies/CheckContract.sol";
+import "./Dependencies/TroveManagerDependent.sol";
 
 /*
 * A sorted doubly linked list with nodes sorted in descending order.
@@ -41,12 +43,15 @@ import "./Dependencies/CheckContract.sol";
 *
 * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
 */
-contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
+contract SortedTroves is Ownable2Step, CheckContract, BorrowerOperationsDependent, TroveManagerDependent, ISortedTroves {
     string constant public NAME = "SortedTroves";
 
-    address public borrowerOperationsAddress;
-
-    ITroveManager public troveManager;
+    modifier onlyBorrowerOperationsOrTroveManager() {
+        if (msg.sender != address(borrowerOperations) && msg.sender != address(troveManager)) {
+            revert SortedTrovesInvalidCaller();
+        }
+        _;
+    }
 
     // Information for a node in the list
     struct Node {
@@ -68,18 +73,14 @@ contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
 
     // --- Dependency setters ---
 
-    function setParams(uint256 _size, address _troveManagerAddress, address _borrowerOperationsAddress) external override onlyOwner {
-        require(_size > 0, "SortedTroves: Size cannot be zero");
-        checkContract(_troveManagerAddress);
-        checkContract(_borrowerOperationsAddress);
-
+    function setParams(uint256 _size, ITroveManager _troveManager, IBorrowerOperations _borrowerOperations) external override onlyOwner {
+        if (_size == 0) {
+            revert TrovesSizeZero();
+        }
         data.maxSize = _size;
 
-        troveManager = ITroveManager(_troveManagerAddress);
-        borrowerOperationsAddress = _borrowerOperationsAddress;
-
-        emit TroveManagerAddressChanged(_troveManagerAddress);
-        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+        setTroveManager(_troveManager);
+        setBorrowerOperations(_borrowerOperations);
 
         renounceOwnership();
     }
@@ -92,22 +93,23 @@ contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
      * @param _nextId Id of next node for the insert position
      */
 
-    function insert(address _id, uint256 _NICR, address _prevId, address _nextId) external override {
-        ITroveManager troveManagerCached = troveManager;
-
-        _requireCallerIsBOorTroveM(troveManagerCached);
-        _insert(troveManagerCached, _id, _NICR, _prevId, _nextId);
+    function insert(address _id, uint256 _NICR, address _prevId, address _nextId) external override onlyBorrowerOperationsOrTroveManager {
+        _insert(troveManager, _id, _NICR, _prevId, _nextId);
     }
 
     function _insert(ITroveManager _troveManager, address _id, uint256 _NICR, address _prevId, address _nextId) internal {
-        // List must not be full
-        require(!isFull(), "SortedTroves: List is full");
-        // List must not already contain node
-        require(!contains(_id), "SortedTroves: List already contains the node");
-        // Node id must not be null
-        require(_id != address(0), "SortedTroves: Id cannot be zero");
-        // NICR must be non-zero
-        require(_NICR > 0, "SortedTroves: NICR must be positive");
+        if (isFull()) {
+            revert TrovesListFull();
+        }
+        if (contains(_id)) {
+            revert TrovesListContainsNode(_id);
+        }
+        if (_id == address(0)) {
+            revert TroveIDZero();
+        }
+        if (_NICR == 0) {
+            revert TrovesNICRZero();
+        }
 
         address prevId = _prevId;
         address nextId = _nextId;
@@ -146,8 +148,7 @@ contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
         emit NodeAdded(_id, _NICR);
     }
 
-    function remove(address _id) external override {
-        _requireCallerIsTroveManager();
+    function remove(address _id) external override onlyTroveManager {
         _remove(_id);
     }
 
@@ -156,8 +157,9 @@ contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
      * @param _id Node's id
      */
     function _remove(address _id) internal {
-        // List must contain the node
-        require(contains(_id), "SortedTroves: List does not contain the id");
+        if (!contains(_id)) {
+            revert TrovesListDoesNotContainNode(_id);
+        }
 
         if (data.size > 1) {
             // List contains more than a single node
@@ -199,19 +201,18 @@ contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
      * @param _prevId Id of previous node for the new insert position
      * @param _nextId Id of next node for the new insert position
      */
-    function reInsert(address _id, uint256 _newNICR, address _prevId, address _nextId) external override {
-        ITroveManager troveManagerCached = troveManager;
-
-        _requireCallerIsBOorTroveM(troveManagerCached);
-        // List must contain the node
-        require(contains(_id), "SortedTroves: List does not contain the id");
-        // NICR must be non-zero
-        require(_newNICR > 0, "SortedTroves: NICR must be positive");
+    function reInsert(address _id, uint256 _newNICR, address _prevId, address _nextId) external override onlyBorrowerOperationsOrTroveManager {
+        if (!contains(_id)) {
+            revert TrovesListDoesNotContainNode(_id);
+        }
+        if (_newNICR == 0) {
+            revert TrovesNICRZero();
+        }
 
         // Remove node from the list
         _remove(_id);
 
-        _insert(troveManagerCached, _id, _newNICR, _prevId, _nextId);
+        _insert(troveManager, _id, _newNICR, _prevId, _nextId);
     }
 
     /*
@@ -396,16 +397,5 @@ contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
             // Descend list starting from `prevId`
             return _descendList(_troveManager, _NICR, prevId);
         }
-    }
-
-    // --- 'require' functions ---
-
-    function _requireCallerIsTroveManager() internal view {
-        require(msg.sender == address(troveManager), "SortedTroves: Caller is not the TroveManager");
-    }
-
-    function _requireCallerIsBOorTroveM(ITroveManager _troveManager) internal view {
-        require(msg.sender == borrowerOperationsAddress || msg.sender == address(_troveManager),
-                "SortedTroves: Caller is neither BO nor TroveM");
     }
 }

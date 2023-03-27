@@ -119,7 +119,7 @@ contract('TroveManager', async accounts => {
     // --- TEST ---
 
     // check ActivePool ETH and R debt before
-    const activePool_ETH_Before = (await activePool.getETH()).toString()
+    const activePool_ETH_Before = (await activePool.ETH()).toString()
     const activePool_RawEther_Before = (await wstETHTokenMock.balanceOf(activePool.address)).toString()
     const activePool_RDebt_Before = (await activePool.getRDebt()).toString()
 
@@ -135,7 +135,7 @@ contract('TroveManager', async accounts => {
     await troveManager.liquidate(bob, { from: owner });
 
     // check ActivePool ETH and R debt
-    const activePool_ETH_After = (await activePool.getETH()).toString()
+    const activePool_ETH_After = (await activePool.ETH()).toString()
     const activePool_RawEther_After = (await wstETHTokenMock.balanceOf(activePool.address)).toString()
     const activePool_RDebt_After = (await activePool.getRDebt()).toString()
 
@@ -152,7 +152,7 @@ contract('TroveManager', async accounts => {
     // --- TEST ---
 
     // check DefaultPool ETH and R debt before
-    const defaultPool_ETH_Before = (await defaultPool.getETH())
+    const defaultPool_ETH_Before = (await defaultPool.ETH())
     const defaultPool_RawEther_Before = (await wstETHTokenMock.balanceOf(defaultPool.address)).toString()
     const defaultPool_RDebt_Before = (await defaultPool.getRDebt()).toString()
 
@@ -167,7 +167,7 @@ contract('TroveManager', async accounts => {
     await troveManager.liquidate(bob, { from: owner });
 
     // check after
-    const defaultPool_ETH_After = (await defaultPool.getETH()).toString()
+    const defaultPool_ETH_After = (await defaultPool.ETH()).toString()
     const defaultPool_RawEther_After = (await wstETHTokenMock.balanceOf(defaultPool.address)).toString()
     const defaultPool_RDebt_After = (await defaultPool.getRDebt()).toString()
 
@@ -397,7 +397,7 @@ contract('TroveManager', async accounts => {
       assert.isFalse(txCarol.receipt.status)
     } catch (err) {
       assert.include(err.message, "revert")
-      assert.include(err.message, "Trove does not exist or is closed")
+      assert.include(err.message, "TroveManagerTroveNotActive")
     }
   })
 
@@ -425,7 +425,7 @@ contract('TroveManager', async accounts => {
       assert.isFalse(txCarol_L2.receipt.status)
     } catch (err) {
       assert.include(err.message, "revert")
-      assert.include(err.message, "Trove does not exist or is closed")
+      assert.include(err.message, "TroveManagerTroveNotActive")
     }
   })
 
@@ -801,7 +801,7 @@ contract('TroveManager', async accounts => {
     // Check C's pending coll and debt rewards are <= the coll and debt in the DefaultPool
     const pendingETH_C = await troveManager.getPendingETHReward(C)
     const pendingRDebt_C = await troveManager.getPendingRDebtReward(C)
-    const defaultPoolETH = await defaultPool.getETH()
+    const defaultPoolETH = await defaultPool.ETH()
     const defaultPoolRDebt = await defaultPool.getRDebt()
     assert.isTrue(pendingETH_C.lte(defaultPoolETH))
     assert.isTrue(pendingRDebt_C.lte(defaultPoolRDebt))
@@ -1309,7 +1309,7 @@ contract('TroveManager', async accounts => {
     // Check C's pending coll and debt rewards are <= the coll and debt in the DefaultPool
     const pendingETH_C = await troveManager.getPendingETHReward(C)
     const pendingRDebt_C = await troveManager.getPendingRDebtReward(C)
-    const defaultPoolETH = await defaultPool.getETH()
+    const defaultPoolETH = await defaultPool.ETH()
     const defaultPoolRDebt = await defaultPool.getRDebt()
     assert.isTrue(pendingETH_C.lte(defaultPoolETH))
     assert.isTrue(pendingRDebt_C.lte(defaultPoolRDebt))
@@ -1492,14 +1492,13 @@ contract('TroveManager', async accounts => {
 
     // Price drops to 1ETH:100R, reducing A, B, C ICR below MCR
     await priceFeed.setPrice(dec(100, 18));
-    const price = await priceFeed.getPrice()
 
     liquidationArray = []
     try {
       const tx = await troveManager.batchLiquidateTroves(liquidationArray);
       assert.isFalse(tx.receipt.status)
     } catch (error) {
-      assert.include(error.message, "TroveManager: Calldata address array must not be empty")
+      assert.include(error.message, "TroveArrayEmpty")
     }
   })
 
@@ -2592,7 +2591,7 @@ contract('TroveManager', async accounts => {
 
     // Get active debt and coll before redemption
     const activePool_debt_before = await activePool.getRDebt()
-    const activePool_coll_before = await activePool.getETH()
+    const activePool_coll_before = await activePool.ETH()
 
     th.assertIsApproximatelyEqual(activePool_debt_before, totalDebt)
     assert.equal(activePool_coll_before.toString(), totalColl)
@@ -2630,7 +2629,7 @@ contract('TroveManager', async accounts => {
     /* Check ActivePool coll reduced by $400 worth of Ether: at ETH:USD price of $200, this should be 2 ETH.
 
     therefore remaining ActivePool ETH should be 198 */
-    const activePool_coll_after = await activePool.getETH()
+    const activePool_coll_after = await activePool.ETH()
     // console.log(`activePool_coll_after: ${activePool_coll_after}`)
     assert.equal(activePool_coll_after.toString(), activePool_coll_before.sub(toBN(dec(2, 18))))
 
@@ -2660,7 +2659,7 @@ contract('TroveManager', async accounts => {
 
     // Get active debt and coll before redemption
     const activePool_debt_before = await activePool.getRDebt()
-    const activePool_coll_before = (await activePool.getETH()).toString()
+    const activePool_coll_before = (await activePool.ETH()).toString()
 
     th.assertIsApproximatelyEqual(activePool_debt_before, totalDebt)
     assert.equal(activePool_coll_before, totalColl)
@@ -2698,7 +2697,7 @@ contract('TroveManager', async accounts => {
       assert.isFalse(redemptionTx.receipt.status)
     } catch (error) {
       assert.include(error.message, "revert")
-      assert.include(error.message, "Requested redemption amount must be <= user's R token balance")
+      assert.include(error.message, "TroveManagerRedemptionAmountExceedsBalance")
     }
 
     // Erin tries to redeem 401 R
@@ -2724,7 +2723,7 @@ contract('TroveManager', async accounts => {
       assert.isFalse(redemptionTx.receipt.status)
     } catch (error) {
       assert.include(error.message, "revert")
-      assert.include(error.message, "Requested redemption amount must be <= user's R token balance")
+      assert.include(error.message, "TroveManagerRedemptionAmountExceedsBalance")
     }
 
     // Erin tries to redeem 239482309 R
@@ -2750,7 +2749,7 @@ contract('TroveManager', async accounts => {
       assert.isFalse(redemptionTx.receipt.status)
     } catch (error) {
       assert.include(error.message, "revert")
-      assert.include(error.message, "Requested redemption amount must be <= user's R token balance")
+      assert.include(error.message, "TroveManagerRedemptionAmountExceedsBalance")
     }
 
     // Erin tries to redeem 2^256 - 1 R
@@ -2778,7 +2777,7 @@ contract('TroveManager', async accounts => {
       assert.isFalse(redemptionTx.receipt.status)
     } catch (error) {
       assert.include(error.message, "revert")
-      assert.include(error.message, "Requested redemption amount must be <= user's R token balance")
+      assert.include(error.message, "TroveManagerRedemptionAmountExceedsBalance")
     }
   })
 
@@ -2805,7 +2804,7 @@ contract('TroveManager', async accounts => {
     const _950_R = '950000000000000000000'
 
     // Check Ether in activePool
-    const activeETH_0 = await activePool.getETH()
+    const activeETH_0 = await activePool.ETH()
     assert.equal(activeETH_0, totalColl.toString());
 
     let firstRedemptionHint
@@ -2842,7 +2841,7 @@ contract('TroveManager', async accounts => {
     ETH removed = (120/200) = 0.6 ETH
     Total active ETH = 280 - 0.6 = 279.4 ETH */
 
-    const activeETH_1 = await activePool.getETH()
+    const activeETH_1 = await activePool.ETH()
     assert.equal(activeETH_1.toString(), activeETH_0.sub(toBN(_120_R).mul(mv._1e18BN).div(price)));
 
     // Flyn redeems 373 R
@@ -2871,7 +2870,7 @@ contract('TroveManager', async accounts => {
     /* 373 R redeemed.  Expect $373 worth of ETH removed. At ETH:USD price of $200,
     ETH removed = (373/200) = 1.865 ETH
     Total active ETH = 279.4 - 1.865 = 277.535 ETH */
-    const activeETH_2 = await activePool.getETH()
+    const activeETH_2 = await activePool.ETH()
     assert.equal(activeETH_2.toString(), activeETH_1.sub(toBN(_373_R).mul(mv._1e18BN).div(price)));
 
     // Graham redeems 950 R
@@ -2900,7 +2899,7 @@ contract('TroveManager', async accounts => {
     /* 950 R redeemed.  Expect $950 worth of ETH removed. At ETH:USD price of $200,
     ETH removed = (950/200) = 4.75 ETH
     Total active ETH = 277.535 - 4.75 = 272.785 ETH */
-    const activeETH_3 = (await activePool.getETH()).toString()
+    const activeETH_3 = (await activePool.ETH()).toString()
     assert.equal(activeETH_3.toString(), activeETH_2.sub(toBN(_950_R).mul(mv._1e18BN).div(price)));
   })
 

@@ -90,8 +90,9 @@ contract PriceFeed is Ownable2Step, CheckContract, BaseMath, IPriceFeed {
         ChainlinkResponse memory chainlinkResponse = _getCurrentChainlinkResponse();
         ChainlinkResponse memory prevChainlinkResponse = _getPrevChainlinkResponse(chainlinkResponse.roundId, chainlinkResponse.decimals);
 
-        require(!_chainlinkIsBroken(chainlinkResponse, prevChainlinkResponse) && !_chainlinkIsFrozen(chainlinkResponse),
-            "PriceFeed: Chainlink must be working and current");
+        if (_chainlinkIsBroken(chainlinkResponse, prevChainlinkResponse) || _chainlinkIsFrozen(chainlinkResponse)) {
+            revert ChainlinkBroken();
+        }
 
         _storeChainlinkPrice(chainlinkResponse);
 

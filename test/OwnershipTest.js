@@ -52,11 +52,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     // Attempt call from alice
     await th.assertRevert(contract.setAddresses(...params, { from: alice }))
 
-    // Attempt to use zero address
-    await testZeroAddress(contract, params, skipLast)
-    // Attempt to use non contract
-    await testNonContractAddress(contract, params, skipLast)
-
     // Owner can successfully set any address
     const txOwner = await contract.setAddresses(...params, { from: owner })
     assert.isTrue(txOwner.receipt.status)

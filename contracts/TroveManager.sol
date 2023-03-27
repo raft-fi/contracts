@@ -9,14 +9,13 @@ import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/IRToken.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
+import "./Dependencies/BorrowerOperationsDependent.sol";
 import "./Dependencies/CheckContract.sol";
 
-contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager {
+contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOperationsDependent, ITroveManager {
     string constant public NAME = "TroveManager";
 
     // --- Connected contract declarations ---
-
-    address public borrowerOperationsAddress;
 
     address gasPoolAddress;
 
@@ -58,20 +57,12 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
     // The timestamp of the latest fee operation (redemption or new R issuance)
     uint public lastFeeOperationTime;
 
-    enum Status {
-        nonExistent,
-        active,
-        closedByOwner,
-        closedByLiquidation,
-        closedByRedemption
-    }
-
     // Store the necessary data for a trove
     struct Trove {
         uint debt;
         uint coll;
         uint stake;
-        Status status;
+        TroveStatus status;
         uint128 arrayIndex;
     }
 
@@ -197,7 +188,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
     // --- Setters ---
 
     function setAddresses(
-        address _borrowerOperationsAddress,
+        IBorrowerOperations _borrowerOperations,
         address _activePoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
@@ -207,9 +198,10 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         address _sortedTrovesAddress,
         address _feeRecipient
     ) external override onlyOwner {
-        require(!_addressesSet, "TroveManager: addresses already set");
+        if (_addressesSet) {
+            revert TroveManagerAddressesAlreadySet();
+        }
 
-        checkContract(_borrowerOperationsAddress);
         checkContract(_activePoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_gasPoolAddress);
@@ -218,7 +210,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         checkContract(_rTokenAddress);
         checkContract(_sortedTrovesAddress);
 
-        borrowerOperationsAddress = _borrowerOperationsAddress;
+        setBorrowerOperations(_borrowerOperations);
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         gasPoolAddress = _gasPoolAddress;
@@ -230,7 +222,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
 
         _addressesSet = true;
 
-        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit GasPoolAddressChanged(_gasPoolAddress);
@@ -242,7 +233,9 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
     }
 
     function setFeeRecipient(address _feeRecipient) external override onlyOwner {
-        require(_addressesSet, "TroveManager: addresses not set");
+        if (! _addressesSet) {
+            revert TroveManagerAddressesNotSet();
+        }
         feeRecipient = _feeRecipient;
         emit FeeRecipientChanged(_feeRecipient);
     }
@@ -307,7 +300,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
             singleLiquidation.collToRedistribute = 0;
         }
 
-        _closeTrove(_borrower, Status.closedByLiquidation);
+        _closeTrove(_borrower, TroveStatus.closedByLiquidation);
         emit TroveLiquidated(_borrower, singleLiquidation.entireTroveDebt, singleLiquidation.entireTroveColl, TroveManagerOperation.liquidate);
         emit TroveUpdated(_borrower, 0, 0, 0, TroveManagerOperation.liquidate);
         return singleLiquidation;
@@ -334,7 +327,9 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
         LiquidationTotals memory totals = _getTotalsFromLiquidateTrovesSequence(contractsCache.activePool, contractsCache.defaultPool, vars.price, _n);
 
-        require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
+        if (totals.totalCollInSequence == 0) {
+            revert NothingToLiquidate();
+        }
 
         _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
         _redistributeDebtAndColl(contractsCache.activePool, contractsCache.defaultPool, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
@@ -382,7 +377,9 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
     * Attempt to liquidate a custom list of troves provided by the caller.
     */
     function batchLiquidateTroves(address[] memory _troveArray) public override {
-        require(_troveArray.length != 0, "TroveManager: Calldata address array must not be empty");
+        if (_troveArray.length == 0) {
+            revert TroveArrayEmpty();
+        }
 
         IActivePool activePoolCached = activePool;
         IDefaultPool defaultPoolCached = defaultPool;
@@ -394,7 +391,9 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
         LiquidationTotals memory totals = _getTotalsFromBatchLiquidate(activePoolCached, defaultPoolCached, vars.price, _troveArray);
 
-        require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
+        if (totals.totalCollInSequence == 0) {
+            revert NothingToLiquidate();
+        }
 
         _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
         _redistributeDebtAndColl(activePoolCached, defaultPoolCached, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
@@ -509,7 +508,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         if (newDebt == R_GAS_COMPENSATION) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
-            _closeTrove(_borrower, Status.closedByRedemption);
+            _closeTrove(_borrower, TroveStatus.closedByRedemption);
             _redeemCloseTrove(_contractsCache, _borrower, R_GAS_COMPENSATION, newColl);
             emit TroveUpdated(_borrower, 0, 0, 0, TroveManagerOperation.redeemCollateral);
 
@@ -609,6 +608,13 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         external
         override
     {
+        if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > DECIMAL_PRECISION) {
+            revert TroveManagerMaxFeePercentageOutOfRange();
+        }
+        if (block.timestamp < deploymentStartTime + BOOTSTRAP_PERIOD) {
+            revert TroveManagerRedemptionNotAllowed();
+        }
+
         ContractsCache memory contractsCache = ContractsCache(
             activePool,
             defaultPool,
@@ -620,8 +626,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         );
         RedemptionTotals memory totals;
 
-        _requireValidMaxFeePercentage(_maxFeePercentage);
-        _requireAfterBootstrapPeriod();
         totals.price = priceFeed.fetchPrice();
         _requireTCRoverMCR(totals.price);
         _requireAmountGreaterThanZero(_rAmount);
@@ -671,7 +675,10 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
             totals.remainingR -= singleRedemption.rLot;
             currentBorrower = nextUserToCheck;
         }
-        require(totals.totalETHDrawn > 0, "TroveManager: Unable to redeem any amount");
+
+        if (totals.totalETHDrawn == 0) {
+            revert UnableToRedeemAnyAmount();
+        }
 
         // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
         // Use the saved total R supply value, from before it was reduced by the redemption.
@@ -717,8 +724,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         currentRDebt = Troves[_borrower].debt + getPendingRDebtReward(_borrower);
     }
 
-    function applyPendingRewards(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
+    function applyPendingRewards(address _borrower) external override onlyBorrowerOperations {
         return _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
@@ -751,8 +757,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
     }
 
     // Update borrower's snapshots of L_ETH and L_RDebt to reflect the current values
-    function updateTroveRewardSnapshots(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
+    function updateTroveRewardSnapshots(address _borrower) external override onlyBorrowerOperations {
        return _updateTroveRewardSnapshots(_borrower);
     }
 
@@ -767,17 +772,17 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         uint snapshotETH = rewardSnapshots[_borrower].ETH;
         uint rewardPerUnitStaked = L_ETH - snapshotETH;
 
-        if ( rewardPerUnitStaked == 0 || Troves[_borrower].status != Status.active) { return 0; }
+        if (rewardPerUnitStaked == 0 || Troves[_borrower].status != TroveStatus.active) { return 0; }
 
         pendingETHReward = Troves[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
     }
 
-    // Get the borrower's pending accumulated LUSD reward, earned by their stake
+    // Get the borrower's pending accumulated R reward, earned by their stake
     function getPendingRDebtReward(address _borrower) public view override returns (uint pendingRDebtReward) {
         uint snapshotRDebt = rewardSnapshots[_borrower].rDebt;
         uint rewardPerUnitStaked = L_RDebt - snapshotRDebt;
 
-        if (rewardPerUnitStaked == 0 || Troves[_borrower].status != Status.active) { return 0; }
+        if (rewardPerUnitStaked == 0 || Troves[_borrower].status != TroveStatus.active) { return 0; }
 
         pendingRDebtReward = Troves[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
     }
@@ -788,7 +793,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         * this indicates that rewards have occured since the snapshot was made, and the user therefore has
         * pending rewards
         */
-        return Troves[_borrower].status == Status.active && rewardSnapshots[_borrower].ETH < L_ETH;
+        return Troves[_borrower].status == TroveStatus.active && rewardSnapshots[_borrower].ETH < L_ETH;
     }
 
     // Return the Troves entire debt and coll, including pending rewards from redistributions.
@@ -807,8 +812,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         coll = Troves[_borrower].coll + pendingETHReward;
     }
 
-    function removeStake(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
+    function removeStake(address _borrower) external override onlyBorrowerOperations {
         return _removeStake(_borrower);
     }
 
@@ -819,8 +823,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         Troves[_borrower].stake = 0;
     }
 
-    function updateStakeAndTotalStakes(address _borrower) external override returns (uint) {
-        _requireCallerIsBorrowerOperations();
+    function updateStakeAndTotalStakes(address _borrower) external override onlyBorrowerOperations returns (uint) {
         return _updateStakeAndTotalStakes(_borrower);
     }
 
@@ -888,13 +891,12 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         _defaultPool.depositCollateral(address(this), _coll);
     }
 
-    function closeTrove(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
-        return _closeTrove(_borrower, Status.closedByOwner);
+    function closeTrove(address _borrower) external override onlyBorrowerOperations {
+        return _closeTrove(_borrower, TroveStatus.closedByOwner);
     }
 
-    function _closeTrove(address _borrower, Status closedStatus) internal {
-        assert(closedStatus != Status.nonExistent && closedStatus != Status.active);
+    function _closeTrove(address _borrower, TroveStatus closedStatus) internal {
+        assert(closedStatus != TroveStatus.nonExistent && closedStatus != TroveStatus.active);
 
         uint TroveOwnersArrayLength = TroveOwners.length;
         _requireMoreThanOneTroveInSystem(TroveOwnersArrayLength);
@@ -923,16 +925,15 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
     function _updateSystemSnapshots_excludeCollRemainder(IActivePool _activePool, uint _collRemainder) internal {
         totalStakesSnapshot = totalStakes;
 
-        uint activeColl = _activePool.getETH();
-        uint liquidatedColl = defaultPool.getETH();
+        uint activeColl = _activePool.ETH();
+        uint liquidatedColl = defaultPool.ETH();
         totalCollateralSnapshot = activeColl - _collRemainder + liquidatedColl;
 
         emit SystemSnapshotsUpdated(totalStakesSnapshot, totalCollateralSnapshot);
     }
 
     // Push the owner's address to the Trove owners list, and record the corresponding array index on the Trove struct
-    function addTroveOwnerToArray(address _borrower) external override returns (uint index) {
-        _requireCallerIsBorrowerOperations();
+    function addTroveOwnerToArray(address _borrower) external override onlyBorrowerOperations returns (uint index) {
         index = _addTroveOwnerToArray(_borrower);
     }
 
@@ -953,9 +954,9 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
     * [A B C D E] => [A E C D], and updates E's Trove struct to point to its new array index.
     */
     function _removeTroveOwner(address _borrower, uint TroveOwnersArrayLength) internal {
-        Status troveStatus = Troves[_borrower].status;
+        TroveStatus troveStatus = Troves[_borrower].status;
         // It’s set in caller function `_closeTrove`
-        assert(troveStatus != Status.nonExistent && troveStatus != Status.active);
+        assert(troveStatus != TroveStatus.nonExistent && troveStatus != TroveStatus.active);
 
         uint128 index = Troves[_borrower].arrayIndex;
         uint length = TroveOwnersArrayLength;
@@ -1032,13 +1033,17 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
 
     function _calcRedemptionFee(uint _redemptionRate, uint _ETHDrawn) internal pure returns (uint redemptionFee) {
         redemptionFee = _redemptionRate * _ETHDrawn / DECIMAL_PRECISION;
-        require(redemptionFee < _ETHDrawn, "TroveManager: Fee would eat up all returned collateral");
+        if (redemptionFee >= _ETHDrawn) {
+            revert FeeEatsUpAllReturnedCollateral();
+        }
     }
 
     // --- Borrowing fee functions ---
 
     function setBorrowingSpread(uint256 _borrowingSpread) external override onlyOwner {
-        require(_borrowingSpread <= MAX_BORROWING_SPREAD, "TroveManager: Borrowing spread exceeds maximum");
+        if (_borrowingSpread > MAX_BORROWING_SPREAD) {
+            revert BorrowingSpreadExceedsMaximum();
+        }
         borrowingSpread = _borrowingSpread;
         emit BorrowingSpreadUpdated(_borrowingSpread);
     }
@@ -1067,11 +1072,8 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
         return _borrowingRate * _rDebt / DECIMAL_PRECISION;
     }
 
-
     // Updates the baseRate state variable based on time elapsed since the last redemption or R borrowing operation.
-    function decayBaseRateFromBorrowing() external override {
-        _requireCallerIsBorrowerOperations();
-
+    function decayBaseRateFromBorrowing() external override onlyBorrowerOperations {
         uint decayedBaseRate = _calcDecayedBaseRate();
         assert(decayedBaseRate <= DECIMAL_PRECISION);  // The baseRate can decay to 0
 
@@ -1106,43 +1108,40 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
 
     // --- 'require' wrapper functions ---
 
-    function _requireCallerIsBorrowerOperations() internal view {
-        require(msg.sender == borrowerOperationsAddress, "TroveManager: Caller is not the BorrowerOperations contract");
-    }
-
     function _requireTroveIsActive(address _borrower) internal view {
-        require(Troves[_borrower].status == Status.active, "TroveManager: Trove does not exist or is closed");
+        if (Troves[_borrower].status != TroveStatus.active) {
+            revert TroveManagerTroveNotActive();
+        }
     }
 
     function _requireRBalanceCoversRedemption(IRToken _rToken, address _redeemer, uint _amount) internal view {
-        require(_rToken.balanceOf(_redeemer) >= _amount, "TroveManager: Requested redemption amount must be <= user's R token balance");
+        if (_rToken.balanceOf(_redeemer) < _amount) {
+            revert TroveManagerRedemptionAmountExceedsBalance();
+        }
     }
 
-    function _requireMoreThanOneTroveInSystem(uint TroveOwnersArrayLength) internal view {
-        require (TroveOwnersArrayLength > 1 && sortedTroves.getSize() > 1, "TroveManager: Only one trove in the system");
+    function _requireMoreThanOneTroveInSystem(uint troveOwnersArrayLength) internal view {
+        if (troveOwnersArrayLength <= 1 || sortedTroves.getSize() <= 1) {
+            revert TroveManagerOnlyOneTroveInSystem();
+        }
     }
 
     function _requireAmountGreaterThanZero(uint _amount) internal pure {
-        require(_amount > 0, "TroveManager: Amount must be greater than zero");
+        if (_amount == 0) {
+            revert TroveManagerAmountIsZero();
+        }
     }
 
     function _requireTCRoverMCR(uint _price) internal view {
-        require(_getTCR(_price) >= MCR, "TroveManager: Cannot redeem when TCR < MCR");
-    }
-
-    function _requireAfterBootstrapPeriod() internal view {
-        require(block.timestamp >= deploymentStartTime + BOOTSTRAP_PERIOD, "TroveManager: Redemptions are not allowed during bootstrap phase");
-    }
-
-    function _requireValidMaxFeePercentage(uint _maxFeePercentage) internal pure {
-        require(_maxFeePercentage >= REDEMPTION_FEE_FLOOR && _maxFeePercentage <= DECIMAL_PRECISION,
-            "Max fee percentage must be between 0.5% and 100%");
+        if (_getTCR(_price) < MCR) {
+            revert TroveManagerRedemptionTCRBelowMCR();
+        }
     }
 
     // --- Trove property getters ---
 
-    function getTroveStatus(address _borrower) external view override returns (uint) {
-        return uint(Troves[_borrower].status);
+    function getTroveStatus(address _borrower) external view override returns (TroveStatus) {
+        return Troves[_borrower].status;
     }
 
     function getTroveStake(address _borrower) external view override returns (uint) {
@@ -1159,31 +1158,26 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager
 
     // --- Trove property setters, called by BorrowerOperations ---
 
-    function setTroveStatus(address _borrower, uint _num) external override {
-        _requireCallerIsBorrowerOperations();
-        Troves[_borrower].status = Status(_num);
+    function setTroveStatus(address _borrower, uint _num) external override onlyBorrowerOperations {
+        Troves[_borrower].status = TroveStatus(_num);
     }
 
-    function increaseTroveColl(address _borrower, uint _collIncrease) external override returns (uint newColl) {
-        _requireCallerIsBorrowerOperations();
+    function increaseTroveColl(address _borrower, uint _collIncrease) external override onlyBorrowerOperations returns (uint newColl) {
         newColl = Troves[_borrower].coll + _collIncrease;
         Troves[_borrower].coll = newColl;
     }
 
-    function decreaseTroveColl(address _borrower, uint _collDecrease) external override returns (uint newColl) {
-        _requireCallerIsBorrowerOperations();
+    function decreaseTroveColl(address _borrower, uint _collDecrease) external override onlyBorrowerOperations returns (uint newColl) {
         newColl = Troves[_borrower].coll - _collDecrease;
         Troves[_borrower].coll = newColl;
     }
 
-    function increaseTroveDebt(address _borrower, uint _debtIncrease) external override returns (uint newDebt) {
-        _requireCallerIsBorrowerOperations();
+    function increaseTroveDebt(address _borrower, uint _debtIncrease) external override onlyBorrowerOperations returns (uint newDebt) {
         newDebt = Troves[_borrower].debt + _debtIncrease;
         Troves[_borrower].debt = newDebt;
     }
 
-    function decreaseTroveDebt(address _borrower, uint _debtDecrease) external override returns (uint newDebt) {
-        _requireCallerIsBorrowerOperations();
+    function decreaseTroveDebt(address _borrower, uint _debtDecrease) external override onlyBorrowerOperations returns (uint newDebt) {
         newDebt = Troves[_borrower].debt - _debtDecrease;
         Troves[_borrower].debt = newDebt;
     }

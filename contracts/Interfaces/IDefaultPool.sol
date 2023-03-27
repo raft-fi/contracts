@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "./IPool.sol";
-
+import "./ITroveManager.sol";
 
 interface IDefaultPool is IPool {
     // --- Events ---
@@ -12,5 +12,7 @@ interface IDefaultPool is IPool {
     event DefaultPoolETHBalanceUpdated(uint _ETH);
 
     // --- Functions ---
+    function setAddresses(ITroveManager _troveManager) external;
+
     function sendETH(address _to, uint _amount) external;
 }

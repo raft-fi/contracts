@@ -9,6 +9,9 @@ import "../Interfaces/IDefaultPool.sol";
 import "../Interfaces/IPriceFeed.sol";
 import "../Interfaces/ILiquityBase.sol";
 
+/// @dev Fee exceeded provided maximum fee percentage
+error FeeExceedsMaxFee(uint fee, uint amount, uint maxFeePercentage);
+
 /*
 * Base contract for TroveManager and BorrowerOperations. Contains global system constants and
 * common functions.
@@ -50,31 +53,25 @@ contract LiquityBase is BaseMath, ILiquityBase {
         return _entireColl / PERCENT_DIVISOR;
     }
 
+    /// @dev Returns active and liquidated collateral.
     function getEntireSystemColl() public view returns (uint entireSystemColl) {
-        uint activeColl = activePool.getETH();
-        uint liquidatedColl = defaultPool.getETH();
-
-        return activeColl + liquidatedColl;
+        entireSystemColl = activePool.ETH() + defaultPool.ETH();
     }
 
+    /// @dev Returns active and closed debt.
     function getEntireSystemDebt() public view returns (uint entireSystemDebt) {
-        uint activeDebt = activePool.getRDebt();
-        uint closedDebt = defaultPool.getRDebt();
-
-        return activeDebt + closedDebt;
+        entireSystemDebt = activePool.getRDebt() + defaultPool.getRDebt();
     }
 
     function _getTCR(uint _price) internal view returns (uint TCR) {
-        uint entireSystemColl = getEntireSystemColl();
-        uint entireSystemDebt = getEntireSystemDebt();
-
-        TCR = LiquityMath._computeCR(entireSystemColl, entireSystemDebt, _price);
-
-        return TCR;
+        TCR = LiquityMath._computeCR(getEntireSystemColl(), getEntireSystemDebt(), _price);
     }
 
     function _requireUserAcceptsFee(uint _fee, uint _amount, uint _maxFeePercentage) internal pure {
         uint feePercentage = _fee * DECIMAL_PRECISION / _amount;
-        require(feePercentage <= _maxFeePercentage, "Fee exceeded provided maximum");
+
+        if (feePercentage > _maxFeePercentage) {
+            revert FeeExceedsMaxFee(_fee, _amount, _maxFeePercentage);
+        }
     }
 }

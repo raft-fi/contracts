@@ -359,15 +359,15 @@
 //             return false;
 //         }
 
-//         if (address(activePool).balance != activePool.getETH()) {
+//         if (address(activePool).balance != activePool.ETH()) {
 //             return false;
 //         }
 
-//         if (address(defaultPool).balance != defaultPool.getETH()) {
+//         if (address(defaultPool).balance != defaultPool.ETH()) {
 //             return false;
 //         }
 
-//         if (address(stabilityPool).balance != stabilityPool.getETH()) {
+//         if (address(stabilityPool).balance != stabilityPool.ETH()) {
 //             return false;
 //         }
 
