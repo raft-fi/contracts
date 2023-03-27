@@ -3,11 +3,9 @@ const testHelpers = require("../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("TroveManagerTester")
 
 const th = testHelpers.TestHelper
-const timeValues = testHelpers.TimeValues
 
 const dec = th.dec
 const toBN = th.toBN
-const assertRevert = th.assertRevert
 
 /* The majority of access control tests are contained in this file. However, tests for restrictions
 on the Liquity admin address's capabilities during the first year are found in:
@@ -16,32 +14,21 @@ test/launchSequenceTest/DuringLockupPeriodTest.js */
 
 contract('Access Control: Liquity functions with the caller restricted to Liquity contract(s)', async accounts => {
 
-  const [owner, alice, bob, carol] = accounts;
-  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
+  const [owner, alice, bob] = accounts;
 
   let coreContracts
 
-  let priceFeed
-  let lusdToken
   let sortedTroves
   let troveManager
-  let nameRegistry
   let activePool
   let defaultPool
-  let functionCaller
   let borrowerOperations
   let wstETHTokenMock
-
-  let lqtyStaking
-  let lqtyToken
-  let communityIssuance
-  let lockupContractFactory
 
   before(async () => {
     coreContracts = await deploymentHelper.deployLiquityCore()
     coreContracts.troveManager = await TroveManagerTester.new()
     coreContracts = await deploymentHelper.deployLUSDTokenTester(coreContracts)
-    const LQTYContracts = await deploymentHelper.deployLQTYTesterContractsHardhat(bountyAddress, lpRewardsAddress, multisig)
 
     await th.fillAccountsWithWstETH(coreContracts, accounts)
 
@@ -49,31 +36,16 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     lusdToken = coreContracts.lusdToken
     sortedTroves = coreContracts.sortedTroves
     troveManager = coreContracts.troveManager
-    nameRegistry = coreContracts.nameRegistry
     activePool = coreContracts.activePool
     defaultPool = coreContracts.defaultPool
-    functionCaller = coreContracts.functionCaller
     borrowerOperations = coreContracts.borrowerOperations
     wstETHTokenMock = coreContracts.wstETHTokenMock
 
-    lqtyStaking = LQTYContracts.lqtyStaking
-    lqtyToken = LQTYContracts.lqtyToken
-    communityIssuance = LQTYContracts.communityIssuance
-    lockupContractFactory = LQTYContracts.lockupContractFactory
-
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(coreContracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, coreContracts)
+    await deploymentHelper.connectCoreContracts(coreContracts, owner)
 
     for (account of accounts.slice(0, 10)) {
       await th.openTrove(coreContracts, { extraLUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), amount: 0, extraParams: { from: account } })
     }
-
-    const expectedCISupplyCap = '32000000000000000000000000' // 32mil
-
-    // Check CI has been properly funded
-    const bal = await lqtyToken.balanceOf(communityIssuance.address)
-    assert.equal(bal, expectedCISupplyCap)
   })
 
   describe('TroveManager', async accounts => {
@@ -350,94 +322,6 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
       }
     })
   })
-
-  describe('LockupContract', async accounts => {
-    it("withdrawLQTY(): reverts when caller is not beneficiary", async () => {
-      // deploy new LC with Carol as beneficiary
-      const unlockTime = (await lqtyToken.getDeploymentStartTime()).add(toBN(timeValues.SECONDS_IN_ONE_YEAR))
-      const deployedLCtx = await lockupContractFactory.deployLockupContract(
-        carol,
-        unlockTime,
-        { from: owner })
-
-      const LC = await th.getLCFromDeploymentTx(deployedLCtx)
-
-      // LQTY Multisig funds the LC
-      await lqtyToken.transfer(LC.address, dec(100, 18), { from: multisig })
-
-      // Fast-forward one year, so that beneficiary can withdraw
-      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-
-      // Bob attempts to withdraw LQTY
-      try {
-        const txBob = await LC.withdrawLQTY({ from: bob })
-
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-
-      // Confirm beneficiary, Carol, can withdraw
-      const txCarol = await LC.withdrawLQTY({ from: carol })
-      assert.isTrue(txCarol.receipt.status)
-    })
-  })
-
-  describe('LQTYStaking', async accounts => {
-    it("increaseF_LUSD(): reverts when caller is not TroveManager", async () => {
-      try {
-        const txAlice = await lqtyStaking.increaseF_LUSD(dec(1, 18), { from: alice })
-
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-  })
-
-  describe('LQTYToken', async accounts => {
-    it("sendToLQTYStaking(): reverts when caller is not the LQTYSstaking", async () => {
-      // Check multisig has some LQTY
-      assert.isTrue((await lqtyToken.balanceOf(multisig)).gt(toBN('0')))
-
-      // multisig tries to call it
-      try {
-        const tx = await lqtyToken.sendToLQTYStaking(multisig, 1, { from: multisig })
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-
-      // FF >> time one year
-      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-
-      // Owner transfers 1 LQTY to bob
-      await lqtyToken.transfer(bob, dec(1, 18), { from: multisig })
-      assert.equal((await lqtyToken.balanceOf(bob)), dec(1, 18))
-
-      // Bob tries to call it
-      try {
-        const tx = await lqtyToken.sendToLQTYStaking(bob, dec(1, 18), { from: bob })
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-  })
-
-  describe('CommunityIssuance', async accounts => {
-    it("sendLQTY(): reverts when caller is not the StabilityPool", async () => {
-      const tx1 = communityIssuance.sendLQTY(alice, dec(100, 18), {from: alice})
-      const tx2 = communityIssuance.sendLQTY(bob, dec(100, 18), {from: alice})
-
-      assertRevert(tx1)
-      assertRevert(tx2)
-    })
-
-    it("issueLQTY(): reverts when caller is not the StabilityPool", async () => {
-      const tx1 = communityIssuance.issueLQTY({from: alice})
-
-      assertRevert(tx1)
-    })
-  })
-
-
 })
 
 

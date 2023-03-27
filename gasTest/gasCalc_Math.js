@@ -11,9 +11,6 @@ const timeValues = testHelpers.TimeValues
 /* Script that logs gas costs for Liquity math functions. */
 contract('Gas costs for math functions', async accounts => {
 
-  const bountyAddress = accounts[998]
-  const lpRewardsAddress = accounts[999]
-
   let contracts
   let troveManagerTester
   let mathTester
@@ -28,7 +25,6 @@ contract('Gas costs for math functions', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress)
 
     priceFeed = contracts.priceFeedTestnet
     lusdToken = contracts.lusdToken
@@ -40,14 +36,7 @@ contract('Gas costs for math functions', async accounts => {
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
 
-    gtStaking = LQTYContracts.gtStaking
-    lqtyToken = LQTYContracts.lqtyToken
-    communityIssuance = LQTYContracts.communityIssuance
-    lockupContractFactory = LQTYContracts.lockupContractFactory
-
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, owner)
   })
 
   // performs n runs of exponentiation on a random base

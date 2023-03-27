@@ -8,7 +8,6 @@ const th = testHelpers.TestHelper
 const dec = th.dec
 const toBN = th.toBN
 const mv = testHelpers.MoneyValues
-const ZERO_ADDRESS = th.ZERO_ADDRESS
 
 const GAS_PRICE = 10000000
 
@@ -16,26 +15,20 @@ const GAS_PRICE = 10000000
 contract('Gas compensation tests', async accounts => {
   const [
     owner, liquidator,
-    alice, bob, carol, dennis, erin, flyn, graham, harriet, ida,
-    defaulter_1, defaulter_2, defaulter_3, defaulter_4, whale] = accounts;
-
-    const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
+    alice, bob, carol, dennis, erin, flyn, harriet,
+    whale] = accounts;
 
   let priceFeed
   let lusdToken
-  let sortedTroves
   let troveManager
   let activePool
-  let stabilityPool
   let defaultPool
-  let borrowerOperations
   let wstETHTokenMock
 
   let contracts
   let troveManagerTester
   let borrowerOperationsTester
 
-  const getOpenTroveLUSDAmount = async (totalDebt) => th.getOpenTroveLUSDAmount(contracts, totalDebt)
   const openTrove = async (params) => th.openTrove(contracts, params)
 
   const logICRs = (ICRList) => {
@@ -59,13 +52,11 @@ contract('Gas compensation tests', async accounts => {
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress, multisig)
 
     await th.fillAccountsWithWstETH(contracts, [
       owner, liquidator,
-      alice, bob, carol, dennis, erin, flyn, graham, harriet, ida,
-      defaulter_1, defaulter_2, defaulter_3, defaulter_4, whale,
-      bountyAddress, lpRewardsAddress, multisig
+      alice, bob, carol, dennis, erin, flyn, harriet,
+      whale,
     ])
 
     priceFeed = contracts.priceFeedTestnet
@@ -77,9 +68,7 @@ contract('Gas compensation tests', async accounts => {
     borrowerOperations = contracts.borrowerOperations
     wstETHTokenMock = contracts.wstETHTokenMock
 
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, owner)
   })
 
   // --- Raw gas compensation calculations ---
@@ -349,284 +338,6 @@ contract('Gas compensation tests', async accounts => {
     assert.isAtMost(th.getDifference(harriet_ICR, '1111111111111111111'), 1000)
   })
 
-  // Test compensation amounts and liquidation amounts
-
-  it.skip('Gas compensation from pool-offset liquidations. All collateral paid as compensation', async () => {
-    await deploymentHelper.mintLUSD(lusdToken, liquidator);
-    await openTrove({ ICR: toBN(dec(2000, 18)), extraParams: { from: whale } })
-
-    // A-E open troves
-    const { totalDebt: A_totalDebt } = await openTrove({ ICR: toBN(dec(204, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: alice } })
-    const { totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(218, 16)), extraLUSDAmount: dec(200, 18), extraParams: { from: bob } })
-    const { totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(209, 16)), extraLUSDAmount: dec(300, 18), extraParams: { from: carol } })
-    await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: A_totalDebt, extraParams: { from: dennis } })
-    await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: B_totalDebt.add(C_totalDebt), extraParams: { from: erin } })
-
-    // D, E each provide LUSD to SP
-    await stabilityPool.provideToSP(A_totalDebt, { from: dennis, gasPrice: GAS_PRICE })
-    await stabilityPool.provideToSP(B_totalDebt.add(C_totalDebt), { from: erin, gasPrice: GAS_PRICE })
-
-    const LUSDinSP_0 = await stabilityPool.getTotalLUSDDeposits()
-
-    // --- Price drops to 99.99 ---
-    await priceFeed.setPrice(dec(9999, 16))
-
-    /*
-    -> Expect 0.5% of collaterall to be sent to liquidator, as gas compensation */
-
-    const aliceColl = (await troveManager.Troves(alice))[1]
-
-    // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_A = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-    await troveManager.liquidate(alice, { from: liquidator, gasPrice: GAS_PRICE })
-    const liquidatorBalance_after_A = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-
-    // Check liquidator's balance increases by 0.5% of A's coll (1 ETH)
-    const compensationReceived_A = (liquidatorBalance_after_A.sub(liquidatorBalance_before_A)).toString()
-    const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_A, _0pt5percent_aliceColl)
-
-    // Check SP LUSD has decreased due to the liquidation
-    const LUSDinSP_A = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_A.lte(LUSDinSP_0))
-
-    // Check ETH in SP has received the liquidation
-    const ETHinSP_A = await stabilityPool.getETH()
-    assert.equal(ETHinSP_A.toString(), aliceColl.sub(_0pt5percent_aliceColl)) // 1 ETH - 0.5%
-
-    // -> Expect 0.5% of collaterall to be sent to liquidator, as gas compensation
-
-    const bobColl = (await troveManager.Troves(bob))[1]
-
-    // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    await troveManager.liquidate(bob, { from: liquidator, gasPrice: GAS_PRICE })
-
-    // Check liquidator's balance increases by B's 0.5% of coll, 2 ETH
-    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
-
-    // Check SP LUSD has decreased due to the liquidation of B
-    const LUSDinSP_B = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_B.lt(LUSDinSP_A))
-
-    // Check ETH in SP has received the liquidation
-    const ETHinSP_B = await stabilityPool.getETH()
-    assert.equal(ETHinSP_B.toString(), aliceColl.sub(_0pt5percent_aliceColl).add(bobColl).sub(_0pt5percent_bobColl)) // (1 + 2 ETH) * 0.995
-
-
-    // --- Price drops to 98.5 ---
-    await priceFeed.setPrice(dec(985, 17))
-
-    /*
-    -> Expect 0.5% of collaterall to be sent to liquidator, as gas compensation */
-
-    const carolColl = (await troveManager.Troves(carol))[1]
-
-    // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_C = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-    await troveManager.liquidate(carol, { from: liquidator, gasPrice: GAS_PRICE })
-    const liquidatorBalance_after_C = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-
-    // Check liquidator's balance increases by C's 0.5% of coll, 3 ETH
-    const compensationReceived_C = (liquidatorBalance_after_C.sub(liquidatorBalance_before_C)).toString()
-    const _0pt5percent_carolColl = carolColl.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_C, _0pt5percent_carolColl)
-
-    // Check SP LUSD has decreased due to the liquidation of C
-    const LUSDinSP_C = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_C.lt(LUSDinSP_B))
-
-    // Check ETH in SP has not changed due to the lquidation of C
-    const ETHinSP_C = await stabilityPool.getETH()
-    assert.equal(ETHinSP_C.toString(), aliceColl.sub(_0pt5percent_aliceColl).add(bobColl).sub(_0pt5percent_bobColl).add(carolColl).sub(_0pt5percent_carolColl)) // (1+2+3 ETH) * 0.995
-  })
-
-  it.skip('gas compensation from pool-offset liquidations: 0.5% collateral < $10 in value. Compensates $10 worth of collateral, liquidates the remainder', async () => {
-    await deploymentHelper.mintLUSD(lusdToken, liquidator);
-    await priceFeed.setPrice(dec(400, 18))
-    await openTrove({ ICR: toBN(dec(2000, 18)), extraParams: { from: whale } })
-
-    // A-E open troves
-    await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: dec(200, 18), extraParams: { from: alice } })
-    await openTrove({ ICR: toBN(dec(120, 16)), extraLUSDAmount: dec(5000, 18), extraParams: { from: bob } })
-    await openTrove({ ICR: toBN(dec(60, 18)), extraLUSDAmount: dec(600, 18), extraParams: { from: carol } })
-    await openTrove({ ICR: toBN(dec(80, 18)), extraLUSDAmount: dec(1, 23), extraParams: { from: dennis } })
-    await openTrove({ ICR: toBN(dec(80, 18)), extraLUSDAmount: dec(1, 23), extraParams: { from: erin } })
-
-    // D, E each provide 10000 LUSD to SP
-    await stabilityPool.provideToSP(dec(1, 23), { from: dennis , gasPrice: GAS_PRICE })
-    await stabilityPool.provideToSP(dec(1, 23), { from: erin , gasPrice: GAS_PRICE })
-
-    const LUSDinSP_0 = await stabilityPool.getTotalLUSDDeposits()
-    const ETHinSP_0 = await stabilityPool.getETH()
-
-    // --- Price drops to 200.999 ---
-    await priceFeed.setPrice('200999000000000000000')
-    const price_1 = await priceFeed.getPrice()
-
-    /*
-    ETH:USD price = 200.999
-    Alice coll = 1 ETH. Value: $200.999
-    0.5% of coll  = 0.05 ETH. Value: (0.05 * 200.999) = $10.04995
-    */
-
-    const aliceColl = (await troveManager.Troves(alice))[1]
-
-    const aliceICR = await troveManager.getCurrentICR(alice, price_1)
-    assert.isTrue(aliceICR.lt(mv._MCR))
-
-    // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_A = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-    await troveManager.liquidate(alice, { from: liquidator, gasPrice: GAS_PRICE });
-    const liquidatorBalance_after_A = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-
-    // Check liquidator's balance increases by 0.5% of coll
-    const compensationReceived_A = (liquidatorBalance_after_A.sub(liquidatorBalance_before_A)).toString()
-    const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_A, _0pt5percent_aliceColl)
-
-    // Check SP LUSD has decreased due to the liquidation of A
-    const LUSDinSP_A = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_A.lt(LUSDinSP_0))
-
-    // Check ETH in SP has increased by the remainder of B's coll
-    const collRemainder_A = aliceColl.sub(_0pt5percent_aliceColl)
-    const ETHinSP_A = await stabilityPool.getETH()
-
-    const SPETHIncrease_A = ETHinSP_A.sub(ETHinSP_0)
-
-    assert.isAtMost(th.getDifference(SPETHIncrease_A, collRemainder_A), 1000)
-
-    // --- Price drops to 360 ---
-    await priceFeed.setPrice(dec(360, 18))
-    const price_2 = await priceFeed.getPrice()
-
-    /*
-    ETH:USD price = 360
-    Bob coll = 15 ETH. Value: $5400
-    0.5% of coll  = 0.75 ETH. Value: (0.75 * 360) = $270
-    */
-
-    const bobColl = (await troveManager.Troves(bob))[1]
-
-    const bobICR = await troveManager.getCurrentICR(bob, price_2)
-    assert.isTrue(bobICR.lte(mv._MCR))
-
-    // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_B = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-    await troveManager.liquidate(bob, { from: liquidator, gasPrice: GAS_PRICE })
-    const liquidatorBalance_after_B = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-
-    // Check liquidator's balance increases by $10 worth of coll
-    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
-    const compensationReceived_B = (liquidatorBalance_after_B.sub(liquidatorBalance_before_B)).toString()
-    assert.equal(compensationReceived_B, _0pt5percent_bobColl)
-
-    // Check SP LUSD has decreased due to the liquidation of B
-    const LUSDinSP_B = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_B.lt(LUSDinSP_A))
-
-    // Check ETH in SP has increased by the remainder of B's coll
-    const collRemainder_B = bobColl.sub(_0pt5percent_bobColl)
-    const ETHinSP_B = await stabilityPool.getETH()
-
-    const SPETHIncrease_B = ETHinSP_B.sub(ETHinSP_A)
-
-    assert.isAtMost(th.getDifference(SPETHIncrease_B, collRemainder_B), 1000)
-  })
-
-  it.skip('gas compensation from pool-offset liquidations: 0.5% collateral > $10 in value. Compensates 0.5% of  collateral, liquidates the remainder', async () => {
-    // open troves
-    await deploymentHelper.mintLUSD(lusdToken, liquidator);
-    await priceFeed.setPrice(dec(400, 18))
-    await openTrove({ ICR: toBN(dec(200, 18)), extraParams: { from: whale } })
-
-    // A-E open troves
-    await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: dec(2000, 18), extraParams: { from: alice,} })
-    await openTrove({ ICR: toBN(dec(1875, 15)), extraLUSDAmount: dec(8000, 18), extraParams: { from: bob,} })
-    await openTrove({ ICR: toBN(dec(2, 18)), extraLUSDAmount: dec(600, 18), extraParams: { from: carol} })
-    await openTrove({ ICR: toBN(dec(4, 18)), extraLUSDAmount: dec(1, 23), extraParams: { from: dennis} })
-    await openTrove({ ICR: toBN(dec(4, 18)), extraLUSDAmount: dec(1, 23), extraParams: { from: erin} })
-
-    // D, E each provide 10000 LUSD to SP
-    await stabilityPool.provideToSP(dec(1, 23), { from: dennis, gasPrice: GAS_PRICE })
-    await stabilityPool.provideToSP(dec(1, 23), { from: erin, gasPrice: GAS_PRICE })
-
-    const LUSDinSP_0 = await stabilityPool.getTotalLUSDDeposits()
-    const ETHinSP_0 = await stabilityPool.getETH()
-
-    await priceFeed.setPrice(dec(201, 18))
-    const price_1 = await priceFeed.getPrice()
-
-    /*
-    ETH:USD price = 201
-    Alice coll = 10.001 ETH. Value: $2010.201
-    0.5% of coll  = 0.050005 ETH. Value: (0.050005 * 201) = $10.051005
-    */
-
-    const aliceColl = (await troveManager.Troves(alice))[1]
-    const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
-
-    const aliceICR = await troveManager.getCurrentICR(alice, price_1)
-    assert.isTrue(aliceICR.lt(mv._MCR))
-
-    // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_A = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-    await troveManager.liquidate(alice, { from: liquidator, gasPrice: GAS_PRICE })
-    const liquidatorBalance_after_A = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-
-    // Check liquidator's balance increases by 0.5% of coll
-    const compensationReceived_A = (liquidatorBalance_after_A.sub(liquidatorBalance_before_A)).toString()
-    assert.equal(compensationReceived_A, _0pt5percent_aliceColl)
-
-    // Check SP LUSD has decreased due to the liquidation of A
-    const LUSDinSP_A = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_A.lt(LUSDinSP_0))
-
-    // Check ETH in SP has increased by the remainder of A's coll
-    const collRemainder_A = aliceColl.sub(_0pt5percent_aliceColl)
-    const ETHinSP_A = await stabilityPool.getETH()
-
-    const SPETHIncrease_A = ETHinSP_A.sub(ETHinSP_0)
-
-    assert.isAtMost(th.getDifference(SPETHIncrease_A, collRemainder_A), 1000)
-
-    await priceFeed.setPrice(dec(222, 18))
-
-    /*
-   ETH:USD price = 222
-   Bob coll = 37.5 ETH. Value: $7500
-   0.5% of coll  = 0.1875 ETH. Value: (0.1875 * 222) = $41.625
-   */
-
-    const bobColl = (await troveManager.Troves(bob))[1]
-    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
-
-    const bobICR = await troveManager.getCurrentICR(bob, price_1)
-    assert.isTrue(bobICR.lt(mv._MCR))
-
-    // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_B = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-    await troveManager.liquidate(bob, { from: liquidator, gasPrice: GAS_PRICE })
-    const liquidatorBalance_after_B = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-
-    // Check liquidator's balance increases by 0.5% of coll
-    const compensationReceived_B = (liquidatorBalance_after_B.sub(liquidatorBalance_before_B)).toString()
-    assert.equal(compensationReceived_B, _0pt5percent_bobColl)
-
-    // Check SP LUSD has decreased due to the liquidation of B
-    const LUSDinSP_B = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_B.lt(LUSDinSP_A))
-
-    // Check ETH in SP has increased by the remainder of B's coll
-    const collRemainder_B = bobColl.sub(_0pt5percent_bobColl)
-    const ETHinSP_B = await stabilityPool.getETH()
-
-    const SPETHIncrease_B = ETHinSP_B.sub(ETHinSP_A)
-
-    assert.isAtMost(th.getDifference(SPETHIncrease_B, collRemainder_B), 1000)
-
-  })
-
   // --- Event emission in single liquidation ---
 
   it('Gas compensation from pool-offset liquidations. Liquidation event emits the correct gas compensation and total liquidated coll and debt', async () => {
@@ -814,93 +525,6 @@ contract('Gas compensation tests', async accounts => {
     assert.isAtMost(th.getDifference(expectedLiquidatedDebt_B, loggedDebt_B), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_B, loggedColl_B), 1000)
     assert.isAtMost(th.getDifference(expectedGasComp_B, loggedGasComp_B), 1000)
-  })
-
-
-  // liquidateTroves - full offset
-  it.skip('liquidateTroves(): full offset.  Compensates the correct amount, and liquidates the remainder', async () => {
-    await deploymentHelper.mintLUSD(lusdToken, liquidator);
-    await priceFeed.setPrice(dec(1000, 18))
-
-    await openTrove({ ICR: toBN(dec(2000, 18)), extraParams: { from: whale } })
-
-    // A-F open troves
-    await openTrove({ ICR: toBN(dec(418, 16)), extraLUSDAmount: dec(2000, 18), extraParams: { from: alice } })
-    await openTrove({ ICR: toBN(dec(426, 16)), extraLUSDAmount: dec(8000, 18), extraParams: { from: bob } })
-    await openTrove({ ICR: toBN(dec(438, 16)), extraLUSDAmount: dec(600, 18), extraParams: { from: carol } })
-    await openTrove({ ICR: toBN(dec(435, 16)), extraLUSDAmount: dec(1, 23), extraParams: { from: dennis } })
-    await openTrove({ ICR: toBN(dec(10, 18)), extraLUSDAmount: dec(1, 23), extraParams: { from: erin } })
-    await openTrove({ ICR: toBN(dec(10, 18)), extraLUSDAmount: dec(1, 23), extraParams: { from: flyn } })
-
-    // D, E each provide 10000 LUSD to SP
-    await stabilityPool.provideToSP(dec(1, 23), { from: erin })
-    await stabilityPool.provideToSP(dec(1, 23), { from: flyn })
-
-    const LUSDinSP_0 = await stabilityPool.getTotalLUSDDeposits()
-
-    // price drops to 250
-    await priceFeed.setPrice(dec(250, 18))
-    const price = await priceFeed.getPrice()
-
-    // Check A, B, C, D have ICR < MCR
-    assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(mv._MCR))
-    assert.isTrue((await troveManager.getCurrentICR(bob, price)).lt(mv._MCR))
-    assert.isTrue((await troveManager.getCurrentICR(carol, price)).lt(mv._MCR))
-    assert.isTrue((await troveManager.getCurrentICR(dennis, price)).lt(mv._MCR))
-
-    // Check E, F have ICR > MCR
-    assert.isTrue((await troveManager.getCurrentICR(erin, price)).gt(mv._MCR))
-    assert.isTrue((await troveManager.getCurrentICR(flyn, price)).gt(mv._MCR))
-
-
-    // --- Check value of of A's collateral is < $10, and value of B,C,D collateral are > $10  ---
-    const aliceColl = (await troveManager.Troves(alice))[1]
-    const bobColl = (await troveManager.Troves(bob))[1]
-    const carolColl = (await troveManager.Troves(carol))[1]
-    const dennisColl = (await troveManager.Troves(dennis))[1]
-
-    // --- Check value of 0.5% of A, B, and C's collateral is <$10, and value of 0.5% of D's collateral is > $10 ---
-    const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
-    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
-    const _0pt5percent_carolColl = carolColl.div(web3.utils.toBN('200'))
-    const _0pt5percent_dennisColl = dennisColl.div(web3.utils.toBN('200'))
-
-    const collGasCompensation = await troveManagerTester.getCollGasCompensation(price)
-    assert.equal(collGasCompensation, dec(125, 16))
-
-    /* Expect total gas compensation =
-    0.5% of [A_coll + B_coll + C_coll + D_coll]
-    */
-    const expectedGasComp = _0pt5percent_aliceColl
-      .add(_0pt5percent_bobColl)
-      .add(_0pt5percent_carolColl)
-      .add(_0pt5percent_dennisColl)
-
-    /* Expect liquidated coll =
-    0.95% of [A_coll + B_coll + C_coll + D_coll]
-    */
-    const expectedLiquidatedColl = aliceColl.sub(_0pt5percent_aliceColl)
-      .add(bobColl.sub(_0pt5percent_bobColl))
-      .add(carolColl.sub(_0pt5percent_carolColl))
-      .add(dennisColl.sub(_0pt5percent_dennisColl))
-
-    // Liquidate troves A-D
-
-    const liquidatorBalance_before = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-    await troveManager.liquidateTroves(4, { from: liquidator, gasPrice: GAS_PRICE })
-    const liquidatorBalance_after = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
-
-    // Check LUSD in SP has decreased
-    const LUSDinSP_1 = await stabilityPool.getTotalLUSDDeposits()
-    assert.isTrue(LUSDinSP_1.lt(LUSDinSP_0))
-
-    // Check liquidator's balance has increased by the expected compensation amount
-    const compensationReceived = (liquidatorBalance_after.sub(liquidatorBalance_before)).toString()
-    assert.equal(expectedGasComp, compensationReceived)
-
-    // Check ETH in stability pool now equals the expected liquidated collateral
-    const ETHinSP = (await stabilityPool.getETH()).toString()
-    assert.equal(expectedLiquidatedColl, ETHinSP)
   })
 
   // liquidateTroves - full redistribution
@@ -1122,6 +746,7 @@ contract('Gas compensation tests', async accounts => {
 
   it('Trove ordering: same collateral, decreasing debt. Price successively increases. Troves should maintain ordering by ICR', async () => {
     const _10_accounts = accounts.slice(1, 11)
+    await th.fillAccountsWithWstETH(contracts, _10_accounts)
 
     let debt = 50
     // create 10 troves, constant coll, descending debt 100 to 90 LUSD
@@ -1228,6 +853,7 @@ contract('Gas compensation tests', async accounts => {
   it('Trove ordering: Constant raw collateral ratio (excluding virtual debt). Price successively increases. Troves should maintain ordering by ICR', async () => {
     let collVals = [1, 5, 10, 25, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000].map(v => v * 20)
     const accountsList = accounts.slice(1, collVals.length + 1)
+    await th.fillAccountsWithWstETH(contracts, accountsList)
 
     let accountIdx = 0
     for (const coll of collVals) {

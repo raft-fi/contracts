@@ -49,8 +49,6 @@ contract('SortedTroves', async accounts => {
   let lusdToken
   let wstETHTokenMock
 
-  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
-
   let contracts
 
   const openTrove = async (params) => th.openTrove(contracts, params)
@@ -63,7 +61,6 @@ contract('SortedTroves', async accounts => {
         contracts.troveManager.address,
         contracts.borrowerOperations.address
       )
-      const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress, multisig)
 
       priceFeed = contracts.priceFeedTestnet
       sortedTroves = contracts.sortedTroves
@@ -72,9 +69,7 @@ contract('SortedTroves', async accounts => {
       lusdToken = contracts.lusdToken
       wstETHTokenMock = contracts.wstETHTokenMock
 
-      await deploymentHelper.connectLQTYContracts(LQTYContracts)
-      await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-      await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+      await deploymentHelper.connectCoreContracts(contracts, owner)
 
       await th.fillAccountsWithWstETH(contracts, [
         alice, bob, carol, dennis, erin,
@@ -258,8 +253,6 @@ contract('SortedTroves', async accounts => {
       await borrowerOperations.openTrove(th._100pct, dec(17, 18), I, I, { from: I, value: dec(4, 'ether') })
       await borrowerOperations.openTrove(th._100pct, dec(5, 21), J, J, { from: J, value: dec(1345, 'ether') })
 
-      const price_1 = await priceFeed.getPrice()
-
       // Check troves are ordered
       await assertSortedListIsOrdered(contracts)
 
@@ -268,7 +261,6 @@ contract('SortedTroves', async accounts => {
 
       // Price drops
       await priceFeed.setPrice(dec(100, 18))
-      const price_2 = await priceFeed.getPrice()
 
       // Liquidate a trove
       await troveManager.liquidate(defaulter_1)

@@ -9,13 +9,8 @@ const StabilityPool = artifacts.require("./StabilityPool.sol")
 const FunctionCaller = artifacts.require("./FunctionCaller.sol")
 const BorrowerOperations = artifacts.require("./BorrowerOperations.sol")
 
-const LQTYStaking = artifacts.require("./LQTY/LQTYStaking.sol")
-const LQTYToken = artifacts.require("./LQTY/LQTYToken.sol")
-const LockupContractFactory = artifacts.require("./LQTY/LockupContractFactory.sol")
-const CommunityIssuance = artifacts.require("./LQTY/CommunityIssuance.sol")
 const HintHelpers = artifacts.require("./HintHelpers.sol")
 
-const CommunityIssuanceTester = artifacts.require("./LQTY/CommunityIssuanceTester.sol")
 const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
 const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
@@ -23,10 +18,7 @@ const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.s
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
 const LUSDTokenTester = artifacts.require("./LUSDTokenTester.sol")
 
-const { TestHelper: th } = require("../utils/testHelpers.js")
-
 const dh = require("./deploymentHelpers.js")
-const ARBITRARY_ADDRESS = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"   // placeholder for the LPrewards bounty addresses
 
 const coreContractABIs = [
   BorrowerOperations,
@@ -41,15 +33,7 @@ const coreContractABIs = [
   HintHelpers,
 ]
 
-const LQTYContractABIs = [
-  LQTYStaking,
-  LQTYToken,
-  LockupContractFactory,
-  CommunityIssuance
-]
-
 const TesterContractABIs  = [
-  CommunityIssuanceTester,
   ActivePoolTester,
   DefaultPoolTester,
   LiquityMathTester,
@@ -109,20 +93,9 @@ const logContractBytecodeLengths = (contractABIs) => {
 // Run script: log deployment gas costs and bytecode lengths for all contracts
 async function main() {
   const coreContracts = await dh.deployLiquityCoreHardhat()
-  const LQTYContracts = await dh.deployLQTYContractsHardhat(ARBITRARY_ADDRESS, ARBITRARY_ADDRESS)
   const testerContracts = await dh.deployTesterContractsHardhat()
 
   await dh.connectCoreContracts(coreContracts, LQTYContracts)
-  await dh.connectLQTYContracts(LQTYContracts)
-  await dh.connectLQTYContractsToCore(LQTYContracts, coreContracts)
-
-
-  console.log(`\n`)
-  console.log(`LQTY CONTRACTS`)
-  await logContractDeploymentCosts(LQTYContracts)
-  console.log(`\n`)
-  logContractBytecodeLengths(LQTYContractABIs)
-  console.log(`\n`)
 
   console.log(`CORE CONTRACTS`)
   await logContractDeploymentCosts(coreContracts)

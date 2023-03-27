@@ -411,7 +411,7 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         require(_collDeposit == 0 || _collWithdrawal == 0, "BorrowerOperations: Cannot withdraw and add coll");
     }
 
-    function _requireNonZeroAdjustment(uint _collWithdrawal, uint _LUSDChange, uint256 _collDeposit) internal view {
+    function _requireNonZeroAdjustment(uint _collWithdrawal, uint _LUSDChange, uint256 _collDeposit) internal pure {
         require(_collDeposit != 0 || _collWithdrawal != 0 || _LUSDChange != 0, "BorrowerOps: There must be either a collateral change or a debt change");
     }
 

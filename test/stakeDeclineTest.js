@@ -20,16 +20,12 @@ contract('TroveManager', async accounts => {
   const ZERO_ADDRESS = th.ZERO_ADDRESS
   const [owner, A, B, C, D, E, F] = accounts;
 
-  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
-
   let priceFeed
   let lusdToken
   let sortedTroves
   let troveManager
   let activePool
-  let defaultPool
   let borrowerOperations
-  let hintHelpers
   let wstETHTokenMock
 
   let contracts
@@ -51,30 +47,19 @@ contract('TroveManager', async accounts => {
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress, multisig)
 
     priceFeed = contracts.priceFeedTestnet
     lusdToken = contracts.lusdToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
-    hintHelpers = contracts.hintHelpers
     wstETHTokenMock = contracts.wstETHTokenMock
 
-    lqtyStaking = LQTYContracts.lqtyStaking
-    lqtyToken = LQTYContracts.lqtyToken
-    communityIssuance = LQTYContracts.communityIssuance
-    lockupContractFactory = LQTYContracts.lockupContractFactory
-
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, owner)
 
     await th.fillAccountsWithWstETH(contracts, [
-      A, B, C, D, E, F,
-      bountyAddress, lpRewardsAddress, multisig
+      A, B, C, D, E, F
     ])
     await th.fillAccountsWithWstETH(contracts, accounts.slice(10, 20))
   })

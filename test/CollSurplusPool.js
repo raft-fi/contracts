@@ -13,9 +13,7 @@ const LUSDToken = artifacts.require("LUSDToken")
 contract('CollSurplusPool', async accounts => {
   const [
     owner,
-    A, B, C, D, E] = accounts;
-
-  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
+    A, B] = accounts;
 
   let borrowerOperations
   let priceFeed
@@ -24,7 +22,6 @@ contract('CollSurplusPool', async accounts => {
 
   let contracts
 
-  const getOpenTroveLUSDAmount = async (totalDebt) => th.getOpenTroveLUSDAmount(contracts, totalDebt)
   const openTrove = async (params) => th.openTrove(contracts, params)
   const fillAccountsWithWstETH =  async (params) => th.fillAccountsWithWstETH(contracts, params)
 
@@ -35,18 +32,15 @@ contract('CollSurplusPool', async accounts => {
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress, multisig)
 
-    await fillAccountsWithWstETH([owner, A, B, C, D, E])
+    await fillAccountsWithWstETH([owner, A, B])
 
     priceFeed = contracts.priceFeedTestnet
     collSurplusPool = contracts.collSurplusPool
     borrowerOperations = contracts.borrowerOperations
     wstETHTokenMock = contracts.wstETHTokenMock
 
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, owner)
   })
 
   it("CollSurplusPool::getETH(): Returns the ETH balance of the CollSurplusPool after redemption", async () => {

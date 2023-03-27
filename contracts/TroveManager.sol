@@ -8,7 +8,6 @@ import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/ILUSDToken.sol";
 import "./Interfaces/ISortedTroves.sol";
-import "./Interfaces/ILQTYToken.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
 
@@ -24,8 +23,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     ICollSurplusPool collSurplusPool;
 
     ILUSDToken public override lusdToken;
-
-    ILQTYToken public override lqtyToken;
 
     address public override feeRecipient;
 
@@ -52,6 +49,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     * Corresponds to (1 / ALPHA) in the white paper.
     */
     uint constant public BETA = 2;
+
+    uint public immutable override deploymentStartTime;
 
     uint256 public override borrowingSpread;
     uint256 public baseRate;
@@ -189,6 +188,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         bool cancelledPartial;
     }
 
+    // --- Constructor ---
+
+    constructor() {
+        deploymentStartTime = block.timestamp;
+    }
+
     // --- Setters ---
 
     function setAddresses(
@@ -200,7 +205,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _priceFeedAddress,
         address _lusdTokenAddress,
         address _sortedTrovesAddress,
-        address _lqtyTokenAddress,
         address _feeRecipient
     ) external override onlyOwner {
         require(!_addressesSet, "TroveManager: addresses already set");
@@ -213,7 +217,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         checkContract(_priceFeedAddress);
         checkContract(_lusdTokenAddress);
         checkContract(_sortedTrovesAddress);
-        checkContract(_lqtyTokenAddress);
 
         borrowerOperationsAddress = _borrowerOperationsAddress;
         activePool = IActivePool(_activePoolAddress);
@@ -223,7 +226,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         priceFeed = IPriceFeed(_priceFeedAddress);
         lusdToken = ILUSDToken(_lusdTokenAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        lqtyToken = ILQTYToken(_lqtyTokenAddress);
         feeRecipient = _feeRecipient;
 
         _addressesSet = true;
@@ -236,7 +238,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit LUSDTokenAddressChanged(_lusdTokenAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
-        emit LQTYTokenAddressChanged(_lqtyTokenAddress);
         emit FeeRecipientChanged(_feeRecipient);
     }
 
@@ -1157,8 +1158,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _requireAfterBootstrapPeriod() internal view {
-        uint systemDeploymentTime = lqtyToken.getDeploymentStartTime();
-        require(block.timestamp >= systemDeploymentTime + BOOTSTRAP_PERIOD, "TroveManager: Redemptions are not allowed during bootstrap phase");
+        require(block.timestamp >= deploymentStartTime + BOOTSTRAP_PERIOD, "TroveManager: Redemptions are not allowed during bootstrap phase");
     }
 
     function _requireValidMaxFeePercentage(uint _maxFeePercentage) internal pure {
