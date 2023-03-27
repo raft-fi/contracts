@@ -17,12 +17,12 @@ interface IBorrowerOperations {
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event PriceFeedAddressChanged(address  _newPriceFeedAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
-    event LUSDTokenAddressChanged(address _lusdTokenAddress);
+    event RTokenAddressChanged(address _rTokenAddress);
     event FeeRecipientChanged(address _feeRecipient);
 
     event TroveCreated(address indexed _borrower, uint arrayIndex);
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint stake, BorrowerOperation operation);
-    event LUSDBorrowingFeePaid(address indexed _borrower, uint _LUSDFee);
+    event RBorrowingFeePaid(address indexed _borrower, uint _rFee);
 
     // --- Functions ---
 
@@ -34,22 +34,22 @@ interface IBorrowerOperations {
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _lusdTokenAddress,
+        address _rTokenAddress,
         address _feeRecipient
     ) external;
 
     function setFeeRecipient(address _feeRecipient) external;
     function feeRecipient() external view returns (address);
 
-    function openTrove(uint _maxFee, uint _LUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
+    function openTrove(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
 
     function addColl(address _upperHint, address _lowerHint, uint _amount) external;
 
     function withdrawColl(uint _amount, address _upperHint, address _lowerHint) external;
 
-    function withdrawLUSD(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external;
+    function withdrawR(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external;
 
-    function repayLUSD(uint _amount, address _upperHint, address _lowerHint) external;
+    function repayR(uint _amount, address _upperHint, address _lowerHint) external;
 
     function closeTrove() external;
 

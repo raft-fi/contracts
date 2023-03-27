@@ -7,7 +7,7 @@ const { dec, toBN } = th
 let latestRandomSeed = 31337
 
 const TroveManagerTester = artifacts.require("TroveManagerTester")
-const LUSDToken = artifacts.require("LUSDToken")
+const RToken = artifacts.require("RToken")
 
 contract('HintHelpers', async accounts => {
 
@@ -24,7 +24,7 @@ contract('HintHelpers', async accounts => {
 
   let numAccounts;
 
- // Sequentially add coll and withdraw LUSD, 1 account at a time
+ // Sequentially add coll and withdraw R, 1 account at a time
   const makeTrovesInSequence = async (accounts, n) => {
     activeAccounts = accounts.slice(0,n)
     await th.fillAccountsWithWstETH(contracts, activeAccounts)
@@ -35,7 +35,7 @@ contract('HintHelpers', async accounts => {
     // console.time('makeTrovesInSequence')
     for (const account of activeAccounts) {
       const ICR_BN = toBN(ICR.toString().concat('0'.repeat(16)))
-      await th.openTrove(contracts, { extraLUSDAmount: toBN(dec(10000, 18)), ICR: ICR_BN, extraParams: { from: account } })
+      await th.openTrove(contracts, { extraRAmount: toBN(dec(10000, 18)), ICR: ICR_BN, extraParams: { from: account } })
 
       ICR += 1
     }
@@ -45,7 +45,7 @@ contract('HintHelpers', async accounts => {
   before(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
-    contracts.lusdToken = await LUSDToken.new(
+    contracts.rToken = await RToken.new(
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )

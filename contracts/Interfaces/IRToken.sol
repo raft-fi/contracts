@@ -10,8 +10,8 @@ error InvalidAddressInput();
 error UnauthorizedCall(address caller);
 error FlashFeePercentageTooBig(uint256 feePercentage);
 
-interface ILUSDToken is IERC20, IERC20Permit, IERC3156FlashLender {
-    event LUSDDeployed(address borrowerOperations, address troveManager, address flashMintFeeRecipient);
+interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender {
+    event RDeployed(address borrowerOperations, address troveManager, address flashMintFeeRecipient);
 
     function PERCENTAGE_BASE() external view returns (uint256);
 

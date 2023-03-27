@@ -73,7 +73,7 @@ class MainnetDeploymentHelper {
     const collSurplusPoolFactory = await this.getFactory("CollSurplusPool")
     const borrowerOperationsFactory = await this.getFactory("BorrowerOperations")
     const hintHelpersFactory = await this.getFactory("HintHelpers")
-    const lusdTokenFactory = await this.getFactory("LUSDToken")
+    const rTokenFactory = await this.getFactory("RToken")
     const tellorCallerFactory = await this.getFactory("TellorCaller")
 
     // Deploy txs
@@ -88,15 +88,15 @@ class MainnetDeploymentHelper {
     const hintHelpers = await this.loadOrDeploy(hintHelpersFactory, 'hintHelpers', deploymentState)
     const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, [tellorMasterAddr])
 
-    const lusdTokenParams = [
+    const rTokenParams = [
       troveManager.address,
       borrowerOperations.address
     ]
-    const lusdToken = await this.loadOrDeploy(
-      lusdTokenFactory,
-      'lusdToken',
+    const rToken = await this.loadOrDeploy(
+      rTokenFactory,
+      'rToken',
       deploymentState,
-      lusdTokenParams
+      rTokenParams
     )
 
     if (!this.configParams.ETHERSCAN_BASE_URL) {
@@ -112,12 +112,12 @@ class MainnetDeploymentHelper {
       await this.verifyContract('borrowerOperations', deploymentState)
       await this.verifyContract('hintHelpers', deploymentState)
       await this.verifyContract('tellorCaller', deploymentState, [tellorMasterAddr])
-      await this.verifyContract('lusdToken', deploymentState, lusdTokenParams)
+      await this.verifyContract('rToken', deploymentState, rTokenParams)
     }
 
     const coreContracts = {
       priceFeed,
-      lusdToken,
+      rToken,
       sortedTroves,
       troveManager,
       activePool,
@@ -183,7 +183,7 @@ class MainnetDeploymentHelper {
         contracts.gasPool.address,
         contracts.collSurplusPool.address,
         contracts.priceFeed.address,
-        contracts.lusdToken.address,
+        contracts.rToken.address,
         contracts.sortedTroves.address,
 	{gasPrice}
       ))
@@ -198,7 +198,7 @@ class MainnetDeploymentHelper {
         contracts.collSurplusPool.address,
         contracts.priceFeed.address,
         contracts.sortedTroves.address,
-        contracts.lusdToken.address,
+        contracts.rToken.address,
 	{gasPrice}
       ))
 

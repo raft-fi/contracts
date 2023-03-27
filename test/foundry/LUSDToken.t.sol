@@ -2,18 +2,18 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../../contracts/LUSDToken.sol";
+import "../../contracts/RToken.sol";
 
-contract LUSDTokenTest is Test {
+contract RTokenTest is Test {
     address public constant POSITIONS_MANAGER = address(12345);
     address public constant BORROWER_OPERATIONS = address(34567);
 
     address public constant USER = address(1);
 
-    ILUSDToken public token;
+    IRToken public token;
 
     function setUp() public {
-        token = new LUSDToken(POSITIONS_MANAGER, BORROWER_OPERATIONS);
+        token = new RToken(POSITIONS_MANAGER, BORROWER_OPERATIONS);
     }
 
     function testMaxFlashMint(uint256 simulatedTotalSupply) public {

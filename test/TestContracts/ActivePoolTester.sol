@@ -9,7 +9,7 @@ contract ActivePoolTester is ActivePool {
     constructor(address _collateralToken) ActivePool(_collateralToken) {
     }
 
-    function unprotectedIncreaseLUSDDebt(uint _amount) external {
-        LUSDDebt  = LUSDDebt + _amount;
+    function unprotectedIncreaseRDebt(uint _amount) external {
+        rDebt  = rDebt + _amount;
     }
 }

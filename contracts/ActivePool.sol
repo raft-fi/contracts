@@ -8,9 +8,9 @@ import "./Interfaces/IActivePool.sol";
 import "./Dependencies/CheckContract.sol";
 
 /*
- * The Active Pool holds the ETH collateral and LUSD debt (but not LUSD tokens) for all active troves.
+ * The Active Pool holds the collateral tokens and R debt (but not R tokens) for all active troves.
  *
- * When a trove is liquidated, it's ETH and LUSD debt are transferred from the Active Pool, to either the
+ * When a trove is liquidated, it's collateral tokens and R debt are transferred from the Active Pool, to either the
  * the Default Pool or the liquidator, depending on the liquidation conditions.
  *
  */
@@ -23,7 +23,7 @@ contract ActivePool is Ownable2Step, CheckContract, IActivePool {
     address public troveManagerAddress;
     address public defaultPoolAddress;
     uint256 internal ETH;  // deposited ether tracker
-    uint256 internal LUSDDebt;
+    uint256 internal rDebt;
 
     // --- Constructor ---
     constructor(address _collateralToken) {
@@ -70,8 +70,8 @@ contract ActivePool is Ownable2Step, CheckContract, IActivePool {
         return ETH;
     }
 
-    function getLUSDDebt() external view override returns (uint) {
-        return LUSDDebt;
+    function getRDebt() external view override returns (uint) {
+        return rDebt;
     }
 
     // --- Pool functionality ---
@@ -93,16 +93,16 @@ contract ActivePool is Ownable2Step, CheckContract, IActivePool {
         IERC20(collateralToken).transfer(_account, _amount);
     }
 
-    function increaseLUSDDebt(uint _amount) external override {
+    function increaseRDebt(uint _amount) external override {
         _requireCallerIsBOorTroveM();
-        LUSDDebt += _amount;
-        emit ActivePoolLUSDDebtUpdated(LUSDDebt);
+        rDebt += _amount;
+        emit ActivePoolRDebtUpdated(rDebt);
     }
 
-    function decreaseLUSDDebt(uint _amount) external override {
+    function decreaseRDebt(uint _amount) external override {
         _requireCallerIsBOorTroveM();
-        LUSDDebt -= _amount;
-        emit ActivePoolLUSDDebtUpdated(LUSDDebt);
+        rDebt -= _amount;
+        emit ActivePoolRDebtUpdated(rDebt);
     }
 
     // --- 'require' functions ---
