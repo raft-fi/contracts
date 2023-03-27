@@ -290,75 +290,6 @@ async function mainnetDeploy(configParams) {
   //   console.log('Already staked in Unipool')
   // }
 
-  // console.log("wait 90 seconds before checking earnings... ")
-  // await configParams.waitFunction()
-
-  // earnedLQTY = await unipool.earned(deployerWallet.address)
-  // th.logBN("deployer's farmed LQTY from Unipool after waiting ~1.5mins", earnedLQTY)
-
-  // let deployerLQTYBal = await LQTYContracts.lqtyToken.balanceOf(deployerWallet.address)
-  // th.logBN("deployer LQTY Balance Before SP deposit", deployerLQTYBal)
-
-
-
-  // // --- Make SP deposit and earn LQTY ---
-  // console.log("CHECK DEPLOYER MAKING DEPOSIT AND EARNING LQTY")
-
-  // let SPDeposit = await liquityCore.stabilityPool.getCompoundedLUSDDeposit(deployerWallet.address)
-  // th.logBN("deployer SP deposit before making deposit", SPDeposit)
-
-  // // Provide to SP
-  // await mdh.sendAndWaitForTransaction(liquityCore.stabilityPool.provideToSP(dec(15, 18), th.ZERO_ADDRESS, { gasPrice, gasLimit: 400000 }))
-
-  // // Get SP deposit
-  // SPDeposit = await liquityCore.stabilityPool.getCompoundedLUSDDeposit(deployerWallet.address)
-  // th.logBN("deployer SP deposit after depositing 15 LUSD", SPDeposit)
-
-  // console.log("wait 90 seconds before withdrawing...")
-  // // wait 90 seconds
-  // await configParams.waitFunction()
-
-  // // Withdraw from SP
-  // // await mdh.sendAndWaitForTransaction(liquityCore.stabilityPool.withdrawFromSP(dec(1000, 18), { gasPrice, gasLimit: 400000 }))
-
-  // // SPDeposit = await liquityCore.stabilityPool.getCompoundedLUSDDeposit(deployerWallet.address)
-  // // th.logBN("deployer SP deposit after full withdrawal", SPDeposit)
-
-  // // deployerLQTYBal = await LQTYContracts.lqtyToken.balanceOf(deployerWallet.address)
-  // // th.logBN("deployer LQTY Balance after SP deposit withdrawal", deployerLQTYBal)
-
-  // // --- 2nd Account opens trove ---
-  // const trove2Status = await liquityCore.troveManager.getTroveStatus(account2Wallet.address)
-  // if (trove2Status.toString() != '1') {
-  //   console.log("Acct 2 opens a trove ...")
-  //   let _2kLUSDWithdrawal = th.dec(2000, 18) // 2000 LUSD
-  //   let _1pt5_ETHcoll = th.dec(15, 17) // 1.5 ETH
-  //   const borrowerOpsEthersFactory = await ethers.getContractFactory("BorrowerOperations", account2Wallet)
-  //   const borrowerOpsAcct2 = await new ethers.Contract(liquityCore.borrowerOperations.address, borrowerOpsEthersFactory.interface, account2Wallet)
-
-  //   await mdh.sendAndWaitForTransaction(borrowerOpsAcct2.openTrove(th._100pct, _2kLUSDWithdrawal, th.ZERO_ADDRESS, th.ZERO_ADDRESS, { value: _1pt5_ETHcoll, gasPrice, gasLimit: 1000000 }))
-  // } else {
-  //   console.log('Acct 2 already has an active trove')
-  // }
-
-  // const acct2Trove = await liquityCore.troveManager.Troves(account2Wallet.address)
-  // th.logBN('acct2 debt', acct2Trove[0])
-  // th.logBN('acct2 coll', acct2Trove[1])
-  // th.logBN('acct2 stake', acct2Trove[2])
-  // console.log(`acct2 trove status: ${acct2Trove[3]}`)
-
-  // //  --- deployer withdraws staking gains ---
-  // console.log("CHECK DEPLOYER WITHDRAWING STAKING GAINS")
-
-  // // check deployer's LUSD balance before withdrawing staking gains
-  // deployerLUSDBal = await liquityCore.lusdToken.balanceOf(deployerWallet.address)
-  // th.logBN('deployer LUSD bal before withdrawing staking gains', deployerLUSDBal)
-
-  // // check deployer's LUSD balance after withdrawing staking gains
-  // deployerLUSDBal = await liquityCore.lusdToken.balanceOf(deployerWallet.address)
-  // th.logBN('deployer LUSD bal after withdrawing staking gains', deployerLUSDBal)
-
-
   // // --- System stats  ---
 
   // Uniswap LUSD-ETH pool size
@@ -390,10 +321,6 @@ async function mainnetDeploy(configParams) {
   th.logBN("Base rate", baseRate)
   th.logBN("Current borrowing rate", currentBorrowingRate)
 
-  // total SP deposits
-  const totalSPDeposits = await liquityCore.stabilityPool.getTotalLUSDDeposits()
-  th.logBN("Total LUSD SP deposits", totalSPDeposits)
-
   // total LP tokens staked in Unipool
   const totalLPTokensStaked = await unipool.totalSupply()
   th.logBN("Total LP (LUSD-ETH) tokens staked in unipool", totalLPTokensStaked)
@@ -413,98 +340,6 @@ async function mainnetDeploy(configParams) {
   const L_LUSDDebt = await liquityCore.troveManager.L_LUSDDebt()
   th.logBN("L_ETH", L_ETH)
   th.logBN("L_LUSDDebt", L_LUSDDebt)
-
-  // StabilityPool
-  console.log("StabilityPool state variables:")
-  const P = await liquityCore.stabilityPool.P()
-  const currentScale = await liquityCore.stabilityPool.currentScale()
-  const currentEpoch = await liquityCore.stabilityPool.currentEpoch()
-  const S = await liquityCore.stabilityPool.epochToScaleToSum(currentEpoch, currentScale)
-  const G = await liquityCore.stabilityPool.epochToScaleToG(currentEpoch, currentScale)
-  th.logBN("Product P", P)
-  th.logBN("Current epoch", currentEpoch)
-  th.logBN("Current scale", currentScale)
-  th.logBN("Sum S, at current epoch and scale", S)
-  th.logBN("Sum G, at current epoch and scale", G)
-
-  // CommunityIssuance
-  console.log("CommunityIssuance state variables:")
-  const totalLQTYIssued = await LQTYContracts.communityIssuance.totalLQTYIssued()
-  th.logBN("Total LQTY issued to depositors / front ends", totalLQTYIssued)
-
-
-  // TODO: Uniswap *LQTY-ETH* pool size (check it's deployed?)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // ************************
-  // --- NOT FOR APRIL 5: Deploy a LQTYToken2 with General Safe as beneficiary to test minting LQTY showing up in Gnosis App  ---
-
-  // // General Safe LQTY bal before:
-  // const realGeneralSafeAddr = "0xF06016D822943C42e3Cb7FC3a6A3B1889C1045f8"
-
-  //   const LQTYToken2EthersFactory = await ethers.getContractFactory("LQTYToken2", deployerWallet)
-  //   const lqtyToken2 = await LQTYToken2EthersFactory.deploy(
-  //     "0xF41E0DD45d411102ed74c047BdA544396cB71E27",  // CI param: LC1
-  //     "0x9694a04263593AC6b895Fc01Df5929E1FC7495fA", // LQTY Staking param: LC2
-  //     "0x98f95E112da23c7b753D8AE39515A585be6Fb5Ef", // LCF param: LC3
-  //     realGeneralSafeAddr,  // bounty/hackathon param: REAL general safe addr
-  //     "0x98f95E112da23c7b753D8AE39515A585be6Fb5Ef", // LP rewards param: LC3
-  //     deployerWallet.address, // multisig param: deployer wallet
-  //     {gasPrice, gasLimit: 10000000}
-  //   )
-
-  //   console.log(`lqty2 address: ${lqtyToken2.address}`)
-
-  //   let generalSafeLQTYBal = await lqtyToken2.balanceOf(realGeneralSafeAddr)
-  //   console.log(`generalSafeLQTYBal: ${generalSafeLQTYBal}`)
-
-
-
-  // ************************
-  // --- NOT FOR APRIL 5: Test short-term lockup contract LQTY withdrawal on mainnet ---
-
-  // now = (await ethers.provider.getBlock(latestBlock)).timestamp
-
-  // existing deployment
-  //   console.log(`Short term LC Address:  ${deployedShortTermLC.address}`)
-  //   console.log(`recorded beneficiary in short term LC:  ${await deployedShortTermLC.beneficiary()}`)
-  //   console.log(`recorded short term LC name:  ${await deployedShortTermLC.NAME()}`)
-  //   console.log(`recorded short term LC name:  ${await deployedShortTermLC.unlockTime()}`)
-  //   now = (await ethers.provider.getBlock(latestBlock)).timestamp
-  //   console.log(`time now: ${now}`)
-
-  //   // check deployer LQTY bal
-  //   let deployerLQTYBal = await LQTYContracts.lqtyToken.balanceOf(deployerWallet.address)
-  //   console.log(`deployerLQTYBal before he withdraws: ${deployerLQTYBal}`)
-
-  //   // check LC LQTY bal
-  //   let LC_LQTYBal = await LQTYContracts.lqtyToken.balanceOf(deployedShortTermLC.address)
-  //   console.log(`LC LQTY bal before withdrawal: ${LC_LQTYBal}`)
-
-  // // withdraw from LC
-  // const withdrawFromShortTermTx = await deployedShortTermLC.withdrawLQTY( {gasPrice, gasLimit: 1000000})
-  // withdrawFromShortTermTx.wait()
-
-  // // check deployer bal after LC withdrawal
-  // deployerLQTYBal = await LQTYContracts.lqtyToken.balanceOf(deployerWallet.address)
-  // console.log(`deployerLQTYBal after he withdraws: ${deployerLQTYBal}`)
-
-  //   // check LC LQTY bal
-  //   LC_LQTYBal = await LQTYContracts.lqtyToken.balanceOf(deployedShortTermLC.address)
-  //   console.log(`LC LQTY bal after withdrawal: ${LC_LQTYBal}`)
 }
 
 module.exports = {

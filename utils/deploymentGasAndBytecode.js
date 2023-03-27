@@ -5,7 +5,6 @@ const PriceFeed = artifacts.require("./PriceFeed.sol")
 const LUSDToken = artifacts.require("./LUSDToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
-const StabilityPool = artifacts.require("./StabilityPool.sol")
 const FunctionCaller = artifacts.require("./FunctionCaller.sol")
 const BorrowerOperations = artifacts.require("./BorrowerOperations.sol")
 
@@ -27,7 +26,6 @@ const coreContractABIs = [
   SortedTroves,
   TroveManager,
   ActivePool,
-  StabilityPool,
   DefaultPool,
   FunctionCaller,
   HintHelpers,
@@ -95,7 +93,7 @@ async function main() {
   const coreContracts = await dh.deployLiquityCoreHardhat()
   const testerContracts = await dh.deployTesterContractsHardhat()
 
-  await dh.connectCoreContracts(coreContracts, LQTYContracts)
+  await dh.connectCoreContracts(coreContracts)
 
   console.log(`CORE CONTRACTS`)
   await logContractDeploymentCosts(coreContracts)

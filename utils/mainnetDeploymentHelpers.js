@@ -68,7 +68,6 @@ class MainnetDeploymentHelper {
     const sortedTrovesFactory = await this.getFactory("SortedTroves")
     const troveManagerFactory = await this.getFactory("TroveManager")
     const activePoolFactory = await this.getFactory("ActivePool")
-    const stabilityPoolFactory = await this.getFactory("StabilityPool")
     const gasPoolFactory = await this.getFactory("GasPool")
     const defaultPoolFactory = await this.getFactory("DefaultPool")
     const collSurplusPoolFactory = await this.getFactory("CollSurplusPool")
@@ -82,7 +81,6 @@ class MainnetDeploymentHelper {
     const sortedTroves = await this.loadOrDeploy(sortedTrovesFactory, 'sortedTroves', deploymentState)
     const troveManager = await this.loadOrDeploy(troveManagerFactory, 'troveManager', deploymentState)
     const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState)
-    const stabilityPool = await this.loadOrDeploy(stabilityPoolFactory, 'stabilityPool', deploymentState)
     const gasPool = await this.loadOrDeploy(gasPoolFactory, 'gasPool', deploymentState)
     const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState)
     const collSurplusPool = await this.loadOrDeploy(collSurplusPoolFactory, 'collSurplusPool', deploymentState)
@@ -92,7 +90,6 @@ class MainnetDeploymentHelper {
 
     const lusdTokenParams = [
       troveManager.address,
-      stabilityPool.address,
       borrowerOperations.address
     ]
     const lusdToken = await this.loadOrDeploy(
@@ -109,7 +106,6 @@ class MainnetDeploymentHelper {
       await this.verifyContract('sortedTroves', deploymentState)
       await this.verifyContract('troveManager', deploymentState)
       await this.verifyContract('activePool', deploymentState)
-      await this.verifyContract('stabilityPool', deploymentState)
       await this.verifyContract('gasPool', deploymentState)
       await this.verifyContract('defaultPool', deploymentState)
       await this.verifyContract('collSurplusPool', deploymentState)
@@ -125,7 +121,6 @@ class MainnetDeploymentHelper {
       sortedTroves,
       troveManager,
       activePool,
-      stabilityPool,
       gasPool,
       defaultPool,
       collSurplusPool,
@@ -185,13 +180,11 @@ class MainnetDeploymentHelper {
         contracts.borrowerOperations.address,
         contracts.activePool.address,
         contracts.defaultPool.address,
-        contracts.stabilityPool.address,
         contracts.gasPool.address,
         contracts.collSurplusPool.address,
         contracts.priceFeed.address,
         contracts.lusdToken.address,
         contracts.sortedTroves.address,
-        LQTYContracts.lqtyToken.address,
 	{gasPrice}
       ))
 
@@ -201,7 +194,6 @@ class MainnetDeploymentHelper {
         contracts.troveManager.address,
         contracts.activePool.address,
         contracts.defaultPool.address,
-        contracts.stabilityPool.address,
         contracts.gasPool.address,
         contracts.collSurplusPool.address,
         contracts.priceFeed.address,
@@ -211,23 +203,11 @@ class MainnetDeploymentHelper {
       ))
 
     // set contracts in the Pools
-    await this.isOwnershipRenounced(contracts.stabilityPool) ||
-      await this.sendAndWaitForTransaction(contracts.stabilityPool.setAddresses(
-        contracts.borrowerOperations.address,
-        contracts.troveManager.address,
-        contracts.activePool.address,
-        contracts.lusdToken.address,
-        contracts.sortedTroves.address,
-        contracts.priceFeed.address,
-        LQTYContracts.communityIssuance.address,
-	{gasPrice}
-      ))
 
     await this.isOwnershipRenounced(contracts.activePool) ||
       await this.sendAndWaitForTransaction(contracts.activePool.setAddresses(
         contracts.borrowerOperations.address,
         contracts.troveManager.address,
-        contracts.stabilityPool.address,
         contracts.defaultPool.address,
 	{gasPrice}
       ))
