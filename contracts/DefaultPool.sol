@@ -24,7 +24,7 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
     uint256 internal LUSDDebt;  // debt
 
     // --- Constructor ---
-    constructor(address _collateralToken) public {
+    constructor(address _collateralToken) {
         checkContract(_collateralToken);
 
         collateralToken = _collateralToken;

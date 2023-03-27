@@ -92,7 +92,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
      * @param _nextId Id of next node for the insert position
      */
 
-    function insert (address _id, uint256 _NICR, address _prevId, address _nextId) external override {
+    function insert(address _id, uint256 _NICR, address _prevId, address _nextId) external override {
         ITroveManager troveManagerCached = troveManager;
 
         _requireCallerIsBOorTroveM(troveManagerCached);

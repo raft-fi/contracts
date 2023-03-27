@@ -311,23 +311,19 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
 
     // --- Helper functions ---
 
-    function _triggerBorrowingFee(ITroveManager _troveManager, ILUSDToken _lusdToken, uint _LUSDAmount, uint _maxFeePercentage) internal returns (uint) {
+    function _triggerBorrowingFee(ITroveManager _troveManager, ILUSDToken _lusdToken, uint _LUSDAmount, uint _maxFeePercentage) internal returns (uint LUSDFee) {
         _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        uint LUSDFee = _troveManager.getBorrowingFee(_LUSDAmount);
+        LUSDFee = _troveManager.getBorrowingFee(_LUSDAmount);
 
         _requireUserAcceptsFee(LUSDFee, _LUSDAmount, _maxFeePercentage);
 
         if (LUSDFee > 0) {
             _lusdToken.mint(feeRecipient, LUSDFee);
         }
-
-        return LUSDFee;
     }
 
-    function _getUSDValue(uint _coll, uint _price) internal pure returns (uint) {
-        uint usdValue = _price * _coll / DECIMAL_PRECISION;
-
-        return usdValue;
+    function _getUSDValue(uint _coll, uint _price) internal pure returns (uint usdValue) {
+        usdValue = _price * _coll / DECIMAL_PRECISION;
     }
 
     function _getCollChange(
@@ -357,14 +353,12 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
         bool _isDebtIncrease
     )
         internal
-        returns (uint, uint)
+        returns (uint newColl, uint newDebt)
     {
-        uint newColl = (_isCollIncrease) ? _troveManager.increaseTroveColl(_borrower, _collChange)
-                                        : _troveManager.decreaseTroveColl(_borrower, _collChange);
-        uint newDebt = (_isDebtIncrease) ? _troveManager.increaseTroveDebt(_borrower, _debtChange)
-                                        : _troveManager.decreaseTroveDebt(_borrower, _debtChange);
-
-        return (newColl, newDebt);
+        newColl = _isCollIncrease ? _troveManager.increaseTroveColl(_borrower, _collChange)
+                                  : _troveManager.decreaseTroveColl(_borrower, _collChange);
+        newDebt = _isDebtIncrease ? _troveManager.increaseTroveDebt(_borrower, _debtChange)
+                                  : _troveManager.decreaseTroveDebt(_borrower, _debtChange);
     }
 
     function _moveTokensAndETHfromAdjustment
@@ -463,12 +457,11 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
     )
         pure
         internal
-        returns (uint)
+        returns (uint newNICR)
     {
         (uint newColl, uint newDebt) = _getNewTroveAmounts(_coll, _debt, _collChange, _isCollIncrease, _debtChange, _isDebtIncrease);
 
-        uint newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
-        return newNICR;
+        newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
     }
 
     // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
@@ -484,12 +477,11 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
     )
         pure
         internal
-        returns (uint)
+        returns (uint newICR)
     {
         (uint newColl, uint newDebt) = _getNewTroveAmounts(_coll, _debt, _collChange, _isCollIncrease, _debtChange, _isDebtIncrease);
 
-        uint newICR = LiquityMath._computeCR(newColl, newDebt, _price);
-        return newICR;
+        newICR = LiquityMath._computeCR(newColl, newDebt, _price);
     }
 
     function _getNewTroveAmounts(
@@ -502,15 +494,10 @@ contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOpe
     )
         internal
         pure
-        returns (uint, uint)
+        returns (uint newColl, uint newDebt)
     {
-        uint newColl = _coll;
-        uint newDebt = _debt;
-
         newColl = _isCollIncrease ? _coll + _collChange :  _coll - _collChange;
         newDebt = _isDebtIncrease ? _debt + _debtChange : _debt - _debtChange;
-
-        return (newColl, newDebt);
     }
 
     function getCompositeDebt(uint _debt) external pure override returns (uint) {

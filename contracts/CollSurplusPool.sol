@@ -23,7 +23,7 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
     mapping (address => uint) internal balances;
 
     // --- Constructor ---
-    constructor(address _collateralToken) public {
+    constructor(address _collateralToken) {
         checkContract(_collateralToken);
 
         collateralToken = _collateralToken;
