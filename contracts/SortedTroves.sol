@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
@@ -41,7 +41,7 @@ import "./Dependencies/CheckContract.sol";
 *
 * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
 */
-contract SortedTroves is Ownable, CheckContract, ISortedTroves {
+contract SortedTroves is Ownable2Step, CheckContract, ISortedTroves {
     string constant public NAME = "SortedTroves";
 
     address public borrowerOperationsAddress;

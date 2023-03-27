@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/ILUSDToken.sol";
@@ -11,7 +11,7 @@ import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
 
-contract BorrowerOperations is LiquityBase, Ownable, CheckContract, IBorrowerOperations {
+contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrowerOperations {
     string constant public NAME = "BorrowerOperations";
 
     bool private _addressesSet;

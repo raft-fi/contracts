@@ -2,13 +2,13 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Dependencies/CheckContract.sol";
 
 
-contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
+contract CollSurplusPool is Ownable2Step, CheckContract, ICollSurplusPool {
     string constant public NAME = "CollSurplusPool";
 
     address immutable public override collateralToken;

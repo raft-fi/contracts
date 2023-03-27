@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import './Interfaces/IDefaultPool.sol';
 import "./Dependencies/CheckContract.sol";
@@ -14,7 +14,7 @@ import "./Dependencies/CheckContract.sol";
  * When a trove makes an operation that applies its pending ETH and LUSD debt, its pending ETH and LUSD debt is moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPool is Ownable, CheckContract, IDefaultPool {
+contract DefaultPool is Ownable2Step, CheckContract, IDefaultPool {
     string constant public NAME = "DefaultPool";
 
     address immutable public override collateralToken;
