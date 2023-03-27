@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Interfaces/IActivePool.sol";
 import "./Dependencies/CheckContract.sol";
@@ -14,7 +14,7 @@ import "./Dependencies/CheckContract.sol";
  * the Default Pool or the liquidator, depending on the liquidation conditions.
  *
  */
-contract ActivePool is Ownable, CheckContract, IActivePool {
+contract ActivePool is Ownable2Step, CheckContract, IActivePool {
     string constant public NAME = "ActivePool";
 
     address immutable public override collateralToken;

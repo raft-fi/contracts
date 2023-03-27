@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/ICollSurplusPool.sol";
@@ -11,7 +11,7 @@ import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
 
-contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
+contract TroveManager is LiquityBase, Ownable2Step, CheckContract, ITroveManager {
     string constant public NAME = "TroveManager";
 
     // --- Connected contract declarations ---
