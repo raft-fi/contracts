@@ -17,8 +17,6 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     alice, bob, carol, dennis, erin, freddy,
     A, B, C, D, E ] = accounts;
 
-  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
-
   let priceFeed
   let lusdToken
   let sortedTroves
@@ -31,7 +29,6 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
   let contracts
 
-  const getOpenTroveLUSDAmount = async (totalDebt) => th.getOpenTroveLUSDAmount(contracts, totalDebt)
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
   const openTrove = async (params) => th.openTrove(contracts, params)
 
@@ -42,7 +39,6 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress, multisig)
 
     priceFeed = contracts.priceFeedTestnet
     lusdToken = contracts.lusdToken
@@ -55,15 +51,12 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     borrowerOperations = contracts.borrowerOperations
     wstETHTokenMock = contracts.wstETHTokenMock
 
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, owner)
 
     await th.fillAccountsWithWstETH(contracts, [
       owner,
       alice, bob, carol, dennis, erin, freddy,
       A, B, C, D, E,
-      bountyAddress, lpRewardsAddress, multisig
     ])
   })
 

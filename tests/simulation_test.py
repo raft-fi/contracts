@@ -127,19 +127,6 @@ def contracts():
         contracts.borrowerOperations.address,
         { 'from': accounts[0] }
     )
-    # LQTY
-    contracts.lqtyStaking = LQTYStaking.deploy({ 'from': accounts[0] })
-    contracts.communityIssuance = CommunityIssuance.deploy({ 'from': accounts[0] })
-    contracts.lockupContractFactory = LockupContractFactory.deploy({ 'from': accounts[0] })
-    contracts.lqtyToken = LQTYToken.deploy(
-        contracts.communityIssuance.address,
-        contracts.lqtyStaking.address,
-        contracts.lockupContractFactory.address,
-        accounts[0], # bountyAddress
-        accounts[0],  # lpRewardsAddress
-        accounts[0],  # multisigAddress
-        { 'from': accounts[0] }
-    )
 
     setAddresses(contracts)
 

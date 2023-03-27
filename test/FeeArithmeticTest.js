@@ -17,7 +17,6 @@ contract('Fee arithmetic tests', async accounts => {
   let mathTester
 
   const [owner] = accounts
-  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
   // see: https://docs.google.com/spreadsheets/d/1RbD8VGzq7xFgeK1GOkz_9bbKVIx-xkOz0VsVelnUFdc/edit#gid=0
   // Results array, maps seconds to expected hours passed output (rounded down to nearest hour).
@@ -341,11 +340,8 @@ contract('Fee arithmetic tests', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress, multisig)
 
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, owner)
   })
 
   it("minutesPassedSinceLastFeeOp(): returns minutes passed for no time increase", async () => {
@@ -454,16 +450,6 @@ contract('Fee arithmetic tests', async accounts => {
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
       const decayedBaseRate = await troveManagerTester.baseRate()
 
-      const minutesPassed = secondsPassed / 60
-
-      const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-      // console.log(
-      //   `starting baseRate: ${startBaseRate},
-      //   minutesPassed: ${minutesPassed},
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-      //   decayedBaseRate: ${decayedBaseRate},
-      //   error: ${error}`
-      // )
       assert.isAtMost(getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()), 100000) // allow absolute error tolerance of 1e-13
     }
   })
@@ -476,8 +462,6 @@ contract('Fee arithmetic tests', async accounts => {
       const contractBaseRate = await troveManagerTester.baseRate()
       assert.equal(contractBaseRate, dec(1, 17))
 
-      const startBaseRate = '0.1'
-
       const secondsPassed = decayBaseRateResults.seconds[i]
       const expectedDecayedBaseRate = decayBaseRateResults['0.1'][i]
       await troveManagerTester.setLastFeeOpTimeToNow()
@@ -488,16 +472,6 @@ contract('Fee arithmetic tests', async accounts => {
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
       const decayedBaseRate = await troveManagerTester.baseRate()
 
-      const minutesPassed = secondsPassed / 60
-
-      const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-      // console.log(
-      //   `starting baseRate: ${startBaseRate},
-      //   minutesPassed: ${minutesPassed},
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-      //   decayedBaseRate: ${decayedBaseRate},
-      //   error: ${error}`
-      // )
       assert.isAtMost(getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()), 1000000) // allow absolute error tolerance of 1e-12
     }
   })
@@ -522,17 +496,6 @@ contract('Fee arithmetic tests', async accounts => {
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
       const decayedBaseRate = await troveManagerTester.baseRate()
 
-      const minutesPassed = secondsPassed / 60
-
-      const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-      // console.log(
-      //   `starting baseRate: ${startBaseRate},
-      //   minutesPassed: ${minutesPassed},
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-      //   decayedBaseRate: ${decayedBaseRate},
-      //   error: ${error}`
-      // )
-
       assert.isAtMost(getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()), 1000000) // allow absolute error tolerance of 1e-12
     }
   })
@@ -556,18 +519,6 @@ contract('Fee arithmetic tests', async accounts => {
       await troveManagerTester.unprotectedDecayBaseRateFromBorrowing()
       const decayedBaseRate = await troveManagerTester.baseRate()
 
-      const minutesPassed = secondsPassed / 60
-
-      const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-
-      // console.log(
-      //   `starting baseRate: ${startBaseRate},
-      //   minutesPassed: ${minutesPassed},
-      //   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-      //   decayedBaseRate: ${decayedBaseRate},
-      //   error: ${error}`
-      // )
-
       assert.isAtMost(getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()), 10000000) // allow absolute error tolerance of 1e-11
     }
   })
@@ -584,7 +535,6 @@ contract('Fee arithmetic tests', async accounts => {
       const e = '990000000000000000'
       const f = '897890990909098978678609090'
       const g = dec(8789789, 27)
-      const maxUint256 = toBN('2').pow(toBN('256')).sub(toBN('1'))
 
       const res_a = await mathTester.callDecPow(a, 0)
       const res_b = await mathTester.callDecPow(b, 0)

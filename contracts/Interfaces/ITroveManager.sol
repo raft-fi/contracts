@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 
 import "./ILiquityBase.sol";
 import "./ILUSDToken.sol";
-import "./ILQTYToken.sol";
 
 // Common interface for the Trove Manager.
 interface ITroveManager is ILiquityBase {
@@ -24,7 +23,6 @@ interface ITroveManager is ILiquityBase {
     event GasPoolAddressChanged(address _gasPoolAddress);
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
-    event LQTYTokenAddressChanged(address _lqtyTokenAddress);
     event FeeRecipientChanged(address _feeRecipient);
 
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _LUSDGasCompensation);
@@ -51,15 +49,15 @@ interface ITroveManager is ILiquityBase {
         address _priceFeedAddress,
         address _lusdTokenAddress,
         address _sortedTrovesAddress,
-        address _lqtyTokenAddress,
         address _feeRecipient
     ) external;
+
+    function deploymentStartTime() external view returns (uint);
 
     function setFeeRecipient(address _feeRecipient) external;
     function feeRecipient() external view returns (address);
 
     function lusdToken() external view returns (ILUSDToken);
-    function lqtyToken() external view returns (ILQTYToken);
 
     function getTroveOwnersCount() external view returns (uint);
 
@@ -96,7 +94,7 @@ interface ITroveManager is ILiquityBase {
 
     function getPendingLUSDDebtReward(address _borrower) external view returns (uint);
 
-     function hasPendingRewards(address _borrower) external view returns (bool);
+    function hasPendingRewards(address _borrower) external view returns (bool);
 
     function getEntireDebtAndColl(address _borrower) external view returns (
         uint debt,

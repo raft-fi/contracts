@@ -4,14 +4,8 @@ const th = testHelpers.TestHelper
 const dec = th.dec
 
 const randAmountInWei = th.randAmountInWei
-//const randAmountInGwei = th.randAmountInGwei
-
-const ZERO_ADDRESS = th.ZERO_ADDRESS
 
 contract('TroveManager', async accounts => {
-
-  const bountyAddress = accounts[998]
-  const lpRewardsAddress = accounts[999]
 
   let contracts
   let priceFeed
@@ -23,7 +17,6 @@ contract('TroveManager', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress)
 
     lusdToken = contracts.lusdToken
     priceFeed = contracts.priceFeedTestnet
@@ -34,14 +27,7 @@ contract('TroveManager', async accounts => {
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
 
-    lqtyStaking = LQTYContracts.lqtyStaking
-    lqtyToken = LQTYContracts.lqtyToken
-    communityIssuance = LQTYContracts.communityIssuance
-    lockupContractFactory = LQTYContracts.lockupContractFactory
-
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
     await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
   })
 
   // --- Check accumulation from repeatedly applying rewards ---

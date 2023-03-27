@@ -21,13 +21,8 @@ contract('Gas cost tests', async accounts => {
   const _30_Accounts = accounts.slice(0, 30)
   const _40_Accounts = accounts.slice(0, 40)
   const _50_Accounts = accounts.slice(0, 50)
-  const _100_Accounts = accounts.slice(0, 100)
 
   const whale = accounts[999]
-  const bountyAddress = accounts[998]
-  const lpRewardsAddress = accounts[999]
-
-  const address_0 = '0x0000000000000000000000000000000000000000'
 
   let contracts
 
@@ -47,7 +42,6 @@ contract('Gas cost tests', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployTesterContractsHardhat()
-    const LQTYContracts = await deploymentHelper.deployLQTYContracts(bountyAddress, lpRewardsAddress)
 
     priceFeed = contracts.priceFeedTestnet
     lusdToken = contracts.lusdToken
@@ -61,14 +55,7 @@ contract('Gas cost tests', async accounts => {
 
     functionCaller = contracts.functionCaller
 
-    lqtyStaking = LQTYContracts.lqtyStaking
-    lqtyToken = LQTYContracts.lqtyToken
-    communityIssuance = LQTYContracts.communityIssuance
-    lockupContractFactory = LQTYContracts.lockupContractFactory
-
-    await deploymentHelper.connectLQTYContracts(LQTYContracts)
-    await deploymentHelper.connectCoreContracts(contracts, LQTYContracts, owner)
-    await deploymentHelper.connectLQTYContractsToCore(LQTYContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, owner)
   })
 
   // ---TESTS ---
