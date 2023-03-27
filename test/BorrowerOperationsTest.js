@@ -905,7 +905,7 @@ contract('BorrowerOperations', async accounts => {
     it("withdrawLUSD(): borrowing at non-zero base rate sends LUSD fee to fee recipient", async () => {
       const feeRecipient = await borrowerOperations.feeRecipient()
 
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
       const feeRecipient_LUSDBalance_Before = await lusdToken.balanceOf(feeRecipient)
@@ -930,13 +930,13 @@ contract('BorrowerOperations', async accounts => {
       // D withdraws LUSD
       await borrowerOperations.withdrawLUSD(th._100pct, dec(37, 18), C, C, { from: D })
 
-      // Check LQTY LUSD balance after has increased
+      // Check feeRecipient LUSD balance after has increased
       const feeRecipient_LUSDBalance_After = await lusdToken.balanceOf(feeRecipient)
       assert.isTrue(feeRecipient_LUSDBalance_After.gt(feeRecipient_LUSDBalance_Before))
     })
 
     it("withdrawLUSD(): borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
@@ -973,10 +973,10 @@ contract('BorrowerOperations', async accounts => {
     it("withdrawLUSD(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
       const feeRecipient = await borrowerOperations.feeRecipient()
 
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-      // Check LQTY Staking contract balance before == 0
+      // Check feeRecipient Staking contract balance before == 0
       const feeRecipient_LUSDBalance_Before = await lusdToken.balanceOf(feeRecipient)
       assert.equal(feeRecipient_LUSDBalance_Before, '0')
 
@@ -1512,10 +1512,10 @@ contract('BorrowerOperations', async accounts => {
     it("adjustTrove(): borrowing at non-zero base rate sends LUSD fee to fee recipient", async () => {
       const feeRecipient = await borrowerOperations.feeRecipient()
 
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-      // Check LQTY LUSD balance before == 0
+      // Check feeRecipient LUSD balance before == 0
       const feeRecipient_LUSDBalance_Before = await lusdToken.balanceOf(feeRecipient)
       assert.equal(feeRecipient_LUSDBalance_Before, '0')
 
@@ -1538,13 +1538,13 @@ contract('BorrowerOperations', async accounts => {
       // D adjusts trove
       await openTrove({ extraLUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      // Check LQTY LUSD balance after has increased
+      // Check feeRecipient LUSD balance after has increased
       const feeRecipient_LUSDBalance_After = await lusdToken.balanceOf(feeRecipient)
       assert.isTrue(feeRecipient_LUSDBalance_After.gt(feeRecipient_LUSDBalance_Before))
     })
 
     it("adjustTrove(): borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
@@ -1582,10 +1582,10 @@ contract('BorrowerOperations', async accounts => {
     it("adjustTrove(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
       const feeRecipient = await borrowerOperations.feeRecipient()
 
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-      // Check LQTY Staking contract balance before == 0
+      // Check feeRecipient Staking contract balance before == 0
       const feeRecipient_LUSDBalance_Before = await lusdToken.balanceOf(feeRecipient)
       assert.equal(feeRecipient_LUSDBalance_Before, '0')
 
@@ -2871,10 +2871,10 @@ contract('BorrowerOperations', async accounts => {
     it("openTrove(): borrowing at non-zero base rate sends LUSD fee to fee recipient", async () => {
       const feeRecipient = await borrowerOperations.feeRecipient()
 
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-      // Check LQTY LUSD balance before == 0
+      // Check feeRecipient LUSD balance before == 0
       const feeRecipient_LUSDBalance_Before = await lusdToken.balanceOf(feeRecipient)
       assert.equal(feeRecipient_LUSDBalance_Before, '0')
 
@@ -2897,13 +2897,13 @@ contract('BorrowerOperations', async accounts => {
       // D opens trove
       await openTrove({ extraLUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      // Check LQTY LUSD balance after has increased
+      // Check feeRecipient LUSD balance after has increased
       const feeRecipient_LUSDBalance_After = await lusdToken.balanceOf(feeRecipient)
       assert.isTrue(feeRecipient_LUSDBalance_After.gt(feeRecipient_LUSDBalance_Before))
     })
 
     it("openTrove(): borrowing at non-zero base records the (drawn debt + fee  + liq. reserve) on the Trove struct", async () => {
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
       await openTrove({ extraLUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
@@ -2940,10 +2940,10 @@ contract('BorrowerOperations', async accounts => {
     it("openTrove(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
       const feeRecipient = await borrowerOperations.feeRecipient()
 
-      // time fast-forwards 1 year, and multisig stakes 1 LQTY
+      // time fast-forwards 1 year
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-      // Check LQTY Staking contract balance before == 0
+      // Check feeRecipient Staking contract balance before == 0
       const feeRecipient_LUSDBalance_Before = await lusdToken.balanceOf(feeRecipient)
       assert.equal(feeRecipient_LUSDBalance_Before, '0')
 

@@ -3010,7 +3010,7 @@ contract('TroveManager', async accounts => {
   })
 
   it("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
-    // time fast-forwards 1 year, and multisig stakes 1 LQTY
+    // time fast-forwards 1 year
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
@@ -3108,7 +3108,7 @@ contract('TroveManager', async accounts => {
   it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to fee recipient contract", async () => {
     const feeRecipient = await troveManager.feeRecipient()
 
-    // time fast-forwards 1 year, and multisig stakes 1 LQTY
+    // time fast-forwards 1 year
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
@@ -3140,8 +3140,8 @@ contract('TroveManager', async accounts => {
     assert.isTrue(feeRecipientAfter.gt(feeRecipientBefore))
   })
 
-  it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-LQTY-staked in LQTY Staking contract", async () => {
-    // time fast-forwards 1 year, and multisig stakes 1 LQTY
+  it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-LQTY-staked", async () => {
+    // time fast-forwards 1 year
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
@@ -3166,10 +3166,10 @@ contract('TroveManager', async accounts => {
     assert.isTrue(baseRate_1.gt(toBN('0')))
   })
 
-  it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee to LQTY staking contract", async () => {
+  it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee", async () => {
     const feeRecipient = await troveManager.feeRecipient()
 
-    // time fast-forwards 1 year, and multisig stakes 1 LQTY
+    // time fast-forwards 1 year
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
 
@@ -3193,7 +3193,7 @@ contract('TroveManager', async accounts => {
     const baseRate_1 = await troveManager.baseRate()
     assert.isTrue(baseRate_1.gt(toBN('0')))
 
-    const lqtyStakingBalance_Before = toBN(await wstETHTokenMock.balanceOf(feeRecipient))
+    const feeRecipientBalance_Before = toBN(await wstETHTokenMock.balanceOf(feeRecipient))
 
     // B redeems 10 LUSD
     await th.redeemCollateral(B, contracts, dec(10, 18), GAS_PRICE)
@@ -3201,14 +3201,14 @@ contract('TroveManager', async accounts => {
     // Check B's balance has decreased by 10 LUSD
     assert.equal(await lusdToken.balanceOf(B), B_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
-    const lqtyStakingBalance_After = toBN(await wstETHTokenMock.balanceOf(feeRecipient))
+    const feeRecipientBalance_After = toBN(await wstETHTokenMock.balanceOf(feeRecipient))
 
-    // check LQTY Staking balance has increased
-    assert.isTrue(lqtyStakingBalance_After.gt(lqtyStakingBalance_Before))
+    // check feeRecipient balance has increased
+    assert.isTrue(feeRecipientBalance_After.gt(feeRecipientBalance_Before))
   })
 
   it("redeemCollateral(): a redemption sends the ETH remainder (ETHDrawn - ETHFee) to the redeemer", async () => {
-    // time fast-forwards 1 year, and multisig stakes 1 LQTY
+    // time fast-forwards 1 year
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
     const { totalDebt: W_totalDebt } = await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
@@ -3258,20 +3258,16 @@ contract('TroveManager', async accounts => {
   })
 
   it("redeemCollateral(): a full redemption (leaving trove with 0 debt), closes the trove", async () => {
-    // time fast-forwards 1 year, and multisig stakes 1 LQTY
+    // time fast-forwards 1 year
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-    const { netDebt: W_netDebt } = await openTrove({ ICR: toBN(dec(20, 18)), extraLUSDAmount: dec(10000, 18), extraParams: { from: whale } })
+    await openTrove({ ICR: toBN(dec(20, 18)), extraLUSDAmount: dec(10000, 18), extraParams: { from: whale } })
 
     const { netDebt: A_netDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: A } })
     const { netDebt: B_netDebt } = await openTrove({ ICR: toBN(dec(190, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: B } })
     const { netDebt: C_netDebt } = await openTrove({ ICR: toBN(dec(180, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: C } })
-    const { netDebt: D_netDebt } = await openTrove({ ICR: toBN(dec(280, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: D } })
+    await openTrove({ ICR: toBN(dec(280, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: D } })
     const redemptionAmount = A_netDebt.add(B_netDebt).add(C_netDebt).add(toBN(dec(10, 18)))
-
-    const A_balanceBefore = toBN(await wstETHTokenMock.balanceOf(A))
-    const B_balanceBefore = toBN(await wstETHTokenMock.balanceOf(B))
-    const C_balanceBefore = toBN(await wstETHTokenMock.balanceOf(C))
 
     // whale redeems 360 LUSD.  Expect this to fully redeem A, B, C, and partially redeem D.
     await th.redeemCollateral(whale, contracts, redemptionAmount, GAS_PRICE)
@@ -3286,15 +3282,15 @@ contract('TroveManager', async accounts => {
   })
 
   const redeemCollateral3Full1Partial = async () => {
-    // time fast-forwards 1 year, and multisig stakes 1 LQTY
+    // time fast-forwards 1 year
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-    const { netDebt: W_netDebt } = await openTrove({ ICR: toBN(dec(20, 18)), extraLUSDAmount: dec(10000, 18), extraParams: { from: whale } })
+    await openTrove({ ICR: toBN(dec(20, 18)), extraLUSDAmount: dec(10000, 18), extraParams: { from: whale } })
 
     const { netDebt: A_netDebt, collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: A } })
     const { netDebt: B_netDebt, collateral: B_coll } = await openTrove({ ICR: toBN(dec(190, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: B } })
     const { netDebt: C_netDebt, collateral: C_coll } = await openTrove({ ICR: toBN(dec(180, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: C } })
-    const { netDebt: D_netDebt } = await openTrove({ ICR: toBN(dec(280, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: D } })
+    await openTrove({ ICR: toBN(dec(280, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: D } })
     const redemptionAmount = A_netDebt.add(B_netDebt).add(C_netDebt).add(toBN(dec(10, 18)))
 
     const A_balanceBefore = toBN(await wstETHTokenMock.balanceOf(A))
@@ -3302,9 +3298,6 @@ contract('TroveManager', async accounts => {
     const C_balanceBefore = toBN(await wstETHTokenMock.balanceOf(C))
     const D_balanceBefore = toBN(await wstETHTokenMock.balanceOf(D))
 
-    const A_collBefore = await troveManager.getTroveColl(A)
-    const B_collBefore = await troveManager.getTroveColl(B)
-    const C_collBefore = await troveManager.getTroveColl(C)
     const D_collBefore = await troveManager.getTroveColl(D)
 
     // Confirm baseRate before redemption is 0
@@ -3365,7 +3358,7 @@ contract('TroveManager', async accounts => {
   }
 
   it("redeemCollateral(): emits correct debt and coll values in each redeemed trove's TroveUpdated event", async () => {
-    const { netDebt: W_netDebt } = await openTrove({ ICR: toBN(dec(20, 18)), extraLUSDAmount: dec(10000, 18), extraParams: { from: whale } })
+    await openTrove({ ICR: toBN(dec(20, 18)), extraLUSDAmount: dec(10000, 18), extraParams: { from: whale } })
 
     const { netDebt: A_netDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: A } })
     const { netDebt: B_netDebt } = await openTrove({ ICR: toBN(dec(190, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: B } })

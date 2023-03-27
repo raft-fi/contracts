@@ -6,19 +6,13 @@ const dh = require("./deploymentHelpers.js")
 
 async function main() {
   const accounts = await web3.eth.getAccounts()
-  const [borrower, A, B] = accounts
+  const [borrower] = accounts
 
   const coreContracts = await dh.deployLiquityCoreHardhat()
-  const ARBITRARY_ADDRESS = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-  const LQTYContracts = await dh.deployLQTYContractsHardhat(
-      ARBITRARY_ADDRESS,
-      ARBITRARY_ADDRESS,
-      ARBITRARY_ADDRESS
-    )
 
  const { troveManager, borrowerOperations, hintHelpers, sortedTroves, priceFeedTestnet } = coreContracts
 
-  await dh.connectCoreContracts(coreContracts, LQTYContracts)
+  await dh.connectCoreContracts(coreContracts)
 
   // Examples of off-chain hint calculation for Open Trove
 

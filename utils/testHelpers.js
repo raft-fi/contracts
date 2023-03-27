@@ -1004,70 +1004,6 @@ class TestHelper {
     }
   }
 
-  // --- StabilityPool gas functions ---
-
-  static async provideToSP_allAccounts(accounts, stabilityPool, amount) {
-    const gasCostList = []
-    for (const account of accounts) {
-      const tx = await stabilityPool.provideToSP(amount, this.ZERO_ADDRESS, { from: account })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async provideToSP_allAccounts_randomAmount(min, max, accounts, stabilityPool) {
-    const gasCostList = []
-    for (const account of accounts) {
-      const randomLUSDAmount = this.randAmountInWei(min, max)
-      const tx = await stabilityPool.provideToSP(randomLUSDAmount, this.ZERO_ADDRESS, { from: account })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async withdrawFromSP_allAccounts(accounts, stabilityPool, amount) {
-    const gasCostList = []
-    for (const account of accounts) {
-      const tx = await stabilityPool.withdrawFromSP(amount, { from: account })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async withdrawFromSP_allAccounts_randomAmount(min, max, accounts, stabilityPool) {
-    const gasCostList = []
-    for (const account of accounts) {
-      const randomLUSDAmount = this.randAmountInWei(min, max)
-      const tx = await stabilityPool.withdrawFromSP(randomLUSDAmount, { from: account })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async withdrawETHGainToTrove_allAccounts(accounts, contracts) {
-    const gasCostList = []
-    for (const account of accounts) {
-
-      let {entireColl, entireDebt } = await this.getEntireCollAndDebt(contracts, account)
-      console.log(`entireColl: ${entireColl}`)
-      console.log(`entireDebt: ${entireDebt}`)
-      const ETHGain = await contracts.stabilityPool.getDepositorETHGain(account)
-      const newColl = entireColl.add(ETHGain)
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, entireDebt)
-
-      const tx = await contracts.stabilityPool.withdrawETHGainToTrove(upperHint, lowerHint, { from: account })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  // --- LQTY & Lockup Contract functions ---
-
   static getLCAddressFromDeploymentTx(deployedLCTx) {
     return deployedLCTx.logs[0].args[0]
   }
@@ -1119,11 +1055,6 @@ class TestHelper {
 
   static daysToSeconds(days) {
     return Number(days) * (60 * 60 * 24)
-  }
-
-  static async getTimeFromSystemDeployment(lqtyToken, web3, timePassedSinceDeployment) {
-    const deploymentTime = await lqtyToken.getDeploymentStartTime()
-    return this.toBN(deploymentTime).add(this.toBN(timePassedSinceDeployment))
   }
 
   // --- Assert functions ---
