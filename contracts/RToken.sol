@@ -6,14 +6,14 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
-import "./Interfaces/ILUSDToken.sol";
+import "./Interfaces/IRToken.sol";
 
 /*
 * Functionality on top of regular OZ implementation
-* - returnFromPool(): functions callable only by Liquity core contracts, which move LUSD tokens between Liquity <-> user.
+* - returnFromPool(): functions callable only by Raft core contracts, which move R tokens between Raft <-> user.
 */
 
-contract LUSDToken is Ownable2Step, ERC20Permit, ERC20FlashMint, ILUSDToken {
+contract RToken is Ownable2Step, ERC20Permit, ERC20FlashMint, IRToken {
     // --- Addresses ---
     address public immutable override troveManager;
     address public immutable override borrowerOperations;
@@ -27,7 +27,7 @@ contract LUSDToken is Ownable2Step, ERC20Permit, ERC20FlashMint, ILUSDToken {
     constructor(
         address _troveManager, 
         address _borrowerOperations
-    ) ERC20Permit("LUSD Stablecoin") ERC20("LUSD Stablecoin", "LUSD") {
+    ) ERC20Permit("R Stablecoin") ERC20("R Stablecoin", "R") {
         if (_troveManager == address(0) &&  _borrowerOperations == address(0)) {
             revert InvalidAddressInput();
         }
@@ -37,7 +37,7 @@ contract LUSDToken is Ownable2Step, ERC20Permit, ERC20FlashMint, ILUSDToken {
         flashMintFeeRecipient = msg.sender;
         flashMintFeePercentage = 0;
 
-        emit LUSDDeployed(_borrowerOperations, _troveManager, msg.sender);
+        emit RDeployed(_borrowerOperations, _troveManager, msg.sender);
     }
 
     function mint(address _account, uint256 _amount) external override {

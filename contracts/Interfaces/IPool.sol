@@ -8,8 +8,6 @@ interface IPool {
     // --- Events ---
 
     event CollateralTokenAddressSet(address _collateralToken);
-    event ETHBalanceUpdated(uint _newBalance);
-    event LUSDBalanceUpdated(uint _newBalance);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
     event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
     event EtherSent(address _to, uint _amount);
@@ -20,11 +18,11 @@ interface IPool {
 
     function getETH() external view returns (uint);
 
-    function getLUSDDebt() external view returns (uint);
+    function getRDebt() external view returns (uint);
 
     function depositCollateral(address _from, uint _amount) external;
 
-    function increaseLUSDDebt(uint _amount) external;
+    function increaseRDebt(uint _amount) external;
 
-    function decreaseLUSDDebt(uint _amount) external;
+    function decreaseRDebt(uint _amount) external;
 }

@@ -4,7 +4,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   const [owner] = accounts;
 
   let priceFeed
-  let lusdToken
+  let rToken
   let sortedTroves
   let troveManager
   let activePool
@@ -16,7 +16,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     const coreContracts = await deploymentHelper.deployLiquityCore()
 
     priceFeed = coreContracts.priceFeedTestnet
-    lusdToken = coreContracts.lusdToken
+    rToken = coreContracts.rToken
     sortedTroves = coreContracts.sortedTroves
     troveManager = coreContracts.troveManager
     activePool = coreContracts.activePool
@@ -36,12 +36,12 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(priceFeedAddress, recordedPriceFeedAddress)
   })
 
-  it('Sets the correct LUSDToken address in TroveManager', async () => {
-    const lusdTokenAddress = lusdToken.address
+  it('Sets the correct RToken address in TroveManager', async () => {
+    const rTokenAddress = rToken.address
 
-    const recordedClvTokenAddress = await troveManager.lusdToken()
+    const recordedClvTokenAddress = await troveManager.rToken()
 
-    assert.equal(lusdTokenAddress, recordedClvTokenAddress)
+    assert.equal(rTokenAddress, recordedClvTokenAddress)
   })
 
   it('Sets the correct SortedTroves address in TroveManager', async () => {

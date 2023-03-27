@@ -8,7 +8,7 @@ const getDifference = th.getDifference
 const mv = testHelpers.MoneyValues
 
 const TroveManagerTester = artifacts.require("TroveManagerTester")
-const LUSDToken = artifacts.require("LUSDToken")
+const RToken = artifacts.require("RToken")
 
 contract('TroveManager - Redistribution reward calculations', async accounts => {
 
@@ -18,7 +18,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     A, B, C, D, E ] = accounts;
 
   let priceFeed
-  let lusdToken
+  let rToken
   let sortedTroves
   let troveManager
   let nameRegistry
@@ -35,13 +35,13 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
-    contracts.lusdToken = await LUSDToken.new(
+    contracts.rToken = await RToken.new(
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
 
     priceFeed = contracts.priceFeedTestnet
-    lusdToken = contracts.lusdToken
+    rToken = contracts.rToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     nameRegistry = contracts.nameRegistry
@@ -113,8 +113,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const entireSystemColl = (await activePool.getETH()).add(await defaultPool.getETH()).toString()
     assert.equal(entireSystemColl, A_coll.add(C_coll).add(th.applyLiquidationFee(B_coll.add(D_coll))))
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   it("redistribution: A, B, C Open. C Liquidated. D, E, F Open. F Liquidated. Distributes correct rewards", async () => {
@@ -189,8 +189,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const entireSystemColl = (await activePool.getETH()).add(await defaultPool.getETH()).toString()
     assert.equal(entireSystemColl, A_coll.add(B_coll).add(D_coll).add(E_coll).add(th.applyLiquidationFee(C_coll.add(F_coll))))
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
   ////
 
@@ -304,8 +304,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const entireSystemColl = (await activePool.getETH()).add(await defaultPool.getETH()).toString()
     assert.isAtMost(th.getDifference(entireSystemColl, F_coll.add(gainedETH)), 1000)
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(1000, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(1000, 18))
   })
 
   // ---Trove adds collateral ---
@@ -313,11 +313,11 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
   // Test based on scenario in: https://docs.google.com/spreadsheets/d/1F5p3nZy749K5jwO-bwJeTsRoY7ewMfWIQ3QHtokxqzo/edit?usp=sharing
   it("redistribution: A,B,C,D,E open. Liq(A). B adds coll. Liq(C). B and D have correct coll and debt", async () => {
     // A, B, C, D, E open troves
-    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: A } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: B } })
-    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: C } })
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(20000, 16)), extraLUSDAmount: dec(10, 18), extraParams: { from: D } })
-    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: E } })
+    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: A } })
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: B } })
+    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: C } })
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(20000, 16)), extraRAmount: dec(10, 18), extraParams: { from: D } })
+    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: E } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -399,11 +399,11 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
   // Test based on scenario in: https://docs.google.com/spreadsheets/d/1F5p3nZy749K5jwO-bwJeTsRoY7ewMfWIQ3QHtokxqzo/edit?usp=sharing
   it("redistribution: A,B,C,D open. Liq(A). B adds coll. Liq(C). B and D have correct coll and debt", async () => {
     // A, B, C, D, E open troves
-    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: A } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: B } })
-    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: C } })
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(20000, 16)), extraLUSDAmount: dec(10, 18), extraParams: { from: D } })
-    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100000, 18), extraParams: { from: E } })
+    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: A } })
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: B } })
+    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: C } })
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(20000, 16)), extraRAmount: dec(10, 18), extraParams: { from: D } })
+    const { collateral: E_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100000, 18), extraParams: { from: E } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -524,8 +524,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
   it("redistribution: A,B,C Open. Liq(C). B adds coll. Liq(A). B acquires all coll and debt", async () => {
     // A, B, C open troves
     const { collateral: A_coll, totalDebt: A_totalDebt } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: carol } })
+    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: carol } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -543,8 +543,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     wstETHTokenMock.approve(activePool.address, addedColl, { from: bob})
     await borrowerOperations.addColl(bob, bob, addedColl, { from: bob })
 
-    // Alice withdraws LUSD
-    await borrowerOperations.withdrawLUSD(th._100pct, await getNetBorrowingAmount(A_totalDebt), alice, alice, { from: alice })
+    // Alice withdraws R
+    await borrowerOperations.withdrawR(th._100pct, await getNetBorrowingAmount(A_totalDebt), alice, alice, { from: alice })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -554,13 +554,13 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isTrue(txA.receipt.status)
     assert.isFalse(await sortedTroves.contains(alice))
 
-    // Expect Bob now holds all Ether and LUSDDebt in the system: 2 + 0.4975+0.4975*0.995+0.995 Ether and 110*3 LUSD (10 each for gas compensation)
+    // Expect Bob now holds all Ether and rDebt in the system: 2 + 0.4975+0.4975*0.995+0.995 Ether and 110*3 R (10 each for gas compensation)
     const bob_Coll = ((await troveManager.Troves(bob))[1]
       .add(await troveManager.getPendingETHReward(bob)))
       .toString()
 
-    const bob_LUSDDebt = ((await troveManager.Troves(bob))[0]
-      .add(await troveManager.getPendingLUSDDebtReward(bob)))
+    const bob_RDebt = ((await troveManager.Troves(bob))[0]
+      .add(await troveManager.getPendingRDebtReward(bob)))
       .toString()
 
     const expected_B_coll = B_coll
@@ -569,14 +569,14 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
           .add(th.applyLiquidationFee(C_coll).mul(B_coll).div(A_coll.add(B_coll)))
           .add(th.applyLiquidationFee(th.applyLiquidationFee(C_coll).mul(A_coll).div(A_coll.add(B_coll))))
     assert.isAtMost(th.getDifference(bob_Coll, expected_B_coll), 1000)
-    assert.isAtMost(th.getDifference(bob_LUSDDebt, A_totalDebt.mul(toBN(2)).add(B_totalDebt).add(C_totalDebt)), 1000)
+    assert.isAtMost(th.getDifference(bob_RDebt, A_totalDebt.mul(toBN(2)).add(B_totalDebt).add(C_totalDebt)), 1000)
   })
 
   it("redistribution: A,B,C Open. Liq(C). B tops up coll. D Opens. Liq(D). Distributes correct rewards.", async () => {
     // A, B, C open troves
     const { collateral: A_coll, totalDebt: A_totalDebt } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: carol } })
+    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: carol } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -595,7 +595,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     await borrowerOperations.addColl(bob, bob, addedColl, { from: bob })
 
     // D opens trove
-    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis } })
+    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -606,36 +606,36 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isFalse(await sortedTroves.contains(dennis))
 
     /* Bob rewards:
-     L1: 1/2*0.995 ETH, 55 LUSD
-     L2: (2.4975/3.995)*0.995 = 0.622 ETH , 110*(2.4975/3.995)= 68.77 LUSDDebt
+     L1: 1/2*0.995 ETH, 55 R
+     L2: (2.4975/3.995)*0.995 = 0.622 ETH , 110*(2.4975/3.995)= 68.77 rDebt
 
     coll: 3.1195 ETH
-    debt: 233.77 LUSDDebt
+    debt: 233.77 rDebt
 
      Alice rewards:
-    L1 1/2*0.995 ETH, 55 LUSD
-    L2 (1.4975/3.995)*0.995 = 0.3730 ETH, 110*(1.4975/3.995) = 41.23 LUSDDebt
+    L1 1/2*0.995 ETH, 55 R
+    L2 (1.4975/3.995)*0.995 = 0.3730 ETH, 110*(1.4975/3.995) = 41.23 rDebt
 
     coll: 1.8705 ETH
-    debt: 146.23 LUSDDebt
+    debt: 146.23 rDebt
 
     totalColl: 4.99 ETH
-    totalDebt 380 LUSD (includes 50 each for gas compensation)
+    totalDebt 380 R (includes 50 each for gas compensation)
     */
     const bob_Coll = ((await troveManager.Troves(bob))[1]
       .add(await troveManager.getPendingETHReward(bob)))
       .toString()
 
-    const bob_LUSDDebt = ((await troveManager.Troves(bob))[0]
-      .add(await troveManager.getPendingLUSDDebtReward(bob)))
+    const bob_RDebt = ((await troveManager.Troves(bob))[0]
+      .add(await troveManager.getPendingRDebtReward(bob)))
       .toString()
 
     const alice_Coll = ((await troveManager.Troves(alice))[1]
       .add(await troveManager.getPendingETHReward(alice)))
       .toString()
 
-    const alice_LUSDDebt = ((await troveManager.Troves(alice))[0]
-      .add(await troveManager.getPendingLUSDDebtReward(alice)))
+    const alice_RDebt = ((await troveManager.Troves(alice))[0]
+      .add(await troveManager.getPendingRDebtReward(alice)))
       .toString()
 
     const totalCollAfterL1 = A_coll.add(B_coll).add(addedColl).add(th.applyLiquidationFee(C_coll))
@@ -645,7 +645,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
           .add(B_coll.mul(C_totalDebt).div(A_coll.add(B_coll)))
           .add(B_collAfterL1.mul(D_totalDebt).div(totalCollAfterL1))
     assert.isAtMost(th.getDifference(bob_Coll, expected_B_coll), 1000)
-    assert.isAtMost(th.getDifference(bob_LUSDDebt, expected_B_debt), 10000)
+    assert.isAtMost(th.getDifference(bob_RDebt, expected_B_debt), 10000)
 
     const A_collAfterL1 = A_coll.add(A_coll.mul(th.applyLiquidationFee(C_coll)).div(A_coll.add(B_coll)))
     const expected_A_coll = A_collAfterL1.add(A_collAfterL1.mul(th.applyLiquidationFee(D_coll)).div(totalCollAfterL1))
@@ -653,21 +653,21 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
           .add(A_coll.mul(C_totalDebt).div(A_coll.add(B_coll)))
           .add(A_collAfterL1.mul(D_totalDebt).div(totalCollAfterL1))
     assert.isAtMost(th.getDifference(alice_Coll, expected_A_coll), 1000)
-    assert.isAtMost(th.getDifference(alice_LUSDDebt, expected_A_debt), 10000)
+    assert.isAtMost(th.getDifference(alice_RDebt, expected_A_debt), 10000)
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   it("redistribution: Trove with the majority stake tops up. A,B,C, D open. Liq(D). C tops up. E Enters, Liq(E). Distributes correct rewards", async () => {
     const _998_Ether = toBN('998000000000000000000')
     // A, B, C, D open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
     wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    const { collateral: C_coll } = await openTrove({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: carol})
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -757,19 +757,19 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const entireSystemColl_3 = (await activePool.getETH()).add(await defaultPool.getETH()).toString()
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
 
-    // check LUSD gas compensation
-    th.assertIsApproximatelyEqual((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   it("redistribution: Trove with the majority stake tops up. A,B,C, D open. Liq(D). A, B, C top up. E Enters, Liq(E). Distributes correct rewards", async () => {
     const _998_Ether = toBN('998000000000000000000')
     // A, B, C open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
     wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    const { collateral: C_coll } = await openTrove({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -865,8 +865,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const entireSystemColl_3 = (await activePool.getETH()).add(await defaultPool.getETH())
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
 
-    // check LUSD gas compensation
-    th.assertIsApproximatelyEqual((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   // --- Trove withdraws collateral ---
@@ -874,8 +874,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
   it("redistribution: A,B,C Open. Liq(C). B withdraws coll. Liq(A). B acquires all coll and debt", async () => {
     // A, B, C open troves
     const { collateral: A_coll, totalDebt: A_totalDebt } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: carol } })
+    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: carol } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -892,8 +892,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const withdrawnColl = toBN(dec(500, 'finney'))
     await borrowerOperations.withdrawColl(withdrawnColl, bob, bob, { from: bob })
 
-    // Alice withdraws LUSD
-    await borrowerOperations.withdrawLUSD(th._100pct, await getNetBorrowingAmount(A_totalDebt), alice, alice, { from: alice })
+    // Alice withdraws R
+    await borrowerOperations.withdrawR(th._100pct, await getNetBorrowingAmount(A_totalDebt), alice, alice, { from: alice })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -903,14 +903,14 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isTrue(txA.receipt.status)
     assert.isFalse(await sortedTroves.contains(alice))
 
-    // Expect Bob now holds all Ether and LUSDDebt in the system: 2.5 Ether and 300 LUSD
+    // Expect Bob now holds all Ether and rDebt in the system: 2.5 Ether and 300 R
     // 1 + 0.995/2 - 0.5 + 1.4975*0.995
     const bob_Coll = ((await troveManager.Troves(bob))[1]
       .add(await troveManager.getPendingETHReward(bob)))
       .toString()
 
-    const bob_LUSDDebt = ((await troveManager.Troves(bob))[0]
-      .add(await troveManager.getPendingLUSDDebtReward(bob)))
+    const bob_RDebt = ((await troveManager.Troves(bob))[0]
+      .add(await troveManager.getPendingRDebtReward(bob)))
       .toString()
 
     const expected_B_coll = B_coll
@@ -919,17 +919,17 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
           .add(th.applyLiquidationFee(C_coll).mul(B_coll).div(A_coll.add(B_coll)))
           .add(th.applyLiquidationFee(th.applyLiquidationFee(C_coll).mul(A_coll).div(A_coll.add(B_coll))))
     assert.isAtMost(th.getDifference(bob_Coll, expected_B_coll), 1000)
-    assert.isAtMost(th.getDifference(bob_LUSDDebt, A_totalDebt.mul(toBN(2)).add(B_totalDebt).add(C_totalDebt)), 1000)
+    assert.isAtMost(th.getDifference(bob_RDebt, A_totalDebt.mul(toBN(2)).add(B_totalDebt).add(C_totalDebt)), 1000)
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   it("redistribution: A,B,C Open. Liq(C). B withdraws coll. D Opens. Liq(D). Distributes correct rewards.", async () => {
     // A, B, C open troves
     const { collateral: A_coll, totalDebt: A_totalDebt } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
-    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: carol } })
+    const { collateral: B_coll, totalDebt: B_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: carol } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -947,7 +947,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     await borrowerOperations.withdrawColl(withdrawnColl, bob, bob, { from: bob })
 
     // D opens trove
-    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis } })
+    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -958,36 +958,36 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     assert.isFalse(await sortedTroves.contains(dennis))
 
     /* Bob rewards:
-     L1: 0.4975 ETH, 55 LUSD
-     L2: (0.9975/2.495)*0.995 = 0.3978 ETH , 110*(0.9975/2.495)= 43.98 LUSDDebt
+     L1: 0.4975 ETH, 55 R
+     L2: (0.9975/2.495)*0.995 = 0.3978 ETH , 110*(0.9975/2.495)= 43.98 rDebt
 
     coll: (1 + 0.4975 - 0.5 + 0.3968) = 1.3953 ETH
-    debt: (110 + 55 + 43.98 = 208.98 LUSDDebt
+    debt: (110 + 55 + 43.98 = 208.98 rDebt
 
      Alice rewards:
-    L1 0.4975, 55 LUSD
-    L2 (1.4975/2.495)*0.995 = 0.5972 ETH, 110*(1.4975/2.495) = 66.022 LUSDDebt
+    L1 0.4975, 55 R
+    L2 (1.4975/2.495)*0.995 = 0.5972 ETH, 110*(1.4975/2.495) = 66.022 rDebt
 
     coll: (1 + 0.4975 + 0.5972) = 2.0947 ETH
-    debt: (50 + 55 + 66.022) = 171.022 LUSD Debt
+    debt: (50 + 55 + 66.022) = 171.022 R Debt
 
     totalColl: 3.49 ETH
-    totalDebt 380 LUSD (Includes 50 in each trove for gas compensation)
+    totalDebt 380 R (Includes 50 in each trove for gas compensation)
     */
     const bob_Coll = ((await troveManager.Troves(bob))[1]
       .add(await troveManager.getPendingETHReward(bob)))
       .toString()
 
-    const bob_LUSDDebt = ((await troveManager.Troves(bob))[0]
-      .add(await troveManager.getPendingLUSDDebtReward(bob)))
+    const bob_RDebt = ((await troveManager.Troves(bob))[0]
+      .add(await troveManager.getPendingRDebtReward(bob)))
       .toString()
 
     const alice_Coll = ((await troveManager.Troves(alice))[1]
       .add(await troveManager.getPendingETHReward(alice)))
       .toString()
 
-    const alice_LUSDDebt = ((await troveManager.Troves(alice))[0]
-      .add(await troveManager.getPendingLUSDDebtReward(alice)))
+    const alice_RDebt = ((await troveManager.Troves(alice))[0]
+      .add(await troveManager.getPendingRDebtReward(alice)))
       .toString()
 
     const totalCollAfterL1 = A_coll.add(B_coll).sub(withdrawnColl).add(th.applyLiquidationFee(C_coll))
@@ -997,7 +997,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
           .add(B_coll.mul(C_totalDebt).div(A_coll.add(B_coll)))
           .add(B_collAfterL1.mul(D_totalDebt).div(totalCollAfterL1))
     assert.isAtMost(th.getDifference(bob_Coll, expected_B_coll), 1000)
-    assert.isAtMost(th.getDifference(bob_LUSDDebt, expected_B_debt), 10000)
+    assert.isAtMost(th.getDifference(bob_RDebt, expected_B_debt), 10000)
 
     const A_collAfterL1 = A_coll.add(A_coll.mul(th.applyLiquidationFee(C_coll)).div(A_coll.add(B_coll)))
     const expected_A_coll = A_collAfterL1.add(A_collAfterL1.mul(th.applyLiquidationFee(D_coll)).div(totalCollAfterL1))
@@ -1005,26 +1005,26 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
           .add(A_coll.mul(C_totalDebt).div(A_coll.add(B_coll)))
           .add(A_collAfterL1.mul(D_totalDebt).div(totalCollAfterL1))
     assert.isAtMost(th.getDifference(alice_Coll, expected_A_coll), 1000)
-    assert.isAtMost(th.getDifference(alice_LUSDDebt, expected_A_debt), 10000)
+    assert.isAtMost(th.getDifference(alice_RDebt, expected_A_debt), 10000)
 
     const entireSystemColl = (await activePool.getETH()).add(await defaultPool.getETH())
     th.assertIsApproximatelyEqual(entireSystemColl, A_coll.add(B_coll).add(th.applyLiquidationFee(C_coll)).sub(withdrawnColl).add(th.applyLiquidationFee(D_coll)))
-    const entireSystemDebt = (await activePool.getLUSDDebt()).add(await defaultPool.getLUSDDebt())
+    const entireSystemDebt = (await activePool.getRDebt()).add(await defaultPool.getRDebt())
     th.assertIsApproximatelyEqual(entireSystemDebt, A_totalDebt.add(B_totalDebt).add(C_totalDebt).add(D_totalDebt))
 
-    // check LUSD gas compensation
-    th.assertIsApproximatelyEqual((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   it("redistribution: Trove with the majority stake withdraws. A,B,C,D open. Liq(D). C withdraws some coll. E Enters, Liq(E). Distributes correct rewards", async () => {
     const _998_Ether = toBN('998000000000000000000')
     // A, B, C, D open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
     wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    const { collateral: C_coll } = await openTrove({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -1113,19 +1113,19 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const entireSystemColl_3 = (await activePool.getETH()).add(await defaultPool.getETH())
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   it("redistribution: Trove with the majority stake withdraws. A,B,C,D open. Liq(D). A, B, C withdraw. E Enters, Liq(E). Distributes correct rewards", async () => {
     const _998_Ether = toBN('998000000000000000000')
     // A, B, C, D open troves
     const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: bob } })
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
     wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
-    const { collateral: C_coll } = await openTrove({ extraLUSDAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
+    const { collateral: C_coll } = await openTrove({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
-    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
+    const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -1234,17 +1234,17 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     const entireSystemColl_3 = (await activePool.getETH()).add(await defaultPool.getETH())
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(400, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
 
   // For calculations of correct values used in test, see scenario 1:
   // https://docs.google.com/spreadsheets/d/1F5p3nZy749K5jwO-bwJeTsRoY7ewMfWIQ3QHtokxqzo/edit?usp=sharing
   it("redistribution, all operations: A,B,C open. Liq(A). D opens. B adds, C withdraws. Liq(B). E & F open. D adds. Liq(F). Distributes correct rewards", async () => {
     // A, B, C open troves
-    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: alice } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: bob } })
-    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(100, 18), extraParams: { from: carol } })
+    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100, 18), extraParams: { from: alice } })
+    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100, 18), extraParams: { from: bob } })
+    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100, 18), extraParams: { from: carol } })
 
     // Price drops to 1 $/E
     await priceFeed.setPrice(dec(1, 18))
@@ -1269,7 +1269,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     await priceFeed.setPrice(dec(1000, 18))
 
     // D opens trove
-    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: dennis } })
+    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: dennis } })
 
     //Bob adds 1 ETH to his trove
     const B_addedColl = toBN(dec(1, 'ether'))
@@ -1307,8 +1307,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     await priceFeed.setPrice(dec(1000, 18))
 
     // E and F open troves
-    const { collateral: E_coll, totalDebt: E_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: erin } })
-    const { collateral: F_coll, totalDebt: F_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraLUSDAmount: dec(110, 18), extraParams: { from: freddy } })
+    const { collateral: E_coll, totalDebt: E_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: erin } })
+    const { collateral: F_coll, totalDebt: F_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: freddy } })
 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
@@ -1364,8 +1364,8 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(totalStakesSnapshot, totalStakesSnapshotAfterL3)
     th.assertIsApproximatelyEqual(totalCollateralSnapshot, totalCollateralSnapshotAfterL3)
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(600, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(600, 18))
   })
 
   // For calculations of correct values used in test, see scenario 2:
@@ -1407,7 +1407,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     // D opens trove: 0.035 ETH
     wstETHTokenMock.approve(activePool.address, toBN(dec(35, 15)), { from: dennis})
-    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), amount: toBN(dec(35, 15)), extraParams: { from: dennis } })
+    const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ extraRAmount: dec(100, 18), amount: toBN(dec(35, 15)), extraParams: { from: dennis } })
 
     // Bob adds 11.33909 ETH to his trove
     const B_addedColl = toBN('11339090000000000000')
@@ -1450,9 +1450,9 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     F: 0.0007 ETH
     */
     wstETHTokenMock.approve(activePool.address, toBN(dec(1, 22)), { from: erin})
-    const { collateral: E_coll, totalDebt: E_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), amount: toBN(dec(1, 22)), extraParams: { from: erin } })
+    const { collateral: E_coll, totalDebt: E_totalDebt } = await openTrove({ extraRAmount: dec(100, 18), amount: toBN(dec(1, 22)), extraParams: { from: erin } })
     wstETHTokenMock.approve(activePool.address, toBN('700000000000000'), { from: erin})
-    const { collateral: F_coll, totalDebt: F_totalDebt } = await openTrove({ extraLUSDAmount: dec(100, 18), amount: toBN('700000000000000'), extraParams: { from: freddy } })
+    const { collateral: F_coll, totalDebt: F_totalDebt } = await openTrove({ extraRAmount: dec(100, 18), amount: toBN('700000000000000'), extraParams: { from: freddy } })
 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
@@ -1511,7 +1511,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     th.assertIsApproximatelyEqual(totalStakesSnapshot, totalStakesSnapshotAfterL3)
     th.assertIsApproximatelyEqual(totalCollateralSnapshot, totalCollateralSnapshotAfterL3)
 
-    // check LUSD gas compensation
-    assert.equal((await lusdToken.balanceOf(owner)).toString(), dec(600, 18))
+    // check R gas compensation
+    assert.equal((await rToken.balanceOf(owner)).toString(), dec(600, 18))
   })
 })

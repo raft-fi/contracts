@@ -1,7 +1,7 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
-const LUSDTokenTester = artifacts.require("./LUSDTokenTester.sol")
+const RTokenTester = artifacts.require("./RTokenTester.sol")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
@@ -21,7 +21,7 @@ contract('TroveManager', async accounts => {
   const [owner, A, B, C, D, E, F] = accounts;
 
   let priceFeed
-  let lusdToken
+  let rToken
   let sortedTroves
   let troveManager
   let activePool
@@ -30,7 +30,7 @@ contract('TroveManager', async accounts => {
 
   let contracts
 
-  const getOpenTroveLUSDAmount = async (totalDebt) => th.getOpenTroveLUSDAmount(contracts, totalDebt)
+  const getOpenTroveRAmount = async (totalDebt) => th.getOpenTroveRAmount(contracts, totalDebt)
 
   const getSnapshotsRatio = async () => {
     const ratio = (await troveManager.totalStakesSnapshot())
@@ -43,13 +43,13 @@ contract('TroveManager', async accounts => {
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
-    contracts.lusdToken = await LUSDTokenTester.new(
+    contracts.rToken = await RTokenTester.new(
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
 
     priceFeed = contracts.priceFeedTestnet
-    lusdToken = contracts.lusdToken
+    rToken = contracts.rToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
@@ -69,25 +69,25 @@ contract('TroveManager', async accounts => {
 
     // Make 1 mega troves A at ~50% total collateral
     wstETHTokenMock.approve(activePool.address, dec(2, 29), { from: A})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
 
     // Make 5 large troves B, C, D, E, F at ~10% total collateral
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: B})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: C})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: D})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: E})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: F})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
 
     // Make 10 tiny troves at relatively negligible collateral (~1e-9 of total)
     const tinyTroves = accounts.slice(10, 20)
     for (account of tinyTroves) {
       wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: account})
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveLUSDAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
     }
 
     // liquidate 1 trove at ~50% total system collateral

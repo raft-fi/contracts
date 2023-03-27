@@ -1,7 +1,7 @@
 const SortedTroves = artifacts.require("./SortedTroves.sol")
 const TroveManager = artifacts.require("./TroveManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
-const LUSDToken = artifacts.require("./LUSDToken.sol")
+const RToken = artifacts.require("./RToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
 const GasPool = artifacts.require("./GasPool.sol")
@@ -15,7 +15,7 @@ const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
-const LUSDTokenTester = artifacts.require("./LUSDTokenTester.sol")
+const RTokenTester = artifacts.require("./RTokenTester.sol")
 const WstETHTokenMock = artifacts.require("./WstETHTokenMock.sol")
 
 const th = require("./testHelpers.js").TestHelper
@@ -51,11 +51,11 @@ class DeploymentHelper {
     const functionCaller = await FunctionCaller.new()
     const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
-    const lusdToken = await LUSDToken.new(
+    const rToken = await RToken.new(
       troveManager.address,
       borrowerOperations.address
     )
-    LUSDToken.setAsDeployed(lusdToken)
+    RToken.setAsDeployed(rToken)
     DefaultPool.setAsDeployed(defaultPool)
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
     SortedTroves.setAsDeployed(sortedTroves)
@@ -69,7 +69,7 @@ class DeploymentHelper {
 
     const coreContracts = {
       priceFeedTestnet,
-      lusdToken,
+      rToken,
       sortedTroves,
       troveManager,
       wstETHTokenMock,
@@ -84,16 +84,16 @@ class DeploymentHelper {
     return coreContracts
   }
 
-  static async mintLUSD(lusdToken, to = null, amount = null) {
+  static async mintR(rToken, to = null, amount = null) {
     to = to || (await ethers.getSigners())[0].address;
     amount = amount ? ethers.BigNumber.from(amount) : ethers.BigNumber.from("1000000000000000000000000")
 
-    const borrowerOperationsAddress = await lusdToken.borrowerOperations();
+    const borrowerOperationsAddress = await rToken.borrowerOperations();
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
       params: [borrowerOperationsAddress]
     })
-    await lusdToken.mint(to, amount, { from: borrowerOperationsAddress, gasPrice: 0 })
+    await rToken.mint(to, amount, { from: borrowerOperationsAddress, gasPrice: 0 })
 
     await hre.network.provider.request({
       method: "hardhat_stopImpersonatingAccount",
@@ -118,7 +118,7 @@ class DeploymentHelper {
     testerContracts.troveManager = await TroveManagerTester.new()
     testerContracts.functionCaller = await FunctionCaller.new()
     testerContracts.hintHelpers = await HintHelpers.new()
-    testerContracts.lusdToken =  await LUSDTokenTester.new(
+    testerContracts.rToken =  await RTokenTester.new(
       testerContracts.troveManager.address,
       testerContracts.borrowerOperations.address
     )
@@ -136,13 +136,13 @@ class DeploymentHelper {
     const functionCaller = await FunctionCaller.new()
     const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
-    const lusdToken = await LUSDToken.new(
+    const rToken = await RToken.new(
       troveManager.address,
       borrowerOperations.address
     )
     const coreContracts = {
       priceFeedTestnet,
-      lusdToken,
+      rToken,
       sortedTroves,
       troveManager,
       activePool,
@@ -156,16 +156,16 @@ class DeploymentHelper {
     return coreContracts
   }
 
-  static async deployLUSDToken(contracts) {
-    contracts.lusdToken = await LUSDToken.new(
+  static async deployRToken(contracts) {
+    contracts.rToken = await RToken.new(
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
     return contracts
   }
 
-  static async deployLUSDTokenTester(contracts) {
-    contracts.lusdToken = await LUSDTokenTester.new(
+  static async deployRTokenTester(contracts) {
+    contracts.rToken = await RTokenTester.new(
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
@@ -194,7 +194,7 @@ class DeploymentHelper {
       contracts.gasPool.address,
       contracts.collSurplusPool.address,
       contracts.priceFeedTestnet.address,
-      contracts.lusdToken.address,
+      contracts.rToken.address,
       contracts.sortedTroves.address,
       feeRecipient
     )
@@ -208,7 +208,7 @@ class DeploymentHelper {
       contracts.collSurplusPool.address,
       contracts.priceFeedTestnet.address,
       contracts.sortedTroves.address,
-      contracts.lusdToken.address,
+      contracts.rToken.address,
       feeRecipient
     )
 

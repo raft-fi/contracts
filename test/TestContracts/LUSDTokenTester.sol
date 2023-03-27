@@ -2,16 +2,16 @@
 
 pragma solidity 0.8.19;
 
-import "../../contracts/LUSDToken.sol";
+import "../../contracts/RToken.sol";
 
-contract LUSDTokenTester is LUSDToken {
+contract RTokenTester is RToken {
 
     bytes32 private immutable _PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
     constructor(
         address _troveManagerAddress,
         address _borrowerOperationsAddress
-    ) public LUSDToken(_troveManagerAddress,
+    ) public RToken(_troveManagerAddress,
                       _borrowerOperationsAddress) {}
 
     function unprotectedMint(address _account, uint256 _amount) external {

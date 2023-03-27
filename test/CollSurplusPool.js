@@ -8,7 +8,7 @@ const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
 
 const TroveManagerTester = artifacts.require("TroveManagerTester")
-const LUSDToken = artifacts.require("LUSDToken")
+const RToken = artifacts.require("RToken")
 
 contract('CollSurplusPool', async accounts => {
   const [
@@ -28,7 +28,7 @@ contract('CollSurplusPool', async accounts => {
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
-    contracts.lusdToken = await LUSDToken.new(
+    contracts.rToken = await RToken.new(
       contracts.troveManager.address,
       contracts.borrowerOperations.address
     )
@@ -51,7 +51,7 @@ contract('CollSurplusPool', async accounts => {
     await priceFeed.setPrice(price)
 
     const { collateral: B_coll, netDebt: B_netDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: B } })
-    await openTrove({ extraLUSDAmount: B_netDebt, amount: dec(3000, 'ether'),  extraParams: { from: A } })
+    await openTrove({ extraRAmount: B_netDebt, amount: dec(3000, 'ether'),  extraParams: { from: A } })
 
     // skip bootstrapping phase
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)

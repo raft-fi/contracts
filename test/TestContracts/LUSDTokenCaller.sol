@@ -2,24 +2,24 @@
 
 pragma solidity 0.8.19;
 
-import "../../contracts/Interfaces/ILUSDToken.sol";
+import "../../contracts/Interfaces/IRToken.sol";
 
-contract LUSDTokenCaller {
-    ILUSDToken LUSD;
+contract RTokenCaller {
+    IRToken R;
 
-    function setLUSD(ILUSDToken _LUSD) external {
-        LUSD = _LUSD;
+    function setR(IRToken _R) external {
+        R = _R;
     }
 
-    function lusdMint(address _account, uint _amount) external {
-        LUSD.mint(_account, _amount);
+    function rMint(address _account, uint _amount) external {
+        R.mint(_account, _amount);
     }
 
-    function lusdBurn(address _account, uint _amount) external {
-        LUSD.burn(_account, _amount);
+    function rBurn(address _account, uint _amount) external {
+        R.burn(_account, _amount);
     }
 
-    function lusdReturnFromPool(address _poolAddress, address _receiver, uint256 _amount ) external {
-        LUSD.returnFromPool(_poolAddress, _receiver, _amount);
+    function rReturnFromPool(address _poolAddress, address _receiver, uint256 _amount ) external {
+        R.returnFromPool(_poolAddress, _receiver, _amount);
     }
 }
