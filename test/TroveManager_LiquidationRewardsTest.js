@@ -1009,7 +1009,7 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
 
     const entireSystemColl = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
     th.assertIsApproximatelyEqual(entireSystemColl, A_coll.add(B_coll).add(th.applyLiquidationFee(C_coll)).sub(withdrawnColl).add(th.applyLiquidationFee(D_coll)))
-    const entireSystemDebt = (await activePool.getRDebt()).add(await defaultPool.getRDebt())
+    const entireSystemDebt = (await activePool.rDebt()).add(await defaultPool.rDebt())
     th.assertIsApproximatelyEqual(entireSystemDebt, A_totalDebt.add(B_totalDebt).add(C_totalDebt).add(D_totalDebt))
 
     // check R gas compensation

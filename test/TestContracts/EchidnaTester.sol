@@ -395,8 +395,8 @@
 //         uint totalSupply = rToken.totalSupply();
 //         uint borrowerOperationsBalance = rToken.balanceOf(address(borrowerOperations));
 
-//         uint activePoolBalance = activePool.getRDebt();
-//         uint defaultPoolBalance = defaultPool.getRDebt();
+//         uint activePoolBalance = activePool.rDebt();
+//         uint defaultPoolBalance = defaultPool.rDebt();
 //         if (totalSupply != activePoolBalance + defaultPoolBalance) {
 //             return false;
 //         }

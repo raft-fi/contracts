@@ -28,11 +28,29 @@ contract DefaultPoolTest is Test {
         defaultPool.withdrawCollateral(USER, 100);
     }
 
+    // increaseRDebt(): increases the R debt by the specified amount
+    function testSuccessfulIncreaseRDebt() public {
+        vm.prank(address(POSITIONS_MANAGER));
+        defaultPool.increaseRDebt(100);
+        assertEq(defaultPool.rDebt(), 100);
+    }
+
     // increaseRDebt(): reverts when called by an account that is not Trove Manager
     function testUnauthorizedIncreaseRDebt() public {
         vm.prank(USER);
         vm.expectRevert(CallerIsNotTroveManager.selector);
         defaultPool.increaseRDebt(100);
+    }
+
+    // decreaseRDebt(): decreases the R debt by the specified amount
+    function testSuccessfulDecreaseRDebt() public {
+        vm.prank(address(POSITIONS_MANAGER));
+        defaultPool.increaseRDebt(100);
+        assertEq(defaultPool.rDebt(), 100);
+
+        vm.prank(address(POSITIONS_MANAGER));
+        defaultPool.decreaseRDebt(100);
+        assertEq(defaultPool.rDebt(), 0);
     }
 
     // decreaseRDebt(): reverts when called by an account that is not Trove Manager

@@ -18,7 +18,7 @@ import "./CollateralPool.sol";
 contract DefaultPool is Ownable2Step, CollateralPool, TroveManagerDependent, IDefaultPool {
     string constant public NAME = "DefaultPool";
 
-    uint256 internal rDebt;  // debt
+    uint256 public override rDebt;
 
     // --- Constructor ---
     constructor(IERC20 _collateralToken) CollateralPool(_collateralToken) {
@@ -30,12 +30,6 @@ contract DefaultPool is Ownable2Step, CollateralPool, TroveManagerDependent, IDe
         setTroveManager(_troveManager);
 
         renounceOwnership();
-    }
-
-    // --- Getters for public variables. Required by IPool interface ---
-
-    function getRDebt() external view override returns (uint) {
-        return rDebt;
     }
 
     // --- Pool functionality ---

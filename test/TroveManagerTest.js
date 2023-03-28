@@ -119,7 +119,7 @@ contract('TroveManager', async accounts => {
     // check ActivePool ETH and R debt before
     const activePool_ETH_Before = (await activePool.collateralBalance()).toString()
     const activePool_RawEther_Before = (await wstETHTokenMock.balanceOf(activePool.address)).toString()
-    const activePool_RDebt_Before = (await activePool.getRDebt()).toString()
+    const activePool_RDebt_Before = (await activePool.rDebt()).toString()
 
     assert.equal(activePool_ETH_Before, A_collateral.add(B_collateral))
     assert.equal(activePool_RawEther_Before, A_collateral.add(B_collateral))
@@ -135,7 +135,7 @@ contract('TroveManager', async accounts => {
     // check ActivePool ETH and R debt
     const activePool_ETH_After = (await activePool.collateralBalance()).toString()
     const activePool_RawEther_After = (await wstETHTokenMock.balanceOf(activePool.address)).toString()
-    const activePool_RDebt_After = (await activePool.getRDebt()).toString()
+    const activePool_RDebt_After = (await activePool.rDebt()).toString()
 
     assert.equal(activePool_ETH_After, A_collateral)
     assert.equal(activePool_RawEther_After, A_collateral)
@@ -152,7 +152,7 @@ contract('TroveManager', async accounts => {
     // check DefaultPool ETH and R debt before
     const defaultPool_ETH_Before = (await defaultPool.collateralBalance())
     const defaultPool_RawEther_Before = (await wstETHTokenMock.balanceOf(defaultPool.address)).toString()
-    const defaultPool_RDebt_Before = (await defaultPool.getRDebt()).toString()
+    const defaultPool_RDebt_Before = (await defaultPool.rDebt()).toString()
 
     assert.equal(defaultPool_ETH_Before, '0')
     assert.equal(defaultPool_RawEther_Before, '0')
@@ -167,7 +167,7 @@ contract('TroveManager', async accounts => {
     // check after
     const defaultPool_ETH_After = (await defaultPool.collateralBalance()).toString()
     const defaultPool_RawEther_After = (await wstETHTokenMock.balanceOf(defaultPool.address)).toString()
-    const defaultPool_RDebt_After = (await defaultPool.getRDebt()).toString()
+    const defaultPool_RDebt_After = (await defaultPool.rDebt()).toString()
 
     const defaultPool_ETH = th.applyLiquidationFee(B_collateral)
     assert.equal(defaultPool_ETH_After, defaultPool_ETH)
@@ -643,16 +643,16 @@ contract('TroveManager', async accounts => {
     assert.equal((await sortedTroves.getSize()).toString(), '4')
 
     // Liquidate A, B and C
-    const activeRDebt_0 = await activePool.getRDebt()
-    const defaultRDebt_0 = await defaultPool.getRDebt()
+    const activeRDebt_0 = await activePool.rDebt()
+    const defaultRDebt_0 = await defaultPool.rDebt()
 
     await troveManager.liquidate(alice)
-    const activeRDebt_A = await activePool.getRDebt()
-    const defaultRDebt_A = await defaultPool.getRDebt()
+    const activeRDebt_A = await activePool.rDebt()
+    const defaultRDebt_A = await defaultPool.rDebt()
 
     await troveManager.liquidate(bob)
-    const activeRDebt_B = await activePool.getRDebt()
-    const defaultRDebt_B = await defaultPool.getRDebt()
+    const activeRDebt_B = await activePool.rDebt()
+    const defaultRDebt_B = await defaultPool.rDebt()
 
     await troveManager.liquidate(carol)
 
@@ -800,7 +800,7 @@ contract('TroveManager', async accounts => {
     const pendingETH_C = await troveManager.getPendingCollateralTokenReward(C)
     const pendingRDebt_C = await troveManager.getPendingRDebtReward(C)
     const defaultPoolETH = await defaultPool.collateralBalance()
-    const defaultPoolRDebt = await defaultPool.getRDebt()
+    const defaultPoolRDebt = await defaultPool.rDebt()
     assert.isTrue(pendingETH_C.lte(defaultPoolETH))
     assert.isTrue(pendingRDebt_C.lte(defaultPoolRDebt))
     //Check only difference is dust
@@ -1308,7 +1308,7 @@ contract('TroveManager', async accounts => {
     const pendingETH_C = await troveManager.getPendingCollateralTokenReward(C)
     const pendingRDebt_C = await troveManager.getPendingRDebtReward(C)
     const defaultPoolETH = await defaultPool.collateralBalance()
-    const defaultPoolRDebt = await defaultPool.getRDebt()
+    const defaultPoolRDebt = await defaultPool.rDebt()
     assert.isTrue(pendingETH_C.lte(defaultPoolETH))
     assert.isTrue(pendingRDebt_C.lte(defaultPoolRDebt))
     //Check only difference is dust
@@ -2588,7 +2588,7 @@ contract('TroveManager', async accounts => {
     const totalColl = W_coll.add(A_coll).add(B_coll).add(C_coll).add(D_coll)
 
     // Get active debt and coll before redemption
-    const activePool_debt_before = await activePool.getRDebt()
+    const activePool_debt_before = await activePool.rDebt()
     const activePool_coll_before = await activePool.collateralBalance()
 
     th.assertIsApproximatelyEqual(activePool_debt_before, totalDebt)
@@ -2621,7 +2621,7 @@ contract('TroveManager', async accounts => {
       { from: erin })
 
     // Check activePool debt reduced by  400 R
-    const activePool_debt_after = await activePool.getRDebt()
+    const activePool_debt_after = await activePool.rDebt()
     assert.equal(activePool_debt_before.sub(activePool_debt_after), dec(400, 18))
 
     /* Check ActivePool coll reduced by $400 worth of Ether: at ETH:USD price of $200, this should be 2 ETH.
@@ -2656,7 +2656,7 @@ contract('TroveManager', async accounts => {
     const totalColl = W_coll.add(A_coll).add(B_coll).add(C_coll).add(D_coll)
 
     // Get active debt and coll before redemption
-    const activePool_debt_before = await activePool.getRDebt()
+    const activePool_debt_before = await activePool.rDebt()
     const activePool_coll_before = (await activePool.collateralBalance()).toString()
 
     th.assertIsApproximatelyEqual(activePool_debt_before, totalDebt)
@@ -2949,7 +2949,7 @@ contract('TroveManager', async accounts => {
     const { collateral: D_coll, totalDebt: D_totalDebt } = await openTrove({ ICR: toBN(dec(1000, 16)), extraRAmount: dec(40, 18), extraParams: { from: dennis } })
 
     const totalDebt = C_totalDebt.add(D_totalDebt)
-    th.assertIsApproximatelyEqual((await activePool.getRDebt()).toString(), totalDebt)
+    th.assertIsApproximatelyEqual((await activePool.rDebt()).toString(), totalDebt)
 
     const price = await priceFeed.getPrice()
     const {
@@ -3222,8 +3222,8 @@ contract('TroveManager', async accounts => {
     assert.equal(baseRate, '0')
 
     // Check total R supply
-    const activeR = await activePool.getRDebt()
-    const defaultR = await defaultPool.getRDebt()
+    const activeR = await activePool.rDebt()
+    const defaultR = await defaultPool.rDebt()
 
     const totalRSupply = activeR.add(defaultR)
     th.assertIsApproximatelyEqual(totalRSupply, totalDebt)

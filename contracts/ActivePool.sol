@@ -21,7 +21,7 @@ contract ActivePool is Ownable2Step, CollateralPool, BorrowerOperationsDependent
     string constant public NAME = "ActivePool";
 
     address public defaultPoolAddress;
-    uint256 internal rDebt;
+    uint256 public override rDebt;
 
     modifier onlyBorrowerOperationsOrTroveManager() {
         if (msg.sender != address(borrowerOperations) && msg.sender != address(troveManager)) {
@@ -49,12 +49,6 @@ contract ActivePool is Ownable2Step, CollateralPool, BorrowerOperationsDependent
         setDefaultPool(_defaultPool);
 
         renounceOwnership();
-    }
-
-    // --- Getters for public variables. Required by IPool interface ---
-
-    function getRDebt() external view override returns (uint) {
-        return rDebt;
     }
 
     // --- Pool functionality ---

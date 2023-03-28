@@ -60,7 +60,7 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     /// @dev Returns active and closed debt.
     function getEntireSystemDebt() public view returns (uint entireSystemDebt) {
-        entireSystemDebt = activePool.getRDebt() + defaultPool.getRDebt();
+        entireSystemDebt = activePool.rDebt() + defaultPool.rDebt();
     }
 
     function _getTCR(uint _price) internal view returns (uint TCR) {
