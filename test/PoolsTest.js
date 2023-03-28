@@ -25,8 +25,8 @@ contract('ActivePool', async accounts => {
     await th.fillAccountsWithWstETH({wstETHTokenMock: wstETHTokenMock}, [owner, alice])
   })
 
-  it('ETH(): gets the recorded ETH balance', async () => {
-    const recordedETHBalance = await activePool.ETH()
+  it('CollateralBalance(): gets the recorded collateralToken balance', async () => {
+    const recordedETHBalance = await activePool.collateralBalance()
     assert.equal(recordedETHBalance, 0)
   })
 
@@ -108,8 +108,8 @@ contract('DefaultPool', async accounts => {
     await th.fillAccountsWithWstETH({wstETHTokenMock: wstETHTokenMock}, [owner, alice])
   })
 
-  it('ETH(): gets the recorded R balance', async () => {
-    const recordedETHBalance = await defaultPool.ETH()
+  it('collateralBalance(): gets the recorded collateralToken balance', async () => {
+    const recordedETHBalance = await defaultPool.collateralBalance()
     assert.equal(recordedETHBalance, 0)
   })
 

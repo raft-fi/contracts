@@ -69,12 +69,12 @@ contract ActivePool is Ownable2Step, CollateralPool, BorrowerOperationsDependent
     {
         _depositCollateral(_from, _amount);
 
-        emit ActivePoolETHBalanceUpdated(ETH);
+        emit ActivePoolETHBalanceUpdated(collateralBalance);
     }
 
     function sendETH(address _account, uint _amount) external override onlyBorrowerOperationsOrTroveManager {
-        ETH -= _amount;
-        emit ActivePoolETHBalanceUpdated(ETH);
+        collateralBalance -= _amount;
+        emit ActivePoolETHBalanceUpdated(collateralBalance);
         emit EtherSent(_account, _amount);
         collateralToken.transfer(_account, _amount);
     }

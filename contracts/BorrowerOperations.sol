@@ -207,12 +207,12 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         emit RBorrowingFeePaid(msg.sender, vars.rFee);
     }
 
-    // Send ETH as collateral to a trove
+    // Send collateralToken to a trove
     function addColl(address _upperHint, address _lowerHint, uint256 _collDeposit) external override {
         _adjustTrove(0, 0, false, _upperHint, _lowerHint, 0, _collDeposit);
     }
 
-    // Withdraw ETH collateral from a trove
+    // Withdraw collateralToken from a trove
     function withdrawColl(uint _collWithdrawal, address _upperHint, address _lowerHint) external override {
         _adjustTrove(_collWithdrawal, 0, false, _upperHint, _lowerHint, 0, 0);
     }
@@ -266,7 +266,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
 
         contractsCache.troveManager.applyPendingRewards(msg.sender);
 
-        // Get the collChange based on whether or not ETH was sent in the transaction
+        // Get the collChange based on whether or not collateralToken was sent in the transaction
         (vars.collChange, vars.isCollIncrease) = _getCollChange(_collDeposit, _collWithdrawal);
 
         vars.netDebtChange = _rChange;
@@ -346,7 +346,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
      * Claim remaining collateral from a redemption
      */
     function claimCollateral() external override {
-        // send ETH from CollSurplus Pool to owner
+        // send collateralToken from CollSurplus Pool to owner
         collSurplusPool.claimColl(msg.sender);
     }
 
