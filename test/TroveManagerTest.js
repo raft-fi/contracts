@@ -36,7 +36,6 @@ contract('TroveManager', async accounts => {
   let sortedTroves
   let troveManager
   let activePool
-  let collSurplusPool
   let defaultPool
   let borrowerOperations
   let hintHelpers
@@ -63,7 +62,6 @@ contract('TroveManager', async accounts => {
     troveManager = contracts.troveManager
     activePool = contracts.activePool
     defaultPool = contracts.defaultPool
-    collSurplusPool = contracts.collSurplusPool
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
     wstETHTokenMock = contracts.wstETHTokenMock
@@ -3322,9 +3320,6 @@ contract('TroveManager', async accounts => {
     ETHDrawn from C = 130/200 = 0.65 ETH --> Surplus = (2-0.65) = 1.35
     */
 
-    const A_balanceAfter = toBN(await wstETHTokenMock.balanceOf(A))
-    const B_balanceAfter = toBN(await wstETHTokenMock.balanceOf(B))
-    const C_balanceAfter = toBN(await wstETHTokenMock.balanceOf(C))
     const D_balanceAfter = toBN(await wstETHTokenMock.balanceOf(D))
 
     // Check A, B, C’s trove collateral balance is zero (fully redeemed-from troves)
@@ -3339,10 +3334,7 @@ contract('TroveManager', async accounts => {
     const D_collAfter = await troveManager.getTroveColl(D)
     assert.isTrue(D_collAfter.lt(D_collBefore))
 
-    // Check A, B, C (fully redeemed-from troves), and D's (the partially redeemed-from trove) balance has not changed
-    assert.isTrue(A_balanceAfter.eq(A_balanceBefore))
-    assert.isTrue(B_balanceAfter.eq(B_balanceBefore))
-    assert.isTrue(C_balanceAfter.eq(C_balanceBefore))
+    // D's (the partially redeemed-from trove) balance has not changed
     assert.isTrue(D_balanceAfter.eq(D_balanceBefore))
 
     // D is not closed, so cannot open trove
@@ -3350,9 +3342,9 @@ contract('TroveManager', async accounts => {
     await assertRevert(borrowerOperations.openTrove(th._100pct, 0, ZERO_ADDRESS, ZERO_ADDRESS, dec(10, 18), { from: D }), 'BorrowerOps: Trove is active')
 
     return {
-      A_netDebt, A_coll,
-      B_netDebt, B_coll,
-      C_netDebt, C_coll,
+      A_balanceBefore, A_netDebt, A_coll,
+      B_balanceBefore, B_netDebt, B_coll,
+      C_balanceBefore, C_netDebt, C_coll,
     }
   }
 
@@ -3403,66 +3395,18 @@ contract('TroveManager', async accounts => {
     th.assertIsApproximatelyEqual(D_emittedColl, D_coll.sub(partialAmount.mul(mv._1e18BN).div(price)))
   })
 
-  it("redeemCollateral(): a redemption that closes a trove leaves the trove's ETH surplus (collateral - ETH drawn) available for the trove owner to claim", async () => {
+  it("redeemCollateral(): a redemption closes a trove and sends surplus to the trove owner", async () => {
     const {
-      A_netDebt, A_coll,
-      B_netDebt, B_coll,
-      C_netDebt, C_coll,
+      A_balanceBefore, A_netDebt, A_coll,
+      B_balanceBefore, B_netDebt, B_coll,
+      C_balanceBefore, C_netDebt, C_coll,
     } = await redeemCollateral3Full1Partial()
-
-    const A_balanceBefore = toBN(await wstETHTokenMock.balanceOf(A))
-    const B_balanceBefore = toBN(await wstETHTokenMock.balanceOf(B))
-    const C_balanceBefore = toBN(await wstETHTokenMock.balanceOf(C))
-
-    // CollSurplusPool endpoint cannot be called directly
-    await assertRevert(collSurplusPool.claimColl(A), 'CollSurplusPool: Caller is not Borrower Operations')
-
-    await borrowerOperations.claimCollateral({ from: A, gasPrice: GAS_PRICE  })
-    await borrowerOperations.claimCollateral({ from: B, gasPrice: GAS_PRICE  })
-    await borrowerOperations.claimCollateral({ from: C, gasPrice: GAS_PRICE  })
-
-    const A_balanceAfter = toBN(await wstETHTokenMock.balanceOf(A))
-    const B_balanceAfter = toBN(await wstETHTokenMock.balanceOf(B))
-    const C_balanceAfter = toBN(await wstETHTokenMock.balanceOf(C))
 
     const price = toBN(await priceFeed.getPrice())
 
-    th.assertIsApproximatelyEqual(A_balanceAfter, A_balanceBefore.add(A_coll.sub(A_netDebt.mul(mv._1e18BN).div(price))))
-    th.assertIsApproximatelyEqual(B_balanceAfter, B_balanceBefore.add(B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price))))
-    th.assertIsApproximatelyEqual(C_balanceAfter, C_balanceBefore.add(C_coll.sub(C_netDebt.mul(mv._1e18BN).div(price))))
-  })
-
-  it("redeemCollateral(): a redemption that closes a trove leaves the trove's ETH surplus (collateral - ETH drawn) available for the trove owner after re-opening trove", async () => {
-    const {
-      A_netDebt, A_coll: A_collBefore,
-      B_netDebt, B_coll: B_collBefore,
-      C_netDebt, C_coll: C_collBefore,
-    } = await redeemCollateral3Full1Partial()
-
-    const price = await priceFeed.getPrice()
-    const A_surplus = A_collBefore.sub(A_netDebt.mul(mv._1e18BN).div(price))
-    const B_surplus = B_collBefore.sub(B_netDebt.mul(mv._1e18BN).div(price))
-    const C_surplus = C_collBefore.sub(C_netDebt.mul(mv._1e18BN).div(price))
-
-    const { collateral: A_coll } = await openTrove({ ICR: toBN(dec(200, 16)), extraRAmount: dec(100, 18), extraParams: { from: A } })
-    const { collateral: B_coll } = await openTrove({ ICR: toBN(dec(190, 16)), extraRAmount: dec(100, 18), extraParams: { from: B } })
-    const { collateral: C_coll } = await openTrove({ ICR: toBN(dec(180, 16)), extraRAmount: dec(100, 18), extraParams: { from: C } })
-
-    const A_collAfter = await troveManager.getTroveColl(A)
-    const B_collAfter = await troveManager.getTroveColl(B)
-    const C_collAfter = await troveManager.getTroveColl(C)
-
-    assert.isTrue(A_collAfter.eq(A_coll))
-    assert.isTrue(B_collAfter.eq(B_coll))
-    assert.isTrue(C_collAfter.eq(C_coll))
-
-    const A_balanceBefore = toBN(await wstETHTokenMock.balanceOf(A))
-    const B_balanceBefore = toBN(await wstETHTokenMock.balanceOf(B))
-    const C_balanceBefore = toBN(await wstETHTokenMock.balanceOf(C))
-
-    await borrowerOperations.claimCollateral({ from: A, gasPrice: GAS_PRICE  })
-    await borrowerOperations.claimCollateral({ from: B, gasPrice: GAS_PRICE  })
-    await borrowerOperations.claimCollateral({ from: C, gasPrice: GAS_PRICE  })
+    const A_surplus = A_coll.sub(A_netDebt.mul(mv._1e18BN).div(price))
+    const B_surplus = B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price))
+    const C_surplus = C_coll.sub(C_netDebt.mul(mv._1e18BN).div(price))
 
     const A_balanceAfter = toBN(await wstETHTokenMock.balanceOf(A))
     const B_balanceAfter = toBN(await wstETHTokenMock.balanceOf(B))

@@ -7,7 +7,6 @@
 // import "../ActivePool.sol";
 // import "../DefaultPool.sol";
 // import "../StabilityPool.sol";
-// import "../CollSurplusPool.sol";
 // import "../RToken.sol";
 // import "./PriceFeedTestnet.sol";
 // import "../SortedTroves.sol";
@@ -30,7 +29,6 @@
 //     ActivePool public activePool;
 //     DefaultPool public defaultPool;
 //     StabilityPool public stabilityPool;
-//     CollSurplusPool public collSurplusPool;
 //     RToken public rToken;
 //     WstETHTokenMock public collateralToken;
 //     PriceFeedTestnet priceFeedTestnet;
@@ -53,20 +51,19 @@
 //             address(borrowerOperations)
 //         );
 
-//         collSurplusPool = new CollSurplusPool(address(collateralToken));
 //         priceFeedTestnet = new PriceFeedTestnet();
 
 //         sortedTroves = new SortedTroves();
 
 //         troveManager.setAddresses(address(borrowerOperations),
 //             address(activePool), address(defaultPool),
-//             address(stabilityPool), address(collSurplusPool),
+//             address(stabilityPool),
 //             address(priceFeedTestnet), address(rToken),
 //             address(sortedTroves), address(0), address(0));
 
 //         borrowerOperations.setAddresses(address(troveManager),
 //             address(activePool), address(defaultPool),
-//             address(stabilityPool), address(collSurplusPool),
+//             address(stabilityPool),
 //             address(priceFeedTestnet), address(sortedTroves),
 //             address(rToken), address(0));
 
@@ -78,9 +75,6 @@
 //         stabilityPool.setAddresses(address(borrowerOperations),
 //             address(troveManager), address(activePool), address(rToken),
 //             address(sortedTroves), address(priceFeedTestnet), address(0));
-
-//         collSurplusPool.setAddresses(address(borrowerOperations),
-//              address(troveManager), address(activePool));
 
 //         sortedTroves.setParams(1e18, address(troveManager), address(borrowerOperations));
 

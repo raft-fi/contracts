@@ -49,7 +49,6 @@ interface IBorrowerOperations {
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event PriceFeedAddressChanged(address  _newPriceFeedAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event RTokenAddressChanged(address _rTokenAddress);
@@ -65,7 +64,6 @@ interface IBorrowerOperations {
         address _troveManagerAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
         address _rTokenAddress,
@@ -88,8 +86,6 @@ interface IBorrowerOperations {
     function closeTrove() external;
 
     function adjustTrove(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
-
-    function claimCollateral() external;
 
     function getCompositeDebt(uint _debt) external pure returns (uint);
 }

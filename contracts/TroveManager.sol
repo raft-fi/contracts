@@ -5,7 +5,6 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/ITroveManager.sol";
-import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/IRToken.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
@@ -16,8 +15,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
     string constant public NAME = "TroveManager";
 
     // --- Connected contract declarations ---
-
-    ICollSurplusPool collSurplusPool;
 
     IRToken public override rToken;
 
@@ -154,7 +151,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         IDefaultPool defaultPool;
         IRToken rToken;
         ISortedTroves sortedTroves;
-        ICollSurplusPool collSurplusPool;
         address feeRecipient;
     }
     // --- Variable container structs for redemptions ---
@@ -188,7 +184,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         IBorrowerOperations _borrowerOperations,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _rTokenAddress,
         address _sortedTrovesAddress,
@@ -200,7 +195,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
         checkContract(_activePoolAddress);
         checkContract(_defaultPoolAddress);
-        checkContract(_collSurplusPoolAddress);
         checkContract(_priceFeedAddress);
         checkContract(_rTokenAddress);
         checkContract(_sortedTrovesAddress);
@@ -208,7 +202,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         setBorrowerOperations(_borrowerOperations);
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         rToken = IRToken(_rTokenAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
@@ -218,7 +211,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit RTokenAddressChanged(_rTokenAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
@@ -309,7 +301,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
             defaultPool,
             IRToken(address(0)),
             sortedTroves,
-            ICollSurplusPool(address(0)),
             address(0)
         );
         LocalVariables_OuterLiquidationFunction memory vars;
@@ -539,7 +530,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
     * Called when a full redemption occurs, and closes the trove.
     * The redeemer swaps (debt - liquidation reserve) R for (debt - liquidation reserve) worth of collateralToken, so the R liquidation reserve left corresponds to the remaining debt.
     * In order to close the trove, the R liquidation reserve is burned, and the corresponding debt is removed from the active pool.
-    * The debt recorded on the trove's struct is zero'd elswhere, in _closeTrove.
+    * The debt recorded on the trove's struct is zero'd elsewhere, in _closeTrove.
     * Any surplus collateralToken left in the trove, is sent to the Coll surplus pool, and can be later claimed by the borrower.
     */
     function _redeemCloseTrove(ContractsCache memory _contractsCache, address _borrower, uint _R, uint _collateralToken) internal {
@@ -547,12 +538,8 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         // Update Active Pool R, and send collateralToken to account
         _contractsCache.activePool.decreaseRDebt(_R);
 
-        // send collateralToken from Active Pool to CollSurplus Pool
-        _contractsCache.collSurplusPool.accountSurplus(_borrower, _collateralToken);
-
         _contractsCache.activePool.withdrawCollateral(address(this), _collateralToken);
-        IERC20(_contractsCache.activePool.collateralToken()).approve(address(_contractsCache.collSurplusPool), _collateralToken);
-        _contractsCache.collSurplusPool.depositCollateral(address(this), _collateralToken);
+        _contractsCache.activePool.collateralToken().transfer(_borrower, _collateralToken);
     }
 
     function _isValidFirstRedemptionHint(ISortedTroves _sortedTroves, address _firstRedemptionHint, uint _price) internal view returns (bool) {
@@ -612,7 +599,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
             defaultPool,
             rToken,
             sortedTroves,
-            collSurplusPool,
             feeRecipient
         );
         RedemptionTotals memory totals;
