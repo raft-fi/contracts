@@ -473,7 +473,7 @@ class TestHelper {
     // console.log(`account: ${account}`)
     const rawColl = (await contracts.troveManager.Troves(account))[1]
     const rawDebt = (await contracts.troveManager.Troves(account))[0]
-    const pendingETHReward = await contracts.troveManager.getPendingETHReward(account)
+    const pendingETHReward = await contracts.troveManager.getPendingCollateralTokenReward(account)
     const pendingRDebtReward = await contracts.troveManager.getPendingRDebtReward(account)
     const entireColl = rawColl.add(pendingETHReward)
     const entireDebt = rawDebt.add(pendingRDebtReward)

@@ -76,7 +76,7 @@ interface ITroveManager is ILiquityBase {
     event FeeRecipientChanged(address _feeRecipient);
 
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _RGasCompensation);
-    event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _ETHSent, uint _ETHFee);
+    event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, TroveManagerOperation _operation);
     event TroveLiquidated(address indexed _borrower, uint _debt, uint _coll, TroveManagerOperation _operation);
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
@@ -84,8 +84,8 @@ interface ITroveManager is ILiquityBase {
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
     event TotalStakesUpdated(uint _newTotalStakes);
     event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
-    event LTermsUpdated(uint _L_ETH, uint _L_RDebt);
-    event TroveSnapshotsUpdated(uint _L_ETH, uint _L_RDebt);
+    event LTermsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
+    event TroveSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
     event TroveIndexUpdated(address _borrower, uint _newIndex);
 
     // --- Functions ---
@@ -139,7 +139,7 @@ interface ITroveManager is ILiquityBase {
 
     function applyPendingRewards(address _borrower) external;
 
-    function getPendingETHReward(address _borrower) external view returns (uint);
+    function getPendingCollateralTokenReward(address _borrower) external view returns (uint);
 
     function getPendingRDebtReward(address _borrower) external view returns (uint);
 
@@ -149,7 +149,7 @@ interface ITroveManager is ILiquityBase {
         uint debt,
         uint coll,
         uint pendingRDebtReward,
-        uint pendingETHReward
+        uint pendingCollateralTokenReward
     );
 
     function closeTrove(address _borrower) external;
@@ -159,7 +159,7 @@ interface ITroveManager is ILiquityBase {
     function getRedemptionRate() external view returns (uint);
     function getRedemptionRateWithDecay() external view returns (uint);
 
-    function getRedemptionFeeWithDecay(uint _ETHDrawn) external view returns (uint);
+    function getRedemptionFeeWithDecay(uint _collateralTokenDrawn) external view returns (uint);
 
     function borrowingSpread() external view returns (uint256);
     function setBorrowingSpread(uint256 _borrowingSpread) external;

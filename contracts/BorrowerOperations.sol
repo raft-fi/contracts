@@ -306,7 +306,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         emit RBorrowingFeePaid(msg.sender, vars.rFee);
 
         // Use the unmodified _rChange here, as we don't send the fee to the user
-        _moveTokensAndETHfromAdjustment(
+        _moveTokensFromAdjustment(
             contractsCache.activePool,
             contractsCache.rToken,
             vars.collChange,
@@ -339,7 +339,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         _repayR(activePoolCached, rTokenCached, address(this), R_GAS_COMPENSATION);
 
         // Send the collateral back to the user
-        activePoolCached.sendETH(msg.sender, coll);
+        activePoolCached.withdrawCollateral(msg.sender, coll);
     }
 
     /**
@@ -401,7 +401,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
                                   : _troveManager.decreaseTroveDebt(msg.sender, _debtChange);
     }
 
-    function _moveTokensAndETHfromAdjustment
+    function _moveTokensFromAdjustment
     (
         IActivePool _activePool,
         IRToken _rToken,
@@ -422,7 +422,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         if (_isCollIncrease) {
             _activePool.depositCollateral(msg.sender, _collChange);
         } else {
-            _activePool.sendETH(msg.sender, _collChange);
+            _activePool.withdrawCollateral(msg.sender, _collChange);
         }
     }
 

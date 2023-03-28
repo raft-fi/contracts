@@ -220,8 +220,8 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(bob_ETHrewardSnapshot_Before, 0)
       assert.equal(bob_RDebtRewardSnapshot_Before, 0)
 
-      const alicePendingETHReward = await troveManager.getPendingETHReward(alice)
-      const bobPendingETHReward = await troveManager.getPendingETHReward(bob)
+      const alicePendingETHReward = await troveManager.getPendingCollateralTokenReward(alice)
+      const bobPendingETHReward = await troveManager.getPendingCollateralTokenReward(bob)
       const alicePendingRDebtReward = await troveManager.getPendingRDebtReward(alice)
       const bobPendingRDebtReward = await troveManager.getPendingRDebtReward(bob)
       for (reward of [alicePendingETHReward, bobPendingETHReward, alicePendingRDebtReward, bobPendingRDebtReward]) {
@@ -587,9 +587,9 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(bob_RDebtRewardSnapshot_Before, 0)
 
       // Check A and B have pending rewards
-      const pendingCollReward_A = await troveManager.getPendingETHReward(alice)
+      const pendingCollReward_A = await troveManager.getPendingCollateralTokenReward(alice)
       const pendingDebtReward_A = await troveManager.getPendingRDebtReward(alice)
-      const pendingCollReward_B = await troveManager.getPendingETHReward(bob)
+      const pendingCollReward_B = await troveManager.getPendingCollateralTokenReward(bob)
       const pendingDebtReward_B = await troveManager.getPendingRDebtReward(bob)
       for (reward of [pendingCollReward_A, pendingDebtReward_A, pendingCollReward_B, pendingDebtReward_B]) {
         assert.isTrue(reward.gt(toBN('0')))
@@ -2468,7 +2468,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isAtMost(th.getDifference(defaultPool_ETH, liquidatedColl_C), 100)
       assert.isAtMost(th.getDifference(defaultPool_RDebt, liquidatedDebt_C), 100)
 
-      const pendingCollReward_A = await troveManager.getPendingETHReward(alice)
+      const pendingCollReward_A = await troveManager.getPendingCollateralTokenReward(alice)
       const pendingDebtReward_A = await troveManager.getPendingRDebtReward(alice)
       assert.isTrue(pendingCollReward_A.gt('0'))
       assert.isTrue(pendingDebtReward_A.gt('0'))

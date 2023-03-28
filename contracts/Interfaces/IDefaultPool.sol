@@ -9,10 +9,10 @@ interface IDefaultPool is IPool {
     // --- Events ---
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event DefaultPoolRDebtUpdated(uint _rDebt);
-    event DefaultPoolETHBalanceUpdated(uint _ETH);
+    event DefaultPoolCollateralTokenBalanceUpdated(uint _collateralBalance);
 
     // --- Functions ---
     function setAddresses(ITroveManager _troveManager) external;
 
-    function sendETH(address _to, uint _amount) external;
+    function withdrawCollateral(address _to, uint _amount) external;
 }

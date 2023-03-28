@@ -13,7 +13,7 @@ error ActivePoolInvalidCaller();
 interface IActivePool is IPool {
     // --- Events ---
     event ActivePoolRDebtUpdated(uint _rDebt);
-    event ActivePoolETHBalanceUpdated(uint _ETH);
+    event ActivePoolCollateralTokenBalanceUpdated(uint _collateralBalance);
 
     // --- Functions ---
     function setAddresses(
@@ -22,5 +22,5 @@ interface IActivePool is IPool {
         IDefaultPool _defaultPool
     ) external;
 
-    function sendETH(address _account, uint _amount) external;
+    function withdrawCollateral(address _account, uint _amount) external;
 }

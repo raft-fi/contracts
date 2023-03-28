@@ -799,7 +799,7 @@ contract('TroveManager', async accounts => {
     assert.isFalse(await troveManager.hasPendingRewards(E))
 
     // Check C's pending coll and debt rewards are <= the coll and debt in the DefaultPool
-    const pendingETH_C = await troveManager.getPendingETHReward(C)
+    const pendingETH_C = await troveManager.getPendingCollateralTokenReward(C)
     const pendingRDebt_C = await troveManager.getPendingRDebtReward(C)
     const defaultPoolETH = await defaultPool.collateralBalance()
     const defaultPoolRDebt = await defaultPool.getRDebt()
@@ -1307,7 +1307,7 @@ contract('TroveManager', async accounts => {
     assert.isFalse(await troveManager.hasPendingRewards(E))
 
     // Check C's pending coll and debt rewards are <= the coll and debt in the DefaultPool
-    const pendingETH_C = await troveManager.getPendingETHReward(C)
+    const pendingETH_C = await troveManager.getPendingCollateralTokenReward(C)
     const pendingRDebt_C = await troveManager.getPendingRDebtReward(C)
     const defaultPoolETH = await defaultPool.collateralBalance()
     const defaultPoolRDebt = await defaultPool.getRDebt()
@@ -3563,7 +3563,7 @@ contract('TroveManager', async accounts => {
     assert.equal(carol_PendingRDebtReward, 0)
   })
 
-  it("getPendingETHReward(): Returns 0 if there is no pending ETH reward", async () => {
+  it("getPendingCollateralTokenReward(): Returns 0 if there is no pending ETH reward", async () => {
     await deploymentHelper.mintR(contracts.rToken, whale);
     // make some troves
     const { totalDebt } = await openTrove({ ICR: toBN(dec(2, 18)), extraRAmount: dec(100, 18), extraParams: { from: defaulter_1 } })
@@ -3587,7 +3587,7 @@ contract('TroveManager', async accounts => {
     const carolSnapshot_L_ETH = (await troveManager.rewardSnapshots(carol))[0]
     assert.equal(carolSnapshot_L_ETH, 0)
 
-    const carol_PendingETHReward = await troveManager.getPendingETHReward(carol)
+    const carol_PendingETHReward = await troveManager.getPendingCollateralTokenReward(carol)
     assert.equal(carol_PendingETHReward, 0)
   })
 

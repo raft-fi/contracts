@@ -23,11 +23,11 @@ contract ActivePoolTest is Test {
         activePool.setAddresses(BORROWER_OPERATIONS, POSITIONS_MANAGER, DEFAULT_POOL);
     }
 
-    // sendETH(): reverts when called by an account that is not Borrower Operations nor Trove Manager
+    // withdrawCollateral(): reverts when called by an account that is not Borrower Operations nor Trove Manager
     function testUnauthorizedSendETH() public {
         vm.prank(USER);
         vm.expectRevert(ActivePoolInvalidCaller.selector);
-        activePool.sendETH(USER, 100);
+        activePool.withdrawCollateral(USER, 100);
     }
 
     // increaseRDebt(): reverts when called by an account that is not Borrower Operations nor Trove Manager
