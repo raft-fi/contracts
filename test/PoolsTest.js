@@ -66,7 +66,7 @@ contract('ActivePool', async accounts => {
   })
 
   // send raw ether
-  it('sendETH(): decreases the recorded ETH balance by the correct amount', async () => {
+  it('withdrawCollateral(): decreases the recorded ETH balance by the correct amount', async () => {
     // setup: give pool 2 ether
     const activePool_initialBalance = web3.utils.toBN(await web3.eth.getBalance(activePool.address))
     assert.equal(activePool_initialBalance, 0)
@@ -80,7 +80,7 @@ contract('ActivePool', async accounts => {
     assert.equal(activePool_BalanceBeforeTx, dec(2, 'ether'))
 
     // send ether from pool to alice
-    const sendETHData = th.getTransactionData('sendETH(address,uint256)', [alice, web3.utils.toHex(dec(1, 'ether'))])
+    const sendETHData = th.getTransactionData('withdrawCollateral(address,uint256)', [alice, web3.utils.toHex(dec(1, 'ether'))])
     const tx2 = await mockBorrowerOperations.forward(activePool.address, sendETHData, { from: owner })
     assert.isTrue(tx2.receipt.status)
 

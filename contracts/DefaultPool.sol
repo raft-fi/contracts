@@ -43,13 +43,13 @@ contract DefaultPool is Ownable2Step, CollateralPool, TroveManagerDependent, IDe
     function depositCollateral(address _from, uint _amount) external override onlyTroveManager {
         _depositCollateral(_from, _amount);
 
-        emit DefaultPoolETHBalanceUpdated(collateralBalance);
+        emit DefaultPoolCollateralTokenBalanceUpdated(collateralBalance);
     }
 
-    function sendETH(address _to, uint _amount) external override onlyTroveManager {
+    function withdrawCollateral(address _to, uint _amount) external override onlyTroveManager {
         collateralBalance -= _amount;
-        emit DefaultPoolETHBalanceUpdated(collateralBalance);
-        emit EtherSent(_to, _amount);
+        emit DefaultPoolCollateralTokenBalanceUpdated(collateralBalance);
+        emit CollateralTokenSent(_to, _amount);
         collateralToken.transfer(_to, _amount);
     }
 

@@ -15,7 +15,7 @@ contract MultiTroveGetter {
         uint coll;
         uint stake;
 
-        uint snapshotETH;
+        uint snapshotCollateralBalance;
         uint snapshotRDebt;
     }
 
@@ -81,7 +81,7 @@ contract MultiTroveGetter {
                 /* arrayIndex */
             ) = troveManager.Troves(currentTroveowner);
             (
-                _troves[idx].snapshotETH,
+                _troves[idx].snapshotCollateralBalance,
                 _troves[idx].snapshotRDebt
             ) = troveManager.rewardSnapshots(currentTroveowner);
 
@@ -110,7 +110,7 @@ contract MultiTroveGetter {
                 /* arrayIndex */
             ) = troveManager.Troves(currentTroveowner);
             (
-                _troves[idx].snapshotETH,
+                _troves[idx].snapshotCollateralBalance,
                 _troves[idx].snapshotRDebt
             ) = troveManager.rewardSnapshots(currentTroveowner);
 

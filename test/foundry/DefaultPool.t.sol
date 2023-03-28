@@ -21,11 +21,11 @@ contract DefaultPoolTest is Test {
         defaultPool.setAddresses(POSITIONS_MANAGER);
     }
 
-    // sendETH(): reverts when called by an account that is not Trove Manager
+    // withdrawCollateral(): reverts when called by an account that is not Trove Manager
     function testUnauthorizedSendETH() public {
         vm.prank(USER);
         vm.expectRevert(CallerIsNotTroveManager.selector);
-        defaultPool.sendETH(USER, 100);
+        defaultPool.withdrawCollateral(USER, 100);
     }
 
     // increaseRDebt(): reverts when called by an account that is not Trove Manager

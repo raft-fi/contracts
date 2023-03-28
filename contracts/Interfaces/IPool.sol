@@ -10,7 +10,7 @@ interface IPool is ICollateralPool {
 
     event ActivePoolAddressChanged(address _newActivePoolAddress);
     event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
-    event EtherSent(address _to, uint _amount);
+    event CollateralTokenSent(address _to, uint _amount);
 
     // --- Functions ---
 

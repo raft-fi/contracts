@@ -68,7 +68,7 @@ contract CollSurplusPool is Ownable2Step, CollateralPool, ActivePoolDependent, B
         emit CollBalanceUpdated(_account, 0);
 
         collateralBalance -= claimableColl;
-        emit EtherSent(_account, claimableColl);
+        emit CollateralTokenSent(_account, claimableColl);
 
         collateralToken.transfer(_account, claimableColl);
     }
