@@ -9,10 +9,10 @@ import "./Dependencies/TroveManagerDependent.sol";
 import "./CollateralPool.sol";
 
 /*
- * The Default Pool holds the ETH and R debt (but not R tokens) from liquidations that have been redistributed
+ * The Default Pool holds the CollateralToken and R debt (but not R tokens) from liquidations that have been redistributed
  * to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
  *
- * When a trove makes an operation that applies its pending ETH and R debt, its pending ETH and R debt is moved
+ * When a trove makes an operation that applies its pending collateralToken and R debt, its pending collateralToken and R debt is moved
  * from the Default Pool to the Active Pool.
  */
 contract DefaultPool is Ownable2Step, CollateralPool, TroveManagerDependent, IDefaultPool {
@@ -43,12 +43,12 @@ contract DefaultPool is Ownable2Step, CollateralPool, TroveManagerDependent, IDe
     function depositCollateral(address _from, uint _amount) external override onlyTroveManager {
         _depositCollateral(_from, _amount);
 
-        emit DefaultPoolETHBalanceUpdated(ETH);
+        emit DefaultPoolETHBalanceUpdated(collateralBalance);
     }
 
     function sendETH(address _to, uint _amount) external override onlyTroveManager {
-        ETH -= _amount;
-        emit DefaultPoolETHBalanceUpdated(ETH);
+        collateralBalance -= _amount;
+        emit DefaultPoolETHBalanceUpdated(collateralBalance);
         emit EtherSent(_to, _amount);
         collateralToken.transfer(_to, _amount);
     }

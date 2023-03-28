@@ -11,9 +11,8 @@ interface ICollateralPool {
 
     // --- Functions ---
 
-    /// @dev Returns the ETH state variable.
-    /// Not necessarily equal to the the contract's raw ETH balance - ether can be forcibly sent to contracts.
-    function ETH() external view returns (uint);
+    /// @dev Returns the collateralBalance state variable (balance of collateralToken)
+    function collateralBalance() external view returns (uint);
 
     function collateralToken() external view returns(IERC20);
 

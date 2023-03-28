@@ -96,10 +96,10 @@ contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
                 if (netRDebt > MIN_NET_DEBT) {
                     uint maxRedeemableR = Math.min(remainingR, netRDebt - MIN_NET_DEBT);
 
-                    uint ETH = troveManager.getTroveColl(currentTroveuser)
+                    uint collateralBalance = troveManager.getTroveColl(currentTroveuser)
                          + troveManager.getPendingETHReward(currentTroveuser);
 
-                    uint newColl = ETH - maxRedeemableR * DECIMAL_PRECISION / _price;
+                    uint newColl = collateralBalance - maxRedeemableR * DECIMAL_PRECISION / _price;
                     uint newDebt = netRDebt - maxRedeemableR;
 
                     uint compositeDebt = _getCompositeDebt(newDebt);

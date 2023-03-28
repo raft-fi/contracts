@@ -12,7 +12,7 @@ import "./Dependencies/BaseMath.sol";
 import "./Dependencies/LiquityMath.sol";
 
 /*
-* PriceFeed for mainnet deployment, to be connected to Chainlink's live ETH:USD aggregator reference
+* PriceFeed for mainnet deployment, to be connected to Chainlink's live collateralToken:USD aggregator reference
 * contract, and a wrapper contract TellorCaller, which connects to TellorMaster contract.
 *
 * The PriceFeed uses Chainlink as primary oracle, and Tellor as fallback. It contains logic for

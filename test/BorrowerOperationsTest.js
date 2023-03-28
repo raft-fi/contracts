@@ -99,10 +99,10 @@ contract('BorrowerOperations', async accounts => {
         "BorrowerOps: An operation that would result in ICR < MCR is not permitted")
     })
 
-    it("addColl(): Increases the activePool ETH and raw ether balance by correct amount", async () => {
+    it("addColl(): Increases the activePool collateralToken and raw ether balance by correct amount", async () => {
       const { collateral: aliceColl } = await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
-      const activePool_ETH_Before = await activePool.ETH()
+      const activePool_ETH_Before = await activePool.collateralBalance()
       const activePool_RawEther_Before = toBN(await wstETHTokenMock.balanceOf(activePool.address))
 
       assert.isTrue(activePool_ETH_Before.eq(aliceColl))
@@ -111,7 +111,7 @@ contract('BorrowerOperations', async accounts => {
       await wstETHTokenMock.approve(activePool.address, dec(1, 'ether'), { from: alice})
       await borrowerOperations.addColl(alice, alice, dec(1, 'ether'), { from: alice })
 
-      const activePool_ETH_After = await activePool.ETH()
+      const activePool_ETH_After = await activePool.collateralBalance()
       const activePool_RawEther_After = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After.eq(aliceColl.add(toBN(dec(1, 'ether')))))
       assert.isTrue(activePool_RawEther_After.eq(aliceColl.add(toBN(dec(1, 'ether')))))
@@ -184,7 +184,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(totalStakes_After.eq(totalStakes_Before.add(toBN(dec(2, 'ether')))))
     })
 
-    it("addColl(), active Trove: applies pending rewards and updates user's L_ETH, L_RDebt snapshots", async () => {
+    it("addColl(), active Trove: applies pending rewards and updates user's L_CollateralBalance, L_RDebt snapshots", async () => {
       // --- SETUP ---
 
       const { collateral: aliceCollBefore, totalDebt: aliceDebtBefore } = await openTrove({ extraRAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
@@ -203,7 +203,7 @@ contract('BorrowerOperations', async accounts => {
 
       assert.isFalse(await sortedTroves.contains(carol))
 
-      const L_ETH = await troveManager.L_ETH()
+      const L_CollateralBalance = await troveManager.L_CollateralBalance()
       const L_RDebt = await troveManager.L_RDebt()
 
       // check Alice and Bob's reward snapshots are zero before they alter their Troves
@@ -249,7 +249,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(bobNewDebt.eq(bobDebtBefore.add(bobPendingRDebtReward)))
 
       /* Check that both Alice and Bob's snapshots of the rewards-per-unit-staked metrics should be updated
-       to the latest values of L_ETH and L_RDebt */
+       to the latest values of L_CollateralBalance and L_RDebt */
       const alice_rewardSnapshot_After = await troveManager.rewardSnapshots(alice)
       const alice_ETHrewardSnapshot_After = alice_rewardSnapshot_After[0]
       const alice_RDebtRewardSnapshot_After = alice_rewardSnapshot_After[1]
@@ -258,9 +258,9 @@ contract('BorrowerOperations', async accounts => {
       const bob_ETHrewardSnapshot_After = bob_rewardSnapshot_After[0]
       const bob_RDebtRewardSnapshot_After = bob_rewardSnapshot_After[1]
 
-      assert.isAtMost(th.getDifference(alice_ETHrewardSnapshot_After, L_ETH), 100)
+      assert.isAtMost(th.getDifference(alice_ETHrewardSnapshot_After, L_CollateralBalance), 100)
       assert.isAtMost(th.getDifference(alice_RDebtRewardSnapshot_After, L_RDebt), 100)
-      assert.isAtMost(th.getDifference(bob_ETHrewardSnapshot_After, L_ETH), 100)
+      assert.isAtMost(th.getDifference(bob_ETHrewardSnapshot_After, L_CollateralBalance), 100)
       assert.isAtMost(th.getDifference(bob_RDebtRewardSnapshot_After, L_RDebt), 100)
     })
 
@@ -352,10 +352,8 @@ contract('BorrowerOperations', async accounts => {
 
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
-      const collWithdrawal = 1  // 1 wei withdrawal
-
-     await assertRevert(borrowerOperations.withdrawColl(1, alice, alice, { from: alice }),
-      "BorrowerOps: An operation that would result in ICR < MCR is not permitted")
+      await assertRevert(borrowerOperations.withdrawColl(1, alice, alice, { from: alice }),
+        "BorrowerOps: An operation that would result in ICR < MCR is not permitted")
     })
 
     // reverts when calling address does not have active trove
@@ -376,7 +374,7 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("withdrawColl(): reverts when requested ETH withdrawal is > the trove's collateral", async () => {
+    it("withdrawColl(): reverts when requested collateralToken withdrawal is > the trove's collateral", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
@@ -496,13 +494,13 @@ contract('BorrowerOperations', async accounts => {
       const aliceCollBefore = await getTroveEntireColl(alice)
 
       // check before
-      const activePool_ETH_before = await activePool.ETH()
+      const activePool_ETH_before = await activePool.collateralBalance()
       const activePool_RawEther_before = toBN(await wstETHTokenMock.balanceOf(activePool.address))
 
       await borrowerOperations.withdrawColl(dec(1, 'ether'), alice, alice, { from: alice })
 
       // check after
-      const activePool_ETH_After = await activePool.ETH()
+      const activePool_ETH_After = await activePool.collateralBalance()
       const activePool_RawEther_After = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After.eq(activePool_ETH_before.sub(toBN(dec(1, 'ether')))))
       assert.isTrue(activePool_RawEther_After.eq(activePool_RawEther_before.sub(toBN(dec(1, 'ether')))))
@@ -547,7 +545,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(balanceDiff.eq(toBN(dec(1, 'ether'))))
     })
 
-    it("withdrawColl(): applies pending rewards and updates user's L_ETH, L_RDebt snapshots", async () => {
+    it("withdrawColl(): applies pending rewards and updates user's L_CollateralBalance, L_RDebt snapshots", async () => {
       // --- SETUP ---
       // Alice adds 15 ether, Bob adds 5 ether, Carol adds 1 ether
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
@@ -571,7 +569,7 @@ contract('BorrowerOperations', async accounts => {
       // close Carol's Trove, liquidating her 1 ether and 180R.
       await troveManager.liquidate(carol, { from: owner });
 
-      const L_ETH = await troveManager.L_ETH()
+      const L_CollateralBalance = await troveManager.L_CollateralBalance()
       const L_RDebt = await troveManager.L_RDebt()
 
       // check Alice and Bob's reward snapshots are zero before they alter their Troves
@@ -617,7 +615,7 @@ contract('BorrowerOperations', async accounts => {
       th.assertIsApproximatelyEqual(bobDebtAfter, bobDebtBefore.add(pendingDebtReward_B), 10000)
 
       /* After top up, both Alice and Bob's snapshots of the rewards-per-unit-staked metrics should be updated
-       to the latest values of L_ETH and L_RDebt */
+       to the latest values of L_CollateralBalance and L_RDebt */
       const alice_rewardSnapshot_After = await troveManager.rewardSnapshots(alice)
       const alice_ETHrewardSnapshot_After = alice_rewardSnapshot_After[0]
       const alice_RDebtRewardSnapshot_After = alice_rewardSnapshot_After[1]
@@ -626,9 +624,9 @@ contract('BorrowerOperations', async accounts => {
       const bob_ETHrewardSnapshot_After = bob_rewardSnapshot_After[0]
       const bob_RDebtRewardSnapshot_After = bob_rewardSnapshot_After[1]
 
-      assert.isAtMost(th.getDifference(alice_ETHrewardSnapshot_After, L_ETH), 100)
+      assert.isAtMost(th.getDifference(alice_ETHrewardSnapshot_After, L_CollateralBalance), 100)
       assert.isAtMost(th.getDifference(alice_RDebtRewardSnapshot_After, L_RDebt), 100)
-      assert.isAtMost(th.getDifference(bob_ETHrewardSnapshot_After, L_ETH), 100)
+      assert.isAtMost(th.getDifference(bob_ETHrewardSnapshot_After, L_CollateralBalance), 100)
       assert.isAtMost(th.getDifference(bob_RDebtRewardSnapshot_After, L_RDebt), 100)
     })
 
@@ -1787,7 +1785,7 @@ contract('BorrowerOperations', async accounts => {
       await openTrove({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const aliceCollBefore = await getTroveEntireColl(alice)
-      const activePoolCollBefore = await activePool.ETH()
+      const activePoolCollBefore = await activePool.collateralBalance()
 
       assert.isTrue(aliceCollBefore.gt(toBN('0')))
       assert.isTrue(aliceCollBefore.eq(activePoolCollBefore))
@@ -1796,7 +1794,7 @@ contract('BorrowerOperations', async accounts => {
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 18), true, alice, alice, 0, { from: alice })
 
       const aliceCollAfter = await getTroveEntireColl(alice)
-      const activePoolCollAfter = await activePool.ETH()
+      const activePoolCollAfter = await activePool.collateralBalance()
 
       assert.isTrue(aliceCollAfter.eq(activePoolCollAfter))
       assert.isTrue(activePoolCollAfter.eq(activePoolCollAfter))
@@ -1978,12 +1976,12 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(alice_RTokenBalance_After.eq(alice_RTokenBalance_Before.add(toBN(dec(100, 18)))))
     })
 
-    it("adjustTrove(): Changes the activePool ETH and raw ether balance by the requested decrease", async () => {
+    it("adjustTrove(): Changes the activePool collateralToken and raw ether balance by the requested decrease", async () => {
       await openTrove({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
       await openTrove({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const activePool_ETH_Before = await activePool.ETH()
+      const activePool_ETH_Before = await activePool.collateralBalance()
       const activePool_RawEther_Before = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_Before.gt(toBN('0')))
       assert.isTrue(activePool_RawEther_Before.gt(toBN('0')))
@@ -1991,7 +1989,7 @@ contract('BorrowerOperations', async accounts => {
       // Alice adjusts trove - coll decrease and debt decrease
       await borrowerOperations.adjustTrove(th._100pct, dec(100, 'finney'), dec(10, 18), false, alice, alice, 0, { from: alice })
 
-      const activePool_ETH_After = await activePool.ETH()
+      const activePool_ETH_After = await activePool.collateralBalance()
       const activePool_RawEther_After = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After.eq(activePool_ETH_Before.sub(toBN(dec(1, 17)))))
       assert.isTrue(activePool_RawEther_After.eq(activePool_ETH_Before.sub(toBN(dec(1, 17)))))
@@ -2002,7 +2000,7 @@ contract('BorrowerOperations', async accounts => {
 
       await openTrove({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const activePool_ETH_Before = await activePool.ETH()
+      const activePool_ETH_Before = await activePool.collateralBalance()
       const activePool_RawEther_Before = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_Before.gt(toBN('0')))
       assert.isTrue(activePool_RawEther_Before.gt(toBN('0')))
@@ -2011,7 +2009,7 @@ contract('BorrowerOperations', async accounts => {
       await wstETHTokenMock.approve(activePool.address, dec(1, 'ether'), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(100, 18), true, alice, alice, dec(1, 'ether'), { from: alice })
 
-      const activePool_ETH_After = await activePool.ETH()
+      const activePool_ETH_After = await activePool.collateralBalance()
       const activePool_RawEther_After = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After.eq(activePool_ETH_Before.add(toBN(dec(1, 18)))))
       assert.isTrue(activePool_RawEther_After.eq(activePool_ETH_Before.add(toBN(dec(1, 18)))))
@@ -2303,7 +2301,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(aliceColl.gt('0'))
 
       // Check active Pool ETH before
-      const activePool_ETH_before = await activePool.ETH()
+      const activePool_ETH_before = await activePool.collateralBalance()
       const activePool_RawEther_before = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_before.eq(aliceColl.add(dennisColl)))
       assert.isTrue(activePool_ETH_before.gt(toBN('0')))
@@ -2316,7 +2314,7 @@ contract('BorrowerOperations', async accounts => {
       await borrowerOperations.closeTrove({ from: alice })
 
       // Check after
-      const activePool_ETH_After = await activePool.ETH()
+      const activePool_ETH_After = await activePool.collateralBalance()
       const activePool_RawEther_After = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After.eq(dennisColl))
       assert.isTrue(activePool_RawEther_After.eq(dennisColl))
@@ -2463,7 +2461,7 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(bob_ETHrewardSnapshot_Before, 0)
       assert.equal(bob_RDebtRewardSnapshot_Before, 0)
 
-      const defaultPool_ETH = await defaultPool.ETH()
+      const defaultPool_ETH = await defaultPool.collateralBalance()
       const defaultPool_RDebt = await defaultPool.getRDebt()
 
       // Carol's liquidated coll (1 ETH) and drawn debt should have entered the Default Pool
@@ -2478,7 +2476,7 @@ contract('BorrowerOperations', async accounts => {
       // Close Alice's trove. Alice's pending rewards should be removed from the DefaultPool when she close.
       await borrowerOperations.closeTrove({ from: alice })
 
-      const defaultPool_ETH_afterAliceCloses = await defaultPool.ETH()
+      const defaultPool_ETH_afterAliceCloses = await defaultPool.collateralBalance()
       const defaultPool_RDebt_afterAliceCloses = await defaultPool.getRDebt()
 
       assert.isAtMost(th.getDifference(defaultPool_ETH_afterAliceCloses,
@@ -2492,7 +2490,7 @@ contract('BorrowerOperations', async accounts => {
       // Close Bob's trove. Expect DefaultPool coll and debt to drop to 0, since closing pulls his rewards out.
       await borrowerOperations.closeTrove({ from: bob })
 
-      const defaultPool_ETH_afterBobCloses = await defaultPool.ETH()
+      const defaultPool_ETH_afterBobCloses = await defaultPool.collateralBalance()
       const defaultPool_RDebt_afterBobCloses = await defaultPool.getRDebt()
 
       assert.isAtMost(th.getDifference(defaultPool_ETH_afterBobCloses, 0), 100000)
@@ -3104,7 +3102,7 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("openTrove(): Increases the activePool ETH and raw ether balance by correct amount", async () => {
-      const activePool_ETH_Before = await activePool.ETH()
+      const activePool_ETH_Before = await activePool.collateralBalance()
       const activePool_RawEther_Before = await wstETHTokenMock.balanceOf(activePool.address)
       assert.equal(activePool_ETH_Before, 0)
       assert.equal(activePool_RawEther_Before, 0)
@@ -3112,13 +3110,13 @@ contract('BorrowerOperations', async accounts => {
       await openTrove({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       const aliceCollAfter = await getTroveEntireColl(alice)
 
-      const activePool_ETH_After = await activePool.ETH()
+      const activePool_ETH_After = await activePool.collateralBalance()
       const activePool_RawEther_After = toBN(await wstETHTokenMock.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After.eq(aliceCollAfter))
       assert.isTrue(activePool_RawEther_After.eq(aliceCollAfter))
     })
 
-    it("openTrove(): records up-to-date initial snapshots of L_ETH and L_RDebt", async () => {
+    it("openTrove(): records up-to-date initial snapshots of L_CollateralBalance and L_RDebt", async () => {
       // --- SETUP ---
 
       await openTrove({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
@@ -3133,13 +3131,13 @@ contract('BorrowerOperations', async accounts => {
       const liquidationTx = await troveManager.liquidate(carol, { from: owner });
       const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
 
-      /* with total stakes = 10 ether, after liquidation, L_ETH should equal 1/10 ether per-ether-staked,
+      /* with total stakes = 10 ether, after liquidation, L_CollateralBalance should equal 1/10 ether per-ether-staked,
        and L_R should equal 18 R per-ether-staked. */
 
-      const L_ETH = await troveManager.L_ETH()
+      const L_CollateralBalance = await troveManager.L_CollateralBalance()
       const L_R = await troveManager.L_RDebt()
 
-      assert.isTrue(L_ETH.gt(toBN('0')))
+      assert.isTrue(L_CollateralBalance.gt(toBN('0')))
       assert.isTrue(L_R.gt(toBN('0')))
 
 
@@ -3147,12 +3145,12 @@ contract('BorrowerOperations', async accounts => {
       // Bob opens trove
       await openTrove({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
-      // Check Bob's snapshots of L_ETH and L_R equal the respective current values
+      // Check Bob's snapshots of L_CollateralBalance and L_R equal the respective current values
       const bob_rewardSnapshot = await troveManager.rewardSnapshots(bob)
       const bob_ETHrewardSnapshot = bob_rewardSnapshot[0]
       const bob_RDebtRewardSnapshot = bob_rewardSnapshot[1]
 
-      assert.isAtMost(th.getDifference(bob_ETHrewardSnapshot, L_ETH), 1000)
+      assert.isAtMost(th.getDifference(bob_ETHrewardSnapshot, L_CollateralBalance), 1000)
       assert.isAtMost(th.getDifference(bob_RDebtRewardSnapshot, L_R), 1000)
     })
 

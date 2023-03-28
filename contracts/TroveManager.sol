@@ -75,21 +75,21 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
     uint public totalCollateralSnapshot;
 
     /*
-    * L_ETH and L_RDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
+    * L_CollateralBalance and L_RDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
     *
-    * An ETH gain of ( stake * [L_ETH - L_ETH(0)] )
+    * An collateralToken gain of ( stake * [L_CollateralBalance - L_CollateralBalance(0)] )
     * A rDebt increase  of ( stake * [L_RDebt - L_RDebt(0)] )
     *
-    * Where L_ETH(0) and L_RDebt(0) are snapshots of L_ETH and L_RDebt for the active Trove taken at the instant the stake was made
+    * Where L_CollateralBalance(0) and L_RDebt(0) are snapshots of L_CollateralBalance and L_RDebt for the active Trove taken at the instant the stake was made
     */
-    uint public L_ETH;
+    uint public L_CollateralBalance;
     uint public L_RDebt;
 
     // Map addresses with active troves to their RewardSnapshot
     mapping (address => RewardSnapshot) public rewardSnapshots;
 
-    // Object containing the ETH and R snapshots for a given active trove
-    struct RewardSnapshot { uint ETH; uint rDebt;}
+    // Object containing the CollateralToken and R snapshots for a given active trove
+    struct RewardSnapshot { uint collateralBalance; uint rDebt;}
 
     // Array of all active trove addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
     address[] public TroveOwners;
@@ -493,7 +493,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         // Get the ETHLot of equivalent value in USD
         singleRedemption.ETHLot = singleRedemption.rLot * DECIMAL_PRECISION / _price;
 
-        // Decrease the debt and collateral of the current Trove according to the R lot and corresponding ETH to send
+        // Decrease the debt and collateral of the current Trove according to the R lot and corresponding collateralToken to send
         uint newDebt = Troves[_borrower].debt - singleRedemption.rLot;
         uint newColl = Troves[_borrower].coll - singleRedemption.ETHLot;
 
@@ -537,17 +537,17 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
     /*
     * Called when a full redemption occurs, and closes the trove.
-    * The redeemer swaps (debt - liquidation reserve) R for (debt - liquidation reserve) worth of ETH, so the R liquidation reserve left corresponds to the remaining debt.
+    * The redeemer swaps (debt - liquidation reserve) R for (debt - liquidation reserve) worth of collateralToken, so the R liquidation reserve left corresponds to the remaining debt.
     * In order to close the trove, the R liquidation reserve is burned, and the corresponding debt is removed from the active pool.
     * The debt recorded on the trove's struct is zero'd elswhere, in _closeTrove.
-    * Any surplus ETH left in the trove, is sent to the Coll surplus pool, and can be later claimed by the borrower.
+    * Any surplus collateralToken left in the trove, is sent to the Coll surplus pool, and can be later claimed by the borrower.
     */
     function _redeemCloseTrove(ContractsCache memory _contractsCache, address _borrower, uint _R, uint _ETH) internal {
         _contractsCache.rToken.burn(address(borrowerOperations), _R);
-        // Update Active Pool R, and send ETH to account
+        // Update Active Pool R, and send collateralToken to account
         _contractsCache.activePool.decreaseRDebt(_R);
 
-        // send ETH from Active Pool to CollSurplus Pool
+        // send collateralToken from Active Pool to CollSurplus Pool
         _contractsCache.collSurplusPool.accountSurplus(_borrower, _ETH);
 
         _contractsCache.activePool.sendETH(address(this), _ETH);
@@ -675,21 +675,21 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         // Use the saved total R supply value, from before it was reduced by the redemption.
         _updateBaseRateFromRedemption(totals.totalETHDrawn, totals.price, totals.totalRSupplyAtStart);
 
-        // Calculate the ETH fee
+        // Calculate the collateralToken fee
         totals.ETHFee = _getRedemptionFee(totals.totalETHDrawn);
 
         _requireUserAcceptsFee(totals.ETHFee, totals.totalETHDrawn, _maxFeePercentage);
 
-        // Send the ETH fee to the recipient
+        // Send the collateralToken fee to the recipient
         contractsCache.activePool.sendETH(feeRecipient, totals.ETHFee);
 
         totals.ETHToSendToRedeemer = totals.totalETHDrawn - totals.ETHFee;
 
         emit Redemption(_rAmount, totals.totalRToRedeem, totals.totalETHDrawn, totals.ETHFee);
 
-        // Burn the total R that is cancelled with debt, and send the redeemed ETH to msg.sender
+        // Burn the total R that is cancelled with debt, and send the redeemed collateralToken to msg.sender
         contractsCache.rToken.burn(msg.sender, totals.totalRToRedeem);
-        // Update Active Pool R, and send ETH to account
+        // Update Active Pool R, and send collateralToken to account
         contractsCache.activePool.decreaseRDebt(totals.totalRToRedeem);
         contractsCache.activePool.sendETH(msg.sender, totals.ETHToSendToRedeemer);
     }
@@ -747,21 +747,21 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         }
     }
 
-    // Update borrower's snapshots of L_ETH and L_RDebt to reflect the current values
+    // Update borrower's snapshots of L_CollateralBalance and L_RDebt to reflect the current values
     function updateTroveRewardSnapshots(address _borrower) external override onlyBorrowerOperations {
        return _updateTroveRewardSnapshots(_borrower);
     }
 
     function _updateTroveRewardSnapshots(address _borrower) internal {
-        rewardSnapshots[_borrower].ETH = L_ETH;
+        rewardSnapshots[_borrower].collateralBalance = L_CollateralBalance;
         rewardSnapshots[_borrower].rDebt = L_RDebt;
-        emit TroveSnapshotsUpdated(L_ETH, L_RDebt);
+        emit TroveSnapshotsUpdated(L_CollateralBalance, L_RDebt);
     }
 
-    // Get the borrower's pending accumulated ETH reward, earned by their stake
+    // Get the borrower's pending accumulated collateralToken reward, earned by their stake
     function getPendingETHReward(address _borrower) public view override returns (uint pendingETHReward) {
-        uint snapshotETH = rewardSnapshots[_borrower].ETH;
-        uint rewardPerUnitStaked = L_ETH - snapshotETH;
+        uint snapshotCollateralBalance = rewardSnapshots[_borrower].collateralBalance;
+        uint rewardPerUnitStaked = L_CollateralBalance - snapshotCollateralBalance;
 
         if (rewardPerUnitStaked == 0 || Troves[_borrower].status != TroveStatus.active) { return 0; }
 
@@ -784,7 +784,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         * this indicates that rewards have occured since the snapshot was made, and the user therefore has
         * pending rewards
         */
-        return Troves[_borrower].status == TroveStatus.active && rewardSnapshots[_borrower].ETH < L_ETH;
+        return Troves[_borrower].status == TroveStatus.active && rewardSnapshots[_borrower].collateralBalance < L_CollateralBalance;
     }
 
     // Return the Troves entire debt and coll, including pending rewards from redistributions.
@@ -849,7 +849,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
         /*
         * Add distributed coll and debt rewards-per-unit-staked to the running totals. Division uses a "feedback"
-        * error correction, to keep the cumulative error low in the running totals L_ETH and L_RDebt:
+        * error correction, to keep the cumulative error low in the running totals L_CollateralBalance and L_RDebt:
         *
         * 1) Form numerators which compensate for the floor division errors that occurred the last time this
         * function was called.
@@ -869,10 +869,10 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         lastRDebtError_Redistribution = RDebtNumerator - RDebtRewardPerUnitStaked * totalStakes;
 
         // Add per-unit-staked terms to the running totals
-        L_ETH += ETHRewardPerUnitStaked;
+        L_CollateralBalance += ETHRewardPerUnitStaked;
         L_RDebt += RDebtRewardPerUnitStaked;
 
-        emit LTermsUpdated(L_ETH, L_RDebt);
+        emit LTermsUpdated(L_CollateralBalance, L_RDebt);
 
         // Transfer coll and debt from ActivePool to DefaultPool
         _activePool.decreaseRDebt(_debt);
@@ -896,7 +896,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         Troves[_borrower].coll = 0;
         Troves[_borrower].debt = 0;
 
-        rewardSnapshots[_borrower].ETH = 0;
+        rewardSnapshots[_borrower].collateralBalance = 0;
         rewardSnapshots[_borrower].rDebt = 0;
 
         _removeTroveOwner(_borrower, TroveOwnersArrayLength);
@@ -909,15 +909,15 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
     *
     * The calculation excludes a portion of collateral that is in the ActivePool:
     *
-    * the total ETH gas compensation from the liquidation sequence
+    * the total collateralToken gas compensation from the liquidation sequence
     *
-    * The ETH as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
+    * The collateralToken as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
     */
     function _updateSystemSnapshots_excludeCollRemainder(IActivePool _activePool, uint _collRemainder) internal {
         totalStakesSnapshot = totalStakes;
 
-        uint activeColl = _activePool.ETH();
-        uint liquidatedColl = defaultPool.ETH();
+        uint activeColl = _activePool.collateralBalance();
+        uint liquidatedColl = defaultPool.collateralBalance();
         totalCollateralSnapshot = activeColl - _collRemainder + liquidatedColl;
 
         emit SystemSnapshotsUpdated(totalStakesSnapshot, totalCollateralSnapshot);
@@ -981,7 +981,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
     function _updateBaseRateFromRedemption(uint _ETHDrawn,  uint _price, uint _totalRSupply) internal returns (uint) {
         uint decayedBaseRate = _calcDecayedBaseRate();
 
-        /* Convert the drawn ETH back to R at face value rate (1 R:1 USD), in order to get
+        /* Convert the drawn collateralToken back to R at face value rate (1 R:1 USD), in order to get
         * the fraction of total supply that was redeemed at face value. */
         uint redeemedRFraction = _ETHDrawn * _price / _totalRSupply;
 
