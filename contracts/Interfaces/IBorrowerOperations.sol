@@ -49,7 +49,6 @@ interface IBorrowerOperations {
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event GasPoolAddressChanged(address _gasPoolAddress);
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event PriceFeedAddressChanged(address  _newPriceFeedAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
@@ -66,7 +65,6 @@ interface IBorrowerOperations {
         address _troveManagerAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _gasPoolAddress,
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,

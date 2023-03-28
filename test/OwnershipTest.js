@@ -1,14 +1,13 @@
+const { artifacts } = require("hardhat")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const { TestHelper: th, MoneyValues: mv } = require("../utils/testHelpers.js")
 
-const GasPool = artifacts.require("./GasPool.sol")
+const NonPayable = artifacts.require("./NonPayable.sol");
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 
 contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   const [owner, alice, bob] = accounts;
-
-  const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
   let contracts
   let rToken
@@ -46,7 +45,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
   }
 
   const testSetAddresses = async (contract, numberOfAddresses, skipLast = 0) => {
-    const dumbContract = await GasPool.new()
+    const dumbContract = await NonPayable.new()
     const params = [...Array(numberOfAddresses).fill(dumbContract.address)]
 
     // Attempt call from alice
@@ -61,7 +60,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('TroveManager', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(troveManager, 9, 1)
+      await testSetAddresses(troveManager, 8, 1)
     })
 
     it("setBorrowingSpread(): reverts when called by non-owner, or with wrong values", async () => {
@@ -79,7 +78,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('BorrowerOperations', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(borrowerOperations, 9, 1)
+      await testSetAddresses(borrowerOperations, 8, 1)
     })
   })
 
@@ -91,7 +90,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('SortedTroves', async accounts => {
     it("setParams(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      const dumbContract = await GasPool.new()
+      const dumbContract = await NonPayable.new()
       const params = [10000001, dumbContract.address, dumbContract.address]
 
       // Attempt call from alice

@@ -17,8 +17,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
     // --- Connected contract declarations ---
 
-    address gasPoolAddress;
-
     ICollSurplusPool collSurplusPool;
 
     IRToken public override rToken;
@@ -157,7 +155,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         IRToken rToken;
         ISortedTroves sortedTroves;
         ICollSurplusPool collSurplusPool;
-        address gasPoolAddress;
         address feeRecipient;
     }
     // --- Variable container structs for redemptions ---
@@ -191,7 +188,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         IBorrowerOperations _borrowerOperations,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _gasPoolAddress,
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _rTokenAddress,
@@ -204,7 +200,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
         checkContract(_activePoolAddress);
         checkContract(_defaultPoolAddress);
-        checkContract(_gasPoolAddress);
         checkContract(_collSurplusPoolAddress);
         checkContract(_priceFeedAddress);
         checkContract(_rTokenAddress);
@@ -213,7 +208,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
         setBorrowerOperations(_borrowerOperations);
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         rToken = IRToken(_rTokenAddress);
@@ -224,7 +218,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit GasPoolAddressChanged(_gasPoolAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit RTokenAddressChanged(_rTokenAddress);
@@ -317,7 +310,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
             IRToken(address(0)),
             sortedTroves,
             ICollSurplusPool(address(0)),
-            address(0),
             address(0)
         );
         LocalVariables_OuterLiquidationFunction memory vars;
@@ -463,7 +455,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
 
     function _sendGasCompensation(IActivePool _activePool, address _liquidator, uint _R, uint _ETH) internal {
         if (_R > 0) {
-            rToken.returnFromPool(gasPoolAddress, _liquidator, _R);
+            rToken.returnFromPool(address(borrowerOperations), _liquidator, _R);
         }
 
         if (_ETH > 0) {
@@ -551,7 +543,7 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
     * Any surplus ETH left in the trove, is sent to the Coll surplus pool, and can be later claimed by the borrower.
     */
     function _redeemCloseTrove(ContractsCache memory _contractsCache, address _borrower, uint _R, uint _ETH) internal {
-        _contractsCache.rToken.burn(gasPoolAddress, _R);
+        _contractsCache.rToken.burn(address(borrowerOperations), _R);
         // Update Active Pool R, and send ETH to account
         _contractsCache.activePool.decreaseRDebt(_R);
 
@@ -621,7 +613,6 @@ contract TroveManager is LiquityBase, Ownable2Step, CheckContract, BorrowerOpera
             rToken,
             sortedTroves,
             collSurplusPool,
-            gasPoolAddress,
             feeRecipient
         );
         RedemptionTotals memory totals;
