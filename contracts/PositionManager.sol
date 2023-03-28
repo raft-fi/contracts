@@ -695,7 +695,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     function _sendGasCompensation(IActivePool _activePool, address _liquidator, uint _R, uint _collateralToken) internal {
         if (_R > 0) {
-            rToken.returnFromPool(address(this), _liquidator, _R);
+            rToken.transfer(_liquidator, _R);
         }
 
         if (_collateralToken > 0) {

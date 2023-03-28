@@ -20,8 +20,6 @@ interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender {
     function mint(address _account, uint256 _amount) external;
     function burn(address _account, uint256 _amount) external;
 
-    function returnFromPool(address poolAddress, address user, uint256 _amount ) external;
-
     function MAX_FLASH_MINT_FEE_PERCENTAGE() external view returns (uint256);
     function flashMintFeePercentage() external view returns (uint256);
     function setFlashMintFeePercentage(uint256 _feePercentage) external;

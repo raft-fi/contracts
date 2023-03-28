@@ -10,7 +10,6 @@ import "./Interfaces/IRToken.sol";
 
 /*
 * Functionality on top of regular OZ implementation
-* - returnFromPool(): functions callable only by Raft core contracts, which move R tokens between Raft <-> user.
 */
 
 contract RToken is Ownable2Step, ERC20Permit, ERC20FlashMint, IRToken {
@@ -49,13 +48,6 @@ contract RToken is Ownable2Step, ERC20Permit, ERC20FlashMint, IRToken {
             revert UnauthorizedCall(msg.sender);
         }
         _burn(_account, _amount);
-    }
-
-    function returnFromPool(address _poolAddress, address _receiver, uint256 _amount) external override {
-        if(msg.sender != positionManager) {
-            revert UnauthorizedCall(msg.sender);
-        }
-        _transfer(_poolAddress, _receiver, _amount);
     }
 
     function maxFlashLoan(
