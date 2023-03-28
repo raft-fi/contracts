@@ -68,7 +68,6 @@ class MainnetDeploymentHelper {
     const sortedTrovesFactory = await this.getFactory("SortedTroves")
     const troveManagerFactory = await this.getFactory("TroveManager")
     const activePoolFactory = await this.getFactory("ActivePool")
-    const gasPoolFactory = await this.getFactory("GasPool")
     const defaultPoolFactory = await this.getFactory("DefaultPool")
     const collSurplusPoolFactory = await this.getFactory("CollSurplusPool")
     const borrowerOperationsFactory = await this.getFactory("BorrowerOperations")
@@ -81,7 +80,6 @@ class MainnetDeploymentHelper {
     const sortedTroves = await this.loadOrDeploy(sortedTrovesFactory, 'sortedTroves', deploymentState)
     const troveManager = await this.loadOrDeploy(troveManagerFactory, 'troveManager', deploymentState)
     const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState)
-    const gasPool = await this.loadOrDeploy(gasPoolFactory, 'gasPool', deploymentState)
     const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState)
     const collSurplusPool = await this.loadOrDeploy(collSurplusPoolFactory, 'collSurplusPool', deploymentState)
     const borrowerOperations = await this.loadOrDeploy(borrowerOperationsFactory, 'borrowerOperations', deploymentState)
@@ -106,7 +104,6 @@ class MainnetDeploymentHelper {
       await this.verifyContract('sortedTroves', deploymentState)
       await this.verifyContract('troveManager', deploymentState)
       await this.verifyContract('activePool', deploymentState)
-      await this.verifyContract('gasPool', deploymentState)
       await this.verifyContract('defaultPool', deploymentState)
       await this.verifyContract('collSurplusPool', deploymentState)
       await this.verifyContract('borrowerOperations', deploymentState)
@@ -121,7 +118,6 @@ class MainnetDeploymentHelper {
       sortedTroves,
       troveManager,
       activePool,
-      gasPool,
       defaultPool,
       collSurplusPool,
       borrowerOperations,
@@ -180,7 +176,6 @@ class MainnetDeploymentHelper {
         contracts.borrowerOperations.address,
         contracts.activePool.address,
         contracts.defaultPool.address,
-        contracts.gasPool.address,
         contracts.collSurplusPool.address,
         contracts.priceFeed.address,
         contracts.rToken.address,
@@ -194,7 +189,6 @@ class MainnetDeploymentHelper {
         contracts.troveManager.address,
         contracts.activePool.address,
         contracts.defaultPool.address,
-        contracts.gasPool.address,
         contracts.collSurplusPool.address,
         contracts.priceFeed.address,
         contracts.sortedTroves.address,

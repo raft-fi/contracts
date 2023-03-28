@@ -7,7 +7,6 @@
 // import "../ActivePool.sol";
 // import "../DefaultPool.sol";
 // import "../StabilityPool.sol";
-// import "../GasPool.sol";
 // import "../CollSurplusPool.sol";
 // import "../RToken.sol";
 // import "./PriceFeedTestnet.sol";
@@ -31,7 +30,6 @@
 //     ActivePool public activePool;
 //     DefaultPool public defaultPool;
 //     StabilityPool public stabilityPool;
-//     GasPool public gasPool;
 //     CollSurplusPool public collSurplusPool;
 //     RToken public rToken;
 //     WstETHTokenMock public collateralToken;
@@ -49,7 +47,6 @@
 //         activePool = new ActivePool(address(collateralToken));
 //         defaultPool = new DefaultPool(address(collateralToken));
 //         stabilityPool = new StabilityPool(address(collateralToken));
-//         gasPool = new GasPool();
 //         rToken = new RToken(
 //             address(troveManager),
 //             address(stabilityPool),
@@ -63,13 +60,13 @@
 
 //         troveManager.setAddresses(address(borrowerOperations),
 //             address(activePool), address(defaultPool),
-//             address(stabilityPool), address(gasPool), address(collSurplusPool),
+//             address(stabilityPool), address(collSurplusPool),
 //             address(priceFeedTestnet), address(rToken),
 //             address(sortedTroves), address(0), address(0));
 
 //         borrowerOperations.setAddresses(address(troveManager),
 //             address(activePool), address(defaultPool),
-//             address(stabilityPool), address(gasPool), address(collSurplusPool),
+//             address(stabilityPool), address(collSurplusPool),
 //             address(priceFeedTestnet), address(sortedTroves),
 //             address(rToken), address(0));
 
@@ -402,7 +399,7 @@
 //     // Total R matches
 //     function echidna_R_global_balances() public view returns(bool) {
 //         uint totalSupply = rToken.totalSupply();
-//         uint gasPoolBalance = rToken.balanceOf(address(gasPool));
+//         uint borrowerOperationsBalance = rToken.balanceOf(address(borrowerOperations));
 
 //         uint activePoolBalance = activePool.getRDebt();
 //         uint defaultPoolBalance = defaultPool.getRDebt();
@@ -418,7 +415,7 @@
 //             currentTrove = sortedTroves.getNext(currentTrove);
 //         }
 //         // we cannot state equality because tranfers are made to external addresses too
-//         if (totalSupply <= stabilityPoolBalance + trovesBalance + gasPoolBalance) {
+//         if (totalSupply <= stabilityPoolBalance + trovesBalance + borrowerOperationsBalance) {
 //             return false;
 //         }
 

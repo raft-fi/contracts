@@ -20,8 +20,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
 
     ITroveManager public troveManager;
 
-    address gasPoolAddress;
-
     ICollSurplusPool collSurplusPool;
 
     address public feeRecipient;
@@ -98,7 +96,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         address _troveManagerAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _gasPoolAddress,
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
@@ -119,7 +116,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
         checkContract(_defaultPoolAddress);
-        checkContract(_gasPoolAddress);
         checkContract(_collSurplusPoolAddress);
         checkContract(_priceFeedAddress);
         checkContract(_sortedTrovesAddress);
@@ -128,7 +124,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         troveManager = ITroveManager(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
@@ -140,7 +135,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit GasPoolAddressChanged(_gasPoolAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
@@ -207,7 +201,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         contractsCache.activePool.depositCollateral(msg.sender, _collAmount);
         _withdrawR(contractsCache.activePool, contractsCache.rToken, msg.sender, _rAmount, vars.netDebt);
         // Move the R gas compensation to the Gas Pool
-        _withdrawR(contractsCache.activePool, contractsCache.rToken, gasPoolAddress, R_GAS_COMPENSATION, R_GAS_COMPENSATION);
+        _withdrawR(contractsCache.activePool, contractsCache.rToken, address(this), R_GAS_COMPENSATION, R_GAS_COMPENSATION);
 
         emit TroveUpdated(msg.sender, vars.compositeDebt, _collAmount, vars.stake, BorrowerOperation.openTrove);
         emit RBorrowingFeePaid(msg.sender, vars.rFee);
@@ -342,7 +336,7 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
 
         // Burn the repaid R from the user's balance and the gas compensation from the Gas Pool
         _repayR(activePoolCached, rTokenCached, msg.sender, debt - R_GAS_COMPENSATION);
-        _repayR(activePoolCached, rTokenCached, gasPoolAddress, R_GAS_COMPENSATION);
+        _repayR(activePoolCached, rTokenCached, address(this), R_GAS_COMPENSATION);
 
         // Send the collateral back to the user
         activePoolCached.sendETH(msg.sender, coll);

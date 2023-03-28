@@ -71,7 +71,6 @@ interface ITroveManager is ILiquityBase {
     event RTokenAddressChanged(address _newRTokenAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event GasPoolAddressChanged(address _gasPoolAddress);
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event FeeRecipientChanged(address _feeRecipient);
@@ -95,7 +94,6 @@ interface ITroveManager is ILiquityBase {
         IBorrowerOperations _borrowerOperationsAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _gasPoolAddress,
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _rTokenAddress,
