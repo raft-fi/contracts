@@ -539,7 +539,7 @@ contract('Gas compensation tests', async accounts => {
     await openTrove({ ICR: toBN(dec(488, 16)), extraRAmount: dec(600, 18), extraParams: { from: carol } })
     await openTrove({ ICR: toBN(dec(445, 16)), extraRAmount: dec(1, 23), extraParams: { from: dennis } })
 
-    const RinDefaultPool_0 = await defaultPool.getRDebt()
+    const RinDefaultPool_0 = await defaultPool.rDebt()
 
     // price drops to 200
     await priceFeed.setPrice(dec(200, 18))
@@ -588,7 +588,7 @@ contract('Gas compensation tests', async accounts => {
     const liquidatorBalance_after = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
 
     // Check R in DefaultPool has decreased
-    const RinDefaultPool_1 = await defaultPool.getRDebt()
+    const RinDefaultPool_1 = await defaultPool.rDebt()
     assert.isTrue(RinDefaultPool_1.gt(RinDefaultPool_0))
 
     // Check liquidator's balance has increased by the expected compensation amount
@@ -689,7 +689,7 @@ contract('Gas compensation tests', async accounts => {
     await openTrove({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: erin } })
     await openTrove({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: flyn } })
 
-    const RinDefaultPool_0 = await defaultPool.getRDebt()
+    const RinDefaultPool_0 = await defaultPool.rDebt()
 
     // price drops to 200
     await priceFeed.setPrice(dec(200, 18))

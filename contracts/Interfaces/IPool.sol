@@ -14,7 +14,7 @@ interface IPool is ICollateralPool {
 
     // --- Functions ---
 
-    function getRDebt() external view returns (uint);
+    function rDebt() external view returns (uint);
 
     function increaseRDebt(uint _amount) external;
 
