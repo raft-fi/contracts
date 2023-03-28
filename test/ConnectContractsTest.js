@@ -9,7 +9,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   let troveManager
   let activePool
   let defaultPool
-  let borrowerOperations
   let feeRecipient
 
   before(async () => {
@@ -22,7 +21,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     activePool = coreContracts.activePool
     defaultPool = coreContracts.defaultPool
     functionCaller = coreContracts.functionCaller
-    borrowerOperations = coreContracts.borrowerOperations
     feeRecipient = owner
 
     await deploymentHelper.connectCoreContracts(coreContracts, feeRecipient)
@@ -50,14 +48,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     const recordedSortedTrovesAddress = await troveManager.sortedTroves()
 
     assert.equal(sortedTrovesAddress, recordedSortedTrovesAddress)
-  })
-
-  it('Sets the correct BorrowerOperations address in TroveManager', async () => {
-    const borrowerOperationsAddress = borrowerOperations.address
-
-    const recordedBorrowerOperationsAddress = await troveManager.borrowerOperations()
-
-    assert.equal(borrowerOperationsAddress, recordedBorrowerOperationsAddress)
   })
 
   // ActivePool in TroveM
@@ -94,14 +84,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(defaultPoolAddress, recordedDefaultPoolAddress)
   })
 
-  it('Sets the correct BorrowerOperations address in ActivePool', async () => {
-    const borrowerOperationsAddress = borrowerOperations.address
-
-    const recordedBorrowerOperationsAddress = await activePool.borrowerOperations()
-
-    assert.equal(borrowerOperationsAddress, recordedBorrowerOperationsAddress)
-  })
-
   it('Sets the correct TroveManager address in ActivePool', async () => {
     const troveManagerAddress = troveManager.address
 
@@ -119,64 +101,9 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   })
 
   it('Sets the correct TroveManager address in SortedTroves', async () => {
-    const borrowerOperationsAddress = borrowerOperations.address
-
-    const recordedBorrowerOperationsAddress = await sortedTroves.borrowerOperations()
-    assert.equal(borrowerOperationsAddress, recordedBorrowerOperationsAddress)
-  })
-
-  it('Sets the correct BorrowerOperations address in SortedTroves', async () => {
     const troveManagerAddress = troveManager.address
 
     const recordedTroveManagerAddress = await sortedTroves.troveManager()
     assert.equal(troveManagerAddress, recordedTroveManagerAddress)
-  })
-
-  //--- BorrowerOperations ---
-
-  // TroveManager in BO
-  it('Sets the correct TroveManager address in BorrowerOperations', async () => {
-    const troveManagerAddress = troveManager.address
-
-    const recordedTroveManagerAddress = await borrowerOperations.troveManager()
-    assert.equal(troveManagerAddress, recordedTroveManagerAddress)
-  })
-
-  // setPriceFeed in BO
-  it('Sets the correct PriceFeed address in BorrowerOperations', async () => {
-    const priceFeedAddress = priceFeed.address
-
-    const recordedPriceFeedAddress = await borrowerOperations.priceFeed()
-    assert.equal(priceFeedAddress, recordedPriceFeedAddress)
-  })
-
-  // setSortedTroves in BO
-  it('Sets the correct SortedTroves address in BorrowerOperations', async () => {
-    const sortedTrovesAddress = sortedTroves.address
-
-    const recordedSortedTrovesAddress = await borrowerOperations.sortedTroves()
-    assert.equal(sortedTrovesAddress, recordedSortedTrovesAddress)
-  })
-
-  // setActivePool in BO
-  it('Sets the correct ActivePool address in BorrowerOperations', async () => {
-    const activePoolAddress = activePool.address
-
-    const recordedActivePoolAddress = await borrowerOperations.activePool()
-    assert.equal(activePoolAddress, recordedActivePoolAddress)
-  })
-
-  // setDefaultPool in BO
-  it('Sets the correct DefaultPool address in BorrowerOperations', async () => {
-    const defaultPoolAddress = defaultPool.address
-
-    const recordedDefaultPoolAddress = await borrowerOperations.defaultPool()
-    assert.equal(defaultPoolAddress, recordedDefaultPoolAddress)
-  })
-
-  // Fee recipient in BO
-  it('Sets the correct fee recipient address in BorrowerOperations', async () => {
-    const recordedFeeRecipient = await borrowerOperations.feeRecipient()
-    assert.equal(feeRecipient, recordedFeeRecipient)
   })
 })

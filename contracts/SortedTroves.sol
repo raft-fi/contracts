@@ -5,8 +5,6 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ITroveManager.sol";
-import "./Interfaces/IBorrowerOperations.sol";
-import "./Dependencies/BorrowerOperationsDependent.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/TroveManagerDependent.sol";
 
@@ -43,15 +41,8 @@ import "./Dependencies/TroveManagerDependent.sol";
 *
 * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
 */
-contract SortedTroves is Ownable2Step, CheckContract, BorrowerOperationsDependent, TroveManagerDependent, ISortedTroves {
+contract SortedTroves is Ownable2Step, CheckContract, TroveManagerDependent, ISortedTroves {
     string constant public NAME = "SortedTroves";
-
-    modifier onlyBorrowerOperationsOrTroveManager() {
-        if (msg.sender != address(borrowerOperations) && msg.sender != address(troveManager)) {
-            revert SortedTrovesInvalidCaller();
-        }
-        _;
-    }
 
     // Information for a node in the list
     struct Node {
@@ -73,14 +64,13 @@ contract SortedTroves is Ownable2Step, CheckContract, BorrowerOperationsDependen
 
     // --- Dependency setters ---
 
-    function setParams(uint256 _size, ITroveManager _troveManager, IBorrowerOperations _borrowerOperations) external override onlyOwner {
+    function setParams(uint256 _size, ITroveManager _troveManager) external override onlyOwner {
         if (_size == 0) {
             revert TrovesSizeZero();
         }
         data.maxSize = _size;
 
         setTroveManager(_troveManager);
-        setBorrowerOperations(_borrowerOperations);
 
         renounceOwnership();
     }
@@ -93,7 +83,7 @@ contract SortedTroves is Ownable2Step, CheckContract, BorrowerOperationsDependen
      * @param _nextId Id of next node for the insert position
      */
 
-    function insert(address _id, uint256 _NICR, address _prevId, address _nextId) external override onlyBorrowerOperationsOrTroveManager {
+    function insert(address _id, uint256 _NICR, address _prevId, address _nextId) external override onlyTroveManager {
         _insert(troveManager, _id, _NICR, _prevId, _nextId);
     }
 
@@ -201,7 +191,7 @@ contract SortedTroves is Ownable2Step, CheckContract, BorrowerOperationsDependen
      * @param _prevId Id of previous node for the new insert position
      * @param _nextId Id of next node for the new insert position
      */
-    function reInsert(address _id, uint256 _newNICR, address _prevId, address _nextId) external override onlyBorrowerOperationsOrTroveManager {
+    function reInsert(address _id, uint256 _newNICR, address _prevId, address _nextId) external override onlyTroveManager {
         if (!contains(_id)) {
             revert TrovesListDoesNotContainNode(_id);
         }

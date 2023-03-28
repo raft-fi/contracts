@@ -45,9 +45,7 @@ contract('SortedTroves', async accounts => {
   let priceFeed
   let sortedTroves
   let troveManager
-  let borrowerOperations
   let rToken
-  let wstETHTokenMock
 
   let contracts
 
@@ -58,16 +56,13 @@ contract('SortedTroves', async accounts => {
       contracts = await deploymentHelper.deployLiquityCore()
       contracts.troveManager = await TroveManagerTester.new()
       contracts.rToken = await RToken.new(
-        contracts.troveManager.address,
-        contracts.borrowerOperations.address
+        contracts.troveManager.address
       )
 
       priceFeed = contracts.priceFeedTestnet
       sortedTroves = contracts.sortedTroves
       troveManager = contracts.troveManager
-      borrowerOperations = contracts.borrowerOperations
       rToken = contracts.rToken
-      wstETHTokenMock = contracts.wstETHTokenMock
 
       await deploymentHelper.connectCoreContracts(contracts, owner)
 
@@ -121,9 +116,9 @@ contract('SortedTroves', async accounts => {
       await rToken.transfer(carol, dec(1000, 18), { from: whale })
 
       // A, B, C close troves
-      await borrowerOperations.closeTrove({ from: alice })
-      await borrowerOperations.closeTrove({ from:bob })
-      await borrowerOperations.closeTrove({ from:carol })
+      await troveManager.closeTrove({ from: alice })
+      await troveManager.closeTrove({ from:bob })
+      await troveManager.closeTrove({ from:carol })
 
       // Confirm trove statuses became closed
       assert.equal((await troveManager.Troves(alice))[3], '2')
@@ -150,9 +145,9 @@ contract('SortedTroves', async accounts => {
       await rToken.transfer(carol, dec(1000, 18), { from: whale })
 
       // A, B, C close troves
-      await borrowerOperations.closeTrove({ from: alice })
-      await borrowerOperations.closeTrove({ from:bob })
-      await borrowerOperations.closeTrove({ from:carol })
+      await troveManager.closeTrove({ from: alice })
+      await troveManager.closeTrove({ from:bob })
+      await troveManager.closeTrove({ from:carol })
 
       // Confirm trove statuses became closed
       assert.equal((await troveManager.Troves(alice))[3], '2')
@@ -239,24 +234,24 @@ contract('SortedTroves', async accounts => {
     it.skip("stays ordered after troves with 'infinite' ICR receive a redistribution", async () => {
 
       // make several troves with 0 debt and collateral, in random order
-      await borrowerOperations.openTrove(th._100pct, 0, whale, whale, { from: whale, value: dec(50, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, 0, A, A, { from: A, value: dec(1, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, 0, B, B, { from: B, value: dec(37, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, 0, C, C, { from: C, value: dec(5, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, 0, D, D, { from: D, value: dec(4, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, 0, E, E, { from: E, value: dec(19, 'ether') })
+      await troveManager.openTrove(th._100pct, 0, whale, whale, { from: whale, value: dec(50, 'ether') })
+      await troveManager.openTrove(th._100pct, 0, A, A, { from: A, value: dec(1, 'ether') })
+      await troveManager.openTrove(th._100pct, 0, B, B, { from: B, value: dec(37, 'ether') })
+      await troveManager.openTrove(th._100pct, 0, C, C, { from: C, value: dec(5, 'ether') })
+      await troveManager.openTrove(th._100pct, 0, D, D, { from: D, value: dec(4, 'ether') })
+      await troveManager.openTrove(th._100pct, 0, E, E, { from: E, value: dec(19, 'ether') })
 
       // Make some troves with non-zero debt, in random order
-      await borrowerOperations.openTrove(th._100pct, dec(5, 19), F, F, { from: F, value: dec(1, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, dec(3, 18), G, G, { from: G, value: dec(37, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, dec(2, 20), H, H, { from: H, value: dec(5, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, dec(17, 18), I, I, { from: I, value: dec(4, 'ether') })
-      await borrowerOperations.openTrove(th._100pct, dec(5, 21), J, J, { from: J, value: dec(1345, 'ether') })
+      await troveManager.openTrove(th._100pct, dec(5, 19), F, F, { from: F, value: dec(1, 'ether') })
+      await troveManager.openTrove(th._100pct, dec(3, 18), G, G, { from: G, value: dec(37, 'ether') })
+      await troveManager.openTrove(th._100pct, dec(2, 20), H, H, { from: H, value: dec(5, 'ether') })
+      await troveManager.openTrove(th._100pct, dec(17, 18), I, I, { from: I, value: dec(4, 'ether') })
+      await troveManager.openTrove(th._100pct, dec(5, 21), J, J, { from: J, value: dec(1345, 'ether') })
 
       // Check troves are ordered
       await assertSortedListIsOrdered(contracts)
 
-      await borrowerOperations.openTrove(th._100pct, dec(100, 18), defaulter_1, defaulter_1, { from: defaulter_1, value: dec(1, 'ether') })
+      await troveManager.openTrove(th._100pct, dec(100, 18), defaulter_1, defaulter_1, { from: defaulter_1, value: dec(1, 'ether') })
       assert.isTrue(await sortedTroves.contains(defaulter_1))
 
       // Price drops
@@ -283,13 +278,13 @@ contract('SortedTroves', async accounts => {
 
     context('when params are wrongly set', () => {
       it('setParams(): reverts if size is zero', async () => {
-        await th.assertRevert(sortedTroves.setParams(0, sortedTrovesTester.address, sortedTrovesTester.address), 'SortedTroves: Size cannot be zero')
+        await th.assertRevert(sortedTroves.setParams(0, sortedTrovesTester.address), 'SortedTroves: Size cannot be zero')
       })
     })
 
     context('when params are properly set', () => {
       beforeEach('set params', async() => {
-        await sortedTroves.setParams(2, sortedTrovesTester.address, sortedTrovesTester.address)
+        await sortedTroves.setParams(2, sortedTrovesTester.address)
       })
 
       it('insert(): fails if list is full', async () => {

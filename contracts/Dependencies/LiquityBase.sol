@@ -13,7 +13,7 @@ import "../Interfaces/ILiquityBase.sol";
 error FeeExceedsMaxFee(uint fee, uint amount, uint maxFeePercentage);
 
 /*
-* Base contract for TroveManager and BorrowerOperations. Contains global system constants and
+* Base contract for TroveManager. Contains global system constants and
 * common functions.
 */
 contract LiquityBase is BaseMath, ILiquityBase {

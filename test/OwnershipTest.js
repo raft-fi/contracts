@@ -3,7 +3,6 @@ const deploymentHelper = require("../utils/deploymentHelpers.js")
 const { TestHelper: th, MoneyValues: mv } = require("../utils/testHelpers.js")
 
 const NonPayable = artifacts.require("./NonPayable.sol");
-const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 
 contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
@@ -15,11 +14,9 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
   let troveManager
   let activePool
   let defaultPool
-  let borrowerOperations
 
   before(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    contracts.borrowerOperations = await BorrowerOperationsTester.new()
     contracts = await deploymentHelper.deployRToken(contracts)
 
     rToken = contracts.rToken
@@ -27,7 +24,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     troveManager = contracts.troveManager
     activePool = contracts.activePool
     defaultPool = contracts.defaultPool
-    borrowerOperations = contracts.borrowerOperations
   })
 
   const testZeroAddress = async (contract, params, skipLast = 0) => {
@@ -60,7 +56,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('TroveManager', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(troveManager, 7, 1)
+      await testSetAddresses(troveManager, 6, 1)
     })
 
     it("setBorrowingSpread(): reverts when called by non-owner, or with wrong values", async () => {
@@ -76,22 +72,16 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     })
   })
 
-  describe('BorrowerOperations', async accounts => {
-    it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(borrowerOperations, 7, 1)
-    })
-  })
-
   describe('ActivePool', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(activePool, 3)
+      await testSetAddresses(activePool, 2)
     })
   })
 
   describe('SortedTroves', async accounts => {
     it("setParams(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
       const dumbContract = await NonPayable.new()
-      const params = [10000001, dumbContract.address, dumbContract.address]
+      const params = [10000001, dumbContract.address]
 
       // Attempt call from alice
       await th.assertRevert(sortedTroves.setParams(...params, { from: alice }))

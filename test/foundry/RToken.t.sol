@@ -6,18 +6,17 @@ import "../../contracts/RToken.sol";
 
 contract RTokenTest is Test {
     address public constant POSITIONS_MANAGER = address(12345);
-    address public constant BORROWER_OPERATIONS = address(34567);
 
     address public constant USER = address(1);
 
     IRToken public token;
 
     function setUp() public {
-        token = new RToken(POSITIONS_MANAGER, BORROWER_OPERATIONS);
+        token = new RToken(POSITIONS_MANAGER);
     }
 
     function testMaxFlashMint(uint256 simulatedTotalSupply) public {
-        vm.prank(BORROWER_OPERATIONS);
+        vm.prank(POSITIONS_MANAGER);
         token.mint(USER, simulatedTotalSupply);
 
         uint256 technicalLimit = type(uint256).max - simulatedTotalSupply;
@@ -62,7 +61,7 @@ contract RTokenTest is Test {
     }
 
     function testMint(uint256 amount) public {
-        vm.prank(BORROWER_OPERATIONS);
+        vm.prank(POSITIONS_MANAGER);
         token.mint(USER, amount);
         assertEq(token.balanceOf(USER), amount);
     }
@@ -78,10 +77,10 @@ contract RTokenTest is Test {
     }
 
     function testBurn(uint256 amountToMint, uint256 amountToBurn) public {
-        vm.prank(BORROWER_OPERATIONS);
+        vm.prank(POSITIONS_MANAGER);
         token.mint(USER, amountToMint);
         
-        vm.prank(BORROWER_OPERATIONS);
+        vm.prank(POSITIONS_MANAGER);
         if (amountToBurn > amountToMint) {
             vm.expectRevert(bytes("ERC20: burn amount exceeds balance"));
         }

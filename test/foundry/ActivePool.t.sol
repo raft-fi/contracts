@@ -8,7 +8,6 @@ import "../TestContracts/WstETHTokenMock.sol";
 
 contract ActivePoolTest is Test {
     ITroveManager public constant POSITIONS_MANAGER = ITroveManager(address(12345));
-    IBorrowerOperations public constant BORROWER_OPERATIONS = IBorrowerOperations(address(34567));
     IDefaultPool public constant DEFAULT_POOL = IDefaultPool(address(56789));
 
     address public constant USER = address(1);
@@ -20,19 +19,19 @@ contract ActivePoolTest is Test {
         collateralToken = new WstETHTokenMock();
 
         activePool = new ActivePool(collateralToken);
-        activePool.setAddresses(BORROWER_OPERATIONS, POSITIONS_MANAGER, DEFAULT_POOL);
+        activePool.setAddresses(POSITIONS_MANAGER, DEFAULT_POOL);
     }
 
     // withdrawCollateral(): reverts when called by an account that is not Borrower Operations nor Trove Manager
     function testUnauthorizedSendETH() public {
         vm.prank(USER);
-        vm.expectRevert(ActivePoolInvalidCaller.selector);
+        vm.expectRevert(CallerIsNotTroveManager.selector);
         activePool.withdrawCollateral(USER, 100);
     }
 
     // increaseRDebt(): increases the R debt by the specified amount
     function testSuccessfulIncreaseRDebt() public {
-        vm.prank(address(BORROWER_OPERATIONS));
+        vm.prank(address(POSITIONS_MANAGER));
         activePool.increaseRDebt(100);
         assertEq(activePool.rDebt(), 100);
     }
@@ -40,17 +39,17 @@ contract ActivePoolTest is Test {
     // increaseRDebt(): reverts when called by an account that is not Borrower Operations nor Trove Manager
     function testUnauthorizedIncreaseRDebt() public {
         vm.prank(USER);
-        vm.expectRevert(ActivePoolInvalidCaller.selector);
+        vm.expectRevert(CallerIsNotTroveManager.selector);
         activePool.increaseRDebt(100);
     }
 
     // decreaseRDebt(): decreases the R debt by the specified amount
     function testSuccessfulDecreaseRDebt() public {
-        vm.prank(address(BORROWER_OPERATIONS));
+        vm.prank(address(POSITIONS_MANAGER));
         activePool.increaseRDebt(100);
         assertEq(activePool.rDebt(), 100);
 
-        vm.prank(address(BORROWER_OPERATIONS));
+        vm.prank(address(POSITIONS_MANAGER));
         activePool.decreaseRDebt(100);
         assertEq(activePool.rDebt(), 0);
     }
@@ -58,7 +57,7 @@ contract ActivePoolTest is Test {
     // decreaseRDebt(): reverts when called by an account that is not Borrower Operations nor Trove Manager
     function testUnauthorizedDecreaseRDebt() public {
         vm.prank(USER);
-        vm.expectRevert(ActivePoolInvalidCaller.selector);
+        vm.expectRevert(CallerIsNotTroveManager.selector);
         activePool.decreaseRDebt(100);
     }
 
@@ -66,7 +65,7 @@ contract ActivePoolTest is Test {
     function testUnauthorizedDepositCollateral() public {
         vm.startPrank(USER);
         collateralToken.approve(address(activePool), 100);
-        vm.expectRevert(ActivePoolInvalidCaller.selector);
+        vm.expectRevert(CallerIsNotTroveManager.selector);
         activePool.depositCollateral(USER, 100);
         vm.stopPrank();
     }
@@ -80,7 +79,7 @@ contract ActivePoolTest is Test {
         collateralToken.mint(USER, 2e18);
         collateralToken.approve(address(activePool), 2e18);
         vm.stopPrank();
-        vm.prank(address(BORROWER_OPERATIONS));
+        vm.prank(address(POSITIONS_MANAGER));
         activePool.depositCollateral(USER, 2e18);
 
         uint256 activePoolBalanceBefore = collateralToken.balanceOf(address(activePool));
@@ -89,7 +88,7 @@ contract ActivePoolTest is Test {
         assertEq(activePoolBalanceBefore, 2e18);
 
         // Send 1 wstETH from pool to user
-        vm.startPrank(address(BORROWER_OPERATIONS));
+        vm.startPrank(address(POSITIONS_MANAGER));
         activePool.withdrawCollateral(USER, 1e18);
 
         uint256 activePoolBalanceAfter = collateralToken.balanceOf(address(activePool));

@@ -21,10 +21,6 @@ contract TroveManagerTester is TroveManager {
         return R_GAS_COMPENSATION;
     }
 
-    function getCompositeDebt(uint _debt) external pure returns (uint) {
-        return _getCompositeDebt(_debt);
-    }
-
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
         baseRate = _calcDecayedBaseRate();
         assert(baseRate >= 0 && baseRate <= DECIMAL_PRECISION);
@@ -56,5 +52,26 @@ contract TroveManagerTester is TroveManager {
     function callInternalRemoveTroveOwner(address _troveOwner) external {
         uint troveOwnersArrayLength = TroveOwners.length;
         _removeTroveOwner(_troveOwner, troveOwnersArrayLength);
+    }
+
+    function getNewICRFromTroveChange
+    (
+        uint _coll,
+        uint _debt,
+        uint _collChange,
+        bool isCollIncrease,
+        uint _debtChange,
+        bool isDebtIncrease,
+        uint _price
+    )
+    external
+    pure
+    returns (uint)
+    {
+        return _getNewICRFromTroveChange(_coll, _debt, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
+    }
+
+    function getUSDValue(uint _coll, uint _price) external pure returns (uint) {
+        return _getUSDValue(_coll, _price);
     }
 }

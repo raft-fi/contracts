@@ -37,7 +37,6 @@ contract('TroveManager', async accounts => {
   let troveManager
   let activePool
   let defaultPool
-  let borrowerOperations
   let hintHelpers
   let wstETHTokenMock
 
@@ -52,8 +51,7 @@ contract('TroveManager', async accounts => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
     contracts.rToken = await RTokenTester.new(
-      contracts.troveManager.address,
-      contracts.borrowerOperations.address
+      contracts.troveManager.address
     )
 
     priceFeed = contracts.priceFeedTestnet
@@ -62,7 +60,6 @@ contract('TroveManager', async accounts => {
     troveManager = contracts.troveManager
     activePool = contracts.activePool
     defaultPool = contracts.defaultPool
-    borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
     wstETHTokenMock = contracts.wstETHTokenMock
 
@@ -788,8 +785,8 @@ contract('TroveManager', async accounts => {
 
     // // All remaining troves D and E repay a little debt, applying their pending rewards
     assert.isTrue((await sortedTroves.getSize()).eq(toBN('3')))
-    await borrowerOperations.repayR(dec(1, 18), D, D, {from: D})
-    await borrowerOperations.repayR(dec(1, 18), E, E, {from: E})
+    await troveManager.repayR(dec(1, 18), D, D, {from: D})
+    await troveManager.repayR(dec(1, 18), E, E, {from: E})
 
     // Check C is the only trove that has pending rewards
     assert.isTrue(await troveManager.hasPendingRewards(C))
@@ -1296,8 +1293,8 @@ contract('TroveManager', async accounts => {
 
     // // All remaining troves D and E repay a little debt, applying their pending rewards
     assert.isTrue((await sortedTroves.getSize()).eq(toBN('3')))
-    await borrowerOperations.repayR(dec(1, 18), D, D, {from: D})
-    await borrowerOperations.repayR(dec(1, 18), E, E, {from: E})
+    await troveManager.repayR(dec(1, 18), D, D, {from: D})
+    await troveManager.repayR(dec(1, 18), E, E, {from: E})
 
     // Check C is the only trove that has pending rewards
     assert.isTrue(await troveManager.hasPendingRewards(C))
@@ -1552,7 +1549,7 @@ contract('TroveManager', async accounts => {
     assert.isFalse(await sortedTroves.contains(carol))
     assert.equal((await troveManager.Troves(carol))[3].toString(), '0')
 
-    const rGasCompensation = await borrowerOperations.R_GAS_COMPENSATION();
+    const rGasCompensation = await troveManager.R_GAS_COMPENSATION();
     th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(rGasCompensation).add(rGasCompensation))
   })
 
@@ -1582,7 +1579,7 @@ contract('TroveManager', async accounts => {
     const price = await priceFeed.getPrice()
 
     // Carol liquidated, and her trove is closed
-    const txCarolClose = await borrowerOperations.closeTrove({ from: carol })
+    const txCarolClose = await troveManager.closeTrove({ from: carol })
     assert.isTrue(txCarolClose.receipt.status)
 
     assert.isFalse(await sortedTroves.contains(carol))
@@ -1619,7 +1616,7 @@ contract('TroveManager', async accounts => {
     assert.equal((await sortedTroves.getSize()).toString(), '3')
 
     // Check liquidator has only been reduced by A-B
-    const rGasCompensation = await borrowerOperations.R_GAS_COMPENSATION();
+    const rGasCompensation = await troveManager.R_GAS_COMPENSATION();
     th.assertIsApproximatelyEqual((await rToken.balanceOf(whale)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(rGasCompensation).add(rGasCompensation))
   })
 
@@ -2111,11 +2108,11 @@ contract('TroveManager', async accounts => {
 
   it("redeemCollateral(): performs partial redemption if resultant debt is > minimum net debt", async () => {
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: A})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(10000, 18)), A, A, dec(1000, 'ether'), { from: A })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(10000, 18)), A, A, dec(1000, 'ether'), { from: A })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: B})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(20000, 18)), B, B, dec(1000, 'ether'), { from: B })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(20000, 18)), B, B, dec(1000, 'ether'), { from: B })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: C})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(30000, 18)), C, C, dec(1000, 'ether'), { from: C })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(30000, 18)), C, C, dec(1000, 'ether'), { from: C })
 
     // A and C send all their tokens to B
     await rToken.transfer(B, await rToken.balanceOf(A), {from: A})
@@ -2142,11 +2139,11 @@ contract('TroveManager', async accounts => {
 
   it("redeemCollateral(): doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: A})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(6000, 18)), A, A, dec(1000, 'ether'), { from: A })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(6000, 18)), A, A, dec(1000, 'ether'), { from: A })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: B})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(20000, 18)), B, B, dec(1000, 'ether'), { from: B })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(20000, 18)), B, B, dec(1000, 'ether'), { from: B })
     wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: C})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(30000, 18)), C, C, dec(1000, 'ether'), { from: C })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(30000, 18)), C, C, dec(1000, 'ether'), { from: C })
 
     // A and C send all their tokens to B
     await rToken.transfer(B, await rToken.balanceOf(A), {from: A})
@@ -3339,7 +3336,7 @@ contract('TroveManager', async accounts => {
 
     // D is not closed, so cannot open trove
     wstETHTokenMock.approve(activePool.address, dec(10, 18), { from: D})
-    await assertRevert(borrowerOperations.openTrove(th._100pct, 0, ZERO_ADDRESS, ZERO_ADDRESS, dec(10, 18), { from: D }), 'BorrowerOps: Trove is active')
+    await assertRevert(troveManager.openTrove(th._100pct, 0, ZERO_ADDRESS, ZERO_ADDRESS, dec(10, 18), { from: D }), 'BorrowerOps: Trove is active')
 
     return {
       A_balanceBefore, A_netDebt, A_coll,
@@ -3454,7 +3451,7 @@ contract('TroveManager', async accounts => {
 
       await openTrove({ ICR: toBN(dec(150, 16)), extraParams: { from: bob } })
       wstETHTokenMock.approve(activePool.address, rAmount.mul(mv._1e18BN).div(price), { from: alice})
-      await borrowerOperations.adjustTrove(th._100pct, 0, rAmount, true, alice, alice, rAmount.mul(mv._1e18BN).div(price), { from: alice })
+      await troveManager.adjustTrove(th._100pct, 0, rAmount, true, alice, alice, rAmount.mul(mv._1e18BN).div(price), { from: alice })
     }
 
     const {
@@ -3639,7 +3636,7 @@ contract('TroveManager', async accounts => {
 
     // to be able to repay:
     await rToken.transfer(B, B_totalDebt, { from: A })
-    await borrowerOperations.closeTrove({from: B})
+    await troveManager.closeTrove({from: B})
 
     const A_Status = await troveManager.getTroveStatus(A)
     const B_Status = await troveManager.getTroveStatus(B)

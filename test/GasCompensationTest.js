@@ -1,7 +1,6 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
-const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const RToken = artifacts.require("RToken")
 
 const th = testHelpers.TestHelper
@@ -27,7 +26,6 @@ contract('Gas compensation tests', async accounts => {
 
   let contracts
   let troveManagerTester
-  let borrowerOperationsTester
 
   const openTrove = async (params) => th.openTrove(contracts, params)
 
@@ -39,18 +37,15 @@ contract('Gas compensation tests', async accounts => {
 
   before(async () => {
     troveManagerTester = await TroveManagerTester.new()
-    borrowerOperationsTester = await BorrowerOperationsTester.new()
 
     TroveManagerTester.setAsDeployed(troveManagerTester)
-    BorrowerOperationsTester.setAsDeployed(borrowerOperationsTester)
   })
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
     contracts.rToken = await RToken.new(
-      contracts.troveManager.address,
-      contracts.borrowerOperations.address
+      contracts.troveManager.address
     )
 
     await th.fillAccountsWithWstETH(contracts, [
@@ -65,7 +60,6 @@ contract('Gas compensation tests', async accounts => {
     troveManager = contracts.troveManager
     activePool = contracts.activePool
     defaultPool = contracts.defaultPool
-    borrowerOperations = contracts.borrowerOperations
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectCoreContracts(contracts, owner)
@@ -422,7 +416,7 @@ contract('Gas compensation tests', async accounts => {
 
     const aliceColl = (await troveManager.Troves(alice))[1]
     const aliceDebt = (await troveManager.Troves(alice))[0]
-    const aliceCollValueInUSD = (await borrowerOperationsTester.getUSDValue(aliceColl, price_1))
+    const aliceCollValueInUSD = (await troveManagerTester.getUSDValue(aliceColl, price_1))
     assert.isTrue(aliceCollValueInUSD.gt(th.toBN(dec(10, 18))))
 
     // Check value of 0.5% of collateral in USD is < $10

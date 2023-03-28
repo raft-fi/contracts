@@ -10,7 +10,7 @@ async function main() {
 
   const coreContracts = await dh.deployLiquityCoreHardhat()
 
- const { troveManager, borrowerOperations, hintHelpers, sortedTroves, priceFeedTestnet } = coreContracts
+ const { troveManager, hintHelpers, sortedTroves, priceFeedTestnet } = coreContracts
 
   await dh.connectCoreContracts(coreContracts)
 
@@ -47,7 +47,7 @@ async function main() {
 
   // Finally, call openTrove with the exact upperHint and lowerHint
   const maxFee = '5'.concat('0'.repeat(16)) // Slippage protection: 5%
-  await borrowerOperations.openTrove(maxFee, rAmount, upperHint, lowerHint, { value: ETHColl })
+  await troveManager.openTrove(maxFee, rAmount, upperHint, lowerHint, { value: ETHColl })
 
   // --- adjust trove ---
 
@@ -72,7 +72,7 @@ async function main() {
   ({ 0: upperHint, 1: lowerHint } = await sortedTroves.findInsertPosition(NICR, approxHint, approxHint))
 
   // Call adjustTrove with the exact upperHint and lowerHint
-  await borrowerOperations.adjustTrove(maxFee, 0, RRepayment, false, upperHint, lowerHint, {value: collIncrease})
+  await troveManager.adjustTrove(maxFee, 0, RRepayment, false, upperHint, lowerHint, {value: collIncrease})
 
 
   // --- RedeemCollateral ---

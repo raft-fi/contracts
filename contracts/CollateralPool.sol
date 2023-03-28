@@ -5,7 +5,6 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Interfaces/IActivePool.sol";
-import "./Dependencies/BorrowerOperationsDependent.sol";
 import "./Dependencies/TroveManagerDependent.sol";
 
 /// @dev The Collateral Pool holds the collateral tokens.

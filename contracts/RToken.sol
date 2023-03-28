@@ -16,7 +16,6 @@ import "./Interfaces/IRToken.sol";
 contract RToken is Ownable2Step, ERC20Permit, ERC20FlashMint, IRToken {
     // --- Addresses ---
     address public immutable override troveManager;
-    address public immutable override borrowerOperations;
     address public override flashMintFeeRecipient;
 
     uint256 public override flashMintFeePercentage;
@@ -25,30 +24,28 @@ contract RToken is Ownable2Step, ERC20Permit, ERC20FlashMint, IRToken {
     uint256 public constant override PERCENTAGE_BASE = 10_000;
 
     constructor(
-        address _troveManager, 
-        address _borrowerOperations
+        address _troveManager
     ) ERC20Permit("R Stablecoin") ERC20("R Stablecoin", "R") {
-        if (_troveManager == address(0) &&  _borrowerOperations == address(0)) {
+        if (_troveManager == address(0)) {
             revert InvalidAddressInput();
         }
 
         troveManager = _troveManager;
-        borrowerOperations = _borrowerOperations;
         flashMintFeeRecipient = msg.sender;
         flashMintFeePercentage = 0;
 
-        emit RDeployed(_borrowerOperations, _troveManager, msg.sender);
+        emit RDeployed(_troveManager, msg.sender);
     }
 
     function mint(address _account, uint256 _amount) external override {
-        if (msg.sender != borrowerOperations) {
+        if (msg.sender != troveManager) {
             revert UnauthorizedCall(msg.sender);
         }
         _mint(_account, _amount);
     }
 
     function burn(address _account, uint256 _amount) external override {
-        if (msg.sender != borrowerOperations && msg.sender != troveManager) {
+        if (msg.sender != troveManager) {
             revert UnauthorizedCall(msg.sender);
         }
         _burn(_account, _amount);
