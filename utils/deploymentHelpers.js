@@ -4,7 +4,6 @@ const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
-const CollSurplusPool = artifacts.require("./CollSurplusPool.sol")
 const FunctionCaller = artifacts.require("./TestContracts/FunctionCaller.sol")
 const BorrowerOperations = artifacts.require("./BorrowerOperations.sol")
 const HintHelpers = artifacts.require("./HintHelpers.sol")
@@ -45,7 +44,6 @@ class DeploymentHelper {
     const wstETHTokenMock = await WstETHTokenMock.new()
     const activePool = await ActivePool.new(wstETHTokenMock.address)
     const defaultPool = await DefaultPool.new(wstETHTokenMock.address)
-    const collSurplusPool = await CollSurplusPool.new(wstETHTokenMock.address)
     const functionCaller = await FunctionCaller.new()
     const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
@@ -59,7 +57,6 @@ class DeploymentHelper {
     SortedTroves.setAsDeployed(sortedTroves)
     TroveManager.setAsDeployed(troveManager)
     ActivePool.setAsDeployed(activePool)
-    CollSurplusPool.setAsDeployed(collSurplusPool)
     FunctionCaller.setAsDeployed(functionCaller)
     BorrowerOperations.setAsDeployed(borrowerOperations)
     HintHelpers.setAsDeployed(hintHelpers)
@@ -72,7 +69,6 @@ class DeploymentHelper {
       wstETHTokenMock,
       activePool,
       defaultPool,
-      collSurplusPool,
       functionCaller,
       borrowerOperations,
       hintHelpers
@@ -107,7 +103,6 @@ class DeploymentHelper {
     // Actual tester contracts
     testerContracts.activePool = await ActivePoolTester.new(testerContracts.wstETHTokenMock.address)
     testerContracts.defaultPool = await DefaultPoolTester.new(testerContracts.wstETHTokenMock.address)
-    testerContracts.collSurplusPool = await CollSurplusPool.new(testerContracts.wstETHTokenMock.address)
     testerContracts.math = await LiquityMathTester.new()
     testerContracts.borrowerOperations = await BorrowerOperationsTester.new()
     testerContracts.troveManager = await TroveManagerTester.new()
@@ -126,7 +121,6 @@ class DeploymentHelper {
     const troveManager = await TroveManager.new()
     const activePool = await ActivePool.new()
     const defaultPool = await DefaultPool.new()
-    const collSurplusPool = await CollSurplusPool.new()
     const functionCaller = await FunctionCaller.new()
     const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
@@ -141,7 +135,6 @@ class DeploymentHelper {
       troveManager,
       activePool,
       defaultPool,
-      collSurplusPool,
       functionCaller,
       borrowerOperations,
       hintHelpers
@@ -184,7 +177,6 @@ class DeploymentHelper {
       contracts.borrowerOperations.address,
       contracts.activePool.address,
       contracts.defaultPool.address,
-      contracts.collSurplusPool.address,
       contracts.priceFeedTestnet.address,
       contracts.rToken.address,
       contracts.sortedTroves.address,
@@ -196,7 +188,6 @@ class DeploymentHelper {
       contracts.troveManager.address,
       contracts.activePool.address,
       contracts.defaultPool.address,
-      contracts.collSurplusPool.address,
       contracts.priceFeedTestnet.address,
       contracts.sortedTroves.address,
       contracts.rToken.address,
@@ -212,12 +203,6 @@ class DeploymentHelper {
 
     await contracts.defaultPool.setAddresses(
       contracts.troveManager.address
-    )
-
-    await contracts.collSurplusPool.setAddresses(
-      contracts.borrowerOperations.address,
-      contracts.troveManager.address,
-      contracts.activePool.address,
     )
 
     // set contracts in HintHelpers

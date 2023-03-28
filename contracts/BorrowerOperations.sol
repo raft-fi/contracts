@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IRToken.sol";
-import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
@@ -19,8 +18,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
     // --- Connected contract declarations ---
 
     ITroveManager public troveManager;
-
-    ICollSurplusPool collSurplusPool;
 
     address public feeRecipient;
 
@@ -96,7 +93,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         address _troveManagerAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
-        address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
         address _rTokenAddress,
@@ -116,7 +112,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
         checkContract(_defaultPoolAddress);
-        checkContract(_collSurplusPoolAddress);
         checkContract(_priceFeedAddress);
         checkContract(_sortedTrovesAddress);
         checkContract(_rTokenAddress);
@@ -124,7 +119,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         troveManager = ITroveManager(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         rToken = IRToken(_rTokenAddress);
@@ -135,7 +129,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit RTokenAddressChanged(_rTokenAddress);
@@ -340,14 +333,6 @@ contract BorrowerOperations is LiquityBase, Ownable2Step, CheckContract, IBorrow
 
         // Send the collateral back to the user
         activePoolCached.withdrawCollateral(msg.sender, coll);
-    }
-
-    /**
-     * Claim remaining collateral from a redemption
-     */
-    function claimCollateral() external override {
-        // send collateralToken from CollSurplus Pool to owner
-        collSurplusPool.claimColl(msg.sender);
     }
 
     // --- Helper functions ---
