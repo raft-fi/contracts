@@ -1,6 +1,6 @@
 
-const SortedTroves = artifacts.require("./SortedTroves.sol")
-const TroveManager = artifacts.require("./TroveManager.sol")
+const SortedPositions = artifacts.require("./SortedPositions.sol")
+const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
@@ -10,21 +10,21 @@ const FunctionCaller = artifacts.require("./FunctionCaller.sol")
 
 const deployLiquity = async () => {
   const priceFeedTestnet = await PriceFeedTestnet.new()
-  const sortedTroves = await SortedTroves.new()
-  const troveManager = await TroveManager.new()
+  const sortedPositions = await SortedPositions.new()
+  const positionManager = await PositionManager.new()
   const activePool = await ActivePool.new()
   const stabilityPool = await StabilityPool.new()
   const defaultPool = await DefaultPool.new()
   const functionCaller = await FunctionCaller.new()
   const rToken = await RToken.new(
-    troveManager.address,
+    positionManager.address,
     stabilityPool.address
   )
   DefaultPool.setAsDeployed(defaultPool)
   PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
   RToken.setAsDeployed(rToken)
-  SortedTroves.setAsDeployed(sortedTroves)
-  TroveManager.setAsDeployed(troveManager)
+  SortedPositions.setAsDeployed(sortedPositions)
+  PositionManager.setAsDeployed(positionManager)
   ActivePool.setAsDeployed(activePool)
   StabilityPool.setAsDeployed(stabilityPool)
   FunctionCaller.setAsDeployed(functionCaller)
@@ -32,8 +32,8 @@ const deployLiquity = async () => {
   const contracts = {
     priceFeedTestnet,
     rToken,
-    sortedTroves,
-    troveManager,
+    sortedPositions,
+    positionManager,
     activePool,
     stabilityPool,
     defaultPool,
@@ -46,8 +46,8 @@ const getAddresses = (contracts) => {
   return {
     PriceFeedTestnet: contracts.priceFeedTestnet.address,
     RToken: contracts.rToken.address,
-    SortedTroves: contracts.sortedTroves.address,
-    TroveManager: contracts.troveManager.address,
+    SortedPositions: contracts.sortedPositions.address,
+    PositionManager: contracts.positionManager.address,
     StabilityPool: contracts.stabilityPool.address,
     ActivePool: contracts.activePool.address,
     DefaultPool: contracts.defaultPool.address,
@@ -57,23 +57,23 @@ const getAddresses = (contracts) => {
 
 // Connect contracts to their dependencies
 const connectContracts = async (contracts, addresses) => {
-  // set TroveManager addr in SortedTroves
-  await contracts.sortedTroves.setTroveManager(addresses.TroveManager)
+  // set PositionManager addr in SortedPositions
+  await contracts.sortedPositions.setPositionManager(addresses.PositionManager)
 
   // set contract addresses in the FunctionCaller
-  await contracts.functionCaller.setTroveManagerAddress(addresses.TroveManager)
-  await contracts.functionCaller.setSortedTrovesAddress(addresses.SortedTroves)
+  await contracts.functionCaller.setPositionManagerAddress(addresses.PositionManager)
+  await contracts.functionCaller.setSortedPositionsAddress(addresses.SortedPositions)
 
-  // set TroveManager addr in PriceFeed
-  await contracts.priceFeedTestnet.setTroveManagerAddress(addresses.TroveManager)
+  // set PositionManager addr in PriceFeed
+  await contracts.priceFeedTestnet.setPositionManagerAddress(addresses.PositionManager)
 
-  // set contracts in the Trove Manager
-  await contracts.troveManager.setRToken(addresses.RToken)
-  await contracts.troveManager.setSortedTroves(addresses.SortedTroves)
-  await contracts.troveManager.setPriceFeed(addresses.PriceFeedTestnet)
-  await contracts.troveManager.setActivePool(addresses.ActivePool)
-  await contracts.troveManager.setDefaultPool(addresses.DefaultPool)
-  await contracts.troveManager.setStabilityPool(addresses.StabilityPool)
+  // set contracts in the Position Manager
+  await contracts.positionManager.setRToken(addresses.RToken)
+  await contracts.positionManager.setSortedPositions(addresses.SortedPositions)
+  await contracts.positionManager.setPriceFeed(addresses.PriceFeedTestnet)
+  await contracts.positionManager.setActivePool(addresses.ActivePool)
+  await contracts.positionManager.setDefaultPool(addresses.DefaultPool)
+  await contracts.positionManager.setStabilityPool(addresses.StabilityPool)
 
   // set contracts in the Pools
   await contracts.stabilityPool.setActivePoolAddress(addresses.ActivePool)
@@ -87,7 +87,7 @@ const connectContracts = async (contracts, addresses) => {
 }
 
 const connectEchidnaProxy = async (echidnaProxy, addresses) => {
-  echidnaProxy.setTroveManager(addresses.TroveManager)
+  echidnaProxy.setPositionManager(addresses.PositionManager)
 }
 
 module.exports = {

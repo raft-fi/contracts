@@ -13,19 +13,19 @@ import "../Interfaces/ILiquityBase.sol";
 error FeeExceedsMaxFee(uint fee, uint amount, uint maxFeePercentage);
 
 /*
-* Base contract for TroveManager. Contains global system constants and
+* Base contract for PositionManager. Contains global system constants and
 * common functions.
 */
 contract LiquityBase is BaseMath, ILiquityBase {
     uint constant public _100pct = 1000000000000000000; // 1e18 == 100%
 
-    // Minimum collateral ratio for individual troves
+    // Minimum collateral ratio for individual positions
     uint constant public MCR = 1100000000000000000; // 110%
 
-    // Amount of R to be locked in gas pool on opening troves
+    // Amount of R to be locked in gas pool on opening positions
     uint constant public R_GAS_COMPENSATION = 200e18;
 
-    // Minimum amount of net R debt a trove must have
+    // Minimum amount of net R debt a position must have
     uint constant public MIN_NET_DEBT = 1800e18;
     // uint constant public MIN_NET_DEBT = 0;
 
@@ -39,7 +39,7 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     // --- Gas compensation functions ---
 
-    // Returns the composite debt (drawn debt + gas compensation) of a trove, for the purpose of ICR calculation
+    // Returns the composite debt (drawn debt + gas compensation) of a position, for the purpose of ICR calculation
     function _getCompositeDebt(uint _debt) internal pure returns (uint) {
         return _debt + R_GAS_COMPENSATION;
     }
@@ -48,7 +48,7 @@ contract LiquityBase is BaseMath, ILiquityBase {
         return _debt - R_GAS_COMPENSATION;
     }
 
-    // Return the amount of collateralToken to be drawn from a trove's collateral and sent as gas compensation.
+    // Return the amount of collateralToken to be drawn from a position's collateral and sent as gas compensation.
     function _getCollGasCompensation(uint _entireColl) internal pure returns (uint) {
         return _entireColl / PERCENT_DIVISOR;
     }

@@ -6,37 +6,37 @@ import "./ILiquityBase.sol";
 import "./IRToken.sol";
 
 /// @dev Max fee percentage must be between borrowing spread and 100%.
-error TroveManagerInvalidMaxFeePercentage();
+error PositionManagerInvalidMaxFeePercentage();
 
-/// @dev Trove is active.
-error TroveMaangerTroveActive();
+/// @dev Position is active.
+error PositionMaangerPositionActive();
 
 /// @dev Dependencies' addresses have already been set.
-error TroveManagerAddressesAlreadySet();
+error PositionManagerAddressesAlreadySet();
 
 /// @dev Dependencies' addresses have not been set yet.
-error TroveManagerAddressesNotSet();
+error PositionManagerAddressesNotSet();
 
 /// @dev Max fee percentage must be between 0.5% and 100%.
-error TroveManagerMaxFeePercentageOutOfRange();
+error PositionManagerMaxFeePercentageOutOfRange();
 
 /// @dev Redemptions are not allowed during bootstrap phase.
-error TroveManagerRedemptionNotAllowed();
+error PositionManagerRedemptionNotAllowed();
 
-/// @dev Trove is not active (either does not exist or closed).
-error TroveManagerTroveNotActive();
+/// @dev Position is not active (either does not exist or closed).
+error PositionManagerPositionNotActive();
 
 /// @dev Requested redemption amount is > user's R token balance.
-error TroveManagerRedemptionAmountExceedsBalance();
+error PositionManagerRedemptionAmountExceedsBalance();
 
-/// @dev Only one trove in the system.
-error TroveManagerOnlyOneTroveInSystem();
+/// @dev Only one position in the system.
+error PositionManagerOnlyOnePositionInSystem();
 
 /// @dev Amount is zero.
-error TroveManagerAmountIsZero();
+error PositionManagerAmountIsZero();
 
 /// @dev Cannot redeem when TCR < MCR.
-error TroveManagerRedemptionTCRBelowMCR();
+error PositionManagerRedemptionTCRBelowMCR();
 
 /// @dev Nothing to liquidate.
 error NothingToLiquidate();
@@ -44,8 +44,8 @@ error NothingToLiquidate();
 /// @dev Unable to redeem any amount.
 error UnableToRedeemAnyAmount();
 
-/// @dev Trove array must is empty.
-error TroveArrayEmpty();
+/// @dev Position array must is empty.
+error PositionArrayEmpty();
 
 /// @dev Fee would eat up all returned collateral.
 error FeeEatsUpAllReturnedCollateral();
@@ -65,19 +65,19 @@ error NoCollateralOrDebtChange();
 /// @dev An operation that would result in ICR < MCR is not permitted.
 error NewICRLowerThanMCR(uint256 newICR);
 
-/// @dev Trove's net debt must be greater than minimum.
+/// @dev Position's net debt must be greater than minimum.
 error NetDebtBelowMinimum(uint256 netDebt);
 
-/// @dev Amount repaid must not be larger than the Trove's debt.
+/// @dev Amount repaid must not be larger than the Position's debt.
 error RepayRAmountExceedsDebt(uint256 debt);
 
 /// @dev Caller doesn't have enough R to make repayment.
 error RepayNotEnoughR(uint256 amount);
 
 
-// Common interface for the Trove Manager.
-interface ITroveManager is ILiquityBase {
-    enum TroveStatus {
+// Common interface for the Position Manager.
+interface IPositionManager is ILiquityBase {
+    enum PositionStatus {
         nonExistent,
         active,
         closedByOwner,
@@ -85,13 +85,13 @@ interface ITroveManager is ILiquityBase {
         closedByRedemption
     }
 
-    enum TroveManagerOperation {
+    enum PositionManagerOperation {
         applyPendingRewards,
         liquidate,
         redeemCollateral,
-        openTrove,
-        closeTrove,
-        adjustTrove
+        openPosition,
+        closePosition,
+        adjustPosition
     }
 
     // --- Events ---
@@ -100,22 +100,22 @@ interface ITroveManager is ILiquityBase {
     event RTokenAddressChanged(address _newRTokenAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event SortedTrovesAddressChanged(address _sortedTrovesAddress);
+    event SortedPositionsAddressChanged(address _sortedPositionsAddress);
     event FeeRecipientChanged(address _feeRecipient);
 
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _RGasCompensation);
     event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
-    event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, TroveManagerOperation _operation);
-    event TroveLiquidated(address indexed _borrower, uint _debt, uint _coll, TroveManagerOperation _operation);
+    event PositionUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, PositionManagerOperation _operation);
+    event PositionLiquidated(address indexed _borrower, uint _debt, uint _coll, PositionManagerOperation _operation);
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
     event BaseRateUpdated(uint _baseRate);
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
     event TotalStakesUpdated(uint _newTotalStakes);
     event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
     event LTermsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
-    event TroveSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
-    event TroveIndexUpdated(address _borrower, uint _newIndex);
-    event TroveCreated(address indexed _borrower, uint arrayIndex);
+    event PositionSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
+    event PositionIndexUpdated(address _borrower, uint _newIndex);
+    event PositionCreated(address indexed _borrower, uint arrayIndex);
     event RBorrowingFeePaid(address indexed _borrower, uint _rFee);
 
     // --- Functions ---
@@ -125,7 +125,7 @@ interface ITroveManager is ILiquityBase {
         address _defaultPoolAddress,
         address _priceFeedAddress,
         address _rTokenAddress,
-        address _sortedTrovesAddress,
+        address _sortedPositionsAddress,
         address _feeRecipient
     ) external;
 
@@ -136,18 +136,18 @@ interface ITroveManager is ILiquityBase {
 
     function rToken() external view returns (IRToken);
 
-    function getTroveOwnersCount() external view returns (uint);
+    function getPositionOwnersCount() external view returns (uint);
 
-    function getTroveFromTroveOwnersArray(uint _index) external view returns (address);
+    function getPositionFromPositionOwnersArray(uint _index) external view returns (address);
 
     function getNominalICR(address _borrower) external view returns (uint);
     function getCurrentICR(address _borrower, uint _price) external view returns (uint);
 
     function liquidate(address _borrower) external;
 
-    function liquidateTroves(uint _n) external;
+    function liquidatePositions(uint _n) external;
 
-    function batchLiquidateTroves(address[] calldata _troveArray) external;
+    function batchLiquidatePositions(address[] calldata _positionArray) external;
 
     function redeemCollateral(
         uint _rAmount,
@@ -186,17 +186,17 @@ interface ITroveManager is ILiquityBase {
     function getBorrowingFee(uint rDebt) external view returns (uint);
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
 
-    function getTroveStatus(address _borrower) external view returns (TroveStatus);
+    function getPositionStatus(address _borrower) external view returns (PositionStatus);
 
-    function getTroveStake(address _borrower) external view returns (uint);
+    function getPositionStake(address _borrower) external view returns (uint);
 
-    function getTroveDebt(address _borrower) external view returns (uint);
+    function getPositionDebt(address _borrower) external view returns (uint);
 
-    function getTroveColl(address _borrower) external view returns (uint);
+    function getPositionColl(address _borrower) external view returns (uint);
 
     function getTCR(uint _price) external view returns (uint);
 
-    function openTrove(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
+    function openPosition(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
 
     function addColl(address _upperHint, address _lowerHint, uint _amount) external;
 
@@ -206,9 +206,9 @@ interface ITroveManager is ILiquityBase {
 
     function repayR(uint _amount, address _upperHint, address _lowerHint) external;
 
-    function closeTrove() external;
+    function closePosition() external;
 
-    function adjustTrove(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
+    function adjustPosition(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
 
     function getCompositeDebt(uint _debt) external pure returns (uint);
 }

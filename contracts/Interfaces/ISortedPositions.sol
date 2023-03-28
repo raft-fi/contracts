@@ -1,41 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "./ITroveManager.sol";
+import "./IPositionManager.sol";
 
-/// @dev Caller is neither Borrower Operations nor Trove Manager.
-error SortedTrovesInvalidCaller();
+/// @dev Caller is neither Borrower Operations nor Position Manager.
+error SortedPositionsInvalidCaller();
 
-/// @dev Troves list size cannot be zero.
-error TrovesSizeZero();
+/// @dev Positions list size cannot be zero.
+error PositionsSizeZero();
 
-/// @dev Troves list is full.
-error TrovesListFull();
+/// @dev Positions list is full.
+error PositionsListFull();
 
-/// @dev Troves list already contains the node.
-error TrovesListContainsNode(address id);
+/// @dev Positions list already contains the node.
+error PositionsListContainsNode(address id);
 
-/// @dev Troves list does not contain the node.
-error TrovesListDoesNotContainNode(address id);
+/// @dev Positions list does not contain the node.
+error PositionsListDoesNotContainNode(address id);
 
-/// @dev Trove ID cannot be zero.
-error TroveIDZero();
+/// @dev Position ID cannot be zero.
+error PositionIDZero();
 
-/// @dev Troves' NICR must is zero.
-error TrovesNICRZero();
+/// @dev Positions' NICR must is zero.
+error PositionsNICRZero();
 
-// Common interface for the SortedTroves Doubly Linked List.
-interface ISortedTroves {
+// Common interface for the SortedPositions Doubly Linked List.
+interface ISortedPositions {
 
     // --- Events ---
 
-    event SortedTrovesAddressChanged(address _sortedDoublyLLAddress);
+    event SortedPositionsAddressChanged(address _sortedDoublyLLAddress);
     event NodeAdded(address _id, uint _NICR);
     event NodeRemoved(address _id);
 
     // --- Functions ---
 
-    function setParams(uint256 _size, ITroveManager _troveManager) external;
+    function setParams(uint256 _size, IPositionManager _positionManager) external;
 
     function insert(address _id, uint256 _ICR, address _prevId, address _nextId) external;
 

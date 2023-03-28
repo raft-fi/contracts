@@ -4,39 +4,39 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./Interfaces/ITroveManager.sol";
-import "./Interfaces/ISortedTroves.sol";
+import "./Interfaces/IPositionManager.sol";
+import "./Interfaces/ISortedPositions.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
 
 contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
     string constant public NAME = "HintHelpers";
 
-    ISortedTroves public sortedTroves;
-    ITroveManager public troveManager;
+    ISortedPositions public sortedPositions;
+    IPositionManager public positionManager;
 
     // --- Events ---
 
-    event SortedTrovesAddressChanged(address _sortedTrovesAddress);
-    event TroveManagerAddressChanged(address _troveManagerAddress);
+    event SortedPositionsAddressChanged(address _sortedPositionsAddress);
+    event PositionManagerAddressChanged(address _positionManagerAddress);
 
     // --- Dependency setters ---
 
     function setAddresses(
-        address _sortedTrovesAddress,
-        address _troveManagerAddress
+        address _sortedPositionsAddress,
+        address _positionManagerAddress
     )
         external
         onlyOwner
     {
-        checkContract(_sortedTrovesAddress);
-        checkContract(_troveManagerAddress);
+        checkContract(_sortedPositionsAddress);
+        checkContract(_positionManagerAddress);
 
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        troveManager = ITroveManager(_troveManagerAddress);
+        sortedPositions = ISortedPositions(_sortedPositionsAddress);
+        positionManager = IPositionManager(_positionManagerAddress);
 
-        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
-        emit TroveManagerAddressChanged(_troveManagerAddress);
+        emit SortedPositionsAddressChanged(_sortedPositionsAddress);
+        emit PositionManagerAddressChanged(_positionManagerAddress);
 
         renounceOwnership();
     }
@@ -45,18 +45,18 @@ contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
 
     /* getRedemptionHints() - Helper function for finding the right hints to pass to redeemCollateral().
      *
-     * It simulates a redemption of `_rAmount` to figure out where the redemption sequence will start and what state the final Trove
+     * It simulates a redemption of `_rAmount` to figure out where the redemption sequence will start and what state the final Position
      * of the sequence will end up in.
      *
      * Returns three hints:
-     *  - `firstRedemptionHint` is the address of the first Trove with ICR >= MCR (i.e. the first Trove that will be redeemed).
-     *  - `partialRedemptionHintNICR` is the final nominal ICR of the last Trove of the sequence after being hit by partial redemption,
+     *  - `firstRedemptionHint` is the address of the first Position with ICR >= MCR (i.e. the first Position that will be redeemed).
+     *  - `partialRedemptionHintNICR` is the final nominal ICR of the last Position of the sequence after being hit by partial redemption,
      *     or zero in case of no partial redemption.
      *  - `truncatedRAmount` is the maximum amount that can be redeemed out of the the provided `_rAmount`. This can be lower than
-     *    `_rAmount` when redeeming the full amount would leave the last Trove of the redemption sequence with less net debt than the
+     *    `_rAmount` when redeeming the full amount would leave the last Position of the redemption sequence with less net debt than the
      *    minimum allowed value (i.e. MIN_NET_DEBT).
      *
-     * The number of Troves to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero
+     * The number of Positions to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero
      * will leave it uncapped.
      */
 
@@ -73,31 +73,31 @@ contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
             uint truncatedRAmount
         )
     {
-        ISortedTroves sortedTrovesCached = sortedTroves;
+        ISortedPositions sortedPositionsCached = sortedPositions;
 
         uint remainingR = _rAmount;
-        address currentTroveuser = sortedTrovesCached.getLast();
+        address currentPositionUser = sortedPositionsCached.getLast();
 
-        while (currentTroveuser != address(0) && troveManager.getCurrentICR(currentTroveuser, _price) < MCR) {
-            currentTroveuser = sortedTrovesCached.getPrev(currentTroveuser);
+        while (currentPositionUser != address(0) && positionManager.getCurrentICR(currentPositionUser, _price) < MCR) {
+            currentPositionUser = sortedPositionsCached.getPrev(currentPositionUser);
         }
 
-        firstRedemptionHint = currentTroveuser;
+        firstRedemptionHint = currentPositionUser;
 
         if (_maxIterations == 0) {
             _maxIterations = type(uint256).max;
         }
 
-        while (currentTroveuser != address(0) && remainingR > 0 && _maxIterations-- > 0) {
-            uint netRDebt = _getNetDebt(troveManager.getTroveDebt(currentTroveuser))
-                + troveManager.getPendingRDebtReward(currentTroveuser);
+        while (currentPositionUser != address(0) && remainingR > 0 && _maxIterations-- > 0) {
+            uint netRDebt = _getNetDebt(positionManager.getPositionDebt(currentPositionUser))
+                + positionManager.getPendingRDebtReward(currentPositionUser);
 
             if (netRDebt > remainingR) {
                 if (netRDebt > MIN_NET_DEBT) {
                     uint maxRedeemableR = Math.min(remainingR, netRDebt - MIN_NET_DEBT);
 
-                    uint collateralBalance = troveManager.getTroveColl(currentTroveuser)
-                         + troveManager.getPendingCollateralTokenReward(currentTroveuser);
+                    uint collateralBalance = positionManager.getPositionColl(currentPositionUser)
+                         + positionManager.getPendingCollateralTokenReward(currentPositionUser);
 
                     uint newColl = collateralBalance - maxRedeemableR * DECIMAL_PRECISION / _price;
                     uint newDebt = netRDebt - maxRedeemableR;
@@ -112,14 +112,14 @@ contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
                 remainingR -= netRDebt;
             }
 
-            currentTroveuser = sortedTrovesCached.getPrev(currentTroveuser);
+            currentPositionUser = sortedPositionsCached.getPrev(currentPositionUser);
         }
 
         truncatedRAmount = _rAmount - remainingR;
     }
 
-    /* getApproxHint() - return address of a Trove that is, on average, (length / numTrials) positions away in the
-    sortedTroves list from the correct insert position of the Trove to be inserted.
+    /* getApproxHint() - return address of a Position that is, on average, (length / numTrials) positions away in the
+    sortedPositions list from the correct insert position of the Position to be inserted.
 
     Note: The output address is worst-case O(n) positions away from the correct insert position, however, the function
     is probabilistic. Input can be tuned to guarantee results to a high degree of confidence, e.g:
@@ -132,14 +132,14 @@ contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
         view
         returns (address hintAddress, uint diff, uint latestRandomSeed)
     {
-        uint arrayLength = troveManager.getTroveOwnersCount();
+        uint arrayLength = positionManager.getPositionOwnersCount();
 
         if (arrayLength == 0) {
             return (address(0), 0, _inputRandomSeed);
         }
 
-        hintAddress = sortedTroves.getLast();
-        diff = LiquityMath._getAbsoluteDifference(_CR, troveManager.getNominalICR(hintAddress));
+        hintAddress = sortedPositions.getLast();
+        diff = LiquityMath._getAbsoluteDifference(_CR, positionManager.getNominalICR(hintAddress));
         latestRandomSeed = _inputRandomSeed;
 
         uint i = 1;
@@ -148,8 +148,8 @@ contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
             latestRandomSeed = uint(keccak256(abi.encodePacked(latestRandomSeed)));
 
             uint arrayIndex = latestRandomSeed % arrayLength;
-            address currentAddress = troveManager.getTroveFromTroveOwnersArray(arrayIndex);
-            uint currentNICR = troveManager.getNominalICR(currentAddress);
+            address currentAddress = positionManager.getPositionFromPositionOwnersArray(arrayIndex);
+            uint currentNICR = positionManager.getNominalICR(currentAddress);
 
             // check if abs(current - CR) > abs(closest - CR), and update closest if current is closer
             uint currentDiff = LiquityMath._getAbsoluteDifference(currentNICR, _CR);

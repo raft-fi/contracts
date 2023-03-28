@@ -53,11 +53,11 @@
 
 //     // --- Ropsten Testnet ---
 
-//    // Set the Trove Manager address in the testnet PriceFeed
-//     // const res = await testnetPriceFeed.setTroveManagerAddress('0x405143dAe9a8a703a1fE82ad4B65BBFE5505AF63')
+//    // Set the Position Manager address in the testnet PriceFeed
+//     // const res = await testnetPriceFeed.setPositionManagerAddress('0x405143dAe9a8a703a1fE82ad4B65BBFE5505AF63')
 //     // res.wait()
-//     const recordedTroveManagerAddressTestnet = await testnetPriceFeed.troveManagerAddress()
-//     console.log(`recorded TroveManager Address is ${recordedTroveManagerAddressTestnet}`)
+//     const recordedPositionManagerAddressTestnet = await testnetPriceFeed.positionManagerAddress()
+//     console.log(`recorded PositionManager Address is ${recordedPositionManagerAddressTestnet}`)
 
 
 //     // Call the testnet Chainlink aggregator directly
@@ -132,7 +132,7 @@
 
 //     /* updatePrice() is a tx (21k) + SStore (5k) + emit event (1.5k) = 27.5k gas
 
-//     Therefore, expected gas cost of a getLatestPrice() call is within a Trove function is (35k - 27.5k)
+//     Therefore, expected gas cost of a getLatestPrice() call is within a Position function is (35k - 27.5k)
 //     = 7500 gas upper bound.
 
 //     To check, deploy an instance of FunctionCaller contract to ropsten and mainnet,

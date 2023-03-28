@@ -11,11 +11,11 @@ error UnauthorizedCall(address caller);
 error FlashFeePercentageTooBig(uint256 feePercentage);
 
 interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender {
-    event RDeployed(address troveManager, address flashMintFeeRecipient);
+    event RDeployed(address positionManager, address flashMintFeeRecipient);
 
     function PERCENTAGE_BASE() external view returns (uint256);
 
-    function troveManager() external view returns (address);
+    function positionManager() external view returns (address);
 
     function mint(address _account, uint256 _amount) external;
     function burn(address _account, uint256 _amount) external;

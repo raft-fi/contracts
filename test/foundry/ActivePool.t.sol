@@ -7,7 +7,7 @@ import "../../contracts/ActivePool.sol";
 import "../TestContracts/WstETHTokenMock.sol";
 
 contract ActivePoolTest is Test {
-    ITroveManager public constant POSITIONS_MANAGER = ITroveManager(address(12345));
+    IPositionManager public constant POSITIONS_MANAGER = IPositionManager(address(12345));
     IDefaultPool public constant DEFAULT_POOL = IDefaultPool(address(56789));
 
     address public constant USER = address(1);
@@ -22,10 +22,10 @@ contract ActivePoolTest is Test {
         activePool.setAddresses(POSITIONS_MANAGER, DEFAULT_POOL);
     }
 
-    // withdrawCollateral(): reverts when called by an account that is not Borrower Operations nor Trove Manager
+    // withdrawCollateral(): reverts when called by an account that is not Borrower Operations nor Position Manager
     function testUnauthorizedSendETH() public {
         vm.prank(USER);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         activePool.withdrawCollateral(USER, 100);
     }
 
@@ -36,10 +36,10 @@ contract ActivePoolTest is Test {
         assertEq(activePool.rDebt(), 100);
     }
 
-    // increaseRDebt(): reverts when called by an account that is not Borrower Operations nor Trove Manager
+    // increaseRDebt(): reverts when called by an account that is not Borrower Operations nor Position Manager
     function testUnauthorizedIncreaseRDebt() public {
         vm.prank(USER);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         activePool.increaseRDebt(100);
     }
 
@@ -54,18 +54,18 @@ contract ActivePoolTest is Test {
         assertEq(activePool.rDebt(), 0);
     }
 
-    // decreaseRDebt(): reverts when called by an account that is not Borrower Operations nor Trove Manager
+    // decreaseRDebt(): reverts when called by an account that is not Borrower Operations nor Position Manager
     function testUnauthorizedDecreaseRDebt() public {
         vm.prank(USER);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         activePool.decreaseRDebt(100);
     }
 
-    // depositCollateral(): reverts when called by an account that is not Borrower Operations nor Trove Manager
+    // depositCollateral(): reverts when called by an account that is not Borrower Operations nor Position Manager
     function testUnauthorizedDepositCollateral() public {
         vm.startPrank(USER);
         collateralToken.approve(address(activePool), 100);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         activePool.depositCollateral(USER, 100);
         vm.stopPrank();
     }

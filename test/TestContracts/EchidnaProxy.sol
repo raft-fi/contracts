@@ -2,41 +2,41 @@
 
 // pragma solidity 0.8.19;
 
-// import "../TroveManager.sol";
+// import "../PositionManager.sol";
 // import "../BorrowerOperations.sol";
 // import "../StabilityPool.sol";
 // import "../RToken.sol";
 
 // contract EchidnaProxy {
-//     TroveManager troveManager;
+//     PositionManager positionManager;
 //     BorrowerOperations borrowerOperations;
 //     StabilityPool stabilityPool;
 //     RToken rToken;
 
 //     constructor(
-//         TroveManager _troveManager,
+//         PositionManager _positionManager,
 //         BorrowerOperations _borrowerOperations,
 //         StabilityPool _stabilityPool,
 //         RToken _rToken
 //     ) public {
-//         troveManager = _troveManager;
+//         positionManager = _positionManager;
 //         borrowerOperations = _borrowerOperations;
 //         stabilityPool = _stabilityPool;
 //         rToken = _rToken;
 //     }
 
-//     // TroveManager
+//     // PositionManager
 
 //     function liquidatePrx(address _user) external {
-//         troveManager.liquidate(_user);
+//         positionManager.liquidate(_user);
 //     }
 
-//     function liquidateTrovesPrx(uint _n) external {
-//         troveManager.liquidateTroves(_n);
+//     function liquidatePositionsPrx(uint _n) external {
+//         positionManager.liquidatePositions(_n);
 //     }
 
-//     function batchLiquidateTrovesPrx(address[] calldata _troveArray) external {
-//         troveManager.batchLiquidateTroves(_troveArray);
+//     function batchLiquidatePositionsPrx(address[] calldata _positionArray) external {
+//         positionManager.batchLiquidatePositions(_positionArray);
 //     }
 
 //     function redeemCollateralPrx(
@@ -48,12 +48,12 @@
 //         uint _maxIterations,
 //         uint _maxFee
 //     ) external {
-//         troveManager.redeemCollateral(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint, _lowerPartialRedemptionHint, _partialRedemptionHintNICR, _maxIterations, _maxFee);
+//         positionManager.redeemCollateral(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint, _lowerPartialRedemptionHint, _partialRedemptionHintNICR, _maxIterations, _maxFee);
 //     }
 
 //     // Borrower Operations
-//     function openTrovePrx(uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) external {
-//         borrowerOperations.openTrove(_maxFee, _rAmount, _upperHint, _lowerHint, _ETH);
+//     function openPositionPrx(uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) external {
+//         borrowerOperations.openPosition(_maxFee, _rAmount, _upperHint, _lowerHint, _ETH);
 //     }
 
 //     function addCollPrx(uint _ETH, address _upperHint, address _lowerHint) external {
@@ -72,12 +72,12 @@
 //         borrowerOperations.repayR(_amount, _upperHint, _lowerHint);
 //     }
 
-//     function closeTrovePrx() external {
-//         borrowerOperations.closeTrove();
+//     function closePositionPrx() external {
+//         borrowerOperations.closePosition();
 //     }
 
-//     function adjustTrovePrx(uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
-//         borrowerOperations.adjustTrove(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _ETH);
+//     function adjustPositionPrx(uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
+//         borrowerOperations.adjustPosition(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _ETH);
 //     }
 
 //     // Pool Manager

@@ -7,7 +7,7 @@ import "../../contracts/DefaultPool.sol";
 import "../TestContracts/WstETHTokenMock.sol";
 
 contract DefaultPoolTest is Test {
-    ITroveManager public constant POSITIONS_MANAGER = ITroveManager(address(12345));
+    IPositionManager public constant POSITIONS_MANAGER = IPositionManager(address(12345));
 
     address public constant USER = address(1);
 
@@ -21,10 +21,10 @@ contract DefaultPoolTest is Test {
         defaultPool.setAddresses(POSITIONS_MANAGER);
     }
 
-    // withdrawCollateral(): reverts when called by an account that is not Trove Manager
+    // withdrawCollateral(): reverts when called by an account that is not Position Manager
     function testUnauthorizedSendETH() public {
         vm.prank(USER);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         defaultPool.withdrawCollateral(USER, 100);
     }
 
@@ -35,10 +35,10 @@ contract DefaultPoolTest is Test {
         assertEq(defaultPool.rDebt(), 100);
     }
 
-    // increaseRDebt(): reverts when called by an account that is not Trove Manager
+    // increaseRDebt(): reverts when called by an account that is not Position Manager
     function testUnauthorizedIncreaseRDebt() public {
         vm.prank(USER);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         defaultPool.increaseRDebt(100);
     }
 
@@ -53,18 +53,18 @@ contract DefaultPoolTest is Test {
         assertEq(defaultPool.rDebt(), 0);
     }
 
-    // decreaseRDebt(): reverts when called by an account that is not Trove Manager
+    // decreaseRDebt(): reverts when called by an account that is not Position Manager
     function testUnauthorizedDecreaseRDebt() public {
         vm.prank(USER);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         defaultPool.decreaseRDebt(100);
     }
 
-    // depositCollateral(): reverts when called by an account that is not Trove Manager
+    // depositCollateral(): reverts when called by an account that is not Position Manager
     function testUnauthorizedDepositCollateral() public {
         vm.startPrank(USER);
         collateralToken.approve(address(defaultPool), 100);
-        vm.expectRevert(CallerIsNotTroveManager.selector);
+        vm.expectRevert(CallerIsNotPositionManager.selector);
         defaultPool.depositCollateral(USER, 100);
         vm.stopPrank();
     }

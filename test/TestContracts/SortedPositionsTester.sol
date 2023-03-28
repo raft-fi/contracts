@@ -2,26 +2,26 @@
 
 pragma solidity 0.8.19;
 
-import "../../contracts/Interfaces/ISortedTroves.sol";
+import "../../contracts/Interfaces/ISortedPositions.sol";
 
 
-contract SortedTrovesTester {
-    ISortedTroves sortedTroves;
+contract SortedPositionsTester {
+    ISortedPositions sortedPositions;
 
-    function setSortedTroves(address _sortedTrovesAddress) external {
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+    function setSortedPositions(address _sortedPositionsAddress) external {
+        sortedPositions = ISortedPositions(_sortedPositionsAddress);
     }
 
     function insert(address _id, uint256 _NICR, address _prevId, address _nextId) external {
-        sortedTroves.insert(_id, _NICR, _prevId, _nextId);
+        sortedPositions.insert(_id, _NICR, _prevId, _nextId);
     }
 
     function remove(address _id) external {
-        sortedTroves.remove(_id);
+        sortedPositions.remove(_id);
     }
 
     function reInsert(address _id, uint256 _newNICR, address _prevId, address _nextId) external {
-        sortedTroves.reInsert(_id, _newNICR, _prevId, _nextId);
+        sortedPositions.reInsert(_id, _newNICR, _prevId, _nextId);
     }
 
     function getNominalICR(address) external pure returns (uint) {

@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.19;
 
-import "../../contracts/TroveManager.sol";
+import "../../contracts/PositionManager.sol";
 
-/* Tester contract inherits from TroveManager, and provides external functions
+/* Tester contract inherits from PositionManager, and provides external functions
 for testing the parent's internal functions. */
 
-contract TroveManagerTester is TroveManager {
+contract PositionManagerTester is PositionManager {
 
     function computeICR(uint _coll, uint _debt, uint _price) external pure returns (uint) {
         return LiquityMath._computeCR(_coll, _debt, _price);
@@ -49,12 +49,12 @@ contract TroveManagerTester is TroveManager {
         return _getNetDebt(_debtVal);
     }
 
-    function callInternalRemoveTroveOwner(address _troveOwner) external {
-        uint troveOwnersArrayLength = TroveOwners.length;
-        _removeTroveOwner(_troveOwner, troveOwnersArrayLength);
+    function callInternalRemovePositionOwner(address _positionOwner) external {
+        uint positionOwnersArrayLength = PositionOwners.length;
+        _removePositionOwner(_positionOwner, positionOwnersArrayLength);
     }
 
-    function getNewICRFromTroveChange
+    function getNewICRFromPositionChange
     (
         uint _coll,
         uint _debt,
@@ -68,7 +68,7 @@ contract TroveManagerTester is TroveManager {
     pure
     returns (uint)
     {
-        return _getNewICRFromTroveChange(_coll, _debt, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
+        return _getNewICRFromPositionChange(_coll, _debt, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
     }
 
     function getUSDValue(uint _coll, uint _price) external pure returns (uint) {

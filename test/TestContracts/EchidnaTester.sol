@@ -2,14 +2,14 @@
 
 // pragma solidity 0.8.19;
 
-// import "../TroveManager.sol";
+// import "../PositionManager.sol";
 // import "../BorrowerOperations.sol";
 // import "../ActivePool.sol";
 // import "../DefaultPool.sol";
 // import "../StabilityPool.sol";
 // import "../RToken.sol";
 // import "./PriceFeedTestnet.sol";
-// import "../SortedTroves.sol";
+// import "../SortedPositions.sol";
 // import "./EchidnaProxy.sol";
 // import { WstETHTokenMock } from "./WstETHTokenMock.sol";
 
@@ -24,7 +24,7 @@
 //     uint constant private CCR = 1500000000000000000; // 150% TODO: delete when doing https://github.com/tempusfinance/raft/issues/17
 //     uint private R_GAS_COMPENSATION;
 
-//     TroveManager public troveManager;
+//     PositionManager public positionManager;
 //     BorrowerOperations public borrowerOperations;
 //     ActivePool public activePool;
 //     DefaultPool public defaultPool;
@@ -32,54 +32,54 @@
 //     RToken public rToken;
 //     WstETHTokenMock public collateralToken;
 //     PriceFeedTestnet priceFeedTestnet;
-//     SortedTroves sortedTroves;
+//     SortedPositions sortedPositions;
 
 //     EchidnaProxy[NUMBER_OF_ACTORS] public echidnaProxies;
 
-//     uint private numberOfTroves;
+//     uint private numberOfPositions;
 
 //     constructor() public {
-//         troveManager = new TroveManager();
+//         positionManager = new PositionManager();
 //         borrowerOperations = new BorrowerOperations();
 //         collateralToken = new WstETHTokenMock();
 //         activePool = new ActivePool(address(collateralToken));
 //         defaultPool = new DefaultPool(address(collateralToken));
 //         stabilityPool = new StabilityPool(address(collateralToken));
 //         rToken = new RToken(
-//             address(troveManager),
+//             address(positionManager),
 //             address(stabilityPool),
 //             address(borrowerOperations)
 //         );
 
 //         priceFeedTestnet = new PriceFeedTestnet();
 
-//         sortedTroves = new SortedTroves();
+//         sortedPositions = new SortedPositions();
 
-//         troveManager.setAddresses(address(borrowerOperations),
+//         positionManager.setAddresses(address(borrowerOperations),
 //             address(activePool), address(defaultPool),
 //             address(stabilityPool),
 //             address(priceFeedTestnet), address(rToken),
-//             address(sortedTroves), address(0), address(0));
+//             address(sortedPositions), address(0), address(0));
 
-//         borrowerOperations.setAddresses(address(troveManager),
+//         borrowerOperations.setAddresses(address(positionManager),
 //             address(activePool), address(defaultPool),
 //             address(stabilityPool),
-//             address(priceFeedTestnet), address(sortedTroves),
+//             address(priceFeedTestnet), address(sortedPositions),
 //             address(rToken), address(0));
 
 //         activePool.setAddresses(address(borrowerOperations),
-//             address(troveManager), address(stabilityPool), address(defaultPool));
+//             address(positionManager), address(stabilityPool), address(defaultPool));
 
-//         defaultPool.setAddresses(address(troveManager));
+//         defaultPool.setAddresses(address(positionManager));
 
 //         stabilityPool.setAddresses(address(borrowerOperations),
-//             address(troveManager), address(activePool), address(rToken),
-//             address(sortedTroves), address(priceFeedTestnet), address(0));
+//             address(positionManager), address(activePool), address(rToken),
+//             address(sortedPositions), address(priceFeedTestnet), address(0));
 
-//         sortedTroves.setParams(1e18, address(troveManager), address(borrowerOperations));
+//         sortedPositions.setParams(1e18, address(positionManager), address(borrowerOperations));
 
 //         for (uint i = 0; i < NUMBER_OF_ACTORS; i++) {
-//             echidnaProxies[i] = new EchidnaProxy(troveManager, borrowerOperations, stabilityPool, rToken);
+//             echidnaProxies[i] = new EchidnaProxy(positionManager, borrowerOperations, stabilityPool, rToken);
 //             (bool success, ) = address(echidnaProxies[i]).call{value: INITIAL_BALANCE}("");
 //             require(success);
 //         }
@@ -92,21 +92,21 @@
 //         priceFeedTestnet.setPrice(1e22);
 //     }
 
-//     // TroveManager
+//     // PositionManager
 
 //     function liquidateExt(uint _i, address _user) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
 //         echidnaProxies[actor].liquidatePrx(_user);
 //     }
 
-//     function liquidateTrovesExt(uint _i, uint _n) external {
+//     function liquidatePositionsExt(uint _i, uint _n) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].liquidateTrovesPrx(_n);
+//         echidnaProxies[actor].liquidatePositionsPrx(_n);
 //     }
 
-//     function batchLiquidateTrovesExt(uint _i, address[] calldata _troveArray) external {
+//     function batchLiquidatePositionsExt(uint _i, address[] calldata _positionArray) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].batchLiquidateTrovesPrx(_troveArray);
+//         echidnaProxies[actor].batchLiquidatePositionsPrx(_positionArray);
 //     }
 
 //     function redeemCollateralExt(
@@ -144,7 +144,7 @@
 //         return rAmount;
 //     }
 
-//     function openTroveExt(uint _i, uint _ETH, uint _rAmount) public {
+//     function openPositionExt(uint _i, uint _ETH, uint _rAmount) public {
 //         uint actor = _i % NUMBER_OF_ACTORS;
 //         EchidnaProxy echidnaProxy = echidnaProxies[actor];
 //         uint actorBalance = address(echidnaProxy).balance;
@@ -156,17 +156,17 @@
 //         //console.log('ETH', ETH);
 //         //console.log('rAmount', rAmount);
 
-//         echidnaProxy.openTrovePrx(ETH, rAmount, address(0), address(0), 0);
+//         echidnaProxy.openPositionPrx(ETH, rAmount, address(0), address(0), 0);
 
-//         numberOfTroves = troveManager.getTroveOwnersCount();
-//         assert(numberOfTroves > 0);
+//         numberOfPositions = positionManager.getPositionOwnersCount();
+//         assert(numberOfPositions > 0);
 //         // canary
-//         //assert(numberOfTroves == 0);
+//         //assert(numberOfPositions == 0);
 //     }
 
-//     function openTroveRawExt(uint _i, uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) public {
+//     function openPositionRawExt(uint _i, uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) public {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].openTrovePrx(_ETH, _rAmount, _upperHint, _lowerHint, _maxFee);
+//         echidnaProxies[actor].openPositionPrx(_ETH, _rAmount, _upperHint, _lowerHint, _maxFee);
 //     }
 
 //     function addCollExt(uint _i, uint _ETH) external {
@@ -199,12 +199,12 @@
 //         echidnaProxies[actor].repayRPrx(_amount, _upperHint, _lowerHint);
 //     }
 
-//     function closeTroveExt(uint _i) external {
+//     function closePositionExt(uint _i) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].closeTrovePrx();
+//         echidnaProxies[actor].closePositionPrx();
 //     }
 
-//     function adjustTroveExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease) external {
+//     function adjustPositionExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
 //         EchidnaProxy echidnaProxy = echidnaProxies[actor];
 //         uint actorBalance = address(echidnaProxy).balance;
@@ -216,12 +216,12 @@
 //             debtChange = getAdjustedR(ETH, uint(_debtChange), MCR);
 //         }
 //         // TODO: collWithdrawal, debtChange
-//         echidnaProxy.adjustTrovePrx(ETH, _collWithdrawal, debtChange, _isDebtIncrease, address(0), address(0), 0);
+//         echidnaProxy.adjustPositionPrx(ETH, _collWithdrawal, debtChange, _isDebtIncrease, address(0), address(0), 0);
 //     }
 
-//     function adjustTroveRawExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
+//     function adjustPositionRawExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].adjustTrovePrx(_ETH, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFee);
+//         echidnaProxies[actor].adjustPositionPrx(_ETH, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFee);
 //     }
 
 //     // Pool Manager
@@ -274,8 +274,8 @@
 //     // Invariants and properties
 //     // --------------------------
 
-//     function echidna_canary_number_of_troves() public view returns(bool) {
-//         if (numberOfTroves > 20) {
+//     function echidna_canary_number_of_positions() public view returns(bool) {
+//         if (numberOfPositions > 20) {
 //             return false;
 //         }
 
@@ -289,19 +289,19 @@
 //         return true;
 //     }
 
-//     function echidna_troves_order() external view returns(bool) {
-//         address currentTrove = sortedTroves.getFirst();
-//         address nextTrove = sortedTroves.getNext(currentTrove);
+//     function echidna_positions_order() external view returns(bool) {
+//         address currentPosition = sortedPositions.getFirst();
+//         address nextPosition = sortedPositions.getNext(currentPosition);
 
-//         while (currentTrove != address(0) && nextTrove != address(0)) {
-//             if (troveManager.getNominalICR(nextTrove) > troveManager.getNominalICR(currentTrove)) {
+//         while (currentPosition != address(0) && nextPosition != address(0)) {
+//             if (positionManager.getNominalICR(nextPosition) > positionManager.getNominalICR(currentPosition)) {
 //                 return false;
 //             }
 //             // Uncomment to check that the condition is meaningful
 //             //else return false;
 
-//             currentTrove = nextTrove;
-//             nextTrove = sortedTroves.getNext(currentTrove);
+//             currentPosition = nextPosition;
+//             nextPosition = sortedPositions.getNext(currentPosition);
 //         }
 
 //         return true;
@@ -312,37 +312,37 @@
 //      * Minimum debt (gas compensation)
 //      * Stake > 0
 //      */
-//     function echidna_trove_properties() public view returns(bool) {
-//         address currentTrove = sortedTroves.getFirst();
-//         while (currentTrove != address(0)) {
+//     function echidna_position_properties() public view returns(bool) {
+//         address currentPosition = sortedPositions.getFirst();
+//         while (currentPosition != address(0)) {
 //             // Status
-//             if (TroveManager.Status(troveManager.getTroveStatus(currentTrove)) != TroveManager.Status.active) {
+//             if (PositionManager.Status(positionManager.getPositionStatus(currentPosition)) != PositionManager.Status.active) {
 //                 return false;
 //             }
 //             // Uncomment to check that the condition is meaningful
 //             //else return false;
 
 //             // Minimum debt (gas compensation)
-//             if (troveManager.getTroveDebt(currentTrove) < R_GAS_COMPENSATION) {
+//             if (positionManager.getPositionDebt(currentPosition) < R_GAS_COMPENSATION) {
 //                 return false;
 //             }
 //             // Uncomment to check that the condition is meaningful
 //             //else return false;
 
 //             // Stake > 0
-//             if (troveManager.getTroveStake(currentTrove) == 0) {
+//             if (positionManager.getPositionStake(currentPosition) == 0) {
 //                 return false;
 //             }
 //             // Uncomment to check that the condition is meaningful
 //             //else return false;
 
-//             currentTrove = sortedTroves.getNext(currentTrove);
+//             currentPosition = sortedPositions.getNext(currentPosition);
 //         }
 //         return true;
 //     }
 
 //     function echidna_ETH_balances() public view returns(bool) {
-//         if (address(troveManager).balance > 0) {
+//         if (address(positionManager).balance > 0) {
 //             return false;
 //         }
 
@@ -370,7 +370,7 @@
 //             return false;
 //         }
 
-//         if (address(sortedTroves).balance > 0) {
+//         if (address(sortedPositions).balance > 0) {
 //             return false;
 //         }
 
@@ -402,14 +402,14 @@
 //         }
 
 //         uint stabilityPoolBalance = stabilityPool.getTotalRDeposits();
-//         address currentTrove = sortedTroves.getFirst();
-//         uint trovesBalance;
-//         while (currentTrove != address(0)) {
-//             trovesBalance += rToken.balanceOf(address(currentTrove));
-//             currentTrove = sortedTroves.getNext(currentTrove);
+//         address currentPosition = sortedPositions.getFirst();
+//         uint positionsBalance;
+//         while (currentPosition != address(0)) {
+//             positionsBalance += rToken.balanceOf(address(currentPosition));
+//             currentPosition = sortedPositions.getNext(currentPosition);
 //         }
 //         // we cannot state equality because tranfers are made to external addresses too
-//         if (totalSupply <= stabilityPoolBalance + trovesBalance + borrowerOperationsBalance) {
+//         if (totalSupply <= stabilityPoolBalance + positionsBalance + borrowerOperationsBalance) {
 //             return false;
 //         }
 

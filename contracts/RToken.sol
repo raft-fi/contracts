@@ -15,7 +15,7 @@ import "./Interfaces/IRToken.sol";
 
 contract RToken is Ownable2Step, ERC20Permit, ERC20FlashMint, IRToken {
     // --- Addresses ---
-    address public immutable override troveManager;
+    address public immutable override positionManager;
     address public override flashMintFeeRecipient;
 
     uint256 public override flashMintFeePercentage;
@@ -24,35 +24,35 @@ contract RToken is Ownable2Step, ERC20Permit, ERC20FlashMint, IRToken {
     uint256 public constant override PERCENTAGE_BASE = 10_000;
 
     constructor(
-        address _troveManager
+        address _positionManager
     ) ERC20Permit("R Stablecoin") ERC20("R Stablecoin", "R") {
-        if (_troveManager == address(0)) {
+        if (_positionManager == address(0)) {
             revert InvalidAddressInput();
         }
 
-        troveManager = _troveManager;
+        positionManager = _positionManager;
         flashMintFeeRecipient = msg.sender;
         flashMintFeePercentage = 0;
 
-        emit RDeployed(_troveManager, msg.sender);
+        emit RDeployed(_positionManager, msg.sender);
     }
 
     function mint(address _account, uint256 _amount) external override {
-        if (msg.sender != troveManager) {
+        if (msg.sender != positionManager) {
             revert UnauthorizedCall(msg.sender);
         }
         _mint(_account, _amount);
     }
 
     function burn(address _account, uint256 _amount) external override {
-        if (msg.sender != troveManager) {
+        if (msg.sender != positionManager) {
             revert UnauthorizedCall(msg.sender);
         }
         _burn(_account, _amount);
     }
 
     function returnFromPool(address _poolAddress, address _receiver, uint256 _amount) external override {
-        if(msg.sender != troveManager) {
+        if(msg.sender != positionManager) {
             revert UnauthorizedCall(msg.sender);
         }
         _transfer(_poolAddress, _receiver, _amount);

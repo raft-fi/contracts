@@ -6,17 +6,17 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Interfaces/IActivePool.sol";
 import "./Dependencies/DefaultPoolDependent.sol";
-import "./Dependencies/TroveManagerDependent.sol";
+import "./Dependencies/PositionManagerDependent.sol";
 import "./CollateralPool.sol";
 
 /*
- * The Active Pool holds the collateral tokens and R debt (but not R tokens) for all active troves.
+ * The Active Pool holds the collateral tokens and R debt (but not R tokens) for all active positions.
  *
- * When a trove is liquidated, it's collateral tokens and R debt are transferred from the Active Pool, to either the
+ * When a position is liquidated, it's collateral tokens and R debt are transferred from the Active Pool, to either the
  * the Default Pool or the liquidator, depending on the liquidation conditions.
  *
  */
-contract ActivePool is Ownable2Step, CollateralPool, DefaultPoolDependent, TroveManagerDependent, IActivePool {
+contract ActivePool is Ownable2Step, CollateralPool, DefaultPoolDependent, PositionManagerDependent, IActivePool {
     string constant public NAME = "ActivePool";
 
     address public defaultPoolAddress;
@@ -29,13 +29,13 @@ contract ActivePool is Ownable2Step, CollateralPool, DefaultPoolDependent, Trove
     // --- Contract setters ---
 
     function setAddresses(
-        ITroveManager _troveManager,
+        IPositionManager _positionManager,
         IDefaultPool _defaultPool
     )
         external
         onlyOwner
     {
-        setTroveManager(_troveManager);
+        setPositionManager(_positionManager);
         setDefaultPool(_defaultPool);
 
         renounceOwnership();
@@ -49,26 +49,26 @@ contract ActivePool is Ownable2Step, CollateralPool, DefaultPoolDependent, Trove
     )
         external
         override
-        onlyTroveManager
+        onlyPositionManager
     {
         _depositCollateral(_from, _amount);
 
         emit ActivePoolCollateralTokenBalanceUpdated(collateralBalance);
     }
 
-    function withdrawCollateral(address _account, uint _amount) external override onlyTroveManager {
+    function withdrawCollateral(address _account, uint _amount) external override onlyPositionManager {
         collateralBalance -= _amount;
         emit ActivePoolCollateralTokenBalanceUpdated(collateralBalance);
         emit CollateralTokenSent(_account, _amount);
         collateralToken.transfer(_account, _amount);
     }
 
-    function increaseRDebt(uint _amount) external override onlyTroveManager {
+    function increaseRDebt(uint _amount) external override onlyPositionManager {
         rDebt += _amount;
         emit ActivePoolRDebtUpdated(rDebt);
     }
 
-    function decreaseRDebt(uint _amount) external override onlyTroveManager {
+    function decreaseRDebt(uint _amount) external override onlyPositionManager {
         rDebt -= _amount;
         emit ActivePoolRDebtUpdated(rDebt);
     }
