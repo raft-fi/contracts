@@ -65,8 +65,8 @@ class MainnetDeploymentHelper {
   async deployLiquityCoreMainnet(tellorMasterAddr, deploymentState) {
     // Get contract factories
     const priceFeedFactory = await this.getFactory("PriceFeed")
-    const sortedTrovesFactory = await this.getFactory("SortedTroves")
-    const troveManagerFactory = await this.getFactory("TroveManager")
+    const sortedPositionsFactory = await this.getFactory("SortedPositions")
+    const positionManagerFactory = await this.getFactory("PositionManager")
     const activePoolFactory = await this.getFactory("ActivePool")
     const defaultPoolFactory = await this.getFactory("DefaultPool")
     const hintHelpersFactory = await this.getFactory("HintHelpers")
@@ -75,15 +75,15 @@ class MainnetDeploymentHelper {
 
     // Deploy txs
     const priceFeed = await this.loadOrDeploy(priceFeedFactory, 'priceFeed', deploymentState)
-    const sortedTroves = await this.loadOrDeploy(sortedTrovesFactory, 'sortedTroves', deploymentState)
-    const troveManager = await this.loadOrDeploy(troveManagerFactory, 'troveManager', deploymentState)
+    const sortedPositions = await this.loadOrDeploy(sortedPositionsFactory, 'sortedPositions', deploymentState)
+    const positionManager = await this.loadOrDeploy(positionManagerFactory, 'positionManager', deploymentState)
     const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState)
     const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState)
     const hintHelpers = await this.loadOrDeploy(hintHelpersFactory, 'hintHelpers', deploymentState)
     const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, [tellorMasterAddr])
 
     const rTokenParams = [
-      troveManager.address
+      positionManager.address
     ]
     const rToken = await this.loadOrDeploy(
       rTokenFactory,
@@ -96,8 +96,8 @@ class MainnetDeploymentHelper {
       console.log('No Etherscan Url defined, skipping verification')
     } else {
       await this.verifyContract('priceFeed', deploymentState)
-      await this.verifyContract('sortedTroves', deploymentState)
-      await this.verifyContract('troveManager', deploymentState)
+      await this.verifyContract('sortedPositions', deploymentState)
+      await this.verifyContract('positionManager', deploymentState)
       await this.verifyContract('activePool', deploymentState)
       await this.verifyContract('defaultPool', deploymentState)
       await this.verifyContract('hintHelpers', deploymentState)
@@ -108,8 +108,8 @@ class MainnetDeploymentHelper {
     const coreContracts = {
       priceFeed,
       rToken,
-      sortedTroves,
-      troveManager,
+      sortedPositions,
+      positionManager,
       activePool,
       defaultPool,
       hintHelpers,
@@ -118,26 +118,26 @@ class MainnetDeploymentHelper {
     return coreContracts
   }
 
-  async deployMultiTroveGetterMainnet(liquityCore, deploymentState) {
-    const multiTroveGetterFactory = await this.getFactory("MultiTroveGetter")
-    const multiTroveGetterParams = [
-      liquityCore.troveManager.address,
-      liquityCore.sortedTroves.address
+  async deployMultiPositionGetterMainnet(liquityCore, deploymentState) {
+    const multiPositionGetterFactory = await this.getFactory("MultiPositionGetter")
+    const multiPositionGetterParams = [
+      liquityCore.positionManager.address,
+      liquityCore.sortedPositions.address
     ]
-    const multiTroveGetter = await this.loadOrDeploy(
-      multiTroveGetterFactory,
-      'multiTroveGetter',
+    const multiPositionGetter = await this.loadOrDeploy(
+      multiPositionGetterFactory,
+      'multiPositionGetter',
       deploymentState,
-      multiTroveGetterParams
+      multiPositionGetterParams
     )
 
     if (!this.configParams.ETHERSCAN_BASE_URL) {
       console.log('No Etherscan Url defined, skipping verification')
     } else {
-      await this.verifyContract('multiTroveGetter', deploymentState, multiTroveGetterParams)
+      await this.verifyContract('multiPositionGetter', deploymentState, multiPositionGetterParams)
     }
 
-    return multiTroveGetter
+    return multiPositionGetter
   }
   // --- Connector methods ---
 
@@ -152,22 +152,22 @@ class MainnetDeploymentHelper {
     await this.isOwnershipRenounced(contracts.priceFeed) ||
       await this.sendAndWaitForTransaction(contracts.priceFeed.setAddresses(chainlinkProxyAddress, contracts.tellorCaller.address, {gasPrice}))
 
-    // set TroveManager addr in SortedTroves
-    await this.isOwnershipRenounced(contracts.sortedTroves) ||
-      await this.sendAndWaitForTransaction(contracts.sortedTroves.setParams(
+    // set PositionManager addr in SortedPositions
+    await this.isOwnershipRenounced(contracts.sortedPositions) ||
+      await this.sendAndWaitForTransaction(contracts.sortedPositions.setParams(
         maxBytes32,
-        contracts.troveManager.address
+        contracts.positionManager.address
 	{gasPrice}
       ))
 
-    // set contracts in the Trove Manager
-    await this.isOwnershipRenounced(contracts.troveManager) ||
-      await this.sendAndWaitForTransaction(contracts.troveManager.setAddresses(
+    // set contracts in the Position Manager
+    await this.isOwnershipRenounced(contracts.positionManager) ||
+      await this.sendAndWaitForTransaction(contracts.positionManager.setAddresses(
         contracts.activePool.address,
         contracts.defaultPool.address,
         contracts.priceFeed.address,
         contracts.rToken.address,
-        contracts.sortedTroves.address,
+        contracts.sortedPositions.address,
 	{gasPrice}
       ))
 
@@ -175,14 +175,14 @@ class MainnetDeploymentHelper {
 
     await this.isOwnershipRenounced(contracts.activePool) ||
       await this.sendAndWaitForTransaction(contracts.activePool.setAddresses(
-        contracts.troveManager.address,
+        contracts.positionManager.address,
         contracts.defaultPool.address,
 	{gasPrice}
       ))
 
     await this.isOwnershipRenounced(contracts.defaultPool) ||
       await this.sendAndWaitForTransaction(contracts.defaultPool.setAddresses(
-        contracts.troveManager.address,
+        contracts.positionManager.address,
         contracts.activePool.address,
 	{gasPrice}
       ))
@@ -190,8 +190,8 @@ class MainnetDeploymentHelper {
     // set contracts in HintHelpers
     await this.isOwnershipRenounced(contracts.hintHelpers) ||
       await this.sendAndWaitForTransaction(contracts.hintHelpers.setAddresses(
-        contracts.sortedTroves.address,
-        contracts.troveManager.address,
+        contracts.sortedPositions.address,
+        contracts.positionManager.address,
 	{gasPrice}
       ))
   }

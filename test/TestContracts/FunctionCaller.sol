@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.19;
 
-import '../../contracts/Interfaces/ITroveManager.sol';
-import '../../contracts/Interfaces/ISortedTroves.sol';
+import '../../contracts/Interfaces/IPositionManager.sol';
+import '../../contracts/Interfaces/ISortedPositions.sol';
 import '../../contracts/Interfaces/IPriceFeed.sol';
 import '../../contracts/Dependencies/LiquityMath.sol';
 
@@ -11,25 +11,25 @@ import '../../contracts/Dependencies/LiquityMath.sol';
 Not part of the Liquity application. */
 contract FunctionCaller {
 
-    ITroveManager troveManager;
-    address public troveManagerAddress;
+    IPositionManager positionManager;
+    address public positionManagerAddress;
 
-    ISortedTroves sortedTroves;
-    address public sortedTrovesAddress;
+    ISortedPositions sortedPositions;
+    address public sortedPositionsAddress;
 
     IPriceFeed priceFeed;
     address public priceFeedAddress;
 
     // --- Dependency setters ---
 
-    function setTroveManagerAddress(address _troveManagerAddress) external {
-        troveManagerAddress = _troveManagerAddress;
-        troveManager = ITroveManager(_troveManagerAddress);
+    function setPositionManagerAddress(address _positionManagerAddress) external {
+        positionManagerAddress = _positionManagerAddress;
+        positionManager = IPositionManager(_positionManagerAddress);
     }
 
-    function setSortedTrovesAddress(address _sortedTrovesAddress) external {
-        troveManagerAddress = _sortedTrovesAddress;
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+    function setSortedPositionsAddress(address _sortedPositionsAddress) external {
+        positionManagerAddress = _sortedPositionsAddress;
+        sortedPositions = ISortedPositions(_sortedPositionsAddress);
     }
 
      function setPriceFeedAddress(address _priceFeedAddress) external {
@@ -39,11 +39,11 @@ contract FunctionCaller {
 
     // --- Non-view wrapper functions used for calculating gas ---
 
-    function troveManager_getCurrentICR(address _address, uint _price) external returns (uint) {
-        return troveManager.getCurrentICR(_address, _price);
+    function positionManager_getCurrentICR(address _address, uint _price) external returns (uint) {
+        return positionManager.getCurrentICR(_address, _price);
     }
 
-    function sortedTroves_findInsertPosition(uint _NICR, address _prevId, address _nextId) external returns (address, address) {
-        return sortedTroves.findInsertPosition(_NICR, _prevId, _nextId);
+    function sortedPositions_findInsertPosition(uint _NICR, address _prevId, address _nextId) external returns (address, address) {
+        return sortedPositions.findInsertPosition(_NICR, _prevId, _nextId);
     }
 }

@@ -6,15 +6,15 @@ const { dec, toBN } = th
 
 let latestRandomSeed = 31337
 
-const TroveManagerTester = artifacts.require("TroveManagerTester")
+const PositionManagerTester = artifacts.require("PositionManagerTester")
 const RToken = artifacts.require("RToken")
 
 contract('HintHelpers', async accounts => {
 
   const [owner] = accounts;
 
-  let sortedTroves
-  let troveManager
+  let sortedPositions
+  let positionManager
   let hintHelpers
   let priceFeed
   let wstETHTokenMock
@@ -24,32 +24,32 @@ contract('HintHelpers', async accounts => {
   let numAccounts;
 
  // Sequentially add coll and withdraw R, 1 account at a time
-  const makeTrovesInSequence = async (accounts, n) => {
+  const makePositionsInSequence = async (accounts, n) => {
     activeAccounts = accounts.slice(0,n)
     await th.fillAccountsWithWstETH(contracts, activeAccounts)
     // console.log(`number of accounts used is: ${activeAccounts.length}`)
 
     let ICR = 200
 
-    // console.time('makeTrovesInSequence')
+    // console.time('makePositionsInSequence')
     for (const account of activeAccounts) {
       const ICR_BN = toBN(ICR.toString().concat('0'.repeat(16)))
-      await th.openTrove(contracts, { extraRAmount: toBN(dec(10000, 18)), ICR: ICR_BN, extraParams: { from: account } })
+      await th.openPosition(contracts, { extraRAmount: toBN(dec(10000, 18)), ICR: ICR_BN, extraParams: { from: account } })
 
       ICR += 1
     }
-    // console.timeEnd('makeTrovesInSequence')
+    // console.timeEnd('makePositionsInSequence')
   }
 
   before(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    contracts.troveManager = await TroveManagerTester.new()
+    contracts.positionManager = await PositionManagerTester.new()
     contracts.rToken = await RToken.new(
-      contracts.troveManager.address
+      contracts.positionManager.address
     )
 
-    sortedTroves = contracts.sortedTroves
-    troveManager = contracts.troveManager
+    sortedPositions = contracts.sortedPositions
+    positionManager = contracts.positionManager
     hintHelpers = contracts.hintHelpers
     priceFeed = contracts.priceFeedTestnet
     wstETHTokenMock = contracts.wstETHTokenMock
@@ -59,21 +59,21 @@ contract('HintHelpers', async accounts => {
     numAccounts = 10
 
     await priceFeed.setPrice(dec(100, 18))
-    await makeTrovesInSequence(accounts, numAccounts)
+    await makePositionsInSequence(accounts, numAccounts)
   })
 
   it("setup: makes accounts with nominal ICRs increasing by 1% consecutively", async () => {
     // check first 10 accounts
-    const ICR_0 = await troveManager.getNominalICR(accounts[0])
-    const ICR_1 = await troveManager.getNominalICR(accounts[1])
-    const ICR_2 = await troveManager.getNominalICR(accounts[2])
-    const ICR_3 = await troveManager.getNominalICR(accounts[3])
-    const ICR_4 = await troveManager.getNominalICR(accounts[4])
-    const ICR_5 = await troveManager.getNominalICR(accounts[5])
-    const ICR_6 = await troveManager.getNominalICR(accounts[6])
-    const ICR_7 = await troveManager.getNominalICR(accounts[7])
-    const ICR_8 = await troveManager.getNominalICR(accounts[8])
-    const ICR_9 = await troveManager.getNominalICR(accounts[9])
+    const ICR_0 = await positionManager.getNominalICR(accounts[0])
+    const ICR_1 = await positionManager.getNominalICR(accounts[1])
+    const ICR_2 = await positionManager.getNominalICR(accounts[2])
+    const ICR_3 = await positionManager.getNominalICR(accounts[3])
+    const ICR_4 = await positionManager.getNominalICR(accounts[4])
+    const ICR_5 = await positionManager.getNominalICR(accounts[5])
+    const ICR_6 = await positionManager.getNominalICR(accounts[6])
+    const ICR_7 = await positionManager.getNominalICR(accounts[7])
+    const ICR_8 = await positionManager.getNominalICR(accounts[8])
+    const ICR_9 = await positionManager.getNominalICR(accounts[9])
 
     assert.isTrue(ICR_0.eq(toBN(dec(200, 16))))
     assert.isTrue(ICR_1.eq(toBN(dec(201, 16))))
@@ -87,12 +87,12 @@ contract('HintHelpers', async accounts => {
     assert.isTrue(ICR_9.eq(toBN(dec(209, 16))))
   })
 
-  it("getApproxHint(): returns the address of a Trove within sqrt(length) positions of the correct insert position", async () => {
+  it("getApproxHint(): returns the address of a Position within sqrt(length) positions of the correct insert position", async () => {
     const sqrtLength = Math.ceil(Math.sqrt(numAccounts))
 
-    /* As per the setup, the ICRs of Troves are monotonic and seperated by 1% intervals. Therefore, the difference in ICR between
+    /* As per the setup, the ICRs of Positions are monotonic and seperated by 1% intervals. Therefore, the difference in ICR between
     the given CR and the ICR of the hint address equals the number of positions between the hint address and the correct insert position
-    for a Trove with the given CR. */
+    for a Position with the given CR. */
 
     // CR = 250%
     const CR_250 = '2500000000000000000'
@@ -100,9 +100,9 @@ contract('HintHelpers', async accounts => {
 
     let hintAddress
 
-    // const hintAddress_250 = await functionCaller.troveManager_getApproxHint(CR_250, sqrtLength * 10)
+    // const hintAddress_250 = await functionCaller.positionManager_getApproxHint(CR_250, sqrtLength * 10)
     ;({ hintAddress, latestRandomSeed } = await hintHelpers.getApproxHint(CR_250, sqrtLength * 10, latestRandomSeed))
-    const ICR_hintAddress_250 = await troveManager.getNominalICR(hintAddress)
+    const ICR_hintAddress_250 = await positionManager.getNominalICR(hintAddress)
     const ICRPercent_hintAddress_250 = Number(web3.utils.fromWei(ICR_hintAddress_250, 'ether')) * 100
 
     // check the hint position is at most sqrtLength positions away from the correct position
@@ -113,9 +113,9 @@ contract('HintHelpers', async accounts => {
     const CR_287 = '2870000000000000000'
     const CRPercent_287 = Number(web3.utils.fromWei(CR_287, 'ether')) * 100
 
-    // const hintAddress_287 = await functionCaller.troveManager_getApproxHint(CR_287, sqrtLength * 10)
+    // const hintAddress_287 = await functionCaller.positionManager_getApproxHint(CR_287, sqrtLength * 10)
     ;({ hintAddress, latestRandomSeed } = await hintHelpers.getApproxHint(CR_287, sqrtLength * 10, latestRandomSeed))
-    const ICR_hintAddress_287 = await troveManager.getNominalICR(hintAddress)
+    const ICR_hintAddress_287 = await positionManager.getNominalICR(hintAddress)
     const ICRPercent_hintAddress_287 = Number(web3.utils.fromWei(ICR_hintAddress_287, 'ether')) * 100
 
     // check the hint position is at most sqrtLength positions away from the correct position
@@ -126,9 +126,9 @@ contract('HintHelpers', async accounts => {
     const CR_213 = '2130000000000000000'
     const CRPercent_213 = Number(web3.utils.fromWei(CR_213, 'ether')) * 100
 
-    // const hintAddress_213 = await functionCaller.troveManager_getApproxHint(CR_213, sqrtLength * 10)
+    // const hintAddress_213 = await functionCaller.positionManager_getApproxHint(CR_213, sqrtLength * 10)
     ;({ hintAddress, latestRandomSeed } = await hintHelpers.getApproxHint(CR_213, sqrtLength * 10, latestRandomSeed))
-    const ICR_hintAddress_213 = await troveManager.getNominalICR(hintAddress)
+    const ICR_hintAddress_213 = await positionManager.getNominalICR(hintAddress)
     const ICRPercent_hintAddress_213 = Number(web3.utils.fromWei(ICR_hintAddress_213, 'ether')) * 100
 
     // check the hint position is at most sqrtLength positions away from the correct position
@@ -139,9 +139,9 @@ contract('HintHelpers', async accounts => {
      const CR_201 = '2010000000000000000'
      const CRPercent_201 = Number(web3.utils.fromWei(CR_201, 'ether')) * 100
 
-    //  const hintAddress_201 = await functionCaller.troveManager_getApproxHint(CR_201, sqrtLength * 10)
+    //  const hintAddress_201 = await functionCaller.positionManager_getApproxHint(CR_201, sqrtLength * 10)
      ;({ hintAddress, latestRandomSeed } = await hintHelpers.getApproxHint(CR_201, sqrtLength * 10, latestRandomSeed))
-     const ICR_hintAddress_201 = await troveManager.getNominalICR(hintAddress)
+     const ICR_hintAddress_201 = await positionManager.getNominalICR(hintAddress)
      const ICRPercent_hintAddress_201 = Number(web3.utils.fromWei(ICR_hintAddress_201, 'ether')) * 100
 
      // check the hint position is at most sqrtLength positions away from the correct position
@@ -150,8 +150,8 @@ contract('HintHelpers', async accounts => {
   })
 
   /* Pass 100 random collateral ratios to getApproxHint(). For each, check whether the returned hint address is within
-  sqrt(length) positions of where a Trove with that CR should be inserted. */
-  // it("getApproxHint(): for 100 random CRs, returns the address of a Trove within sqrt(length) positions of the correct insert position", async () => {
+  sqrt(length) positions of where a Position with that CR should be inserted. */
+  // it("getApproxHint(): for 100 random CRs, returns the address of a Position within sqrt(length) positions of the correct insert position", async () => {
   //   const sqrtLength = Math.ceil(Math.sqrt(numAccounts))
 
   //   for (i = 0; i < 100; i++) {
@@ -164,7 +164,7 @@ contract('HintHelpers', async accounts => {
   //     const ICR = web3.utils.toWei((ICR_Percent * 10).toString(), 'finney')
 
   //     const hintAddress = await hintHelpers.getApproxHint(ICR, sqrtLength * 10)
-  //     const ICR_hintAddress = await troveManager.getNominalICR(hintAddress)
+  //     const ICR_hintAddress = await positionManager.getNominalICR(hintAddress)
   //     const ICRPercent_hintAddress = Number(web3.utils.fromWei(ICR_hintAddress, 'ether')) * 100
 
   //     // check the hint position is at most sqrtLength positions away from the correct position
@@ -181,22 +181,22 @@ contract('HintHelpers', async accounts => {
 
     let hintAddress
 
-    // const hintAddress_Max = await functionCaller.troveManager_getApproxHint(CR_Max, sqrtLength * 10)
+    // const hintAddress_Max = await functionCaller.positionManager_getApproxHint(CR_Max, sqrtLength * 10)
     ;({ hintAddress, latestRandomSeed } = await hintHelpers.getApproxHint(CR_Max, sqrtLength * 10, latestRandomSeed))
 
-    const ICR_hintAddress_Max = await troveManager.getNominalICR(hintAddress)
+    const ICR_hintAddress_Max = await positionManager.getNominalICR(hintAddress)
     const ICRPercent_hintAddress_Max = Number(web3.utils.fromWei(ICR_hintAddress_Max, 'ether')) * 100
 
-     const firstTrove = await sortedTroves.getFirst()
-     const ICR_FirstTrove = await troveManager.getNominalICR(firstTrove)
-     const ICRPercent_FirstTrove = Number(web3.utils.fromWei(ICR_FirstTrove, 'ether')) * 100
+     const firstPosition = await sortedPositions.getFirst()
+     const ICR_FirstPosition = await positionManager.getNominalICR(firstPosition)
+     const ICRPercent_FirstPosition = Number(web3.utils.fromWei(ICR_FirstPosition, 'ether')) * 100
 
      // check the hint position is at most sqrtLength positions away from the correct position
-     ICR_Difference_Max = (ICRPercent_hintAddress_Max - ICRPercent_FirstTrove)
+     ICR_Difference_Max = (ICRPercent_hintAddress_Max - ICRPercent_FirstPosition)
      assert.isBelow(ICR_Difference_Max, sqrtLength)
   })
 
-  it("getApproxHint(): returns the tail of the list if the CR is lower than ICR of any Trove", async () => {
+  it("getApproxHint(): returns the tail of the list if the CR is lower than ICR of any Position", async () => {
     const sqrtLength = Math.ceil(Math.sqrt(numAccounts))
 
      // CR = MCR
@@ -204,17 +204,17 @@ contract('HintHelpers', async accounts => {
 
      let hintAddress
 
-    //  const hintAddress_Min = await functionCaller.troveManager_getApproxHint(CR_Min, sqrtLength * 10)
+    //  const hintAddress_Min = await functionCaller.positionManager_getApproxHint(CR_Min, sqrtLength * 10)
     ;({ hintAddress, latestRandomSeed } = await hintHelpers.getApproxHint(CR_Min, sqrtLength * 10, latestRandomSeed))
-    const ICR_hintAddress_Min = await troveManager.getNominalICR(hintAddress)
+    const ICR_hintAddress_Min = await positionManager.getNominalICR(hintAddress)
     const ICRPercent_hintAddress_Min = Number(web3.utils.fromWei(ICR_hintAddress_Min, 'ether')) * 100
 
-     const lastTrove = await sortedTroves.getLast()
-     const ICR_LastTrove = await troveManager.getNominalICR(lastTrove)
-     const ICRPercent_LastTrove = Number(web3.utils.fromWei(ICR_LastTrove, 'ether')) * 100
+     const lastPosition = await sortedPositions.getLast()
+     const ICR_LastPosition = await positionManager.getNominalICR(lastPosition)
+     const ICRPercent_LastPosition = Number(web3.utils.fromWei(ICR_LastPosition, 'ether')) * 100
 
      // check the hint position is at most sqrtLength positions away from the correct position
-     const ICR_Difference_Min = (ICRPercent_hintAddress_Min - ICRPercent_LastTrove)
+     const ICR_Difference_Min = (ICRPercent_hintAddress_Min - ICRPercent_LastPosition)
      assert.isBelow(ICR_Difference_Min, sqrtLength)
   })
 

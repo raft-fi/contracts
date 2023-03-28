@@ -10,11 +10,11 @@ async function main() {
 
   const coreContracts = await dh.deployLiquityCoreHardhat()
 
- const { troveManager, hintHelpers, sortedTroves, priceFeedTestnet } = coreContracts
+ const { positionManager, hintHelpers, sortedPositions, priceFeedTestnet } = coreContracts
 
   await dh.connectCoreContracts(coreContracts)
 
-  // Examples of off-chain hint calculation for Open Trove
+  // Examples of off-chain hint calculation for Open Position
 
   const toWei = web3.utils.toWei
   const toBN = web3.utils.toBN
@@ -25,54 +25,54 @@ async function main() {
   const rAmount = toBN(toWei('2500')) // borrower wants to withdraw 2500 R
   const ETHColl = toBN(toWei('5')) // borrower wants to lock 5 ETH collateral
 
-  // Call deployed TroveManager contract to read the liquidation reserve and latest borrowing fee
-  const liquidationReserve = await troveManager.R_GAS_COMPENSATION()
-  const expectedFee = await troveManager.getBorrowingFeeWithDecay(rAmount)
+  // Call deployed PositionManager contract to read the liquidation reserve and latest borrowing fee
+  const liquidationReserve = await positionManager.R_GAS_COMPENSATION()
+  const expectedFee = await positionManager.getBorrowingFeeWithDecay(rAmount)
 
-  // Total debt of the new trove = R amount drawn, plus fee, plus the liquidation reserve
+  // Total debt of the new position = R amount drawn, plus fee, plus the liquidation reserve
   const expectedDebt = rAmount.add(expectedFee).add(liquidationReserve)
 
-  // Get the nominal NICR of the new trove
+  // Get the nominal NICR of the new position
   const _1e20 = toBN(toWei('100'))
   let NICR = ETHColl.mul(_1e20).div(expectedDebt)
 
-  // Get an approximate address hint from the deployed HintHelper contract. Use (15 * number of troves) trials
+  // Get an approximate address hint from the deployed HintHelper contract. Use (15 * number of positions) trials
   // to get an approx. hint that is close to the right position.
-  let numTroves = await sortedTroves.getSize()
-  let numTrials = numTroves.mul(toBN('15'))
+  let numPositions = await sortedPositions.getSize()
+  let numTrials = numPositions.mul(toBN('15'))
   let { 0: approxHint } = await hintHelpers.getApproxHint(NICR, numTrials, 42)  // random seed of 42
 
-  // Use the approximate hint to get the exact upper and lower hints from the deployed SortedTroves contract
-  let { 0: upperHint, 1: lowerHint } = await sortedTroves.findInsertPosition(NICR, approxHint, approxHint)
+  // Use the approximate hint to get the exact upper and lower hints from the deployed SortedPositions contract
+  let { 0: upperHint, 1: lowerHint } = await sortedPositions.findInsertPosition(NICR, approxHint, approxHint)
 
-  // Finally, call openTrove with the exact upperHint and lowerHint
+  // Finally, call openPosition with the exact upperHint and lowerHint
   const maxFee = '5'.concat('0'.repeat(16)) // Slippage protection: 5%
-  await troveManager.openTrove(maxFee, rAmount, upperHint, lowerHint, { value: ETHColl })
+  await positionManager.openPosition(maxFee, rAmount, upperHint, lowerHint, { value: ETHColl })
 
-  // --- adjust trove ---
+  // --- adjust position ---
 
   const collIncrease = toBN(toWei('1'))  // borrower wants to add 1 ETH
   const RRepayment = toBN(toWei('230')) // borrower wants to repay 230 R
 
-  // Get trove's current debt and coll
-  const {0: debt, 1: coll} = await troveManager.getEntireDebtAndColl(borrower)
+  // Get position's current debt and coll
+  const {0: debt, 1: coll} = await positionManager.getEntireDebtAndColl(borrower)
 
   const newDebt = debt.sub(RRepayment)
   const newColl = coll.add(collIncrease)
 
   NICR = newColl.mul(_1e20).div(newDebt)
 
-  // Get an approximate address hint from the deployed HintHelper contract. Use (15 * number of troves) trials
+  // Get an approximate address hint from the deployed HintHelper contract. Use (15 * number of positions) trials
   // to get an approx. hint that is close to the right position.
-  numTroves = await sortedTroves.getSize()
-  numTrials = numTroves.mul(toBN('15'))
+  numPositions = await sortedPositions.getSize()
+  numTrials = numPositions.mul(toBN('15'))
   ({0: approxHint} = await hintHelpers.getApproxHint(NICR, numTrials, 42))
 
-  // Use the approximate hint to get the exact upper and lower hints from the deployed SortedTroves contract
-  ({ 0: upperHint, 1: lowerHint } = await sortedTroves.findInsertPosition(NICR, approxHint, approxHint))
+  // Use the approximate hint to get the exact upper and lower hints from the deployed SortedPositions contract
+  ({ 0: upperHint, 1: lowerHint } = await sortedPositions.findInsertPosition(NICR, approxHint, approxHint))
 
-  // Call adjustTrove with the exact upperHint and lowerHint
-  await troveManager.adjustTrove(maxFee, 0, RRepayment, false, upperHint, lowerHint, {value: collIncrease})
+  // Call adjustPosition with the exact upperHint and lowerHint
+  await positionManager.adjustPosition(maxFee, 0, RRepayment, false, upperHint, lowerHint, {value: collIncrease})
 
 
   // --- RedeemCollateral ---
@@ -89,16 +89,16 @@ async function main() {
   } = await contracts.hintHelpers.getApproxHint(partialRedemptionNewICR, numTrials, 42)
 
   /* Use the approximate partial redemption hint to get the exact partial redemption hint from the
-  * deployed SortedTroves contract
+  * deployed SortedPositions contract
   */
-  const exactPartialRedemptionHint = (await sortedTroves.findInsertPosition(partialRedemptionNewICR,
+  const exactPartialRedemptionHint = (await sortedPositions.findInsertPosition(partialRedemptionNewICR,
     approxPartialRedemptionHint,
     approxPartialRedemptionHint))
 
   /* Finally, perform the on-chain redemption, passing the truncated R amount, the correct hints, and the expected
-  * ICR of the final partially redeemed trove in the sequence.
+  * ICR of the final partially redeemed position in the sequence.
   */
-  await troveManager.redeemCollateral(truncatedRAmount,
+  await positionManager.redeemCollateral(truncatedRAmount,
     firstRedemptionHint,
     exactPartialRedemptionHint[0],
     exactPartialRedemptionHint[1],

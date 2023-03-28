@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 
 import "./IDefaultPool.sol";
 import "./IPool.sol";
-import "./ITroveManager.sol";
+import "./IPositionManager.sol";
 
 interface IActivePool is IPool {
     // --- Events ---
@@ -13,7 +13,7 @@ interface IActivePool is IPool {
 
     // --- Functions ---
     function setAddresses(
-        ITroveManager _troveManager,
+        IPositionManager _positionManager,
         IDefaultPool _defaultPool
     ) external;
 

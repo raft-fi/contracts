@@ -5,8 +5,8 @@ contract('Deployment script - Sets correct contract addresses dependencies after
 
   let priceFeed
   let rToken
-  let sortedTroves
-  let troveManager
+  let sortedPositions
+  let positionManager
   let activePool
   let defaultPool
   let feeRecipient
@@ -16,8 +16,8 @@ contract('Deployment script - Sets correct contract addresses dependencies after
 
     priceFeed = coreContracts.priceFeedTestnet
     rToken = coreContracts.rToken
-    sortedTroves = coreContracts.sortedTroves
-    troveManager = coreContracts.troveManager
+    sortedPositions = coreContracts.sortedPositions
+    positionManager = coreContracts.positionManager
     activePool = coreContracts.activePool
     defaultPool = coreContracts.defaultPool
     functionCaller = coreContracts.functionCaller
@@ -26,51 +26,51 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     await deploymentHelper.connectCoreContracts(coreContracts, feeRecipient)
   })
 
-  it('Sets the correct PriceFeed address in TroveManager', async () => {
+  it('Sets the correct PriceFeed address in PositionManager', async () => {
     const priceFeedAddress = priceFeed.address
 
-    const recordedPriceFeedAddress = await troveManager.priceFeed()
+    const recordedPriceFeedAddress = await positionManager.priceFeed()
 
     assert.equal(priceFeedAddress, recordedPriceFeedAddress)
   })
 
-  it('Sets the correct RToken address in TroveManager', async () => {
+  it('Sets the correct RToken address in PositionManager', async () => {
     const rTokenAddress = rToken.address
 
-    const recordedClvTokenAddress = await troveManager.rToken()
+    const recordedClvTokenAddress = await positionManager.rToken()
 
     assert.equal(rTokenAddress, recordedClvTokenAddress)
   })
 
-  it('Sets the correct SortedTroves address in TroveManager', async () => {
-    const sortedTrovesAddress = sortedTroves.address
+  it('Sets the correct SortedPositions address in PositionManager', async () => {
+    const sortedPositionsAddress = sortedPositions.address
 
-    const recordedSortedTrovesAddress = await troveManager.sortedTroves()
+    const recordedSortedPositionsAddress = await positionManager.sortedPositions()
 
-    assert.equal(sortedTrovesAddress, recordedSortedTrovesAddress)
+    assert.equal(sortedPositionsAddress, recordedSortedPositionsAddress)
   })
 
-  // ActivePool in TroveM
-  it('Sets the correct ActivePool address in TroveManager', async () => {
+  // ActivePool in PositionM
+  it('Sets the correct ActivePool address in PositionManager', async () => {
     const activePoolAddress = activePool.address
 
-    const recordedActivePoolAddresss = await troveManager.activePool()
+    const recordedActivePoolAddresss = await positionManager.activePool()
 
     assert.equal(activePoolAddress, recordedActivePoolAddresss)
   })
 
-  // DefaultPool in TroveM
-  it('Sets the correct DefaultPool address in TroveManager', async () => {
+  // DefaultPool in PositionM
+  it('Sets the correct DefaultPool address in PositionManager', async () => {
     const defaultPoolAddress = defaultPool.address
 
-    const recordedDefaultPoolAddresss = await troveManager.defaultPool()
+    const recordedDefaultPoolAddresss = await positionManager.defaultPool()
 
     assert.equal(defaultPoolAddress, recordedDefaultPoolAddresss)
   })
 
-  // Fee recipient in TroveM
-  it('Sets the correct fee recipient address in TroveManager', async () => {
-    const recordedFeeRecipient = await troveManager.feeRecipient()
+  // Fee recipient in PositionM
+  it('Sets the correct fee recipient address in PositionManager', async () => {
+    const recordedFeeRecipient = await positionManager.feeRecipient()
     assert.equal(feeRecipient, recordedFeeRecipient)
   })
 
@@ -84,26 +84,26 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(defaultPoolAddress, recordedDefaultPoolAddress)
   })
 
-  it('Sets the correct TroveManager address in ActivePool', async () => {
-    const troveManagerAddress = troveManager.address
+  it('Sets the correct PositionManager address in ActivePool', async () => {
+    const positionManagerAddress = positionManager.address
 
-    const recordedTroveManagerAddress = await activePool.troveManager()
-    assert.equal(troveManagerAddress, recordedTroveManagerAddress)
+    const recordedPositionManagerAddress = await activePool.positionManager()
+    assert.equal(positionManagerAddress, recordedPositionManagerAddress)
   })
 
   // Default Pool
 
-  it('Sets the correct TroveManager address in DefaultPool', async () => {
-    const troveManagerAddress = troveManager.address
+  it('Sets the correct PositionManager address in DefaultPool', async () => {
+    const positionManagerAddress = positionManager.address
 
-    const recordedTroveManagerAddress = await defaultPool.troveManager()
-    assert.equal(troveManagerAddress, recordedTroveManagerAddress)
+    const recordedPositionManagerAddress = await defaultPool.positionManager()
+    assert.equal(positionManagerAddress, recordedPositionManagerAddress)
   })
 
-  it('Sets the correct TroveManager address in SortedTroves', async () => {
-    const troveManagerAddress = troveManager.address
+  it('Sets the correct PositionManager address in SortedPositions', async () => {
+    const positionManagerAddress = positionManager.address
 
-    const recordedTroveManagerAddress = await sortedTroves.troveManager()
-    assert.equal(troveManagerAddress, recordedTroveManagerAddress)
+    const recordedPositionManagerAddress = await sortedPositions.positionManager()
+    assert.equal(positionManagerAddress, recordedPositionManagerAddress)
   })
 })

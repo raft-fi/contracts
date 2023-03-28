@@ -1,6 +1,6 @@
 // Hardhat script
-const SortedTroves = artifacts.require("./SortedTroves.sol")
-const TroveManager = artifacts.require("./TroveManager.sol")
+const SortedPositions = artifacts.require("./SortedPositions.sol")
+const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeed = artifacts.require("./PriceFeed.sol")
 const RToken = artifacts.require("./RToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
@@ -12,7 +12,7 @@ const HintHelpers = artifacts.require("./HintHelpers.sol")
 const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
 const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
-const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
+const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
 const RTokenTester = artifacts.require("./RTokenTester.sol")
 
 const dh = require("./deploymentHelpers.js")
@@ -20,8 +20,8 @@ const dh = require("./deploymentHelpers.js")
 const coreContractABIs = [
   PriceFeed,
   RToken,
-  SortedTroves,
-  TroveManager,
+  SortedPositions,
+  PositionManager,
   ActivePool,
   DefaultPool,
   FunctionCaller,
@@ -32,7 +32,7 @@ const TesterContractABIs  = [
   ActivePoolTester,
   DefaultPoolTester,
   LiquityMathTester,
-  TroveManagerTester,
+  PositionManagerTester,
   RTokenTester,
 ]
 
