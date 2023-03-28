@@ -55,7 +55,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   it('Sets the correct BorrowerOperations address in TroveManager', async () => {
     const borrowerOperationsAddress = borrowerOperations.address
 
-    const recordedBorrowerOperationsAddress = await troveManager.borrowerOperationsAddress()
+    const recordedBorrowerOperationsAddress = await troveManager.borrowerOperations()
 
     assert.equal(borrowerOperationsAddress, recordedBorrowerOperationsAddress)
   })
@@ -89,7 +89,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   it('Sets the correct DefaultPool address in ActivePool', async () => {
     const defaultPoolAddress = defaultPool.address
 
-    const recordedDefaultPoolAddress = await activePool.defaultPoolAddress()
+    const recordedDefaultPoolAddress = await activePool.defaultPool()
 
     assert.equal(defaultPoolAddress, recordedDefaultPoolAddress)
   })
@@ -97,7 +97,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   it('Sets the correct BorrowerOperations address in ActivePool', async () => {
     const borrowerOperationsAddress = borrowerOperations.address
 
-    const recordedBorrowerOperationsAddress = await activePool.borrowerOperationsAddress()
+    const recordedBorrowerOperationsAddress = await activePool.borrowerOperations()
 
     assert.equal(borrowerOperationsAddress, recordedBorrowerOperationsAddress)
   })
@@ -105,7 +105,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   it('Sets the correct TroveManager address in ActivePool', async () => {
     const troveManagerAddress = troveManager.address
 
-    const recordedTroveManagerAddress = await activePool.troveManagerAddress()
+    const recordedTroveManagerAddress = await activePool.troveManager()
     assert.equal(troveManagerAddress, recordedTroveManagerAddress)
   })
 
@@ -114,14 +114,14 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   it('Sets the correct TroveManager address in DefaultPool', async () => {
     const troveManagerAddress = troveManager.address
 
-    const recordedTroveManagerAddress = await defaultPool.troveManagerAddress()
+    const recordedTroveManagerAddress = await defaultPool.troveManager()
     assert.equal(troveManagerAddress, recordedTroveManagerAddress)
   })
 
   it('Sets the correct TroveManager address in SortedTroves', async () => {
     const borrowerOperationsAddress = borrowerOperations.address
 
-    const recordedBorrowerOperationsAddress = await sortedTroves.borrowerOperationsAddress()
+    const recordedBorrowerOperationsAddress = await sortedTroves.borrowerOperations()
     assert.equal(borrowerOperationsAddress, recordedBorrowerOperationsAddress)
   })
 

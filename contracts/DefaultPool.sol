@@ -5,7 +5,8 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import './Interfaces/IDefaultPool.sol';
-import "./Dependencies/CheckContract.sol";
+import "./Dependencies/TroveManagerDependent.sol";
+import "./CollateralPool.sol";
 
 /*
  * The Default Pool holds the ETH and R debt (but not R tokens) from liquidations that have been redistributed
@@ -14,51 +15,24 @@ import "./Dependencies/CheckContract.sol";
  * When a trove makes an operation that applies its pending ETH and R debt, its pending ETH and R debt is moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPool is Ownable2Step, CheckContract, IDefaultPool {
+contract DefaultPool is Ownable2Step, CollateralPool, TroveManagerDependent, IDefaultPool {
     string constant public NAME = "DefaultPool";
 
-    address immutable public override collateralToken;
-
-    address public troveManagerAddress;
-    uint256 internal ETH;  // deposited ETH tracker
     uint256 internal rDebt;  // debt
 
     // --- Constructor ---
-    constructor(address _collateralToken) {
-        checkContract(_collateralToken);
-
-        collateralToken = _collateralToken;
-
-        emit CollateralTokenAddressSet(_collateralToken);
+    constructor(IERC20 _collateralToken) CollateralPool(_collateralToken) {
     }
 
     // --- Dependency setters ---
 
-    function setAddresses(
-        address _troveManagerAddress
-    )
-        external
-        onlyOwner
-    {
-        checkContract(_troveManagerAddress);
-
-        troveManagerAddress = _troveManagerAddress;
-
-        emit TroveManagerAddressChanged(_troveManagerAddress);
+    function setAddresses(ITroveManager _troveManager) external onlyOwner {
+        setTroveManager(_troveManager);
 
         renounceOwnership();
     }
 
     // --- Getters for public variables. Required by IPool interface ---
-
-    /*
-    * Returns the ETH state variable.
-    *
-    * Not necessarily equal to the the contract's raw ETH balance - ether can be forcibly sent to contracts.
-    */
-    function getETH() external view override returns (uint) {
-        return ETH;
-    }
 
     function getRDebt() external view override returns (uint) {
         return rDebt;
@@ -66,38 +40,26 @@ contract DefaultPool is Ownable2Step, CheckContract, IDefaultPool {
 
     // --- Pool functionality ---
 
-    function depositCollateral(address _from, uint _amount) external override {
-        _requireCallerIsTroveManager();
-
-        IERC20(collateralToken).transferFrom(_from, address(this), _amount);
-        ETH += _amount;
+    function depositCollateral(address _from, uint _amount) external override onlyTroveManager {
+        _depositCollateral(_from, _amount);
 
         emit DefaultPoolETHBalanceUpdated(ETH);
     }
 
-    function sendETH(address _to, uint _amount) external override {
-        _requireCallerIsTroveManager();
+    function sendETH(address _to, uint _amount) external override onlyTroveManager {
         ETH -= _amount;
         emit DefaultPoolETHBalanceUpdated(ETH);
         emit EtherSent(_to, _amount);
-        IERC20(collateralToken).transfer(_to, _amount);
+        collateralToken.transfer(_to, _amount);
     }
 
-    function increaseRDebt(uint _amount) external override {
-        _requireCallerIsTroveManager();
+    function increaseRDebt(uint _amount) external override onlyTroveManager {
         rDebt += _amount;
         emit DefaultPoolRDebtUpdated(rDebt);
     }
 
-    function decreaseRDebt(uint _amount) external override {
-        _requireCallerIsTroveManager();
+    function decreaseRDebt(uint _amount) external override onlyTroveManager {
         rDebt -= _amount;
         emit DefaultPoolRDebtUpdated(rDebt);
-    }
-
-    // --- 'require' functions ---
-
-    function _requireCallerIsTroveManager() internal view {
-        require(msg.sender == troveManagerAddress, "DefaultPool: Caller is not the TroveManager");
     }
 }

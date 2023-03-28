@@ -1,21 +1,42 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.19;
+
+import "./IBorrowerOperations.sol";
+import "./ITroveManager.sol";
+
+/// @dev Caller is neither Borrower Operations nor Trove Manager.
+error SortedTrovesInvalidCaller();
+
+/// @dev Troves list size cannot be zero.
+error TrovesSizeZero();
+
+/// @dev Troves list is full.
+error TrovesListFull();
+
+/// @dev Troves list already contains the node.
+error TrovesListContainsNode(address id);
+
+/// @dev Troves list does not contain the node.
+error TrovesListDoesNotContainNode(address id);
+
+/// @dev Trove ID cannot be zero.
+error TroveIDZero();
+
+/// @dev Troves' NICR must is zero.
+error TrovesNICRZero();
 
 // Common interface for the SortedTroves Doubly Linked List.
 interface ISortedTroves {
 
     // --- Events ---
 
-    event TroveManagerAddressChanged(address _troveManagerAddress);
     event SortedTrovesAddressChanged(address _sortedDoublyLLAddress);
-    event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
     event NodeAdded(address _id, uint _NICR);
     event NodeRemoved(address _id);
 
     // --- Functions ---
 
-    function setParams(uint256 _size, address _TroveManagerAddress, address _borrowerOperationsAddress) external;
+    function setParams(uint256 _size, ITroveManager _troveManager, IBorrowerOperations _borrowerOperations) external;
 
     function insert(address _id, uint256 _ICR, address _prevId, address _nextId) external;
 

@@ -2,11 +2,62 @@
 
 pragma solidity 0.8.19;
 
+import "./IBorrowerOperations.sol";
 import "./ILiquityBase.sol";
 import "./IRToken.sol";
 
+/// @dev Dependencies' addresses have already been set.
+error TroveManagerAddressesAlreadySet();
+
+/// @dev Dependencies' addresses have not been set yet.
+error TroveManagerAddressesNotSet();
+
+/// @dev Max fee percentage must be between 0.5% and 100%.
+error TroveManagerMaxFeePercentageOutOfRange();
+
+/// @dev Redemptions are not allowed during bootstrap phase.
+error TroveManagerRedemptionNotAllowed();
+
+/// @dev Trove is not active (either does not exist or closed).
+error TroveManagerTroveNotActive();
+
+/// @dev Requested redemption amount is > user's R token balance.
+error TroveManagerRedemptionAmountExceedsBalance();
+
+/// @dev Only one trove in the system.
+error TroveManagerOnlyOneTroveInSystem();
+
+/// @dev Amount is zero.
+error TroveManagerAmountIsZero();
+
+/// @dev Cannot redeem when TCR < MCR.
+error TroveManagerRedemptionTCRBelowMCR();
+
+/// @dev Nothing to liquidate.
+error NothingToLiquidate();
+
+/// @dev Unable to redeem any amount.
+error UnableToRedeemAnyAmount();
+
+/// @dev Trove array must is empty.
+error TroveArrayEmpty();
+
+/// @dev Fee would eat up all returned collateral.
+error FeeEatsUpAllReturnedCollateral();
+
+/// @dev Borrowing spread exceeds maximum.
+error BorrowingSpreadExceedsMaximum();
+
 // Common interface for the Trove Manager.
 interface ITroveManager is ILiquityBase {
+    enum TroveStatus {
+        nonExistent,
+        active,
+        closedByOwner,
+        closedByLiquidation,
+        closedByRedemption
+    }
+
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidate,
@@ -41,7 +92,7 @@ interface ITroveManager is ILiquityBase {
     // --- Functions ---
 
     function setAddresses(
-        address _borrowerOperationsAddress,
+        IBorrowerOperations _borrowerOperationsAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
@@ -123,7 +174,7 @@ interface ITroveManager is ILiquityBase {
 
     function decayBaseRateFromBorrowing() external;
 
-    function getTroveStatus(address _borrower) external view returns (uint);
+    function getTroveStatus(address _borrower) external view returns (TroveStatus);
 
     function getTroveStake(address _borrower) external view returns (uint);
 
