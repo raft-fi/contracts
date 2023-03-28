@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "./IBorrowerOperations.sol";
 import "./ITroveManager.sol";
 
 /// @dev Caller is neither Borrower Operations nor Trove Manager.
@@ -36,7 +35,7 @@ interface ISortedTroves {
 
     // --- Functions ---
 
-    function setParams(uint256 _size, ITroveManager _troveManager, IBorrowerOperations _borrowerOperations) external;
+    function setParams(uint256 _size, ITroveManager _troveManager) external;
 
     function insert(address _id, uint256 _ICR, address _prevId, address _nextId) external;
 

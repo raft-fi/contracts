@@ -2,9 +2,14 @@
 
 pragma solidity 0.8.19;
 
-import "./IBorrowerOperations.sol";
 import "./ILiquityBase.sol";
 import "./IRToken.sol";
+
+/// @dev Max fee percentage must be between borrowing spread and 100%.
+error TroveManagerInvalidMaxFeePercentage();
+
+/// @dev Trove is active.
+error TroveMaangerTroveActive();
 
 /// @dev Dependencies' addresses have already been set.
 error TroveManagerAddressesAlreadySet();
@@ -48,6 +53,28 @@ error FeeEatsUpAllReturnedCollateral();
 /// @dev Borrowing spread exceeds maximum.
 error BorrowingSpreadExceedsMaximum();
 
+/// @dev Debt increase requires non-zero debt change.
+error DebtIncreaseZeroDebtChange();
+
+/// @dev Cannot withdraw and add collateral at the same time.
+error NotSingularCollateralChange();
+
+/// @dev There must be either a collateral change or a debt change.
+error NoCollateralOrDebtChange();
+
+/// @dev An operation that would result in ICR < MCR is not permitted.
+error NewICRLowerThanMCR(uint256 newICR);
+
+/// @dev Trove's net debt must be greater than minimum.
+error NetDebtBelowMinimum(uint256 netDebt);
+
+/// @dev Amount repaid must not be larger than the Trove's debt.
+error RepayRAmountExceedsDebt(uint256 debt);
+
+/// @dev Caller doesn't have enough R to make repayment.
+error RepayNotEnoughR(uint256 amount);
+
+
 // Common interface for the Trove Manager.
 interface ITroveManager is ILiquityBase {
     enum TroveStatus {
@@ -61,12 +88,14 @@ interface ITroveManager is ILiquityBase {
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidate,
-        redeemCollateral
+        redeemCollateral,
+        openTrove,
+        closeTrove,
+        adjustTrove
     }
 
     // --- Events ---
 
-    event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event RTokenAddressChanged(address _newRTokenAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
@@ -86,11 +115,12 @@ interface ITroveManager is ILiquityBase {
     event LTermsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
     event TroveSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
     event TroveIndexUpdated(address _borrower, uint _newIndex);
+    event TroveCreated(address indexed _borrower, uint arrayIndex);
+    event RBorrowingFeePaid(address indexed _borrower, uint _rFee);
 
     // --- Functions ---
 
     function setAddresses(
-        IBorrowerOperations _borrowerOperationsAddress,
         address _activePoolAddress,
         address _defaultPoolAddress,
         address _priceFeedAddress,
@@ -129,14 +159,6 @@ interface ITroveManager is ILiquityBase {
         uint _maxFee
     ) external;
 
-    function updateStakeAndTotalStakes(address _borrower) external returns (uint);
-
-    function updateTroveRewardSnapshots(address _borrower) external;
-
-    function addTroveOwnerToArray(address _borrower) external returns (uint index);
-
-    function applyPendingRewards(address _borrower) external;
-
     function getPendingCollateralTokenReward(address _borrower) external view returns (uint);
 
     function getPendingRDebtReward(address _borrower) external view returns (uint);
@@ -149,10 +171,6 @@ interface ITroveManager is ILiquityBase {
         uint pendingRDebtReward,
         uint pendingCollateralTokenReward
     );
-
-    function closeTrove(address _borrower) external;
-
-    function removeStake(address _borrower) external;
 
     function getRedemptionRate() external view returns (uint);
     function getRedemptionRateWithDecay() external view returns (uint);
@@ -168,8 +186,6 @@ interface ITroveManager is ILiquityBase {
     function getBorrowingFee(uint rDebt) external view returns (uint);
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
 
-    function decayBaseRateFromBorrowing() external;
-
     function getTroveStatus(address _borrower) external view returns (TroveStatus);
 
     function getTroveStake(address _borrower) external view returns (uint);
@@ -178,15 +194,21 @@ interface ITroveManager is ILiquityBase {
 
     function getTroveColl(address _borrower) external view returns (uint);
 
-    function setTroveStatus(address _borrower, uint num) external;
-
-    function increaseTroveColl(address _borrower, uint _collIncrease) external returns (uint);
-
-    function decreaseTroveColl(address _borrower, uint _collDecrease) external returns (uint);
-
-    function increaseTroveDebt(address _borrower, uint _debtIncrease) external returns (uint);
-
-    function decreaseTroveDebt(address _borrower, uint _collDecrease) external returns (uint);
-
     function getTCR(uint _price) external view returns (uint);
+
+    function openTrove(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
+
+    function addColl(address _upperHint, address _lowerHint, uint _amount) external;
+
+    function withdrawColl(uint _amount, address _upperHint, address _lowerHint) external;
+
+    function withdrawR(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external;
+
+    function repayR(uint _amount, address _upperHint, address _lowerHint) external;
+
+    function closeTrove() external;
+
+    function adjustTrove(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
+
+    function getCompositeDebt(uint _debt) external pure returns (uint);
 }

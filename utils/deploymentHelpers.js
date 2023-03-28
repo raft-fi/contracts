@@ -5,13 +5,11 @@ const RToken = artifacts.require("./RToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
 const FunctionCaller = artifacts.require("./TestContracts/FunctionCaller.sol")
-const BorrowerOperations = artifacts.require("./BorrowerOperations.sol")
 const HintHelpers = artifacts.require("./HintHelpers.sol")
 
 const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
 const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
-const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
 const RTokenTester = artifacts.require("./RTokenTester.sol")
 const WstETHTokenMock = artifacts.require("./WstETHTokenMock.sol")
@@ -45,11 +43,9 @@ class DeploymentHelper {
     const activePool = await ActivePool.new(wstETHTokenMock.address)
     const defaultPool = await DefaultPool.new(wstETHTokenMock.address)
     const functionCaller = await FunctionCaller.new()
-    const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
-      troveManager.address,
-      borrowerOperations.address
+      troveManager.address
     )
     RToken.setAsDeployed(rToken)
     DefaultPool.setAsDeployed(defaultPool)
@@ -58,7 +54,6 @@ class DeploymentHelper {
     TroveManager.setAsDeployed(troveManager)
     ActivePool.setAsDeployed(activePool)
     FunctionCaller.setAsDeployed(functionCaller)
-    BorrowerOperations.setAsDeployed(borrowerOperations)
     HintHelpers.setAsDeployed(hintHelpers)
 
     const coreContracts = {
@@ -70,7 +65,6 @@ class DeploymentHelper {
       activePool,
       defaultPool,
       functionCaller,
-      borrowerOperations,
       hintHelpers
     }
     return coreContracts
@@ -80,16 +74,16 @@ class DeploymentHelper {
     to = to || (await ethers.getSigners())[0].address;
     amount = amount ? ethers.BigNumber.from(amount) : ethers.BigNumber.from("1000000000000000000000000")
 
-    const borrowerOperationsAddress = await rToken.borrowerOperations();
+    const troveManagerAddress = await rToken.troveManager();
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [borrowerOperationsAddress]
+      params: [troveManagerAddress]
     })
-    await rToken.mint(to, amount, { from: borrowerOperationsAddress, gasPrice: 0 })
+    await rToken.mint(to, amount, { from: troveManagerAddress, gasPrice: 0 })
 
     await hre.network.provider.request({
       method: "hardhat_stopImpersonatingAccount",
-      params: [borrowerOperationsAddress]
+      params: [troveManagerAddress]
     })
   }
 
@@ -104,13 +98,11 @@ class DeploymentHelper {
     testerContracts.activePool = await ActivePoolTester.new(testerContracts.wstETHTokenMock.address)
     testerContracts.defaultPool = await DefaultPoolTester.new(testerContracts.wstETHTokenMock.address)
     testerContracts.math = await LiquityMathTester.new()
-    testerContracts.borrowerOperations = await BorrowerOperationsTester.new()
     testerContracts.troveManager = await TroveManagerTester.new()
     testerContracts.functionCaller = await FunctionCaller.new()
     testerContracts.hintHelpers = await HintHelpers.new()
     testerContracts.rToken =  await RTokenTester.new(
-      testerContracts.troveManager.address,
-      testerContracts.borrowerOperations.address
+      testerContracts.troveManager.address
     )
     return testerContracts
   }
@@ -122,11 +114,9 @@ class DeploymentHelper {
     const activePool = await ActivePool.new()
     const defaultPool = await DefaultPool.new()
     const functionCaller = await FunctionCaller.new()
-    const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
-      troveManager.address,
-      borrowerOperations.address
+      troveManager.address
     )
     const coreContracts = {
       priceFeedTestnet,
@@ -136,7 +126,6 @@ class DeploymentHelper {
       activePool,
       defaultPool,
       functionCaller,
-      borrowerOperations,
       hintHelpers
     }
     return coreContracts
@@ -144,16 +133,14 @@ class DeploymentHelper {
 
   static async deployRToken(contracts) {
     contracts.rToken = await RToken.new(
-      contracts.troveManager.address,
-      contracts.borrowerOperations.address
+      contracts.troveManager.address
     )
     return contracts
   }
 
   static async deployRTokenTester(contracts) {
     contracts.rToken = await RTokenTester.new(
-      contracts.troveManager.address,
-      contracts.borrowerOperations.address
+      contracts.troveManager.address
     )
     return contracts
   }
@@ -164,8 +151,7 @@ class DeploymentHelper {
     // set TroveManager addr in SortedTroves
     await contracts.sortedTroves.setParams(
       maxBytes32,
-      contracts.troveManager.address,
-      contracts.borrowerOperations.address
+      contracts.troveManager.address
     )
 
     // set contract addresses in the FunctionCaller
@@ -174,29 +160,16 @@ class DeploymentHelper {
 
     // set contracts in the Trove Manager
     await contracts.troveManager.setAddresses(
-      contracts.borrowerOperations.address,
       contracts.activePool.address,
       contracts.defaultPool.address,
       contracts.priceFeedTestnet.address,
       contracts.rToken.address,
       contracts.sortedTroves.address,
-      feeRecipient
-    )
-
-    // set contracts in BorrowerOperations
-    await contracts.borrowerOperations.setAddresses(
-      contracts.troveManager.address,
-      contracts.activePool.address,
-      contracts.defaultPool.address,
-      contracts.priceFeedTestnet.address,
-      contracts.sortedTroves.address,
-      contracts.rToken.address,
       feeRecipient
     )
 
     // set contracts in the Pools
     await contracts.activePool.setAddresses(
-      contracts.borrowerOperations.address,
       contracts.troveManager.address,
       contracts.defaultPool.address
     )

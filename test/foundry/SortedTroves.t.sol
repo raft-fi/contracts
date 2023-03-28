@@ -7,7 +7,6 @@ import "../../contracts/SortedTroves.sol";
 
 contract SortedTrovesTest is Test {
     ITroveManager public constant POSITIONS_MANAGER = ITroveManager(address(12345));
-    IBorrowerOperations public constant BORROWER_OPERATIONS = IBorrowerOperations(address(34567));
 
     address public constant ALICE = address(1);
     address public constant BOB = address(2);
@@ -16,13 +15,13 @@ contract SortedTrovesTest is Test {
 
     function setUp() public {
         sortedTroves = new SortedTroves();
-        sortedTroves.setParams(10, POSITIONS_MANAGER, BORROWER_OPERATIONS);
+        sortedTroves.setParams(10, POSITIONS_MANAGER);
     }
 
     // insert(): reverts when called by an account that is not Borrower Operations or Trove Manager
     function testUnauthorizedInsert() public {
         vm.prank(ALICE);
-        vm.expectRevert(SortedTrovesInvalidCaller.selector);
+        vm.expectRevert(CallerIsNotTroveManager.selector);
         sortedTroves.insert(BOB, 150e18, BOB, BOB);
     }
 
@@ -36,7 +35,7 @@ contract SortedTrovesTest is Test {
     // reinsert(): reverts when called by an account that is neither BorrowerOps nor TroveManager
     function testUnauthorizedReinsert() public {
         vm.prank(ALICE);
-        vm.expectRevert(SortedTrovesInvalidCaller.selector);
+        vm.expectRevert(CallerIsNotTroveManager.selector);
         sortedTroves.reInsert(BOB, 150e18, BOB, BOB);
     }
 }

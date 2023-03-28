@@ -69,7 +69,6 @@ class MainnetDeploymentHelper {
     const troveManagerFactory = await this.getFactory("TroveManager")
     const activePoolFactory = await this.getFactory("ActivePool")
     const defaultPoolFactory = await this.getFactory("DefaultPool")
-    const borrowerOperationsFactory = await this.getFactory("BorrowerOperations")
     const hintHelpersFactory = await this.getFactory("HintHelpers")
     const rTokenFactory = await this.getFactory("RToken")
     const tellorCallerFactory = await this.getFactory("TellorCaller")
@@ -80,13 +79,11 @@ class MainnetDeploymentHelper {
     const troveManager = await this.loadOrDeploy(troveManagerFactory, 'troveManager', deploymentState)
     const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState)
     const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState)
-    const borrowerOperations = await this.loadOrDeploy(borrowerOperationsFactory, 'borrowerOperations', deploymentState)
     const hintHelpers = await this.loadOrDeploy(hintHelpersFactory, 'hintHelpers', deploymentState)
     const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, [tellorMasterAddr])
 
     const rTokenParams = [
-      troveManager.address,
-      borrowerOperations.address
+      troveManager.address
     ]
     const rToken = await this.loadOrDeploy(
       rTokenFactory,
@@ -103,7 +100,6 @@ class MainnetDeploymentHelper {
       await this.verifyContract('troveManager', deploymentState)
       await this.verifyContract('activePool', deploymentState)
       await this.verifyContract('defaultPool', deploymentState)
-      await this.verifyContract('borrowerOperations', deploymentState)
       await this.verifyContract('hintHelpers', deploymentState)
       await this.verifyContract('tellorCaller', deploymentState, [tellorMasterAddr])
       await this.verifyContract('rToken', deploymentState, rTokenParams)
@@ -116,7 +112,6 @@ class MainnetDeploymentHelper {
       troveManager,
       activePool,
       defaultPool,
-      borrowerOperations,
       hintHelpers,
       tellorCaller
     }
@@ -161,32 +156,18 @@ class MainnetDeploymentHelper {
     await this.isOwnershipRenounced(contracts.sortedTroves) ||
       await this.sendAndWaitForTransaction(contracts.sortedTroves.setParams(
         maxBytes32,
-        contracts.troveManager.address,
-        contracts.borrowerOperations.address,
+        contracts.troveManager.address
 	{gasPrice}
       ))
 
     // set contracts in the Trove Manager
     await this.isOwnershipRenounced(contracts.troveManager) ||
       await this.sendAndWaitForTransaction(contracts.troveManager.setAddresses(
-        contracts.borrowerOperations.address,
         contracts.activePool.address,
         contracts.defaultPool.address,
         contracts.priceFeed.address,
         contracts.rToken.address,
         contracts.sortedTroves.address,
-	{gasPrice}
-      ))
-
-    // set contracts in BorrowerOperations
-    await this.isOwnershipRenounced(contracts.borrowerOperations) ||
-      await this.sendAndWaitForTransaction(contracts.borrowerOperations.setAddresses(
-        contracts.troveManager.address,
-        contracts.activePool.address,
-        contracts.defaultPool.address,
-        contracts.priceFeed.address,
-        contracts.sortedTroves.address,
-        contracts.rToken.address,
 	{gasPrice}
       ))
 
@@ -194,7 +175,6 @@ class MainnetDeploymentHelper {
 
     await this.isOwnershipRenounced(contracts.activePool) ||
       await this.sendAndWaitForTransaction(contracts.activePool.setAddresses(
-        contracts.borrowerOperations.address,
         contracts.troveManager.address,
         contracts.defaultPool.address,
 	{gasPrice}

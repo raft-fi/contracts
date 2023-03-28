@@ -25,7 +25,6 @@ contract('TroveManager', async accounts => {
   let sortedTroves
   let troveManager
   let activePool
-  let borrowerOperations
   let wstETHTokenMock
 
   let contracts
@@ -44,8 +43,7 @@ contract('TroveManager', async accounts => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
     contracts.rToken = await RTokenTester.new(
-      contracts.troveManager.address,
-      contracts.borrowerOperations.address
+      contracts.troveManager.address
     )
 
     priceFeed = contracts.priceFeedTestnet
@@ -53,7 +51,6 @@ contract('TroveManager', async accounts => {
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    borrowerOperations = contracts.borrowerOperations
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectCoreContracts(contracts, owner)
@@ -69,25 +66,25 @@ contract('TroveManager', async accounts => {
 
     // Make 1 mega troves A at ~50% total collateral
     wstETHTokenMock.approve(activePool.address, dec(2, 29), { from: A})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
 
     // Make 5 large troves B, C, D, E, F at ~10% total collateral
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: B})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: C})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: D})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: E})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
     wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: F})
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
+    await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
 
     // Make 10 tiny troves at relatively negligible collateral (~1e-9 of total)
     const tinyTroves = accounts.slice(10, 20)
     for (account of tinyTroves) {
       wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: account})
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveRAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
+      await troveManager.openTrove(th._100pct, await getOpenTroveRAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
     }
 
     // liquidate 1 trove at ~50% total system collateral
@@ -102,7 +99,7 @@ contract('TroveManager', async accounts => {
 
     // adjust trove B 1 wei: apply rewards
     await priceFeed.setPrice(dec(200, 18))
-    await borrowerOperations.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // B repays 1 wei
+    await troveManager.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // B repays 1 wei
     await priceFeed.setPrice(dec(50, 18))
     console.log(`B stake after A1: ${(await troveManager.Troves(B))[2]}`)
     console.log(`Snapshots ratio after A1: ${await getSnapshotsRatio()}`)
@@ -115,7 +112,7 @@ contract('TroveManager', async accounts => {
       console.log(`B stake after L${idx + 2}: ${(await troveManager.Troves(B))[2]}`)
       console.log(`Snapshots ratio after L${idx + 2}: ${await getSnapshotsRatio()}`)
       await priceFeed.setPrice(dec(200, 18))
-      await borrowerOperations.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // A repays 1 wei
+      await troveManager.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // A repays 1 wei
       await priceFeed.setPrice(dec(50, 18))
       console.log(`B stake after A${idx + 2}: ${(await troveManager.Troves(B))[2]}`)
     }

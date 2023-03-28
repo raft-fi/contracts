@@ -15,7 +15,6 @@ contract('HintHelpers', async accounts => {
 
   let sortedTroves
   let troveManager
-  let borrowerOperations
   let hintHelpers
   let priceFeed
   let wstETHTokenMock
@@ -46,13 +45,11 @@ contract('HintHelpers', async accounts => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
     contracts.rToken = await RToken.new(
-      contracts.troveManager.address,
-      contracts.borrowerOperations.address
+      contracts.troveManager.address
     )
 
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
-    borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
     priceFeed = contracts.priceFeedTestnet
     wstETHTokenMock = contracts.wstETHTokenMock

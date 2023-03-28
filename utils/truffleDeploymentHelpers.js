@@ -7,7 +7,6 @@ const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
 const StabilityPool = artifacts.require("./StabilityPool.sol")
 const FunctionCaller = artifacts.require("./FunctionCaller.sol")
-const BorrowerOperations = artifacts.require("./BorrowerOperations.sol")
 
 const deployLiquity = async () => {
   const priceFeedTestnet = await PriceFeedTestnet.new()
@@ -17,11 +16,9 @@ const deployLiquity = async () => {
   const stabilityPool = await StabilityPool.new()
   const defaultPool = await DefaultPool.new()
   const functionCaller = await FunctionCaller.new()
-  const borrowerOperations = await BorrowerOperations.new()
   const rToken = await RToken.new(
     troveManager.address,
-    stabilityPool.address,
-    borrowerOperations.address
+    stabilityPool.address
   )
   DefaultPool.setAsDeployed(defaultPool)
   PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
@@ -31,7 +28,6 @@ const deployLiquity = async () => {
   ActivePool.setAsDeployed(activePool)
   StabilityPool.setAsDeployed(stabilityPool)
   FunctionCaller.setAsDeployed(functionCaller)
-  BorrowerOperations.setAsDeployed(borrowerOperations)
 
   const contracts = {
     priceFeedTestnet,
@@ -41,15 +37,13 @@ const deployLiquity = async () => {
     activePool,
     stabilityPool,
     defaultPool,
-    functionCaller,
-    borrowerOperations
+    functionCaller
   }
   return contracts
 }
 
 const getAddresses = (contracts) => {
   return {
-    BorrowerOperations: contracts.borrowerOperations.address,
     PriceFeedTestnet: contracts.priceFeedTestnet.address,
     RToken: contracts.rToken.address,
     SortedTroves: contracts.sortedTroves.address,
@@ -80,14 +74,6 @@ const connectContracts = async (contracts, addresses) => {
   await contracts.troveManager.setActivePool(addresses.ActivePool)
   await contracts.troveManager.setDefaultPool(addresses.DefaultPool)
   await contracts.troveManager.setStabilityPool(addresses.StabilityPool)
-  await contracts.troveManager.setBorrowerOperations(addresses.BorrowerOperations)
-
-  // set contracts in BorrowerOperations
-  await contracts.borrowerOperations.setSortedTroves(addresses.SortedTroves)
-  await contracts.borrowerOperations.setPriceFeed(addresses.PriceFeedTestnet)
-  await contracts.borrowerOperations.setActivePool(addresses.ActivePool)
-  await contracts.borrowerOperations.setDefaultPool(addresses.DefaultPool)
-  await contracts.borrowerOperations.setTroveManager(addresses.TroveManager)
 
   // set contracts in the Pools
   await contracts.stabilityPool.setActivePoolAddress(addresses.ActivePool)
@@ -102,7 +88,6 @@ const connectContracts = async (contracts, addresses) => {
 
 const connectEchidnaProxy = async (echidnaProxy, addresses) => {
   echidnaProxy.setTroveManager(addresses.TroveManager)
-  echidnaProxy.setBorrowerOperations(addresses.BorrowerOperations)
 }
 
 module.exports = {
