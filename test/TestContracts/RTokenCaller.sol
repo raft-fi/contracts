@@ -18,8 +18,4 @@ contract RTokenCaller {
     function rBurn(address _account, uint _amount) external {
         R.burn(_account, _amount);
     }
-
-    function rReturnFromPool(address _poolAddress, address _receiver, uint256 _amount ) external {
-        R.returnFromPool(_poolAddress, _receiver, _amount);
-    }
 }
