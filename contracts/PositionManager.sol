@@ -853,7 +853,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         RedemptionTotals memory totals;
 
         totals.price = priceFeed.fetchPrice();
-        _requireTCRoverMCR(totals.price);
         _requireAmountGreaterThanZero(_rAmount);
         _requireRBalanceCoversRedemption(contractsCache.rToken, msg.sender, _rAmount);
 
@@ -1334,12 +1333,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     function _requireAmountGreaterThanZero(uint _amount) internal pure {
         if (_amount == 0) {
             revert PositionManagerAmountIsZero();
-        }
-    }
-
-    function _requireTCRoverMCR(uint _price) internal view {
-        if (_getTCR(_price) < MCR) {
-            revert PositionManagerRedemptionTCRBelowMCR();
         }
     }
 
