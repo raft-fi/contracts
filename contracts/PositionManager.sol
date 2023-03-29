@@ -66,7 +66,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         uint128 arrayIndex;
     }
 
-    mapping (address => Position) public Positions;
+    mapping (address => Position) public override positions;
 
     uint public totalStakes;
 
@@ -212,14 +212,14 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     }
 
     modifier onlyActivePosition() {
-        if (Positions[msg.sender].status != PositionStatus.active) {
+        if (positions[msg.sender].status != PositionStatus.active) {
             revert PositionManagerPositionNotActive();
         }
         _;
     }
 
     modifier onlyNonActivePosition() {
-        if (Positions[msg.sender].status == PositionStatus.active) {
+        if (positions[msg.sender].status == PositionStatus.active) {
             revert PositionMaangerPositionActive();
         }
         _;
@@ -319,9 +319,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         _requireICRisAboveMCR(vars.ICR);
 
         // Set the position struct's properties
-        Positions[msg.sender].status = PositionStatus.active;
-        Positions[msg.sender].coll = _collAmount;
-        Positions[msg.sender].debt = vars.compositeDebt;
+        positions[msg.sender].status = PositionStatus.active;
+        positions[msg.sender].coll = _collAmount;
+        positions[msg.sender].debt = vars.compositeDebt;
 
         _updatePositionRewardSnapshots(msg.sender);
         vars.stake = _updateStakeAndTotalStakes(msg.sender);
@@ -416,8 +416,8 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             vars.netDebtChange += vars.rFee; // The raw debt change includes the fee
         }
 
-        vars.debt = Positions[msg.sender].debt;
-        vars.coll = Positions[msg.sender].coll;
+        vars.debt = positions[msg.sender].debt;
+        vars.coll = positions[msg.sender].coll;
 
         // Get the position's old ICR before the adjustment, and what its new ICR will be after the adjustment
         vars.price = priceFeed.fetchPrice();
@@ -434,15 +434,15 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             _requireSufficientRBalance(contractsCache.rToken, msg.sender, vars.netDebtChange);
         }
 
-        Positions[msg.sender].coll = vars.isCollIncrease ? vars.coll + vars.collChange : vars.coll - vars.collChange;
-        Positions[msg.sender].debt = _isDebtIncrease ? vars.debt + vars.netDebtChange : vars.debt - vars.netDebtChange;
+        positions[msg.sender].coll = vars.isCollIncrease ? vars.coll + vars.collChange : vars.coll - vars.collChange;
+        positions[msg.sender].debt = _isDebtIncrease ? vars.debt + vars.netDebtChange : vars.debt - vars.netDebtChange;
         vars.stake = _updateStakeAndTotalStakes(msg.sender);
 
         // Re-insert position in to the sorted list
         vars.newNICR = _getNewNominalICRFromPositionChange(vars.coll, vars.debt, vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease);
         sortedPositions.reInsert(msg.sender, vars.newNICR, _upperHint, _lowerHint);
 
-        emit PositionUpdated(msg.sender, Positions[msg.sender].debt, Positions[msg.sender].coll, vars.stake, PositionManagerOperation.adjustPosition);
+        emit PositionUpdated(msg.sender, positions[msg.sender].debt, positions[msg.sender].coll, vars.stake, PositionManagerOperation.adjustPosition);
         emit RBorrowingFeePaid(msg.sender, vars.rFee);
 
         // Use the unmodified _rChange here, as we don't send the fee to the user
@@ -460,8 +460,8 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
         _applyPendingRewards(msg.sender);
 
-        uint coll = Positions[msg.sender].coll;
-        uint debt = Positions[msg.sender].debt;
+        uint coll = positions[msg.sender].coll;
+        uint debt = positions[msg.sender].debt;
 
         _requireSufficientRBalance(rTokenCached, msg.sender, debt - R_GAS_COMPENSATION);
 
@@ -704,14 +704,14 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         internal returns (SingleRedemptionValues memory singleRedemption)
     {
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position minus the liquidation reserve
-        singleRedemption.rLot = Math.min(_maxRamount, Positions[_borrower].debt - R_GAS_COMPENSATION);
+        singleRedemption.rLot = Math.min(_maxRamount, positions[_borrower].debt - R_GAS_COMPENSATION);
 
         // Get the CollateralTokenLot of equivalent value in USD
         singleRedemption.collateralTokenLot = singleRedemption.rLot * DECIMAL_PRECISION / _price;
 
         // Decrease the debt and collateral of the current Position according to the R lot and corresponding collateralToken to send
-        uint newDebt = Positions[_borrower].debt - singleRedemption.rLot;
-        uint newColl = Positions[_borrower].coll - singleRedemption.collateralTokenLot;
+        uint newDebt = positions[_borrower].debt - singleRedemption.rLot;
+        uint newColl = positions[_borrower].coll - singleRedemption.collateralTokenLot;
 
         if (newDebt == R_GAS_COMPENSATION) {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
@@ -736,14 +736,14 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
             _contractsCache.sortedPositions.reInsert(_borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
 
-            Positions[_borrower].debt = newDebt;
-            Positions[_borrower].coll = newColl;
+            positions[_borrower].debt = newDebt;
+            positions[_borrower].coll = newColl;
             _updateStakeAndTotalStakes(_borrower);
 
             emit PositionUpdated(
                 _borrower,
                 newDebt, newColl,
-                Positions[_borrower].stake,
+                positions[_borrower].stake,
                 PositionManagerOperation.redeemCollateral
             );
         }
@@ -919,8 +919,8 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     }
 
     function _getCurrentPositionAmounts(address _borrower) internal view returns (uint currentCollateralToken, uint currentRDebt) {
-        currentCollateralToken = Positions[_borrower].coll + getPendingCollateralTokenReward(_borrower);
-        currentRDebt = Positions[_borrower].debt + getPendingRDebtReward(_borrower);
+        currentCollateralToken = positions[_borrower].coll + getPendingCollateralTokenReward(_borrower);
+        currentRDebt = positions[_borrower].debt + getPendingRDebtReward(_borrower);
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Position
@@ -933,8 +933,8 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             uint pendingRDebtReward = getPendingRDebtReward(_borrower);
 
             // Apply pending rewards to position's state
-            Positions[_borrower].coll += pendingCollateralTokenReward;
-            Positions[_borrower].debt += pendingRDebtReward;
+            positions[_borrower].coll += pendingCollateralTokenReward;
+            positions[_borrower].debt += pendingRDebtReward;
 
             _updatePositionRewardSnapshots(_borrower);
 
@@ -943,9 +943,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
             emit PositionUpdated(
                 _borrower,
-                Positions[_borrower].debt,
-                Positions[_borrower].coll,
-                Positions[_borrower].stake,
+                positions[_borrower].debt,
+                positions[_borrower].coll,
+                positions[_borrower].stake,
                 PositionManagerOperation.applyPendingRewards
             );
         }
@@ -963,9 +963,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         uint snapshotCollateralBalance = rewardSnapshots[_borrower].collateralBalance;
         uint rewardPerUnitStaked = L_CollateralBalance - snapshotCollateralBalance;
 
-        if (rewardPerUnitStaked == 0 || Positions[_borrower].status != PositionStatus.active) { return 0; }
+        if (rewardPerUnitStaked == 0 || positions[_borrower].status != PositionStatus.active) { return 0; }
 
-        pendingCollateralTokenReward = Positions[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+        pendingCollateralTokenReward = positions[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
     }
 
     // Get the borrower's pending accumulated R reward, earned by their stake
@@ -973,9 +973,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         uint snapshotRDebt = rewardSnapshots[_borrower].rDebt;
         uint rewardPerUnitStaked = L_RDebt - snapshotRDebt;
 
-        if (rewardPerUnitStaked == 0 || Positions[_borrower].status != PositionStatus.active) { return 0; }
+        if (rewardPerUnitStaked == 0 || positions[_borrower].status != PositionStatus.active) { return 0; }
 
-        pendingRDebtReward = Positions[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+        pendingRDebtReward = positions[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
     }
 
     function hasPendingRewards(address _borrower) public view override returns (bool) {
@@ -984,7 +984,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         * this indicates that rewards have occured since the snapshot was made, and the user therefore has
         * pending rewards
         */
-        return Positions[_borrower].status == PositionStatus.active && rewardSnapshots[_borrower].collateralBalance < L_CollateralBalance;
+        return positions[_borrower].status == PositionStatus.active && rewardSnapshots[_borrower].collateralBalance < L_CollateralBalance;
     }
 
     // Return the Positions entire debt and coll, including pending rewards from redistributions.
@@ -999,22 +999,22 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         pendingRDebtReward = getPendingRDebtReward(_borrower);
         pendingCollateralTokenReward = getPendingCollateralTokenReward(_borrower);
 
-        debt = Positions[_borrower].debt + pendingRDebtReward;
-        coll = Positions[_borrower].coll + pendingCollateralTokenReward;
+        debt = positions[_borrower].debt + pendingRDebtReward;
+        coll = positions[_borrower].coll + pendingCollateralTokenReward;
     }
 
     // Remove borrower's stake from the totalStakes sum, and set their stake to 0
     function _removeStake(address _borrower) internal {
-        uint stake = Positions[_borrower].stake;
+        uint stake = positions[_borrower].stake;
         totalStakes = totalStakes - stake;
-        Positions[_borrower].stake = 0;
+        positions[_borrower].stake = 0;
     }
 
     // Update borrower's stake based on their latest collateral value
     function _updateStakeAndTotalStakes(address _borrower) internal returns (uint newStake) {
-        newStake = _computeNewStake(Positions[_borrower].coll);
-        uint oldStake = Positions[_borrower].stake;
-        Positions[_borrower].stake = newStake;
+        newStake = _computeNewStake(positions[_borrower].coll);
+        uint oldStake = positions[_borrower].stake;
+        positions[_borrower].stake = newStake;
 
         totalStakes = totalStakes - oldStake + newStake;
         emit TotalStakesUpdated(totalStakes);
@@ -1077,9 +1077,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         uint PositionOwnersArrayLength = PositionOwners.length;
         _requireMoreThanOnePositionInSystem(PositionOwnersArrayLength);
 
-        Positions[_borrower].status = closedStatus;
-        Positions[_borrower].coll = 0;
-        Positions[_borrower].debt = 0;
+        positions[_borrower].status = closedStatus;
+        positions[_borrower].coll = 0;
+        positions[_borrower].debt = 0;
 
         rewardSnapshots[_borrower].collateralBalance = 0;
         rewardSnapshots[_borrower].rDebt = 0;
@@ -1114,7 +1114,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
         // Record the index of the new Positionowner on their Position struct
         index = uint128(PositionOwners.length - 1);
-        Positions[_borrower].arrayIndex = index;
+        positions[_borrower].arrayIndex = index;
     }
 
     /*
@@ -1122,11 +1122,11 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     * [A B C D E] => [A E C D], and updates E's Position struct to point to its new array index.
     */
     function _removePositionOwner(address _borrower, uint PositionOwnersArrayLength) internal {
-        PositionStatus positionStatus = Positions[_borrower].status;
+        PositionStatus positionStatus = positions[_borrower].status;
         // It’s set in caller function `_closePosition`
         assert(positionStatus != PositionStatus.nonExistent && positionStatus != PositionStatus.active);
 
-        uint128 index = Positions[_borrower].arrayIndex;
+        uint128 index = positions[_borrower].arrayIndex;
         uint length = PositionOwnersArrayLength;
         uint idxLast = length - 1;
 
@@ -1135,7 +1135,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         address addressToMove = PositionOwners[idxLast];
 
         PositionOwners[index] = addressToMove;
-        Positions[addressToMove].arrayIndex = index;
+        positions[addressToMove].arrayIndex = index;
         emit PositionIndexUpdated(addressToMove, index);
 
         PositionOwners.pop();
@@ -1275,7 +1275,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     // --- 'require' wrapper functions ---
 
     function _requirePositionIsActive(address _borrower) internal view {
-        if (Positions[_borrower].status != PositionStatus.active) {
+        if (positions[_borrower].status != PositionStatus.active) {
             revert PositionManagerPositionNotActive();
         }
     }
@@ -1296,24 +1296,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         if (_amount == 0) {
             revert PositionManagerAmountIsZero();
         }
-    }
-
-    // --- Position property getters ---
-
-    function getPositionStatus(address _borrower) external view override returns (PositionStatus) {
-        return Positions[_borrower].status;
-    }
-
-    function getPositionStake(address _borrower) external view override returns (uint) {
-        return Positions[_borrower].stake;
-    }
-
-    function getPositionDebt(address _borrower) external view override returns (uint) {
-        return Positions[_borrower].debt;
-    }
-
-    function getPositionColl(address _borrower) external view override returns (uint) {
-        return Positions[_borrower].coll;
     }
 
     // --- Helper functions ---

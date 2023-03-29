@@ -82,10 +82,10 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isFalse(await sortedPositions.contains(dennis))
 
     // Get entire coll of A and C
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
-    const carol_Coll = ((await positionManager.Positions(carol))[1]
+    const carol_Coll = ((await positionManager.positions(carol))[1]
       .add(await positionManager.getPendingCollateralTokenReward(carol)))
       .toString()
 
@@ -140,16 +140,16 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isFalse(await sortedPositions.contains(freddy))
 
     // Get entire coll of A, B, D and E
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
-    const dennis_Coll = ((await positionManager.Positions(dennis))[1]
+    const dennis_Coll = ((await positionManager.positions(dennis))[1]
       .add(await positionManager.getPendingCollateralTokenReward(dennis)))
       .toString()
-    const erin_Coll = ((await positionManager.Positions(erin))[1]
+    const erin_Coll = ((await positionManager.positions(erin))[1]
       .add(await positionManager.getPendingCollateralTokenReward(erin)))
       .toString()
 
@@ -252,23 +252,23 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isFalse(await sortedPositions.contains(erin))
 
     // Get entire coll of A, B, D, E and F
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
-    const carol_Coll = ((await positionManager.Positions(carol))[1]
+    const carol_Coll = ((await positionManager.positions(carol))[1]
       .add(await positionManager.getPendingCollateralTokenReward(carol)))
       .toString()
-    const dennis_Coll = ((await positionManager.Positions(dennis))[1]
+    const dennis_Coll = ((await positionManager.positions(dennis))[1]
       .add(await positionManager.getPendingCollateralTokenReward(dennis)))
       .toString()
-    const erin_Coll = ((await positionManager.Positions(erin))[1]
+    const erin_Coll = ((await positionManager.positions(erin))[1]
       .add(await positionManager.getPendingCollateralTokenReward(erin)))
       .toString()
 
-    const freddy_rawColl = (await positionManager.Positions(freddy))[1].toString()
+    const freddy_rawColl = (await positionManager.positions(freddy))[1].toString()
     const freddy_ETHReward = (await positionManager.getPendingCollateralTokenReward(freddy)).toString()
 
     /* Expected collateral:
@@ -422,11 +422,11 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isFalse(await sortedPositions.contains(alice))
 
     // Expect Bob now holds all Ether and rDebt in the system: 2 + 0.4975+0.4975*0.995+0.995 Ether and 110*3 R (10 each for gas compensation)
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const bob_RDebt = ((await positionManager.Positions(bob))[0]
+    const bob_RDebt = ((await positionManager.positions(bob))[0]
       .add(await positionManager.getPendingRDebtReward(bob)))
       .toString()
 
@@ -489,19 +489,19 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     totalColl: 4.99 ETH
     totalDebt 380 R (includes 50 each for gas compensation)
     */
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const bob_RDebt = ((await positionManager.Positions(bob))[0]
+    const bob_RDebt = ((await positionManager.positions(bob))[0]
       .add(await positionManager.getPendingRDebtReward(bob)))
       .toString()
 
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
 
-    const alice_RDebt = ((await positionManager.Positions(alice))[0]
+    const alice_RDebt = ((await positionManager.positions(alice))[0]
       .add(await positionManager.getPendingRDebtReward(alice)))
       .toString()
 
@@ -596,15 +596,15 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     total = 3982.02 ETH
     */
 
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
 
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const carol_Coll = ((await positionManager.Positions(carol))[1]
+    const carol_Coll = ((await positionManager.positions(carol))[1]
       .add(await positionManager.getPendingCollateralTokenReward(carol)))
       .toString()
 
@@ -706,15 +706,15 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     total = 3986.01 ETH
     */
 
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
 
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const carol_Coll = ((await positionManager.Positions(carol))[1]
+    const carol_Coll = ((await positionManager.positions(carol))[1]
       .add(await positionManager.getPendingCollateralTokenReward(carol)))
       .toString()
 
@@ -775,11 +775,11 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     // Expect Bob now holds all Ether and rDebt in the system: 2.5 Ether and 300 R
     // 1 + 0.995/2 - 0.5 + 1.4975*0.995
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const bob_RDebt = ((await positionManager.Positions(bob))[0]
+    const bob_RDebt = ((await positionManager.positions(bob))[0]
       .add(await positionManager.getPendingRDebtReward(bob)))
       .toString()
 
@@ -844,19 +844,19 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     totalColl: 3.49 ETH
     totalDebt 380 R (Includes 50 in each position for gas compensation)
     */
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const bob_RDebt = ((await positionManager.Positions(bob))[0]
+    const bob_RDebt = ((await positionManager.positions(bob))[0]
       .add(await positionManager.getPendingRDebtReward(bob)))
       .toString()
 
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
 
-    const alice_RDebt = ((await positionManager.Positions(alice))[0]
+    const alice_RDebt = ((await positionManager.positions(alice))[0]
       .add(await positionManager.getPendingRDebtReward(alice)))
       .toString()
 
@@ -952,15 +952,15 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     total = 3978.03 ETH
     */
 
-    const alice_Coll = ((await positionManager.Positions(alice))[1]
+    const alice_Coll = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
 
-    const bob_Coll = ((await positionManager.Positions(bob))[1]
+    const bob_Coll = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const carol_Coll = ((await positionManager.Positions(carol))[1]
+    const carol_Coll = ((await positionManager.positions(carol))[1]
       .add(await positionManager.getPendingCollateralTokenReward(carol)))
       .toString()
 
@@ -1028,15 +1028,15 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     await positionManager.withdrawColl(withdrawnColl, bob, bob, { from: bob })
     await positionManager.withdrawColl(withdrawnColl, carol, carol, { from: carol })
 
-    const alice_Coll_1 = ((await positionManager.Positions(alice))[1]
+    const alice_Coll_1 = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
 
-    const bob_Coll_1 = ((await positionManager.Positions(bob))[1]
+    const bob_Coll_1 = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const carol_Coll_1 = ((await positionManager.Positions(carol))[1]
+    const carol_Coll_1 = ((await positionManager.positions(carol))[1]
       .add(await positionManager.getPendingCollateralTokenReward(carol)))
       .toString()
 
@@ -1076,15 +1076,15 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     total = 3977.0325 ETH
     */
 
-    const alice_Coll_2 = ((await positionManager.Positions(alice))[1]
+    const alice_Coll_2 = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
       .toString()
 
-    const bob_Coll_2 = ((await positionManager.Positions(bob))[1]
+    const bob_Coll_2 = ((await positionManager.positions(bob))[1]
       .add(await positionManager.getPendingCollateralTokenReward(bob)))
       .toString()
 
-    const carol_Coll_2 = ((await positionManager.Positions(carol))[1]
+    const carol_Coll_2 = ((await positionManager.positions(carol))[1]
       .add(await positionManager.getPendingCollateralTokenReward(carol)))
       .toString()
 
@@ -1194,13 +1194,13 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isFalse(await sortedPositions.contains(freddy))
 
     // Grab remaining positions' collateral
-    const carol_rawColl = (await positionManager.Positions(carol))[1].toString()
+    const carol_rawColl = (await positionManager.positions(carol))[1].toString()
     const carol_pendingETHReward = (await positionManager.getPendingCollateralTokenReward(carol)).toString()
 
-    const dennis_rawColl = (await positionManager.Positions(dennis))[1].toString()
+    const dennis_rawColl = (await positionManager.positions(dennis))[1].toString()
     const dennis_pendingETHReward = (await positionManager.getPendingCollateralTokenReward(dennis)).toString()
 
-    const erin_rawColl = (await positionManager.Positions(erin))[1].toString()
+    const erin_rawColl = (await positionManager.positions(erin))[1].toString()
     const erin_pendingETHReward = (await positionManager.getPendingCollateralTokenReward(erin)).toString()
 
     // Check raw collateral of C, D, E
@@ -1333,17 +1333,17 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isFalse(await sortedPositions.contains(freddy))
 
     // Grab remaining positions' collateral
-    const carol_rawColl = (await positionManager.Positions(carol))[1].toString()
+    const carol_rawColl = (await positionManager.positions(carol))[1].toString()
     const carol_pendingETHReward = (await positionManager.getPendingCollateralTokenReward(carol)).toString()
-    const carol_Stake = (await positionManager.Positions(carol))[2].toString()
+    const carol_Stake = (await positionManager.positions(carol))[2].toString()
 
-    const dennis_rawColl = (await positionManager.Positions(dennis))[1].toString()
+    const dennis_rawColl = (await positionManager.positions(dennis))[1].toString()
     const dennis_pendingETHReward = (await positionManager.getPendingCollateralTokenReward(dennis)).toString()
-    const dennis_Stake = (await positionManager.Positions(dennis))[2].toString()
+    const dennis_Stake = (await positionManager.positions(dennis))[2].toString()
 
-    const erin_rawColl = (await positionManager.Positions(erin))[1].toString()
+    const erin_rawColl = (await positionManager.positions(erin))[1].toString()
     const erin_pendingETHReward = (await positionManager.getPendingCollateralTokenReward(erin)).toString()
-    const erin_Stake = (await positionManager.Positions(erin))[2].toString()
+    const erin_Stake = (await positionManager.positions(erin))[2].toString()
 
     // Check raw collateral of C, D, E
     const totalCollForL3 = C_collAfterL2.add(D_collAfterL2).add(E_coll)

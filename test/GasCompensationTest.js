@@ -350,8 +350,8 @@ contract('Gas compensation tests', async accounts => {
     -> Expect 0.5% of collaterall to be sent to liquidator, as gas compensation */
 
     // Check collateral value in USD is < $10
-    const aliceColl = (await positionManager.Positions(alice))[1]
-    const aliceDebt = (await positionManager.Positions(alice))[0]
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const aliceDebt = (await positionManager.positions(alice))[0]
 
     // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
     const liquidationTxA = await positionManager.liquidate(alice, { from: liquidator, gasPrice: GAS_PRICE })
@@ -370,8 +370,8 @@ contract('Gas compensation tests', async accounts => {
     await priceFeed.setPrice(dec(101, 18))
 
     // Check collateral value in USD is < $10
-    const bobColl = (await positionManager.Positions(bob))[1]
-    const bobDebt = (await positionManager.Positions(bob))[0]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const bobDebt = (await positionManager.positions(bob))[0]
 
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
     const liquidationTxB = await positionManager.liquidate(bob, { from: liquidator, gasPrice: GAS_PRICE })
@@ -410,8 +410,8 @@ contract('Gas compensation tests', async accounts => {
     0.5% of coll  = 0.05 ETH. Value: (0.05 * 200.999) = $10.04995
     */
 
-    const aliceColl = (await positionManager.Positions(alice))[1]
-    const aliceDebt = (await positionManager.Positions(alice))[0]
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const aliceDebt = (await positionManager.positions(alice))[0]
     const aliceCollValueInUSD = (await positionManagerTester.getUSDValue(aliceColl, price_1))
     assert.isTrue(aliceCollValueInUSD.gt(th.toBN(dec(10, 18))))
 
@@ -438,8 +438,8 @@ contract('Gas compensation tests', async accounts => {
       await priceFeed.setPrice(dec(335, 18))
       const price_2 = await priceFeed.getPrice()
 
-    const bobColl = (await positionManager.Positions(bob))[1]
-    const bobDebt = (await positionManager.Positions(bob))[0]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const bobDebt = (await positionManager.positions(bob))[0]
 
     const bobICR = await positionManager.getCurrentICR(bob, price_2)
     assert.isTrue(bobICR.lte(mv._MCR))
@@ -476,8 +476,8 @@ contract('Gas compensation tests', async accounts => {
     await priceFeed.setPrice(dec(215, 18))
     const price_1 = await priceFeed.getPrice()
 
-    const aliceColl = (await positionManager.Positions(alice))[1]
-    const aliceDebt = (await positionManager.Positions(alice))[0]
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const aliceDebt = (await positionManager.positions(alice))[0]
     const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
 
     const aliceICR = await positionManager.getCurrentICR(alice, price_1)
@@ -496,8 +496,8 @@ contract('Gas compensation tests', async accounts => {
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_A, loggedColl_A), 1000)
     assert.isAtMost(th.getDifference(expectedGasComp_A, loggedGasComp_A), 1000)
 
-    const bobColl = (await positionManager.Positions(bob))[1]
-    const bobDebt = (await positionManager.Positions(bob))[0]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const bobDebt = (await positionManager.positions(bob))[0]
     const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
 
     const bobICR = await positionManager.getCurrentICR(bob, price_1)
@@ -540,10 +540,10 @@ contract('Gas compensation tests', async accounts => {
     assert.isTrue((await positionManager.getCurrentICR(dennis, price)).lt(mv._MCR))
 
     // --- Check value of of A's collateral is < $10, and value of B,C,D collateral are > $10  ---
-    const aliceColl = (await positionManager.Positions(alice))[1]
-    const bobColl = (await positionManager.Positions(bob))[1]
-    const carolColl = (await positionManager.Positions(carol))[1]
-    const dennisColl = (await positionManager.Positions(dennis))[1]
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const carolColl = (await positionManager.positions(carol))[1]
+    const dennisColl = (await positionManager.positions(dennis))[1]
 
     // --- Check value of 0.5% of A, B, and C's collateral is <$10, and value of 0.5% of D's collateral is > $10 ---
     const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
@@ -612,10 +612,10 @@ contract('Gas compensation tests', async accounts => {
 
 
     // --- Check value of of A's collateral is < $10, and value of B,C,D collateral are > $10  ---
-    const aliceColl = (await positionManager.Positions(alice))[1]
-    const bobColl = (await positionManager.Positions(bob))[1]
-    const carolColl = (await positionManager.Positions(carol))[1]
-    const dennisColl = (await positionManager.Positions(dennis))[1]
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const carolColl = (await positionManager.positions(carol))[1]
+    const dennisColl = (await positionManager.positions(dennis))[1]
 
     // --- Check value of 0.5% of A, B, and C's collateral is <$10, and value of 0.5% of D's collateral is > $10 ---
     const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
@@ -679,10 +679,10 @@ contract('Gas compensation tests', async accounts => {
     assert.isTrue((await positionManager.getCurrentICR(carol, price)).lt(mv._MCR))
     assert.isTrue((await positionManager.getCurrentICR(dennis, price)).lt(mv._MCR))
 
-    const aliceColl = (await positionManager.Positions(alice))[1]
-    const bobColl = (await positionManager.Positions(bob))[1]
-    const carolColl = (await positionManager.Positions(carol))[1]
-    const dennisColl = (await positionManager.Positions(dennis))[1]
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const carolColl = (await positionManager.positions(carol))[1]
+    const dennisColl = (await positionManager.positions(dennis))[1]
 
     // --- Check value of 0.5% of A, B, and C's collateral is <$10, and value of 0.5% of D's collateral is > $10 ---
     const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
@@ -740,7 +740,7 @@ contract('Gas compensation tests', async accounts => {
     }
 
     const initialPrice = await priceFeed.getPrice()
-    const firstColl = (await positionManager.Positions(_10_accounts[0]))[1]
+    const firstColl = (await positionManager.positions(_10_accounts[0]))[1]
 
     // Vary price 200-210
     let price = 200
@@ -750,12 +750,12 @@ contract('Gas compensation tests', async accounts => {
       await priceFeed.setPrice(priceString)
 
       const ICRList = []
-      const coll_firstPosition = (await positionManager.Positions(_10_accounts[0]))[1]
+      const coll_firstPosition = (await positionManager.positions(_10_accounts[0]))[1]
       const gasComp_firstPosition = (await positionManagerTester.getCollGasCompensation(coll_firstPosition)).toString()
 
       for (account of _10_accounts) {
         // Check gas compensation is the same for all positions
-        const coll = (await positionManager.Positions(account))[1]
+        const coll = (await positionManager.positions(account))[1]
         const gasCompensation = (await positionManagerTester.getCollGasCompensation(coll)).toString()
 
         assert.equal(gasCompensation, gasComp_firstPosition)

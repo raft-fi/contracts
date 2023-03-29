@@ -109,7 +109,7 @@ contract('BorrowerOperations', async accounts => {
       // alice creates a Position and adds first collateral
       await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
-      const alice_Position_Before = await positionManager.Positions(alice)
+      const alice_Position_Before = await positionManager.positions(alice)
       const coll_before = alice_Position_Before[1]
       const status_Before = alice_Position_Before[3]
 
@@ -120,7 +120,7 @@ contract('BorrowerOperations', async accounts => {
       await wstETHTokenMock.approve(positionManager.address, dec(1, 'ether'), { from: alice})
       await positionManager.addColl(alice, alice, dec(1, 'ether'), { from: alice })
 
-      const alice_Position_After = await positionManager.Positions(alice)
+      const alice_Position_After = await positionManager.positions(alice)
       const coll_After = alice_Position_After[1]
       const status_After = alice_Position_After[3]
 
@@ -153,7 +153,7 @@ contract('BorrowerOperations', async accounts => {
       //  Alice creates initial Position with 1 ether
       await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
-      const alice_Position_Before = await positionManager.Positions(alice)
+      const alice_Position_Before = await positionManager.positions(alice)
       const alice_Stake_Before = alice_Position_Before[2]
       const totalStakes_Before = (await positionManager.totalStakes())
 
@@ -164,7 +164,7 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.addColl(alice, alice, dec(2, 'ether'), { from: alice })
 
       // Check stake and total stakes get updated
-      const alice_Position_After = await positionManager.Positions(alice)
+      const alice_Position_After = await positionManager.positions(alice)
       const alice_Stake_After = alice_Position_After[2]
       const totalStakes_After = (await positionManager.totalStakes())
 
@@ -285,7 +285,7 @@ contract('BorrowerOperations', async accounts => {
     //   totalCollateral = (alice_Collateral + bob_Collateral + dennis_orig_coll + totalPendingETHReward) = (15 + 4 + 1 + 5)  = 25 ETH.
 
     //   Therefore, as Dennis adds 1 ether collateral, his corrected stake should be:  s = 2 * (20 / 25 ) = 1.6 ETH */
-    //   const dennis_Position = await positionManager.Positions(dennis)
+    //   const dennis_Position = await positionManager.positions(dennis)
 
     //   const dennis_Stake = dennis_Position[2]
     //   console.log(dennis_Stake.toString())
@@ -431,7 +431,7 @@ contract('BorrowerOperations', async accounts => {
       const aliceColl = (await positionManager.getEntireDebtAndColl(alice))[1]
 
       // Check Position is active
-      const alice_Position_Before = await positionManager.Positions(alice)
+      const alice_Position_Before = await positionManager.positions(alice)
       const status_Before = alice_Position_Before[3]
       assert.equal(status_Before, 1)
       assert.isTrue(await sortedPositions.contains(alice))
@@ -448,7 +448,7 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // Check Position is active
-      const alice_Position_Before = await positionManager.Positions(alice)
+      const alice_Position_Before = await positionManager.positions(alice)
       const status_Before = alice_Position_Before[3]
       assert.equal(status_Before, 1)
       assert.isTrue(await sortedPositions.contains(alice))
@@ -457,7 +457,7 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.withdrawColl(dec(100, 'finney'), alice, alice, { from: alice })
 
       // Check Position is still active
-      const alice_Position_After = await positionManager.Positions(alice)
+      const alice_Position_After = await positionManager.positions(alice)
       const status_After = alice_Position_After[3]
       assert.equal(status_After, 1)
       assert.isTrue(await sortedPositions.contains(alice))
@@ -471,7 +471,7 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.withdrawColl(dec(1, 'ether'), alice, alice, { from: alice })
 
       // Check 1 ether remaining
-      const alice_Position_After = await positionManager.Positions(alice)
+      const alice_Position_After = await positionManager.positions(alice)
       const aliceCollAfter = await getPositionEntireColl(alice)
 
       assert.isTrue(aliceCollAfter.eq(aliceCollBefore.sub(toBN(dec(1, 'ether')))))
@@ -497,7 +497,7 @@ contract('BorrowerOperations', async accounts => {
       const aliceColl = await getPositionEntireColl(alice)
       assert.isTrue(aliceColl.gt(toBN('0')))
 
-      const alice_Position_Before = await positionManager.Positions(alice)
+      const alice_Position_Before = await positionManager.positions(alice)
       const alice_Stake_Before = alice_Position_Before[2]
       const totalStakes_Before = (await positionManager.totalStakes())
 
@@ -508,7 +508,7 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.withdrawColl(dec(1, 'ether'), alice, alice, { from: alice })
 
       // Check stake and total stakes get updated
-      const alice_Position_After = await positionManager.Positions(alice)
+      const alice_Position_After = await positionManager.positions(alice)
       const alice_Stake_After = alice_Position_After[2]
       const totalStakes_After = (await positionManager.totalStakes())
 
@@ -946,7 +946,7 @@ contract('BorrowerOperations', async accounts => {
       const emittedFee = toBN(th.getRfeeFromRBorrowingEvent(withdrawalTx))
       assert.isTrue(emittedFee.gt(toBN('0')))
 
-      const newDebt = (await positionManager.Positions(D))[0]
+      const newDebt = (await positionManager.positions(D))[0]
 
       // Check debt on Position struct equals initial debt + withdrawal + emitted fee
       th.assertIsApproximatelyEqual(newDebt, D_debtBefore.add(withdrawal_D).add(emittedFee), 10000)
@@ -1520,7 +1520,7 @@ contract('BorrowerOperations', async accounts => {
       const emittedFee = toBN(th.getRfeeFromRBorrowingEvent(adjustmentTx))
       assert.isTrue(emittedFee.gt(toBN('0')))
 
-      const D_newDebt = (await positionManager.Positions(D))[0]
+      const D_newDebt = (await positionManager.positions(D))[0]
 
       // Check debt on Position struct equals initila debt plus drawn debt plus emitted fee
       assert.isTrue(D_newDebt.eq(D_debtBefore.add(withdrawal_D).add(emittedFee)))
@@ -1685,7 +1685,7 @@ contract('BorrowerOperations', async accounts => {
       // Alice transfers R to bob to compensate borrowing fees
       await rToken.transfer(bob, bobFee, { from: alice })
 
-      const remainingDebt = (await positionManager.getPositionDebt(bob)).sub(R_GAS_COMPENSATION)
+      const remainingDebt = (await positionManager.positions(bob))[0].sub(R_GAS_COMPENSATION)
 
       // Bob attempts an adjustment that would repay 1 wei more than his debt
       await wstETHTokenMock.approve(positionManager.address, dec(1, 'ether'), { from: bob})
@@ -1848,7 +1848,7 @@ contract('BorrowerOperations', async accounts => {
 
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const stakeBefore = await positionManager.getPositionStake(alice)
+      const stakeBefore = (await positionManager.positions(alice))[2]
       const totalStakesBefore = await positionManager.totalStakes();
       assert.isTrue(stakeBefore.gt(toBN('0')))
       assert.isTrue(totalStakesBefore.gt(toBN('0')))
@@ -1857,7 +1857,7 @@ contract('BorrowerOperations', async accounts => {
       await wstETHTokenMock.approve(positionManager.address, dec(1, 'ether'), { from: alice})
       await positionManager.adjustPosition(th._100pct, 0, dec(50, 18), true, alice, alice, dec(1, 'ether'), { from: alice })
 
-      const stakeAfter = await positionManager.getPositionStake(alice)
+      const stakeAfter = (await positionManager.positions(alice))[2]
       const totalStakesAfter = await positionManager.totalStakes();
 
       assert.isTrue(stakeAfter.eq(stakeBefore.add(toBN(dec(1, 18)))))
@@ -1869,7 +1869,7 @@ contract('BorrowerOperations', async accounts => {
 
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const stakeBefore = await positionManager.getPositionStake(alice)
+      const stakeBefore = (await positionManager.positions(alice))[2]
       const totalStakesBefore = await positionManager.totalStakes();
       assert.isTrue(stakeBefore.gt(toBN('0')))
       assert.isTrue(totalStakesBefore.gt(toBN('0')))
@@ -1877,7 +1877,7 @@ contract('BorrowerOperations', async accounts => {
       // Alice adjusts position - coll decrease and debt decrease
       await positionManager.adjustPosition(th._100pct, dec(500, 'finney'), dec(50, 18), false, alice, alice, 0, { from: alice })
 
-      const stakeAfter = await positionManager.getPositionStake(alice)
+      const stakeAfter = (await positionManager.positions(alice))[2]
       const totalStakesAfter = await positionManager.totalStakes();
 
       assert.isTrue(stakeAfter.eq(stakeBefore.sub(toBN(dec(5, 17)))))
@@ -1954,7 +1954,7 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
       const aliceColl = await getPositionEntireColl(alice)
       const aliceDebt = await getPositionEntireColl(alice)
-      const status_Before = await positionManager.getPositionStatus(alice)
+      const status_Before = (await positionManager.positions(alice))[3]
       const isInSortedList_Before = await sortedPositions.contains(alice)
 
       assert.equal(status_Before, 1)  // 1: Active
@@ -2106,7 +2106,7 @@ contract('BorrowerOperations', async accounts => {
       // Alice attempts to close position
       await positionManager.closePosition({ from: alice })
 
-      const stakeAfter = ((await positionManager.Positions(alice))[2]).toString()
+      const stakeAfter = ((await positionManager.positions(alice))[2]).toString()
       assert.equal(stakeAfter, '0')
       // check withdrawal was successful
     })
@@ -2173,7 +2173,7 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // Check Position is active
-      const alice_Position_Before = await positionManager.Positions(alice)
+      const alice_Position_Before = await positionManager.positions(alice)
       const status_Before = alice_Position_Before[3]
 
       assert.equal(status_Before, 1)
@@ -2185,7 +2185,7 @@ contract('BorrowerOperations', async accounts => {
       // Close the position
       await positionManager.closePosition({ from: alice })
 
-      const alice_Position_After = await positionManager.Positions(alice)
+      const alice_Position_After = await positionManager.positions(alice)
       const status_After = alice_Position_After[3]
 
       assert.equal(status_After, 2)
@@ -2775,7 +2775,7 @@ contract('BorrowerOperations', async accounts => {
       const emittedFee = toBN(th.getRfeeFromRBorrowingEvent(openPositionTx))
       assert.isTrue(toBN(emittedFee).gt(toBN('0')))
 
-      const newDebt = (await positionManager.Positions(D))[0]
+      const newDebt = (await positionManager.positions(D))[0]
 
       // Check debt on Position struct equals drawn debt plus emitted fee
       th.assertIsApproximatelyEqual(newDebt, D_RRequest.add(emittedFee).add(R_GAS_COMPENSATION), 100000)
@@ -2872,7 +2872,7 @@ contract('BorrowerOperations', async accounts => {
     it("openPosition(): creates a new Position and assigns the correct collateral and debt amount", async () => {
       const debt_Before = await getPositionEntireDebt(alice)
       const coll_Before = await getPositionEntireColl(alice)
-      const status_Before = await positionManager.getPositionStatus(alice)
+      const status_Before = (await positionManager.positions(alice))[3]
 
       // check coll and debt before
       assert.equal(debt_Before, 0)
@@ -2892,7 +2892,7 @@ contract('BorrowerOperations', async accounts => {
 
       const debt_After = await getPositionEntireDebt(alice)
       const coll_After = await getPositionEntireColl(alice)
-      const status_After = await positionManager.getPositionStatus(alice)
+      const status_After = (await positionManager.positions(alice))[3]
 
       // check coll and debt after
       assert.isTrue(coll_After.gt('0'))
@@ -3003,7 +3003,7 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
       // Check Position is active
-      const alice_Position_1 = await positionManager.Positions(alice)
+      const alice_Position_1 = await positionManager.positions(alice)
       const status_1 = alice_Position_1[3]
       assert.equal(status_1, 1)
       assert.isTrue(await sortedPositions.contains(alice))
@@ -3015,7 +3015,7 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.closePosition({ from: alice })
 
       // Check Position is closed
-      const alice_Position_2 = await positionManager.Positions(alice)
+      const alice_Position_2 = await positionManager.positions(alice)
       const status_2 = alice_Position_2[3]
       assert.equal(status_2, 2)
       assert.isFalse(await sortedPositions.contains(alice))
@@ -3024,7 +3024,7 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // Check Position is re-opened
-      const alice_Position_3 = await positionManager.Positions(alice)
+      const alice_Position_3 = await positionManager.positions(alice)
       const status_3 = alice_Position_3[3]
       assert.equal(status_3, 1)
       assert.isTrue(await sortedPositions.contains(alice))
@@ -3032,7 +3032,7 @@ contract('BorrowerOperations', async accounts => {
 
     it("openPosition(): increases the Position's R debt by the correct amount", async () => {
       // check before
-      const alice_Position_Before = await positionManager.Positions(alice)
+      const alice_Position_Before = await positionManager.positions(alice)
       const debt_Before = alice_Position_Before[0]
       assert.equal(debt_Before, 0)
 
@@ -3040,7 +3040,7 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(10000, 18)), alice, alice, dec(100, 'ether'), { from: alice })
 
       // check after
-      const alice_Position_After = await positionManager.Positions(alice)
+      const alice_Position_After = await positionManager.positions(alice)
       const debt_After = alice_Position_After[0]
       th.assertIsApproximatelyEqual(debt_After, dec(10000, 18), 10000)
     })
