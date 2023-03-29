@@ -109,28 +109,6 @@ class MainnetDeploymentHelper {
     }
     return coreContracts
   }
-
-  async deployMultiPositionGetterMainnet(liquityCore, deploymentState) {
-    const multiPositionGetterFactory = await this.getFactory("MultiPositionGetter")
-    const multiPositionGetterParams = [
-      liquityCore.positionManager.address,
-      liquityCore.sortedPositions.address
-    ]
-    const multiPositionGetter = await this.loadOrDeploy(
-      multiPositionGetterFactory,
-      'multiPositionGetter',
-      deploymentState,
-      multiPositionGetterParams
-    )
-
-    if (!this.configParams.ETHERSCAN_BASE_URL) {
-      console.log('No Etherscan Url defined, skipping verification')
-    } else {
-      await this.verifyContract('multiPositionGetter', deploymentState, multiPositionGetterParams)
-    }
-
-    return multiPositionGetter
-  }
   // --- Connector methods ---
 
   async isOwnershipRenounced(contract) {
