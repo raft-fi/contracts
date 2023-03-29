@@ -95,7 +95,6 @@ interface IPositionManager is ILiquityBase {
 
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event RTokenAddressChanged(address _newRTokenAddress);
-    event SortedPositionsAddressChanged(address _sortedPositionsAddress);
     event FeeRecipientChanged(address _feeRecipient);
 
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _RGasCompensation);
@@ -119,7 +118,6 @@ interface IPositionManager is ILiquityBase {
         address _priceFeedAddress,
         IERC20 _collateralToken,
         address _rTokenAddress,
-        address _sortedPositionsAddress,
         address _feeRecipient
     ) external;
 

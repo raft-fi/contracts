@@ -22,7 +22,6 @@ contract('PositionManager', async accounts => {
 
   let priceFeed
   let rToken
-  let sortedPositions
   let positionManager
   let wstETHTokenMock
 
@@ -47,7 +46,6 @@ contract('PositionManager', async accounts => {
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
-    sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
     wstETHTokenMock = contracts.wstETHTokenMock
 

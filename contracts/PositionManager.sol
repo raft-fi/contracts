@@ -6,11 +6,13 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/IPositionManager.sol";
 import "./Interfaces/IRToken.sol";
-import "./Interfaces/ISortedPositions.sol";
+import "./Dependencies/SortedDoublyLL.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
 
 contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionManager {
+    using SortedDoublyLL for SortedDoublyLL.Data;
+
     string constant public NAME = "PositionManager";
 
     // --- Connected contract declarations ---
@@ -21,7 +23,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     address public override feeRecipient;
 
     // A doubly linked list of Positions, sorted by their sorted by their collateral ratios
-    ISortedPositions public sortedPositions;
+    SortedDoublyLL.Data private sortedPositions;
 
     // --- Pools ---
 
@@ -180,7 +182,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     struct ContractsCache {
         IRToken rToken;
-        ISortedPositions sortedPositions;
         address feeRecipient;
     }
     // --- Variable container structs for redemptions ---
@@ -229,6 +230,8 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     constructor() {
         deploymentStartTime = block.timestamp;
+        // TODO: expose as param
+        sortedPositions.setMaxSize(1_000_000);
     }
 
     // --- Setters ---
@@ -237,7 +240,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         address _priceFeedAddress,
         IERC20 _collateralToken,
         address _rTokenAddress,
-        address _sortedPositionsAddress,
         address _feeRecipient
     ) external override onlyOwner {
         if (_addressesSet) {
@@ -246,19 +248,16 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
         checkContract(_priceFeedAddress);
         checkContract(_rTokenAddress);
-        checkContract(_sortedPositionsAddress);
 
         priceFeed = IPriceFeed(_priceFeedAddress);
         collateralToken = _collateralToken;
         rToken = IRToken(_rTokenAddress);
-        sortedPositions = ISortedPositions(_sortedPositionsAddress);
         feeRecipient = _feeRecipient;
 
         _addressesSet = true;
 
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit RTokenAddressChanged(_rTokenAddress);
-        emit SortedPositionsAddressChanged(_sortedPositionsAddress);
         emit FeeRecipientChanged(_feeRecipient);
     }
 
@@ -296,7 +295,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     {
         ContractsCache memory contractsCache = ContractsCache(
             rToken,
-            ISortedPositions(address(0)),
             address(0)
         );
         LocalVariables_openPosition memory vars;
@@ -388,7 +386,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     {
         ContractsCache memory contractsCache = ContractsCache(
             rToken,
-            ISortedPositions(address(0)),
             address(0)
         );
         LocalVariables_adjustPosition memory vars;
@@ -573,10 +570,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     {
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
-        ISortedPositions sortedPositionsCached = sortedPositions;
 
         for (vars.i = 0; vars.i < _n; vars.i++) {
-            vars.user = sortedPositionsCached.getLast();
+            vars.user = sortedPositions.getLast();
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
@@ -734,7 +730,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
                 return singleRedemption;
             }
 
-            _contractsCache.sortedPositions.reInsert(_borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
+            sortedPositions.reInsert(_borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
 
             positions[_borrower].debt = newDebt;
             positions[_borrower].coll = newColl;
@@ -765,15 +761,15 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         collateralToken.transfer(_borrower, _collateral);
     }
 
-    function _isValidFirstRedemptionHint(ISortedPositions _sortedPositions, address _firstRedemptionHint, uint _price) internal view returns (bool) {
+    function _isValidFirstRedemptionHint(address _firstRedemptionHint, uint _price) internal view returns (bool) {
         if (_firstRedemptionHint == address(0) ||
-            !_sortedPositions.contains(_firstRedemptionHint) ||
+            !sortedPositions.contains(_firstRedemptionHint) ||
             getCurrentICR(_firstRedemptionHint, _price) < MCR
         ) {
             return false;
         }
 
-        address nextPosition = _sortedPositions.getNext(_firstRedemptionHint);
+        address nextPosition = sortedPositions.getNext(_firstRedemptionHint);
         return nextPosition == address(0) || getCurrentICR(nextPosition, _price) < MCR;
     }
 
@@ -819,7 +815,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
         ContractsCache memory contractsCache = ContractsCache(
             rToken,
-            sortedPositions,
             feeRecipient
         );
         RedemptionTotals memory totals;
@@ -835,13 +830,13 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         totals.remainingR = _rAmount;
         address currentBorrower;
 
-        if (_isValidFirstRedemptionHint(contractsCache.sortedPositions, _firstRedemptionHint, totals.price)) {
+        if (_isValidFirstRedemptionHint(_firstRedemptionHint, totals.price)) {
             currentBorrower = _firstRedemptionHint;
         } else {
-            currentBorrower = contractsCache.sortedPositions.getLast();
+            currentBorrower = sortedPositions.getLast();
             // Find the first position with ICR >= MCR
             while (currentBorrower != address(0) && getCurrentICR(currentBorrower, totals.price) < MCR) {
-                currentBorrower = contractsCache.sortedPositions.getPrev(currentBorrower);
+                currentBorrower = sortedPositions.getPrev(currentBorrower);
             }
         }
 
@@ -850,7 +845,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         while (currentBorrower != address(0) && totals.remainingR > 0 && _maxIterations > 0) {
             _maxIterations--;
             // Save the address of the Position preceding the current one, before potentially modifying the list
-            address nextUserToCheck = contractsCache.sortedPositions.getPrev(currentBorrower);
+            address nextUserToCheck = sortedPositions.getPrev(currentBorrower);
 
             _applyPendingRewards(currentBorrower);
 

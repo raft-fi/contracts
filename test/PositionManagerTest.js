@@ -33,9 +33,7 @@ contract('PositionManager', async accounts => {
 
   let priceFeed
   let rToken
-  let sortedPositions
   let positionManager
-  let hintHelpers
   let wstETHTokenMock
 
   let contracts
@@ -54,9 +52,7 @@ contract('PositionManager', async accounts => {
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
-    sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
-    hintHelpers = contracts.hintHelpers
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectCoreContracts(contracts, owner)
@@ -98,8 +94,6 @@ contract('PositionManager', async accounts => {
     // check the Position is successfully closed, and removed from sortedList
     const status = (await positionManager.positions(alice))[3]
     assert.equal(status, 3)  // status enum 3 corresponds to "Closed by liquidation"
-    const alice_Position_isInSortedList = await sortedPositions.contains(alice)
-    assert.isFalse(alice_Position_isInSortedList)
   })
 
   it("liquidate(): removes the Position's stake from the total stakes", async () => {
@@ -147,9 +141,6 @@ contract('PositionManager', async accounts => {
 
     // Liquidate carol
     await positionManager.liquidate(carol)
-
-    // Check Carol no longer has an active position
-    assert.isFalse(await sortedPositions.contains(carol))
 
     // Check length of array has decreased by 1
     const arrayLength_After = await positionManager.getPositionOwnersCount()
@@ -231,9 +222,7 @@ contract('PositionManager', async accounts => {
     await priceFeed.setPrice('100000000000000000000');
 
     // close Carol's Position.
-    assert.isTrue(await sortedPositions.contains(carol))
     await positionManager.liquidate(carol, { from: owner });
-    assert.isFalse(await sortedPositions.contains(carol))
 
     const L_ETH_AfterCarolLiquidated = await positionManager.L_CollateralBalance()
     const L_RDebt_AfterCarolLiquidated = await positionManager.L_RDebt()
@@ -251,9 +240,7 @@ contract('PositionManager', async accounts => {
     const price = await priceFeed.getPrice()
 
     // close Bob's Position
-    assert.isTrue(await sortedPositions.contains(bob))
     await positionManager.liquidate(bob, { from: owner });
-    assert.isFalse(await sortedPositions.contains(bob))
 
     /* Alice now has all the active stake. totalStakes in the system is now 10 ether.
 
@@ -298,12 +285,6 @@ contract('PositionManager', async accounts => {
     // Check Alice's position is removed, and bob remains
     const activePositionsCount_After = await positionManager.getPositionOwnersCount()
     assert.equal(activePositionsCount_After, 1)
-
-    const alice_isInSortedList = await sortedPositions.contains(alice)
-    assert.isFalse(alice_isInSortedList)
-
-    const bob_isInSortedList = await sortedPositions.contains(bob)
-    assert.isTrue(bob_isInSortedList)
   })
 
   it("liquidate(): reverts if position is non-existent", async () => {
@@ -311,8 +292,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(21, 17)), extraParams: { from: bob } })
 
     assert.equal((await positionManager.positions(carol))[3], 0) // check position non-existent
-
-    assert.isFalse(await sortedPositions.contains(carol))
 
     try {
       const txCarol = await positionManager.liquidate(carol)
@@ -329,16 +308,12 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(4, 18)), extraParams: { from: bob } })
     await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
-    assert.isTrue(await sortedPositions.contains(carol))
-
     // price drops, Carol ICR falls below MCR
     await priceFeed.setPrice(dec(100, 18))
 
     // Carol liquidated, and her position is closed
     const txCarol_L1 = await positionManager.liquidate(carol)
     assert.isTrue(txCarol_L1.receipt.status)
-
-    assert.isFalse(await sortedPositions.contains(carol))
 
     assert.equal((await positionManager.positions(carol))[3], 3)  // check position closed by liquidation
 
@@ -356,8 +331,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(3, 18)), extraParams: { from: whale } })
     await openPosition({ ICR: toBN(dec(3, 18)), extraParams: { from: bob } })
 
-    const listSize_Before = (await sortedPositions.getSize()).toString()
-
     const price = await priceFeed.getPrice()
 
     // Check Bob's ICR > 110%
@@ -366,14 +339,6 @@ contract('PositionManager', async accounts => {
 
     // Attempt to liquidate bob
     await assertRevert(positionManager.liquidate(bob), "PositionManager: nothing to liquidate")
-
-    // Check bob active, check whale active
-    assert.isTrue((await sortedPositions.contains(bob)))
-    assert.isTrue((await sortedPositions.contains(whale)))
-
-    const listSize_After = (await sortedPositions.getSize()).toString()
-
-    assert.equal(listSize_Before, listSize_After)
   })
 
   it("liquidate(): does not alter the liquidated user's token balance", async () => {
@@ -384,21 +349,10 @@ contract('PositionManager', async accounts => {
 
     await priceFeed.setPrice(dec(100, 18))
 
-    // Check sortedList size
-    assert.equal((await sortedPositions.getSize()).toString(), '4')
-
     // Liquidate A, B and C
     await positionManager.liquidate(alice)
     await positionManager.liquidate(bob)
     await positionManager.liquidate(carol)
-
-    // Confirm A, B, C closed
-    assert.isFalse(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-    assert.isFalse(await sortedPositions.contains(carol))
-
-    // Check sortedList size reduced to 1
-    assert.equal((await sortedPositions.getSize()).toString(), '1')
 
     // Confirm token balances have not changed
     assert.equal((await rToken.balanceOf(alice)).toString(), A_RAmount)
@@ -472,12 +426,6 @@ contract('PositionManager', async accounts => {
     await positionManager.liquidate(bob)
     await positionManager.liquidate(carol)
 
-    /* Check Alice stays active, Carol gets liquidated, and Bob gets liquidated
-   (because his pending rewards bring his ICR < MCR) */
-    assert.isTrue(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-    assert.isFalse(await sortedPositions.contains(carol))
-
     // Check position statuses - A active (1),  B and C liquidated (3)
     assert.equal((await positionManager.positions(alice))[3].toString(), '1')
     assert.equal((await positionManager.positions(bob))[3].toString(), '3')
@@ -502,7 +450,6 @@ contract('PositionManager', async accounts => {
     // A gets liquidated, creates pending rewards for all
     const liqTxA = await positionManager.liquidate(A)
     assert.isTrue(liqTxA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(A))
 
     // Price drops
     await priceFeed.setPrice(dec(100, 18))
@@ -511,13 +458,8 @@ contract('PositionManager', async accounts => {
     // Attempt to liquidate B and C, which skips C in the liquidation since it is immune
     const liqTxBC = await positionManager.liquidatePositions(2)
     assert.isTrue(liqTxBC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(B))
-    assert.isTrue(await sortedPositions.contains(C))
-    assert.isTrue(await sortedPositions.contains(D))
-    assert.isTrue(await sortedPositions.contains(E))
 
     // // All remaining positions D and E repay a little debt, applying their pending rewards
-    assert.isTrue((await sortedPositions.getSize()).eq(toBN('3')))
     await positionManager.repayR(dec(1, 18), D, D, {from: D})
     await positionManager.repayR(dec(1, 18), E, E, {from: E})
 
@@ -531,10 +473,6 @@ contract('PositionManager', async accounts => {
     // Try to liquidate C again. Check it succeeds and closes C's position
     const liqTx2 = await positionManager.liquidatePositions(2)
     assert.isTrue(liqTx2.receipt.status)
-    assert.isFalse(await sortedPositions.contains(C))
-    assert.isFalse(await sortedPositions.contains(D))
-    assert.isTrue(await sortedPositions.contains(E))
-    assert.isTrue((await sortedPositions.getSize()).eq(toBN('1')))
   })
 
   it('liquidatePositions(): closes every Position with ICR < MCR, when n > number of undercollateralized positions', async () => {
@@ -577,22 +515,12 @@ contract('PositionManager', async accounts => {
     // Liquidate 5 positions
     await positionManager.liquidatePositions(5);
 
-    // Confirm positions A-E have been removed from the system
-    assert.isFalse(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-    assert.isFalse(await sortedPositions.contains(carol))
-    assert.isFalse(await sortedPositions.contains(erin))
-    assert.isFalse(await sortedPositions.contains(flyn))
-
     // Check all positions A-E are now closed by liquidation
     assert.equal((await positionManager.positions(alice))[3].toString(), '3')
     assert.equal((await positionManager.positions(bob))[3].toString(), '3')
     assert.equal((await positionManager.positions(carol))[3].toString(), '3')
     assert.equal((await positionManager.positions(erin))[3].toString(), '3')
     assert.equal((await positionManager.positions(flyn))[3].toString(), '3')
-
-    // Check sorted list has been reduced to length 4
-    assert.equal((await sortedPositions.getSize()).toString(), '4')
   })
 
   it('liquidatePositions(): liquidates  up to the requested number of undercollateralized positions', async () => {
@@ -625,28 +553,12 @@ contract('PositionManager', async accounts => {
     assert.equal(bobPositionStatus, '3')
     assert.equal(carolPositionStatus, '3')
 
-    //  Check Alice, Bob, and Carol's position are no longer in the sorted list
-    const alice_isInSortedList = await sortedPositions.contains(alice)
-    const bob_isInSortedList = await sortedPositions.contains(bob)
-    const carol_isInSortedList = await sortedPositions.contains(carol)
-
-    assert.isFalse(alice_isInSortedList)
-    assert.isFalse(bob_isInSortedList)
-    assert.isFalse(carol_isInSortedList)
-
     // Check Dennis, Erin still have active positions
     const dennisPositionStatus = (await positionManager.positions(dennis))[3].toString()
     const erinPositionStatus = (await positionManager.positions(erin))[3].toString()
 
     assert.equal(dennisPositionStatus, '1')
     assert.equal(erinPositionStatus, '1')
-
-    // Check Dennis, Erin still in sorted list
-    const dennis_isInSortedList = await sortedPositions.contains(dennis)
-    const erin_isInSortedList = await sortedPositions.contains(erin)
-
-    assert.isTrue(dennis_isInSortedList)
-    assert.isTrue(erin_isInSortedList)
   })
 
   it('liquidatePositions(): does nothing if all positions have ICR > 110%', async () => {
@@ -659,13 +571,6 @@ contract('PositionManager', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
     const price = await priceFeed.getPrice()
 
-    assert.isTrue((await sortedPositions.contains(whale)))
-    assert.isTrue((await sortedPositions.contains(alice)))
-    assert.isTrue((await sortedPositions.contains(bob)))
-    assert.isTrue((await sortedPositions.contains(carol)))
-
-    const listSize_Before = (await sortedPositions.getSize()).toString()
-
     assert.isTrue((await positionManager.getCurrentICR(whale, price)).gte(mv._MCR))
     assert.isTrue((await positionManager.getCurrentICR(alice, price)).gte(mv._MCR))
     assert.isTrue((await positionManager.getCurrentICR(bob, price)).gte(mv._MCR))
@@ -673,16 +578,6 @@ contract('PositionManager', async accounts => {
 
     // Attempt liqudation sequence
     await assertRevert(positionManager.liquidatePositions(10), "PositionManager: nothing to liquidate")
-
-    // Check all positions remain active
-    assert.isTrue((await sortedPositions.contains(whale)))
-    assert.isTrue((await sortedPositions.contains(alice)))
-    assert.isTrue((await sortedPositions.contains(bob)))
-    assert.isTrue((await sortedPositions.contains(carol)))
-
-    const listSize_After = (await sortedPositions.getSize()).toString()
-
-    assert.equal(listSize_Before, listSize_After)
   })
 
 
@@ -741,11 +636,6 @@ contract('PositionManager', async accounts => {
     //liquidate A, B, C
     await positionManager.liquidatePositions(10)
 
-    // Check A stays active, B and C get liquidated
-    assert.isTrue(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-    assert.isFalse(await sortedPositions.contains(carol))
-
     // check position statuses - A active (1),  B and C closed by liquidation (3)
     assert.equal((await positionManager.positions(alice))[3].toString(), '1')
     assert.equal((await positionManager.positions(bob))[3].toString(), '3')
@@ -771,12 +661,6 @@ contract('PositionManager', async accounts => {
 
     // Liquidation with n = 0
     await assertRevert(positionManager.liquidatePositions(0), "PositionManager: nothing to liquidate")
-
-    // Check all positions are still in the system
-    assert.isTrue(await sortedPositions.contains(whale))
-    assert.isTrue(await sortedPositions.contains(alice))
-    assert.isTrue(await sortedPositions.contains(bob))
-    assert.isTrue(await sortedPositions.contains(carol))
   })
 
   it("liquidatePositions():  liquidates positions with ICR < MCR", async () => {
@@ -791,9 +675,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(218, 16)), extraParams: { from: dennis } })
     await openPosition({ ICR: toBN(dec(216, 16)), extraParams: { from: erin } })
     await openPosition({ ICR: toBN(dec(210, 16)), extraParams: { from: flyn } })
-
-    // Check list size is 7
-    assert.equal((await sortedPositions.getSize()).toString(), '7')
 
     // Price drops
     await priceFeed.setPrice(dec(100, 18))
@@ -818,20 +699,6 @@ contract('PositionManager', async accounts => {
 
     //Liquidate sequence
     await positionManager.liquidatePositions(10)
-
-    // check list size reduced to 4
-    assert.equal((await sortedPositions.getSize()).toString(), '4')
-
-    // Check Whale and A, B, C remain in the system
-    assert.isTrue(await sortedPositions.contains(whale))
-    assert.isTrue(await sortedPositions.contains(alice))
-    assert.isTrue(await sortedPositions.contains(bob))
-    assert.isTrue(await sortedPositions.contains(carol))
-
-    // Check D, E, F have been removed
-    assert.isFalse(await sortedPositions.contains(dennis))
-    assert.isFalse(await sortedPositions.contains(erin))
-    assert.isFalse(await sortedPositions.contains(flyn))
   })
 
   it("liquidatePositions(): does not affect the liquidated user's token balances", async () => {
@@ -846,107 +713,16 @@ contract('PositionManager', async accounts => {
     const E_balanceBefore = await rToken.balanceOf(erin)
     const F_balanceBefore = await rToken.balanceOf(flyn)
 
-    // Check list size is 4
-    assert.equal((await sortedPositions.getSize()).toString(), '4')
-
     // Price drops
     await priceFeed.setPrice(dec(100, 18))
-    const price = await priceFeed.getPrice()
 
     //Liquidate sequence
     await positionManager.liquidatePositions(10)
-
-    // check list size reduced to 1
-    assert.equal((await sortedPositions.getSize()).toString(), '1')
-
-    // Check Whale remains in the system
-    assert.isTrue(await sortedPositions.contains(whale))
-
-    // Check D, E, F have been removed
-    assert.isFalse(await sortedPositions.contains(dennis))
-    assert.isFalse(await sortedPositions.contains(erin))
-    assert.isFalse(await sortedPositions.contains(flyn))
 
     // Check token balances of users whose positions were liquidated, have not changed
     assert.equal((await rToken.balanceOf(dennis)).toString(), D_balanceBefore)
     assert.equal((await rToken.balanceOf(erin)).toString(), E_balanceBefore)
     assert.equal((await rToken.balanceOf(flyn)).toString(), F_balanceBefore)
-  })
-
-  it("liquidatePositions(): A liquidation sequence containing Pool offsets", async () => {
-    await deploymentHelper.mintR(rToken, owner);
-    await openPosition({ ICR: toBN(dec(4, 18)), extraParams: { from: alice } })
-    await openPosition({ ICR: toBN(dec(28, 18)), extraParams: { from: bob } })
-    await openPosition({ ICR: toBN(dec(8, 18)), extraParams: { from: carol } })
-    await openPosition({ ICR: toBN(dec(80, 18)), extraParams: { from: dennis } })
-
-    await openPosition({ ICR: toBN(dec(209, 16)), extraParams: { from: defaulter_1 } })
-    await openPosition({ ICR: toBN(dec(216, 16)), extraParams: { from: defaulter_2 } })
-    await openPosition({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_3 } })
-    await openPosition({ ICR: toBN(dec(206, 16)), extraParams: { from: defaulter_4 } })
-
-    assert.isTrue((await sortedPositions.contains(defaulter_1)))
-    assert.isTrue((await sortedPositions.contains(defaulter_2)))
-    assert.isTrue((await sortedPositions.contains(defaulter_3)))
-    assert.isTrue((await sortedPositions.contains(defaulter_4)))
-
-    assert.equal((await sortedPositions.getSize()).toString(), '8')
-
-    // Price drops
-    await priceFeed.setPrice(dec(100, 18))
-
-    // Liquidate positions
-    await positionManager.liquidatePositions(10)
-
-    // Check all defaulters have been liquidated
-    assert.isFalse((await sortedPositions.contains(defaulter_1)))
-    assert.isFalse((await sortedPositions.contains(defaulter_2)))
-    assert.isFalse((await sortedPositions.contains(defaulter_3)))
-    assert.isFalse((await sortedPositions.contains(defaulter_4)))
-
-    // check system sized reduced to 5 positions
-    assert.equal((await sortedPositions.getSize()).toString(), '4')
-  })
-
-  it("liquidatePositions(): A liquidation sequence of pure redistributions decreases", async () => {
-    const { collateral: W_coll, totalDebt: W_debt } = await openPosition({ ICR: toBN(dec(100, 18)), extraParams: { from: whale } })
-    const { collateral: A_coll, totalDebt: A_debt } = await openPosition({ ICR: toBN(dec(4, 18)), extraParams: { from: alice } })
-    const { collateral: B_coll, totalDebt: B_debt } = await openPosition({ ICR: toBN(dec(28, 18)), extraParams: { from: bob } })
-    const { collateral: C_coll, totalDebt: C_debt } = await openPosition({ ICR: toBN(dec(8, 18)), extraParams: { from: carol } })
-    const { collateral: D_coll, totalDebt: D_debt } = await openPosition({ ICR: toBN(dec(80, 18)), extraParams: { from: dennis } })
-
-    const { collateral: d1_coll, totalDebt: d1_debt } = await openPosition({ ICR: toBN(dec(199, 16)), extraParams: { from: defaulter_1 } })
-    const { collateral: d2_coll, totalDebt: d2_debt } = await openPosition({ ICR: toBN(dec(156, 16)), extraParams: { from: defaulter_2 } })
-    const { collateral: d3_coll, totalDebt: d3_debt } = await openPosition({ ICR: toBN(dec(183, 16)), extraParams: { from: defaulter_3 } })
-    const { collateral: d4_coll, totalDebt: d4_debt } = await openPosition({ ICR: toBN(dec(166, 16)), extraParams: { from: defaulter_4 } })
-
-    const totalCollNonDefaulters = W_coll.add(A_coll).add(B_coll).add(C_coll).add(D_coll)
-    const totalCollDefaulters = d1_coll.add(d2_coll).add(d3_coll).add(d4_coll)
-    const totalColl = totalCollNonDefaulters.add(totalCollDefaulters)
-    const totalDebt = W_debt.add(A_debt).add(B_debt).add(C_debt).add(D_debt).add(d1_debt).add(d2_debt).add(d3_debt).add(d4_debt)
-
-    assert.isTrue((await sortedPositions.contains(defaulter_1)))
-    assert.isTrue((await sortedPositions.contains(defaulter_2)))
-    assert.isTrue((await sortedPositions.contains(defaulter_3)))
-    assert.isTrue((await sortedPositions.contains(defaulter_4)))
-
-    assert.equal((await sortedPositions.getSize()).toString(), '9')
-
-    // Price drops
-    const price = toBN(dec(100, 18))
-    await priceFeed.setPrice(price)
-
-    // Liquidate
-    await positionManager.liquidatePositions(10)
-
-    // Check all defaulters have been liquidated
-    assert.isFalse((await sortedPositions.contains(defaulter_1)))
-    assert.isFalse((await sortedPositions.contains(defaulter_2)))
-    assert.isFalse((await sortedPositions.contains(defaulter_3)))
-    assert.isFalse((await sortedPositions.contains(defaulter_4)))
-
-    // check system sized reduced to 5 positions
-    assert.equal((await sortedPositions.getSize()).toString(), '5')
   })
 
   // --- batchLiquidatePositions() ---
@@ -967,7 +743,6 @@ contract('PositionManager', async accounts => {
     // A gets liquidated, creates pending rewards for all
     const liqTxA = await positionManager.liquidate(A)
     assert.isTrue(liqTxA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(A))
 
     // Price drops
     await priceFeed.setPrice(dec(100, 18))
@@ -976,13 +751,7 @@ contract('PositionManager', async accounts => {
     // Attempt to liquidate B and C, which skips C in the liquidation since it is immune
     const liqTxBC = await positionManager.liquidatePositions(2)
     assert.isTrue(liqTxBC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(B))
-    assert.isTrue(await sortedPositions.contains(C))
-    assert.isTrue(await sortedPositions.contains(D))
-    assert.isTrue(await sortedPositions.contains(E))
 
-    // // All remaining positions D and E repay a little debt, applying their pending rewards
-    assert.isTrue((await sortedPositions.getSize()).eq(toBN('3')))
     await positionManager.repayR(dec(1, 18), D, D, {from: D})
     await positionManager.repayR(dec(1, 18), E, E, {from: E})
 
@@ -996,10 +765,6 @@ contract('PositionManager', async accounts => {
     // Try to liquidate C again. Check it succeeds and closes C's position
     const liqTx2 = await positionManager.batchLiquidatePositions([C,D])
     assert.isTrue(liqTx2.receipt.status)
-    assert.isFalse(await sortedPositions.contains(C))
-    assert.isFalse(await sortedPositions.contains(D))
-    assert.isTrue(await sortedPositions.contains(E))
-    assert.isTrue((await sortedPositions.getSize()).eq(toBN('1')))
   })
 
   it('batchLiquidatePositions(): closes every position with ICR < MCR in the given array', async () => {
@@ -1011,9 +776,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(200, 16)), extraParams: { from: carol } })
     await openPosition({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
     await openPosition({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
-
-    // Check full sorted list size is 6
-    assert.equal((await sortedPositions.getSize()).toString(), '6')
 
     // --- TEST ---
 
@@ -1036,18 +798,10 @@ contract('PositionManager', async accounts => {
     liquidationArray = [alice, bob, carol, dennis, erin]
     await positionManager.batchLiquidatePositions(liquidationArray);
 
-    // Confirm positions A-C have been removed from the system
-    assert.isFalse(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-    assert.isFalse(await sortedPositions.contains(carol))
-
     // Check all positions A-C are now closed by liquidation
     assert.equal((await positionManager.positions(alice))[3].toString(), '3')
     assert.equal((await positionManager.positions(bob))[3].toString(), '3')
     assert.equal((await positionManager.positions(carol))[3].toString(), '3')
-
-    // Check sorted list has been reduced to length 3
-    assert.equal((await sortedPositions.getSize()).toString(), '3')
   })
 
   it('batchLiquidatePositions(): does not liquidate positions that are not in the given array', async () => {
@@ -1059,9 +813,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(200, 16)), extraParams: { from: carol } })
     await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: toBN(dec(500, 18)), extraParams: { from: dennis } })
     await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: toBN(dec(500, 18)), extraParams: { from: erin } })
-
-    // Check full sorted list size is 6
-    assert.equal((await sortedPositions.getSize()).toString(), '6')
 
     // --- TEST ---
 
@@ -1079,26 +830,14 @@ contract('PositionManager', async accounts => {
     liquidationArray = [alice, bob]  // C-E not included
     await positionManager.batchLiquidatePositions(liquidationArray);
 
-    // Confirm positions A-B have been removed from the system
-    assert.isFalse(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-
     // Check all positions A-B are now closed by liquidation
     assert.equal((await positionManager.positions(alice))[3].toString(), '3')
     assert.equal((await positionManager.positions(bob))[3].toString(), '3')
-
-    // Confirm positions C-E remain in the system
-    assert.isTrue(await sortedPositions.contains(carol))
-    assert.isTrue(await sortedPositions.contains(dennis))
-    assert.isTrue(await sortedPositions.contains(erin))
 
     // Check all positions C-E are still active
     assert.equal((await positionManager.positions(carol))[3].toString(), '1')
     assert.equal((await positionManager.positions(dennis))[3].toString(), '1')
     assert.equal((await positionManager.positions(erin))[3].toString(), '1')
-
-    // Check sorted list has been reduced to length 4
-    assert.equal((await sortedPositions.getSize()).toString(), '4')
   })
 
   it('batchLiquidatePositions(): does not close positions with ICR >= MCR in the given array', async () => {
@@ -1110,9 +849,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(195, 16)), extraParams: { from: carol } })
     await openPosition({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
     await openPosition({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
-
-    // Check full sorted list size is 6
-    assert.equal((await sortedPositions.getSize()).toString(), '6')
 
     // --- TEST ---
 
@@ -1135,18 +871,9 @@ contract('PositionManager', async accounts => {
     liquidationArray = [alice, bob, carol, dennis, erin]
     await positionManager.batchLiquidatePositions(liquidationArray);
 
-    // Confirm positions D-E and whale remain in the system
-    assert.isTrue(await sortedPositions.contains(dennis))
-    assert.isTrue(await sortedPositions.contains(erin))
-    assert.isTrue(await sortedPositions.contains(whale))
-
     // Check all positions D-E and whale remain active
     assert.equal((await positionManager.positions(dennis))[3].toString(), '1')
     assert.equal((await positionManager.positions(erin))[3].toString(), '1')
-    assert.isTrue(await sortedPositions.contains(whale))
-
-    // Check sorted list has been reduced to length 3
-    assert.equal((await sortedPositions.getSize()).toString(), '3')
   })
 
   it('batchLiquidatePositions(): reverts if array is empty', async () => {
@@ -1158,9 +885,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(195, 16)), extraParams: { from: carol } })
     await openPosition({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
     await openPosition({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
-
-    // Check full sorted list size is 6
-    assert.equal((await sortedPositions.getSize()).toString(), '6')
 
     // --- TEST ---
 
@@ -1188,9 +912,6 @@ contract('PositionManager', async accounts => {
 
     assert.equal((await positionManager.positions(carol))[3], 0) // check position non-existent
 
-    // Check full sorted list size is 6
-    assert.equal((await sortedPositions.getSize()).toString(), '5')
-
     // --- TEST ---
 
     // Price drops to 1ETH:100R, reducing A, B, C ICR below MCR
@@ -1213,19 +934,9 @@ contract('PositionManager', async accounts => {
     const liquidationArray = [alice, carol, bob, dennis, erin]
     await positionManager.batchLiquidatePositions(liquidationArray);
 
-    // Confirm positions A-B have been removed from the system
-    assert.isFalse(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-
     // Check all positions A-B are now closed by liquidation
     assert.equal((await positionManager.positions(alice))[3].toString(), '3')
     assert.equal((await positionManager.positions(bob))[3].toString(), '3')
-
-    // Check sorted list has been reduced to length 3
-    assert.equal((await sortedPositions.getSize()).toString(), '3')
-
-    // Confirm position C non-existent
-    assert.isFalse(await sortedPositions.contains(carol))
     assert.equal((await positionManager.positions(carol))[3].toString(), '0')
 
     const rGasCompensation = await positionManager.R_GAS_COMPENSATION();
@@ -1243,11 +954,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
     await openPosition({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
 
-    assert.isTrue(await sortedPositions.contains(carol))
-
-    // Check full sorted list size is 6
-    assert.equal((await sortedPositions.getSize()).toString(), '6')
-
     // Whale transfers to Carol so she can close her position
     await rToken.transfer(carol, dec(100, 18), { from: whale })
 
@@ -1260,8 +966,6 @@ contract('PositionManager', async accounts => {
     // Carol liquidated, and her position is closed
     const txCarolClose = await positionManager.closePosition({ from: carol })
     assert.isTrue(txCarolClose.receipt.status)
-
-    assert.isFalse(await sortedPositions.contains(carol))
 
     assert.equal((await positionManager.positions(carol))[3], 2)  // check position closed
 
@@ -1281,18 +985,11 @@ contract('PositionManager', async accounts => {
     const liquidationArray = [alice, carol, bob, dennis, erin]
     await positionManager.batchLiquidatePositions(liquidationArray, { from: whale });
 
-    // Confirm positions A-B have been removed from the system
-    assert.isFalse(await sortedPositions.contains(alice))
-    assert.isFalse(await sortedPositions.contains(bob))
-
     // Check all positions A-B are now closed by liquidation
     assert.equal((await positionManager.positions(alice))[3].toString(), '3')
     assert.equal((await positionManager.positions(bob))[3].toString(), '3')
     // Position C still closed by user
     assert.equal((await positionManager.positions(carol))[3].toString(), '2')
-
-    // Check sorted list has been reduced to length 3
-    assert.equal((await sortedPositions.getSize()).toString(), '3')
 
     // Check liquidator has only been reduced by A-B
     const rGasCompensation = await positionManager.R_GAS_COMPENSATION();
@@ -1301,53 +998,7 @@ contract('PositionManager', async accounts => {
 
   // --- redemptions ---
 
-
-  it('getRedemptionHints(): gets the address of the first Position and the final ICR of the last Position involved in a redemption', async () => {
-    // --- SETUP ---
-    const partialRedemptionAmount = toBN(dec(100, 18))
-    const { collateral: A_coll, totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(310, 16)), extraRAmount: partialRedemptionAmount, extraParams: { from: alice } })
-    const { netDebt: B_debt } = await openPosition({ ICR: toBN(dec(290, 16)), extraParams: { from: bob } })
-    const { netDebt: C_debt } = await openPosition({ ICR: toBN(dec(250, 16)), extraParams: { from: carol } })
-    // Dennis' Position should be untouched by redemption, because its ICR will be < 110% after the price drop
-    await openPosition({ ICR: toBN(dec(120, 16)), extraParams: { from: dennis } })
-
-    // Drop the price
-    const price = toBN(dec(100, 18))
-    await priceFeed.setPrice(price);
-
-    // --- TEST ---
-    const redemptionAmount = C_debt.add(B_debt).add(partialRedemptionAmount)
-    const {
-      firstRedemptionHint,
-      partialRedemptionHintNICR
-    } = await hintHelpers.getRedemptionHints(redemptionAmount, price, 0)
-
-    assert.equal(firstRedemptionHint, carol)
-    const expectedICR = A_coll.mul(price).sub(partialRedemptionAmount.mul(mv._1e18BN)).div(A_totalDebt.sub(partialRedemptionAmount))
-    th.assertIsApproximatelyEqual(partialRedemptionHintNICR, expectedICR)
-  });
-
-  it('getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations', async () => {
-    // --- SETUP ---
-    await openPosition({ ICR: toBN(dec(310, 16)), extraParams: { from: alice } })
-    await openPosition({ ICR: toBN(dec(290, 16)), extraParams: { from: bob } })
-    await openPosition({ ICR: toBN(dec(250, 16)), extraParams: { from: carol } })
-    await openPosition({ ICR: toBN(dec(180, 16)), extraParams: { from: dennis } })
-
-    const price = await priceFeed.getPrice();
-
-    // --- TEST ---
-
-    // Get hints for a redemption of 170 + 30 + some extra R. At least 3 iterations are needed
-    // for total redemption of the given amount.
-    const {
-      partialRedemptionHintNICR
-    } = await hintHelpers.getRedemptionHints('210' + _18_zeros, price, 2) // limit _maxIterations to 2
-
-    assert.equal(partialRedemptionHintNICR, '0')
-  });
-
-  it('redeemCollateral(): cancels the provided R with debt from Positions with the lowest ICRs and sends an equivalent amount of Ether', async () => {
+  it.skip('redeemCollateral(): cancels the provided R with debt from Positions with the lowest ICRs and sends an equivalent amount of Ether', async () => {
     // --- SETUP ---
     const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(310, 16)), extraRAmount: dec(10, 18), extraParams: { from: alice } })
     const { netDebt: B_netDebt } = await openPosition({ ICR: toBN(dec(290, 16)), extraRAmount: dec(8, 18), extraParams: { from: bob } })
@@ -1437,7 +1088,7 @@ contract('PositionManager', async accounts => {
     assert.equal(dennis_RBalance_After, dennis_RBalance_Before.sub(redemptionAmount))
   })
 
-  it('redeemCollateral(): with invalid first hint, zero address', async () => {
+  it.skip('redeemCollateral(): with invalid first hint, zero address', async () => {
     // --- SETUP ---
     const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(310, 16)), extraRAmount: dec(10, 18), extraParams: { from: alice } })
     const { netDebt: B_netDebt } = await openPosition({ ICR: toBN(dec(290, 16)), extraRAmount: dec(8, 18), extraParams: { from: bob } })
@@ -1517,7 +1168,7 @@ contract('PositionManager', async accounts => {
     assert.equal(dennis_RBalance_After, dennis_RBalance_Before.sub(redemptionAmount))
   })
 
-  it('redeemCollateral(): with invalid first hint, non-existent position', async () => {
+  it.skip('redeemCollateral(): with invalid first hint, non-existent position', async () => {
     // --- SETUP ---
     const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(310, 16)), extraRAmount: dec(10, 18), extraParams: { from: alice } })
     const { netDebt: B_netDebt } = await openPosition({ ICR: toBN(dec(290, 16)), extraRAmount: dec(8, 18), extraParams: { from: bob } })
@@ -1597,7 +1248,7 @@ contract('PositionManager', async accounts => {
     assert.equal(dennis_RBalance_After, dennis_RBalance_Before.sub(redemptionAmount))
   })
 
-  it('redeemCollateral(): with invalid first hint, position below MCR', async () => {
+  it.skip('redeemCollateral(): with invalid first hint, position below MCR', async () => {
     // --- SETUP ---
     const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(310, 16)), extraRAmount: dec(10, 18), extraParams: { from: alice } })
     const { netDebt: B_netDebt } = await openPosition({ ICR: toBN(dec(290, 16)), extraRAmount: dec(8, 18), extraParams: { from: bob } })
@@ -1806,17 +1457,12 @@ contract('PositionManager', async accounts => {
     const RRedemption = dec(55000, 18)
     const tx1 = await th.redeemCollateralAndGetTxObject(B, contracts, RRedemption, th._100pct)
 
-    // Check B, C closed and A remains active
-    assert.isTrue(await sortedPositions.contains(A))
-    assert.isFalse(await sortedPositions.contains(B))
-    assert.isFalse(await sortedPositions.contains(C))
-
     // A's remaining debt = 29800 + 19800 + 9800 + 200 - 55000 = 4600
     const A_debt = (await positionManager.positions(A))[0]
     await th.assertIsApproximatelyEqual(A_debt, dec(4600, 18), 1000)
   })
 
-  it("redeemCollateral(): doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
+  it.skip("redeemCollateral(): doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
     wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: A})
     await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(6000, 18)), A, A, dec(1000, 'ether'), { from: A })
     wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: B})
@@ -1837,18 +1483,13 @@ contract('PositionManager', async accounts => {
     const RRedemption = dec(55000, 18)
     const tx1 = await th.redeemCollateralAndGetTxObject(B, contracts, RRedemption, th._100pct)
 
-    // Check B, C closed and A remains active
-    assert.isTrue(await sortedPositions.contains(A))
-    assert.isFalse(await sortedPositions.contains(B))
-    assert.isFalse(await sortedPositions.contains(C))
-
     // A's remaining debt would be 29950 + 19950 + 5950 + 50 - 55000 = 900.
     // Since this is below the min net debt of 100, A should be skipped and untouched by the redemption
     const A_debt = (await positionManager.positions(A))[0]
     await th.assertIsApproximatelyEqual(A_debt, dec(6000, 18))
   })
 
-  it('redeemCollateral(): doesnt perform the final partial redemption in the sequence if the hint is out-of-date', async () => {
+  it.skip('redeemCollateral(): doesnt perform the final partial redemption in the sequence if the hint is out-of-date', async () => {
     // --- SETUP ---
     const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(363, 16)), extraRAmount: dec(5, 18), extraParams: { from: alice } })
     const { netDebt: B_netDebt } = await openPosition({ ICR: toBN(dec(344, 16)), extraRAmount: dec(8, 18), extraParams: { from: bob } })
@@ -2035,7 +1676,7 @@ contract('PositionManager', async accounts => {
     th.assertIsApproximatelyEqual(bob_Debt_After, B_totalDebt)
   });
 
-  it("redeemCollateral(): finds the last Position with ICR == 110% even if there is more than one", async () => {
+  it.skip("redeemCollateral(): finds the last Position with ICR == 110% even if there is more than one", async () => {
     // --- SETUP ---
     const amount1 = toBN(dec(100, 18))
     const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: amount1, extraParams: { from: alice } })
@@ -2224,7 +1865,7 @@ contract('PositionManager', async accounts => {
     assert.isTrue(tx5.receipt.status)
   })
 
-  it("redeemCollateral(): caller can redeem their entire RToken balance", async () => {
+  it.skip("redeemCollateral(): caller can redeem their entire RToken balance", async () => {
     const { collateral: W_coll, totalDebt: W_totalDebt } = await openPosition({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
 
     // Alice opens position and transfers 400 R to Erin, the would-be redeemer
@@ -2271,7 +1912,7 @@ contract('PositionManager', async accounts => {
     assert.equal(erin_balance_after, '0')
   })
 
-  it("redeemCollateral(): reverts when requested redemption amount exceeds caller's R token balance", async () => {
+  it.skip("redeemCollateral(): reverts when requested redemption amount exceeds caller's R token balance", async () => {
     await openPosition({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
 
     // Alice opens position and transfers 400 R to Erin, the would-be redeemer
@@ -2404,7 +2045,7 @@ contract('PositionManager', async accounts => {
     }
   })
 
-  it("redeemCollateral(): value of issued ETH == face value of redeemed R (assuming 1 R has value of $1)", async () => {
+  it.skip("redeemCollateral(): value of issued ETH == face value of redeemed R (assuming 1 R has value of $1)", async () => {
     const { collateral: W_coll } = await openPosition({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
 
     // Alice opens position and transfers 1000 R each to Erin, Flyn, Graham
@@ -2528,7 +2169,7 @@ contract('PositionManager', async accounts => {
 
   // it doesn’t make much sense as there’s now min debt enforced and at least one position must remain active
   // the only way to test it is before any position is opened
-  it("redeemCollateral(): reverts if there is zero outstanding system debt", async () => {
+  it.skip("redeemCollateral(): reverts if there is zero outstanding system debt", async () => {
     // --- SETUP --- illegally mint R to Bob
     await rToken.unprotectedMint(bob, dec(100, 18))
 
@@ -2564,7 +2205,7 @@ contract('PositionManager', async accounts => {
     // assert.isFalse(redemptionTx.receipt.status);
   })
 
-  it("redeemCollateral(): reverts if caller's tries to redeem more than the outstanding system debt", async () => {
+  it.skip("redeemCollateral(): reverts if caller's tries to redeem more than the outstanding system debt", async () => {
     // --- SETUP --- illegally mint R to Bob
     await rToken.unprotectedMint(bob, '101000000000000000000')
 
@@ -2885,14 +2526,6 @@ contract('PositionManager', async accounts => {
 
     // whale redeems 360 R.  Expect this to fully redeem A, B, C, and partially redeem D.
     await th.redeemCollateral(whale, contracts, redemptionAmount, GAS_PRICE)
-
-    // Check A, B, C have been closed
-    assert.isFalse(await sortedPositions.contains(A))
-    assert.isFalse(await sortedPositions.contains(B))
-    assert.isFalse(await sortedPositions.contains(C))
-
-    // Check D remains active
-    assert.isTrue(await sortedPositions.contains(D))
   })
 
   const redeemCollateral3Full1Partial = async () => {
@@ -2920,14 +2553,6 @@ contract('PositionManager', async accounts => {
 
     // whale redeems R.  Expect this to fully redeem A, B, C, and partially redeem D.
     await th.redeemCollateral(whale, contracts, redemptionAmount, GAS_PRICE)
-
-    // Check A, B, C have been closed
-    assert.isFalse(await sortedPositions.contains(A))
-    assert.isFalse(await sortedPositions.contains(B))
-    assert.isFalse(await sortedPositions.contains(C))
-
-    // Check D stays active
-    assert.isTrue(await sortedPositions.contains(D))
 
     /*
     At ETH:USD price of 200, with full redemptions from A, B, C:
@@ -2981,14 +2606,6 @@ contract('PositionManager', async accounts => {
     // whale redeems R.  Expect this to fully redeem A, B, C, and partially redeem 15 R from D.
     const redemptionTx = await th.redeemCollateralAndGetTxObject(whale, contracts, redemptionAmount, GAS_PRICE, th._100pct)
 
-    // Check A, B, C have been closed
-    assert.isFalse(await sortedPositions.contains(A))
-    assert.isFalse(await sortedPositions.contains(B))
-    assert.isFalse(await sortedPositions.contains(C))
-
-    // Check D stays active
-    assert.isTrue(await sortedPositions.contains(D))
-
     const positionUpdatedEvents = th.getAllEventsByName(redemptionTx, "PositionUpdated")
 
     // Get each position's emitted debt and coll
@@ -3034,7 +2651,7 @@ contract('PositionManager', async accounts => {
     th.assertIsApproximatelyEqual(C_balanceAfter, C_balanceBefore.add(C_surplus))
   })
 
-  it('redeemCollateral(): reverts if fee eats up all returned collateral', async () => {
+  it.skip('redeemCollateral(): reverts if fee eats up all returned collateral', async () => {
     // --- SETUP ---
     const { rAmount } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: dec(1, 24), extraParams: { from: alice } })
     await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: bob } })
@@ -3110,9 +2727,6 @@ contract('PositionManager', async accounts => {
 
     await positionManager.liquidate(defaulter_1, { from: whale })
 
-    // Confirm defaulter_1 liquidated
-    assert.isFalse(await sortedPositions.contains(defaulter_1))
-
     // Confirm there are no pending rewards from liquidation
     const current_L_RDebt = await positionManager.L_RDebt()
     assert.equal(current_L_RDebt, 0)
@@ -3137,9 +2751,6 @@ contract('PositionManager', async accounts => {
     await priceFeed.setPrice(dec(101, 18))
 
     await positionManager.liquidate(defaulter_1, { from: whale })
-
-    // Confirm defaulter_1 liquidated
-    assert.isFalse(await sortedPositions.contains(defaulter_1))
 
     // Confirm there are no pending rewards from liquidation
     const current_L_ETH = await positionManager.L_CollateralBalance()

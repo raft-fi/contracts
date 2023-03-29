@@ -212,35 +212,6 @@ class TestHelper {
     )
   }
 
-  static async logActiveAccounts(contracts, n) {
-    const count = await contracts.sortedPositions.getSize()
-    const price = await contracts.priceFeedTestnet.getPrice()
-
-    n = (typeof n == 'undefined') ? count : n
-
-    let account = await contracts.sortedPositions.getLast()
-    const head = await contracts.sortedPositions.getFirst()
-
-    console.log(`Total active accounts: ${count}`)
-    console.log(`First ${n} accounts, in ascending ICR order:`)
-
-    let i = 0
-    while (i < n) {
-      const squeezedAddr = this.squeezeAddr(account)
-      const coll = (await contracts.positionManager.positions(account))[1]
-      const debt = (await contracts.positionManager.positions(account))[0]
-      const ICR = await contracts.positionManager.getCurrentICR(account, price)
-
-      console.log(`Acct: ${squeezedAddr}  coll:${coll}  debt: ${debt}  ICR: ${ICR}`)
-
-      if (account == head) { break; }
-
-      account = await contracts.sortedPositions.getPrev(account)
-
-      i++
-    }
-  }
-
   static async logAccountsArray(accounts, positionManager, price, n) {
     const length = accounts.length
 
@@ -446,18 +417,6 @@ class TestHelper {
   static getDebtAndCollFromPositionUpdatedEvents(positionUpdatedEvents, address) {
     const event = positionUpdatedEvents.filter(event => event.args[0] === address)[0]
     return [event.args[1], event.args[2]]
-  }
-
-  static async getBorrowerOpsListHint(contracts, newColl, newDebt) {
-    const newNICR = await contracts.hintHelpers.computeNominalCR(newColl, newDebt)
-    const {
-      hintAddress: approxfullListHint,
-      latestRandomSeed
-    } = await contracts.hintHelpers.getApproxHint(newNICR, 5, this.latestRandomSeed)
-    this.latestRandomSeed = latestRandomSeed
-
-    const {0: upperHint, 1: lowerHint} = await contracts.sortedPositions.findInsertPosition(newNICR, approxfullListHint, approxfullListHint)
-    return {upperHint, lowerHint}
   }
 
   static async getEntireCollAndDebt(contracts, account) {
@@ -951,34 +910,6 @@ class TestHelper {
       gasCostList.push(gas)
     }
     return this.getGasMetrics(gasCostList)
-  }
-
-  static async performRedemptionTx(redeemer, price, contracts, rAmount, maxFee = 0, gasPrice_toUse = 0) {
-    const redemptionhint = await contracts.hintHelpers.getRedemptionHints(rAmount, price, gasPrice_toUse)
-
-    const firstRedemptionHint = redemptionhint[0]
-    const partialRedemptionNewICR = redemptionhint[1]
-
-    const {
-      hintAddress: approxPartialRedemptionHint,
-      latestRandomSeed
-    } = await contracts.hintHelpers.getApproxHint(partialRedemptionNewICR, 50, this.latestRandomSeed)
-    this.latestRandomSeed = latestRandomSeed
-
-    const exactPartialRedemptionHint = (await contracts.sortedPositions.findInsertPosition(partialRedemptionNewICR,
-      approxPartialRedemptionHint,
-      approxPartialRedemptionHint))
-
-    const tx = await contracts.positionManager.redeemCollateral(rAmount,
-      firstRedemptionHint,
-      exactPartialRedemptionHint[0],
-      exactPartialRedemptionHint[1],
-      partialRedemptionNewICR,
-      0, maxFee,
-      { from: redeemer, gasPrice: gasPrice_toUse},
-    )
-
-    return tx
   }
 
   // --- Composite functions ---

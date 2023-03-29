@@ -1,9 +1,6 @@
-const SortedPositions = artifacts.require("./SortedPositions.sol")
 const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
-const FunctionCaller = artifacts.require("./TestContracts/FunctionCaller.sol")
-const HintHelpers = artifacts.require("./HintHelpers.sol")
 
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
@@ -31,29 +28,20 @@ class DeploymentHelper {
 
   static async deployLiquityCoreHardhat() {
     const priceFeedTestnet = await PriceFeedTestnet.new()
-    const sortedPositions = await SortedPositions.new()
     const positionManager = await PositionManager.new()
     const wstETHTokenMock = await WstETHTokenMock.new()
-    const functionCaller = await FunctionCaller.new()
-    const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
       positionManager.address
     )
     RToken.setAsDeployed(rToken)
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
-    SortedPositions.setAsDeployed(sortedPositions)
     PositionManager.setAsDeployed(positionManager)
-    FunctionCaller.setAsDeployed(functionCaller)
-    HintHelpers.setAsDeployed(hintHelpers)
 
     const coreContracts = {
       priceFeedTestnet,
       rToken,
-      sortedPositions,
       positionManager,
-      wstETHTokenMock,
-      functionCaller,
-      hintHelpers
+      wstETHTokenMock
     }
     return coreContracts
   }
@@ -80,13 +68,10 @@ class DeploymentHelper {
 
     // Contract without testers (yet)
     testerContracts.priceFeedTestnet = await PriceFeedTestnet.new()
-    testerContracts.sortedPositions = await SortedPositions.new()
     testerContracts.wstETHTokenMock = await WstETHTokenMock.new();
     // Actual tester contracts
     testerContracts.math = await LiquityMathTester.new()
     testerContracts.positionManager = await PositionManagerTester.new()
-    testerContracts.functionCaller = await FunctionCaller.new()
-    testerContracts.hintHelpers = await HintHelpers.new()
     testerContracts.rToken =  await RTokenTester.new(
       testerContracts.positionManager.address
     )
@@ -95,20 +80,14 @@ class DeploymentHelper {
 
   static async deployLiquityCoreTruffle() {
     const priceFeedTestnet = await PriceFeedTestnet.new()
-    const sortedPositions = await SortedPositions.new()
     const positionManager = await PositionManager.new()
-    const functionCaller = await FunctionCaller.new()
-    const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
       positionManager.address
     )
     const coreContracts = {
       priceFeedTestnet,
       rToken,
-      sortedPositions,
-      positionManager,
-      functionCaller,
-      hintHelpers
+      positionManager
     }
     return coreContracts
   }
@@ -129,30 +108,12 @@ class DeploymentHelper {
 
   // Connect contracts to their dependencies
   static async connectCoreContracts(contracts, feeRecipient) {
-
-    // set PositionManager addr in SortedPositions
-    await contracts.sortedPositions.setParams(
-      maxBytes32,
-      contracts.positionManager.address
-    )
-
-    // set contract addresses in the FunctionCaller
-    await contracts.functionCaller.setPositionManagerAddress(contracts.positionManager.address)
-    await contracts.functionCaller.setSortedPositionsAddress(contracts.sortedPositions.address)
-
     // set contracts in the Position Manager
     await contracts.positionManager.setAddresses(
       contracts.priceFeedTestnet.address,
       contracts.wstETHTokenMock.address,
       contracts.rToken.address,
-      contracts.sortedPositions.address,
       feeRecipient
-    )
-
-    // set contracts in HintHelpers
-    await contracts.hintHelpers.setAddresses(
-      contracts.sortedPositions.address,
-      contracts.positionManager.address
     )
   }
 }

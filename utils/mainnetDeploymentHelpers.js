@@ -65,17 +65,13 @@ class MainnetDeploymentHelper {
   async deployLiquityCoreMainnet(tellorMasterAddr, deploymentState) {
     // Get contract factories
     const priceFeedFactory = await this.getFactory("PriceFeed")
-    const sortedPositionsFactory = await this.getFactory("SortedPositions")
     const positionManagerFactory = await this.getFactory("PositionManager")
-    const hintHelpersFactory = await this.getFactory("HintHelpers")
     const rTokenFactory = await this.getFactory("RToken")
     const tellorCallerFactory = await this.getFactory("TellorCaller")
 
     // Deploy txs
     const priceFeed = await this.loadOrDeploy(priceFeedFactory, 'priceFeed', deploymentState)
-    const sortedPositions = await this.loadOrDeploy(sortedPositionsFactory, 'sortedPositions', deploymentState)
     const positionManager = await this.loadOrDeploy(positionManagerFactory, 'positionManager', deploymentState)
-    const hintHelpers = await this.loadOrDeploy(hintHelpersFactory, 'hintHelpers', deploymentState)
     const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, [tellorMasterAddr])
 
     const rTokenParams = [
@@ -92,9 +88,7 @@ class MainnetDeploymentHelper {
       console.log('No Etherscan Url defined, skipping verification')
     } else {
       await this.verifyContract('priceFeed', deploymentState)
-      await this.verifyContract('sortedPositions', deploymentState)
       await this.verifyContract('positionManager', deploymentState)
-      await this.verifyContract('hintHelpers', deploymentState)
       await this.verifyContract('tellorCaller', deploymentState, [tellorMasterAddr])
       await this.verifyContract('rToken', deploymentState, rTokenParams)
     }
@@ -102,9 +96,7 @@ class MainnetDeploymentHelper {
     const coreContracts = {
       priceFeed,
       rToken,
-      sortedPositions,
       positionManager,
-      hintHelpers,
       tellorCaller
     }
     return coreContracts
@@ -122,29 +114,12 @@ class MainnetDeploymentHelper {
     await this.isOwnershipRenounced(contracts.priceFeed) ||
       await this.sendAndWaitForTransaction(contracts.priceFeed.setAddresses(chainlinkProxyAddress, contracts.tellorCaller.address, {gasPrice}))
 
-    // set PositionManager addr in SortedPositions
-    await this.isOwnershipRenounced(contracts.sortedPositions) ||
-      await this.sendAndWaitForTransaction(contracts.sortedPositions.setParams(
-        maxBytes32,
-        contracts.positionManager.address
-	{gasPrice}
-      ))
-
     // set contracts in the Position Manager
     await this.isOwnershipRenounced(contracts.positionManager) ||
       await this.sendAndWaitForTransaction(contracts.positionManager.setAddresses(
         contracts.priceFeed.address,
         '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0',
         contracts.rToken.address,
-        contracts.sortedPositions.address,
-	{gasPrice}
-      ))
-
-    // set contracts in HintHelpers
-    await this.isOwnershipRenounced(contracts.hintHelpers) ||
-      await this.sendAndWaitForTransaction(contracts.hintHelpers.setAddresses(
-        contracts.sortedPositions.address,
-        contracts.positionManager.address,
 	{gasPrice}
       ))
   }

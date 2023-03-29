@@ -54,7 +54,6 @@ contract('Gas compensation tests', async accounts => {
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
-    sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
     wstETHTokenMock = contracts.wstETHTokenMock
 

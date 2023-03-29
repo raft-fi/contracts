@@ -10,7 +10,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   let contracts
   let rToken
-  let sortedPositions
   let positionManager
 
   before(async () => {
@@ -18,7 +17,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     contracts = await deploymentHelper.deployRToken(contracts)
 
     rToken = contracts.rToken
-    sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
   })
 
@@ -52,7 +50,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('PositionManager', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(positionManager, 5, 1)
+      await testSetAddresses(positionManager, 4, 1)
     })
 
     it("setBorrowingSpread(): reverts when called by non-owner, or with wrong values", async () => {
@@ -65,28 +63,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
       // Owner can successfully set spread
       const txOwner = await positionManager.setBorrowingSpread(100, { from: owner })
       assert.isTrue(txOwner.receipt.status)
-    })
-  })
-
-  describe('SortedPositions', async accounts => {
-    it("setParams(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      const dumbContract = await NonPayable.new()
-      const params = [10000001, dumbContract.address]
-
-      // Attempt call from alice
-      await th.assertRevert(sortedPositions.setParams(...params, { from: alice }))
-
-      // Attempt to use zero address
-      await testZeroAddress(sortedPositions, params, 'setParams', 1)
-      // Attempt to use non contract
-      await testNonContractAddress(sortedPositions, params, 'setParams', 1)
-
-      // Owner can successfully set params
-      const txOwner = await sortedPositions.setParams(...params, { from: owner })
-      assert.isTrue(txOwner.receipt.status)
-
-      // fails if called twice
-      await th.assertRevert(sortedPositions.setParams(...params, { from: owner }))
     })
   })
 })
