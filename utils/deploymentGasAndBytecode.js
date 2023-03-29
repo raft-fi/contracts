@@ -3,14 +3,10 @@ const SortedPositions = artifacts.require("./SortedPositions.sol")
 const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeed = artifacts.require("./PriceFeed.sol")
 const RToken = artifacts.require("./RToken.sol")
-const ActivePool = artifacts.require("./ActivePool.sol");
-const DefaultPool = artifacts.require("./DefaultPool.sol");
 const FunctionCaller = artifacts.require("./FunctionCaller.sol")
 
 const HintHelpers = artifacts.require("./HintHelpers.sol")
 
-const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
-const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
 const RTokenTester = artifacts.require("./RTokenTester.sol")
@@ -22,15 +18,11 @@ const coreContractABIs = [
   RToken,
   SortedPositions,
   PositionManager,
-  ActivePool,
-  DefaultPool,
   FunctionCaller,
   HintHelpers,
 ]
 
-const TesterContractABIs  = [
-  ActivePoolTester,
-  DefaultPoolTester,
+const TesterContractABIs = [
   LiquityMathTester,
   PositionManagerTester,
   RTokenTester,

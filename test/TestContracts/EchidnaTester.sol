@@ -4,8 +4,6 @@
 
 // import "../PositionManager.sol";
 // import "../BorrowerOperations.sol";
-// import "../ActivePool.sol";
-// import "../DefaultPool.sol";
 // import "../StabilityPool.sol";
 // import "../RToken.sol";
 // import "./PriceFeedTestnet.sol";

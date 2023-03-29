@@ -20,8 +20,6 @@ contract('Gas compensation tests', async accounts => {
   let priceFeed
   let rToken
   let positionManager
-  let activePool
-  let defaultPool
   let wstETHTokenMock
 
   let contracts
@@ -58,8 +56,6 @@ contract('Gas compensation tests', async accounts => {
     rToken = contracts.rToken
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
-    activePool = contracts.activePool
-    defaultPool = contracts.defaultPool
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectCoreContracts(contracts, owner)
@@ -533,8 +529,6 @@ contract('Gas compensation tests', async accounts => {
     await openPosition({ ICR: toBN(dec(488, 16)), extraRAmount: dec(600, 18), extraParams: { from: carol } })
     await openPosition({ ICR: toBN(dec(445, 16)), extraRAmount: dec(1, 23), extraParams: { from: dennis } })
 
-    const RinDefaultPool_0 = await defaultPool.rDebt()
-
     // price drops to 200
     await priceFeed.setPrice(dec(200, 18))
     const price = await priceFeed.getPrice()
@@ -581,18 +575,10 @@ contract('Gas compensation tests', async accounts => {
     await positionManager.liquidatePositions(4, { from: liquidator, gasPrice: GAS_PRICE })
     const liquidatorBalance_after = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
 
-    // Check R in DefaultPool has decreased
-    const RinDefaultPool_1 = await defaultPool.rDebt()
-    assert.isTrue(RinDefaultPool_1.gt(RinDefaultPool_0))
-
     // Check liquidator's balance has increased by the expected compensation amount
     const compensationReceived = (liquidatorBalance_after.sub(liquidatorBalance_before)).toString()
 
     assert.isAtMost(th.getDifference(expectedGasComp, compensationReceived), 1000)
-
-    // Check ETH in defaultPool now equals the expected liquidated collateral
-    const ETHinDefaultPool = (await defaultPool.collateralBalance()).toString()
-    assert.isAtMost(th.getDifference(expectedLiquidatedColl, ETHinDefaultPool), 1000)
   })
 
   //  --- event emission in liquidation sequence ---
@@ -683,8 +669,6 @@ contract('Gas compensation tests', async accounts => {
     await openPosition({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: erin } })
     await openPosition({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: flyn } })
 
-    const RinDefaultPool_0 = await defaultPool.rDebt()
-
     // price drops to 200
     await priceFeed.setPrice(dec(200, 18))
     const price = await priceFeed.getPrice()
@@ -747,7 +731,7 @@ contract('Gas compensation tests', async accounts => {
     for (const account of _10_accounts) {
 
       const debtString = debt.toString().concat('000000000000000000')
-      await wstETHTokenMock.approve(activePool.address, dec(30, 'ether'), { from: account})
+      await wstETHTokenMock.approve(positionManager.address, dec(30, 'ether'), { from: account})
       await openPosition({ extraRAmount: debtString, amount: dec(30, 'ether'), extraParams: { from: account } })
 
       const squeezedPositionAddr = th.squeezeAddr(account)
@@ -806,7 +790,7 @@ contract('Gas compensation tests', async accounts => {
     for (const account of _20_accounts) {
 
       const collString = coll.toString().concat('000000000000000000')
-      await wstETHTokenMock.approve(activePool.address, collString, { from: account})
+      await wstETHTokenMock.approve(positionManager.address, collString, { from: account})
       await openPosition({ extraRAmount: dec(100, 18), amount: collString, extraParams: { from: account } })
 
       coll += 5
@@ -856,7 +840,7 @@ contract('Gas compensation tests', async accounts => {
 
       const account = accountsList[accountIdx]
       const collString = coll.toString().concat('000000000000000000')
-      await wstETHTokenMock.approve(activePool.address, collString, { from: account})
+      await wstETHTokenMock.approve(positionManager.address, collString, { from: account})
       await openPosition({ extraRAmount: dec(100, 18), amount: collString, extraParams: { from: account } })
 
       accountIdx += 1

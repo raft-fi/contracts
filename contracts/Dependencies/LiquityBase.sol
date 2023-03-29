@@ -4,8 +4,6 @@ pragma solidity 0.8.19;
 
 import "./BaseMath.sol";
 import "./LiquityMath.sol";
-import "../Interfaces/IActivePool.sol";
-import "../Interfaces/IDefaultPool.sol";
 import "../Interfaces/IPriceFeed.sol";
 import "../Interfaces/ILiquityBase.sol";
 
@@ -30,10 +28,6 @@ contract LiquityBase is BaseMath, ILiquityBase {
     // uint constant public MIN_NET_DEBT = 0;
 
     uint constant public PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
-
-    IActivePool public override activePool;
-
-    IDefaultPool public override defaultPool;
 
     IPriceFeed public override priceFeed;
 

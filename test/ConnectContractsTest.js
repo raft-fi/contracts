@@ -7,8 +7,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   let rToken
   let sortedPositions
   let positionManager
-  let activePool
-  let defaultPool
   let feeRecipient
 
   before(async () => {
@@ -18,8 +16,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     rToken = coreContracts.rToken
     sortedPositions = coreContracts.sortedPositions
     positionManager = coreContracts.positionManager
-    activePool = coreContracts.activePool
-    defaultPool = coreContracts.defaultPool
     functionCaller = coreContracts.functionCaller
     feeRecipient = owner
 
@@ -50,60 +46,9 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(sortedPositionsAddress, recordedSortedPositionsAddress)
   })
 
-  // ActivePool in PositionM
-  it('Sets the correct ActivePool address in PositionManager', async () => {
-    const activePoolAddress = activePool.address
-
-    const recordedActivePoolAddresss = await positionManager.activePool()
-
-    assert.equal(activePoolAddress, recordedActivePoolAddresss)
-  })
-
-  // DefaultPool in PositionM
-  it('Sets the correct DefaultPool address in PositionManager', async () => {
-    const defaultPoolAddress = defaultPool.address
-
-    const recordedDefaultPoolAddresss = await positionManager.defaultPool()
-
-    assert.equal(defaultPoolAddress, recordedDefaultPoolAddresss)
-  })
-
   // Fee recipient in PositionM
   it('Sets the correct fee recipient address in PositionManager', async () => {
     const recordedFeeRecipient = await positionManager.feeRecipient()
     assert.equal(feeRecipient, recordedFeeRecipient)
-  })
-
-  // Active Pool
-
-  it('Sets the correct DefaultPool address in ActivePool', async () => {
-    const defaultPoolAddress = defaultPool.address
-
-    const recordedDefaultPoolAddress = await activePool.defaultPool()
-
-    assert.equal(defaultPoolAddress, recordedDefaultPoolAddress)
-  })
-
-  it('Sets the correct PositionManager address in ActivePool', async () => {
-    const positionManagerAddress = positionManager.address
-
-    const recordedPositionManagerAddress = await activePool.positionManager()
-    assert.equal(positionManagerAddress, recordedPositionManagerAddress)
-  })
-
-  // Default Pool
-
-  it('Sets the correct PositionManager address in DefaultPool', async () => {
-    const positionManagerAddress = positionManager.address
-
-    const recordedPositionManagerAddress = await defaultPool.positionManager()
-    assert.equal(positionManagerAddress, recordedPositionManagerAddress)
-  })
-
-  it('Sets the correct PositionManager address in SortedPositions', async () => {
-    const positionManagerAddress = positionManager.address
-
-    const recordedPositionManagerAddress = await sortedPositions.positionManager()
-    assert.equal(positionManagerAddress, recordedPositionManagerAddress)
   })
 })
