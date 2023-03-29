@@ -53,20 +53,6 @@ contract LiquityBase is BaseMath, ILiquityBase {
         return _entireColl / PERCENT_DIVISOR;
     }
 
-    /// @dev Returns active and liquidated collateral.
-    function getEntireSystemColl() public view returns (uint entireSystemColl) {
-        entireSystemColl = activePool.collateralBalance() + defaultPool.collateralBalance();
-    }
-
-    /// @dev Returns active and closed debt.
-    function getEntireSystemDebt() public view returns (uint entireSystemDebt) {
-        entireSystemDebt = activePool.rDebt() + defaultPool.rDebt();
-    }
-
-    function _getTCR(uint _price) internal view returns (uint TCR) {
-        TCR = LiquityMath._computeCR(getEntireSystemColl(), getEntireSystemDebt(), _price);
-    }
-
     function _requireUserAcceptsFee(uint _fee, uint _amount, uint _maxFeePercentage) internal pure {
         uint feePercentage = _fee * DECIMAL_PRECISION / _amount;
 
