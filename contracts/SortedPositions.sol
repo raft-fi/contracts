@@ -5,8 +5,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./Interfaces/ISortedPositions.sol";
 import "./Interfaces/IPositionManager.sol";
-import "./Dependencies/CheckContract.sol";
-import "./Dependencies/PositionManagerDependent.sol";
+import "./PositionManagerDependent.sol";
 
 /*
 * A sorted doubly linked list with nodes sorted in descending order.
@@ -41,7 +40,7 @@ import "./Dependencies/PositionManagerDependent.sol";
 *
 * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
 */
-contract SortedPositions is Ownable2Step, CheckContract, PositionManagerDependent, ISortedPositions {
+contract SortedPositions is PositionManagerDependent, ISortedPositions {
     string constant public NAME = "SortedPositions";
 
     // Information for a node in the list
@@ -62,17 +61,11 @@ contract SortedPositions is Ownable2Step, CheckContract, PositionManagerDependen
 
     Data public data;
 
-    // --- Dependency setters ---
-
-    function setParams(uint256 _size, IPositionManager _positionManager) external override onlyOwner {
+    constructor(uint256 _size, IPositionManager _positionManager) PositionManagerDependent(_positionManager) {
         if (_size == 0) {
             revert PositionsSizeZero();
         }
         data.maxSize = _size;
-
-        setPositionManager(_positionManager);
-
-        renounceOwnership();
     }
 
     /*

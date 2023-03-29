@@ -15,30 +15,28 @@ const maxBytes32 = '0x' + 'f'.repeat(64)
 
 class DeploymentHelper {
 
-  static async deployLiquityCore() {
+  static async deployLiquityCore(feeRecipient) {
     const cmdLineArgs = process.argv
     const frameworkPath = cmdLineArgs[1]
     // console.log(`Framework used:  ${frameworkPath}`)
 
     if (frameworkPath.includes("hardhat")) {
-      return this.deployLiquityCoreHardhat()
+      return this.deployLiquityCoreHardhat(feeRecipient)
     } else if (frameworkPath.includes("truffle")) {
       return this.deployLiquityCoreTruffle()
     }
   }
 
-  static async deployLiquityCoreHardhat() {
-    const priceFeedTestnet = await PriceFeedTestnet.new()
-    const sortedPositions = await SortedPositions.new()
-    const positionManager = await PositionManager.new()
-    const wstETHTokenMock = await WstETHTokenMock.new()
-    const rToken = await RToken.new(
-      positionManager.address
-    )
-    RToken.setAsDeployed(rToken)
+  static async deployLiquityCoreHardhat(feeRecipient) {
+    const priceFeedTestnet = await PriceFeedTestnet.new({ from: feeRecipient })
+    const wstETHTokenMock = await WstETHTokenMock.new({ from: feeRecipient })
+    const positionManager = await PositionManagerTester.new(priceFeedTestnet.address, wstETHTokenMock.address, maxBytes32, { from: feeRecipient })
+    const sortedPositions = await SortedPositions.at(await positionManager.sortedPositions())
+    const rToken = await RTokenTester.at(await positionManager.rToken(), feeRecipient)
+    RTokenTester.setAsDeployed(rToken)
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
     SortedPositions.setAsDeployed(sortedPositions)
-    PositionManager.setAsDeployed(positionManager)
+    PositionManagerTester.setAsDeployed(positionManager)
 
     const coreContracts = {
       priceFeedTestnet,
@@ -97,39 +95,6 @@ class DeploymentHelper {
       positionManager
     }
     return coreContracts
-  }
-
-  static async deployRToken(contracts) {
-    contracts.rToken = await RToken.new(
-      contracts.positionManager.address
-    )
-    return contracts
-  }
-
-  static async deployRTokenTester(contracts) {
-    contracts.rToken = await RTokenTester.new(
-      contracts.positionManager.address
-    )
-    return contracts
-  }
-
-  // Connect contracts to their dependencies
-  static async connectCoreContracts(contracts, feeRecipient) {
-
-    // set PositionManager addr in SortedPositions
-    await contracts.sortedPositions.setParams(
-      maxBytes32,
-      contracts.positionManager.address
-    )
-
-    // set contracts in the Position Manager
-    await contracts.positionManager.setAddresses(
-      contracts.priceFeedTestnet.address,
-      contracts.wstETHTokenMock.address,
-      contracts.rToken.address,
-      contracts.sortedPositions.address,
-      feeRecipient
-    )
   }
 }
 module.exports = DeploymentHelper

@@ -29,13 +29,10 @@ interface ISortedPositions {
 
     // --- Events ---
 
-    event SortedPositionsAddressChanged(address _sortedDoublyLLAddress);
     event NodeAdded(address _id, uint _NICR);
     event NodeRemoved(address _id);
 
     // --- Functions ---
-
-    function setParams(uint256 _size, IPositionManager _positionManager) external;
 
     function insert(address _id, uint256 _ICR, address _prevId, address _nextId) external;
 

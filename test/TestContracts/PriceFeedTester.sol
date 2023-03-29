@@ -6,6 +6,14 @@ import "../../contracts/PriceFeed.sol";
 
 contract PriceFeedTester is PriceFeed {
 
+    constructor(
+        AggregatorV3Interface _priceAggregator,
+        ITellorCaller _tellorCaller
+    )
+        PriceFeed(_priceAggregator, _tellorCaller)
+    {
+    }
+
     function setLastGoodPrice(uint _lastGoodPrice) external {
         lastGoodPrice = _lastGoodPrice;
     }

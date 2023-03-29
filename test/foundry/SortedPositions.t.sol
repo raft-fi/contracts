@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import "../../contracts/SortedPositions.sol";
 
 contract SortedPositionsTest is Test {
-    IPositionManager public constant POSITIONS_MANAGER = IPositionManager(address(12345));
+    IPositionManager public constant POSITION_MANAGER = IPositionManager(address(12345));
 
     address public constant ALICE = address(1);
     address public constant BOB = address(2);
@@ -14,28 +14,27 @@ contract SortedPositionsTest is Test {
     SortedPositions sortedPositions;
 
     function setUp() public {
-        sortedPositions = new SortedPositions();
-        sortedPositions.setParams(10, POSITIONS_MANAGER);
+        sortedPositions = new SortedPositions(10, POSITION_MANAGER);
     }
 
     // insert(): reverts when called by an account that is not Borrower Operations or Position Manager
     function testUnauthorizedInsert() public {
         vm.prank(ALICE);
-        vm.expectRevert(CallerIsNotPositionManager.selector);
+        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, ALICE));
         sortedPositions.insert(BOB, 150e18, BOB, BOB);
     }
 
     // remove(): reverts when called by an account that is not Position Manager
     function testUnauthorizedRemove() public {
         vm.prank(ALICE);
-        vm.expectRevert(CallerIsNotPositionManager.selector);
+        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, ALICE));
         sortedPositions.remove(BOB);
     }
 
     // reinsert(): reverts when called by an account that is neither BorrowerOps nor PositionManager
     function testUnauthorizedReinsert() public {
         vm.prank(ALICE);
-        vm.expectRevert(CallerIsNotPositionManager.selector);
+        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, ALICE));
         sortedPositions.reInsert(BOB, 150e18, BOB, BOB);
     }
 }

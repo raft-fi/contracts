@@ -33,18 +33,8 @@ contract('Gas compensation tests', async accounts => {
     }
   }
 
-  before(async () => {
-    positionManagerTester = await PositionManagerTester.new()
-
-    PositionManagerTester.setAsDeployed(positionManagerTester)
-  })
-
   beforeEach(async () => {
-    contracts = await deploymentHelper.deployLiquityCore()
-    contracts.positionManager = await PositionManagerTester.new()
-    contracts.rToken = await RToken.new(
-      contracts.positionManager.address
-    )
+    contracts = await deploymentHelper.deployLiquityCore(owner)
 
     await th.fillAccountsWithWstETH(contracts, [
       owner, liquidator,
@@ -56,9 +46,8 @@ contract('Gas compensation tests', async accounts => {
     rToken = contracts.rToken
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
+    positionManagerTester = contracts.positionManager
     wstETHTokenMock = contracts.wstETHTokenMock
-
-    await deploymentHelper.connectCoreContracts(contracts, owner)
   })
 
   // --- Raw gas compensation calculations ---

@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/IPriceFeed.sol";
 import "./Interfaces/ITellorCaller.sol";
 import "./Dependencies/AggregatorV3Interface.sol";
-import "./Dependencies/CheckContract.sol";
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/LiquityMath.sol";
 
@@ -19,11 +18,11 @@ import "./Dependencies/LiquityMath.sol";
 * switching oracles based on oracle failures, timeouts, and conditions for returning to the primary
 * Chainlink oracle.
 */
-contract PriceFeed is Ownable2Step, CheckContract, BaseMath, IPriceFeed {
+contract PriceFeed is BaseMath, IPriceFeed {
     string constant public NAME = "PriceFeed";
 
-    AggregatorV3Interface public priceAggregator;  // Mainnet Chainlink aggregator
-    ITellorCaller public tellorCaller;  // Wrapper contract that calls the Tellor system
+    AggregatorV3Interface public immutable priceAggregator;  // Mainnet Chainlink aggregator
+    ITellorCaller public immutable tellorCaller;  // Wrapper contract that calls the Tellor system
 
     // Core Liquity contracts
     address positionManagerAddress;
@@ -67,20 +66,9 @@ contract PriceFeed is Ownable2Step, CheckContract, BaseMath, IPriceFeed {
     // The current status of the PricFeed, which determines the conditions for the next price fetch attempt
     Status public status;
 
-    // --- Dependency setters ---
-
-    function setAddresses(
-        address _priceAggregatorAddress,
-        address _tellorCallerAddress
-    )
-        external
-        onlyOwner
-    {
-        checkContract(_priceAggregatorAddress);
-        checkContract(_tellorCallerAddress);
-
-        priceAggregator = AggregatorV3Interface(_priceAggregatorAddress);
-        tellorCaller = ITellorCaller(_tellorCallerAddress);
+    constructor(AggregatorV3Interface _priceAggregator, ITellorCaller _tellorCaller) {
+        priceAggregator = _priceAggregator;
+        tellorCaller = _tellorCaller;
 
         // Explicitly set initial system status
         status = Status.chainlinkWorking;
@@ -94,8 +82,6 @@ contract PriceFeed is Ownable2Step, CheckContract, BaseMath, IPriceFeed {
         }
 
         _storeChainlinkPrice(chainlinkResponse);
-
-        renounceOwnership();
     }
 
     // --- Functions ---
@@ -559,4 +545,3 @@ contract PriceFeed is Ownable2Step, CheckContract, BaseMath, IPriceFeed {
         }
     }
 }
-
