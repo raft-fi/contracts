@@ -428,7 +428,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(3, 18)), extraParams: { from: whale } })
     await openPosition({ ICR: toBN(dec(3, 18)), extraParams: { from: bob } })
 
-    const TCR_Before = (await th.getTCR(contracts)).toString()
     const listSize_Before = (await sortedPositions.getSize()).toString()
 
     const price = await priceFeed.getPrice()
@@ -444,188 +443,9 @@ contract('PositionManager', async accounts => {
     assert.isTrue((await sortedPositions.contains(bob)))
     assert.isTrue((await sortedPositions.contains(whale)))
 
-    const TCR_After = (await th.getTCR(contracts)).toString()
     const listSize_After = (await sortedPositions.getSize()).toString()
 
-    assert.equal(TCR_Before, TCR_After)
     assert.equal(listSize_Before, listSize_After)
-  })
-
-  it("liquidate(): Given the same price and no other position changes, complete Pool offsets restore the TCR to its value prior to the defaulters opening positions", async () => {
-    await deploymentHelper.mintR(rToken, owner);
-    await openPosition({ ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
-    await openPosition({ ICR: toBN(dec(70, 18)), extraParams: { from: bob } })
-    await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-    await openPosition({ ICR: toBN(dec(200, 18)), extraParams: { from: dennis } })
-
-    const TCR_Before = (await th.getTCR(contracts)).toString()
-
-    await openPosition({ ICR: toBN(dec(202, 16)), extraParams: { from: defaulter_1 } })
-    await openPosition({ ICR: toBN(dec(218, 16)), extraParams: { from: defaulter_2 } })
-    await openPosition({ ICR: toBN(dec(206, 16)), extraParams: { from: defaulter_3 } })
-    await openPosition({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_4 } })
-
-    assert.isTrue((await sortedPositions.contains(defaulter_1)))
-    assert.isTrue((await sortedPositions.contains(defaulter_2)))
-    assert.isTrue((await sortedPositions.contains(defaulter_3)))
-    assert.isTrue((await sortedPositions.contains(defaulter_4)))
-
-    // Price drop
-    await priceFeed.setPrice(dec(100, 18))
-
-    // All defaulters liquidated
-    await positionManager.liquidate(defaulter_1)
-    assert.isFalse((await sortedPositions.contains(defaulter_1)))
-
-    await positionManager.liquidate(defaulter_2)
-    assert.isFalse((await sortedPositions.contains(defaulter_2)))
-
-    await positionManager.liquidate(defaulter_3)
-    assert.isFalse((await sortedPositions.contains(defaulter_3)))
-
-    await positionManager.liquidate(defaulter_4)
-    assert.isFalse((await sortedPositions.contains(defaulter_4)))
-
-    // Price bounces back
-    await priceFeed.setPrice(dec(200, 18))
-
-    const TCR_After = (await th.getTCR(contracts)).toString()
-    assert.equal(TCR_Before, TCR_After)
-  })
-
-
-  it("liquidate(): Pool offsets increase the TCR", async () => {
-    await deploymentHelper.mintR(rToken, owner);
-
-    await openPosition({ ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
-    await openPosition({ ICR: toBN(dec(70, 18)), extraParams: { from: bob } })
-    await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-    await openPosition({ ICR: toBN(dec(200, 18)), extraParams: { from: dennis } })
-
-    await openPosition({ ICR: toBN(dec(202, 16)), extraParams: { from: defaulter_1 } })
-    await openPosition({ ICR: toBN(dec(208, 16)), extraParams: { from: defaulter_2 } })
-    await openPosition({ ICR: toBN(dec(201, 16)), extraParams: { from: defaulter_3 } })
-    await openPosition({ ICR: toBN(dec(219, 16)), extraParams: { from: defaulter_4 } })
-
-    assert.isTrue((await sortedPositions.contains(defaulter_1)))
-    assert.isTrue((await sortedPositions.contains(defaulter_2)))
-    assert.isTrue((await sortedPositions.contains(defaulter_3)))
-    assert.isTrue((await sortedPositions.contains(defaulter_4)))
-
-    await priceFeed.setPrice(dec(100, 18))
-
-    const TCR_1 = await th.getTCR(contracts)
-
-    // Check TCR improves with each liquidation that is offset with Pool
-    await positionManager.liquidate(defaulter_1)
-    assert.isFalse((await sortedPositions.contains(defaulter_1)))
-    const TCR_2 = await th.getTCR(contracts)
-    assert.isTrue(TCR_2.gte(TCR_1))
-
-    await positionManager.liquidate(defaulter_2)
-    assert.isFalse((await sortedPositions.contains(defaulter_2)))
-    const TCR_3 = await th.getTCR(contracts)
-    assert.isTrue(TCR_3.gte(TCR_2))
-
-    await positionManager.liquidate(defaulter_3)
-    assert.isFalse((await sortedPositions.contains(defaulter_3)))
-    const TCR_4 = await th.getTCR(contracts)
-    assert.isTrue(TCR_4.gte(TCR_3))
-
-    await positionManager.liquidate(defaulter_4)
-    assert.isFalse((await sortedPositions.contains(defaulter_4)))
-    const TCR_5 = await th.getTCR(contracts)
-    assert.isTrue(TCR_5.gte(TCR_4))
-  })
-
-  it("liquidate(): a pure redistribution reduces the TCR only as a result of compensation", async () => {
-    await openPosition({ ICR: toBN(dec(4, 18)), extraParams: { from: whale } })
-    await openPosition({ ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
-    await openPosition({ ICR: toBN(dec(70, 18)), extraParams: { from: bob } })
-    await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-    await openPosition({ ICR: toBN(dec(200, 18)), extraParams: { from: dennis } })
-
-    await openPosition({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_1 } })
-    await openPosition({ ICR: toBN(dec(190, 16)), extraParams: { from: defaulter_2 } })
-    await openPosition({ ICR: toBN(dec(196, 16)), extraParams: { from: defaulter_3 } })
-    await openPosition({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_4 } })
-
-    assert.isTrue((await sortedPositions.contains(defaulter_1)))
-    assert.isTrue((await sortedPositions.contains(defaulter_2)))
-    assert.isTrue((await sortedPositions.contains(defaulter_3)))
-    assert.isTrue((await sortedPositions.contains(defaulter_4)))
-
-    await priceFeed.setPrice(dec(100, 18))
-    const price = await priceFeed.getPrice()
-
-    const TCR_0 = await th.getTCR(contracts)
-
-    const entireSystemCollBefore = await positionManager.getEntireSystemColl()
-    const entireSystemDebtBefore = await positionManager.getEntireSystemDebt()
-
-    const expectedTCR_0 = entireSystemCollBefore.mul(price).div(entireSystemDebtBefore)
-
-    assert.isTrue(expectedTCR_0.eq(TCR_0))
-
-    // Check TCR does not decrease with each liquidation
-    const liquidationTx_1 = await positionManager.liquidate(defaulter_1)
-    const [liquidatedDebt_1, liquidatedColl_1, gasComp_1] = th.getEmittedLiquidationValues(liquidationTx_1)
-    assert.isFalse((await sortedPositions.contains(defaulter_1)))
-    const TCR_1 = await th.getTCR(contracts)
-
-    // Expect only change to TCR to be due to the issued gas compensation
-    const expectedTCR_1 = (entireSystemCollBefore
-      .sub(gasComp_1))
-      .mul(price)
-      .div(entireSystemDebtBefore)
-
-    assert.isTrue(expectedTCR_1.eq(TCR_1))
-
-    const liquidationTx_2 = await positionManager.liquidate(defaulter_2)
-    const [liquidatedDebt_2, liquidatedColl_2, gasComp_2] = th.getEmittedLiquidationValues(liquidationTx_2)
-    assert.isFalse((await sortedPositions.contains(defaulter_2)))
-
-    const TCR_2 = await th.getTCR(contracts)
-
-    const expectedTCR_2 = (entireSystemCollBefore
-      .sub(gasComp_1)
-      .sub(gasComp_2))
-      .mul(price)
-      .div(entireSystemDebtBefore)
-
-    assert.isTrue(expectedTCR_2.eq(TCR_2))
-
-    const liquidationTx_3 = await positionManager.liquidate(defaulter_3)
-    const [liquidatedDebt_3, liquidatedColl_3, gasComp_3] = th.getEmittedLiquidationValues(liquidationTx_3)
-    assert.isFalse((await sortedPositions.contains(defaulter_3)))
-
-    const TCR_3 = await th.getTCR(contracts)
-
-    const expectedTCR_3 = (entireSystemCollBefore
-      .sub(gasComp_1)
-      .sub(gasComp_2)
-      .sub(gasComp_3))
-      .mul(price)
-      .div(entireSystemDebtBefore)
-
-    assert.isTrue(expectedTCR_3.eq(TCR_3))
-
-
-    const liquidationTx_4 = await positionManager.liquidate(defaulter_4)
-    const [liquidatedDebt_4, liquidatedColl_4, gasComp_4] = th.getEmittedLiquidationValues(liquidationTx_4)
-    assert.isFalse((await sortedPositions.contains(defaulter_4)))
-
-    const TCR_4 = await th.getTCR(contracts)
-
-    const expectedTCR_4 = (entireSystemCollBefore
-      .sub(gasComp_1)
-      .sub(gasComp_2)
-      .sub(gasComp_3)
-      .sub(gasComp_4))
-      .mul(price)
-      .div(entireSystemDebtBefore)
-
-    assert.isTrue(expectedTCR_4.eq(TCR_4))
   })
 
   it("liquidate(): does not alter the liquidated user's token balance", async () => {
@@ -768,12 +588,6 @@ contract('PositionManager', async accounts => {
     // Price drops
     await priceFeed.setPrice(dec(100, 18))
     price = await priceFeed.getPrice()
-
-    // Confirm C has ICR > TCR
-    const TCR = await positionManager.getTCR(price)
-    const ICR_C = await positionManager.getCurrentICR(C, price)
-
-    assert.isTrue(ICR_C.gt(TCR))
 
     // Attempt to liquidate B and C, which skips C in the liquidation since it is immune
     const liqTxBC = await positionManager.liquidatePositions(2)
@@ -942,7 +756,6 @@ contract('PositionManager', async accounts => {
     assert.isTrue((await sortedPositions.contains(bob)))
     assert.isTrue((await sortedPositions.contains(carol)))
 
-    const TCR_Before = (await th.getTCR(contracts)).toString()
     const listSize_Before = (await sortedPositions.getSize()).toString()
 
     assert.isTrue((await positionManager.getCurrentICR(whale, price)).gte(mv._MCR))
@@ -959,10 +772,8 @@ contract('PositionManager', async accounts => {
     assert.isTrue((await sortedPositions.contains(bob)))
     assert.isTrue((await sortedPositions.contains(carol)))
 
-    const TCR_After = (await th.getTCR(contracts)).toString()
     const listSize_After = (await sortedPositions.getSize()).toString()
 
-    assert.equal(TCR_Before, TCR_After)
     assert.equal(listSize_Before, listSize_After)
   })
 
@@ -1042,8 +853,6 @@ contract('PositionManager', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
     const price = await priceFeed.getPrice()
 
-    const TCR_Before = (await th.getTCR(contracts)).toString()
-
     // Confirm A, B, C ICRs are below 110%
     const alice_ICR = await positionManager.getCurrentICR(alice, price)
     const bob_ICR = await positionManager.getCurrentICR(bob, price)
@@ -1060,11 +869,6 @@ contract('PositionManager', async accounts => {
     assert.isTrue(await sortedPositions.contains(alice))
     assert.isTrue(await sortedPositions.contains(bob))
     assert.isTrue(await sortedPositions.contains(carol))
-
-    const TCR_After = (await th.getTCR(contracts)).toString()
-
-    // Check TCR has not changed after liquidation
-    assert.equal(TCR_Before, TCR_After)
   })
 
   it("liquidatePositions():  liquidates positions with ICR < MCR", async () => {
@@ -1161,7 +965,7 @@ contract('PositionManager', async accounts => {
     assert.equal((await rToken.balanceOf(flyn)).toString(), F_balanceBefore)
   })
 
-  it("liquidatePositions(): A liquidation sequence containing Pool offsets increases the TCR", async () => {
+  it("liquidatePositions(): A liquidation sequence containing Pool offsets", async () => {
     await deploymentHelper.mintR(rToken, owner);
     await openPosition({ ICR: toBN(dec(4, 18)), extraParams: { from: alice } })
     await openPosition({ ICR: toBN(dec(28, 18)), extraParams: { from: bob } })
@@ -1183,8 +987,6 @@ contract('PositionManager', async accounts => {
     // Price drops
     await priceFeed.setPrice(dec(100, 18))
 
-    const TCR_Before = await th.getTCR(contracts)
-
     // Liquidate positions
     await positionManager.liquidatePositions(10)
 
@@ -1196,13 +998,9 @@ contract('PositionManager', async accounts => {
 
     // check system sized reduced to 5 positions
     assert.equal((await sortedPositions.getSize()).toString(), '4')
-
-    // Check that the liquidation sequence has improved the TCR
-    const TCR_After = await th.getTCR(contracts)
-    assert.isTrue(TCR_After.gte(TCR_Before))
   })
 
-  it("liquidatePositions(): A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
+  it("liquidatePositions(): A liquidation sequence of pure redistributions decreases", async () => {
     const { collateral: W_coll, totalDebt: W_debt } = await openPosition({ ICR: toBN(dec(100, 18)), extraParams: { from: whale } })
     const { collateral: A_coll, totalDebt: A_debt } = await openPosition({ ICR: toBN(dec(4, 18)), extraParams: { from: alice } })
     const { collateral: B_coll, totalDebt: B_debt } = await openPosition({ ICR: toBN(dec(28, 18)), extraParams: { from: bob } })
@@ -1230,9 +1028,6 @@ contract('PositionManager', async accounts => {
     const price = toBN(dec(100, 18))
     await priceFeed.setPrice(price)
 
-    const TCR_Before = await th.getTCR(contracts)
-    assert.isAtMost(th.getDifference(TCR_Before, totalColl.mul(price).div(totalDebt)), 1000)
-
     // Liquidate
     await positionManager.liquidatePositions(10)
 
@@ -1244,13 +1039,6 @@ contract('PositionManager', async accounts => {
 
     // check system sized reduced to 5 positions
     assert.equal((await sortedPositions.getSize()).toString(), '5')
-
-    // Check that the liquidation sequence has reduced the TCR
-    const TCR_After = await th.getTCR(contracts)
-    // ((100+1+7+2+20)+(1+2+3+4)*0.995)*100/(2050+50+50+50+50+101+257+328+480)
-    assert.isAtMost(th.getDifference(TCR_After, totalCollNonDefaulters.add(th.applyLiquidationFee(totalCollDefaulters)).mul(price).div(totalDebt)), 1000)
-    assert.isTrue(TCR_Before.gte(TCR_After))
-    assert.isTrue(TCR_After.gte(TCR_Before.mul(toBN(995)).div(toBN(1000))))
   })
 
   // --- batchLiquidatePositions() ---
@@ -1276,12 +1064,6 @@ contract('PositionManager', async accounts => {
     // Price drops
     await priceFeed.setPrice(dec(100, 18))
     price = await priceFeed.getPrice()
-
-    // Confirm C has ICR > TCR
-    const TCR = await positionManager.getTCR(price)
-    const ICR_C = await positionManager.getCurrentICR(C, price)
-
-    assert.isTrue(ICR_C.gt(TCR))
 
     // Attempt to liquidate B and C, which skips C in the liquidation since it is immune
     const liqTxBC = await positionManager.liquidatePositions(2)
@@ -2407,26 +2189,6 @@ contract('PositionManager', async accounts => {
 
     const { debt: dennis_Debt_After } = await positionManager.Positions(dennis)
     th.assertIsApproximatelyEqual(dennis_Debt_After, D_totalDebt)
-  });
-
-  it("redeemCollateral(): reverts when TCR < MCR", async () => {
-    await openPosition({ ICR: toBN(dec(200, 16)), extraParams: { from: alice } })
-    await openPosition({ ICR: toBN(dec(200, 16)), extraParams: { from: bob } })
-    await openPosition({ ICR: toBN(dec(200, 16)), extraParams: { from: carol } })
-    await openPosition({ ICR: toBN(dec(196, 16)), extraParams: { from: dennis } })
-
-    // This will put Dennis slightly below 110%, and everyone else exactly at 110%
-
-    await priceFeed.setPrice('110' + _18_zeros)
-    const price = await priceFeed.getPrice()
-
-    const TCR = (await th.getTCR(contracts))
-    assert.isTrue(TCR.lt(toBN('1100000000000000000')))
-
-    // skip bootstrapping phase
-    await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
-
-    await assertRevert(th.redeemCollateral(carol, contracts, GAS_PRICE, dec(270, 18)), "PositionManager: Cannot redeem when TCR < MCR")
   });
 
   it("redeemCollateral(): reverts when argument _amount is 0", async () => {

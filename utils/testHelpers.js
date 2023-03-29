@@ -268,11 +268,6 @@ class TestHelper {
     console.log(`${label}:`, integerPart + '.' + x.slice(-18))
   }
 
-  static async getTCR(contracts) {
-    const price = await contracts.priceFeedTestnet.getPrice()
-    return contracts.positionManager.getTCR(price)
-  }
-
   // --- Gas compensation calculation functions ---
 
   // Given a composite debt, returns the actual debt  - i.e. subtracts the virtual debt.

@@ -191,8 +191,6 @@ interface IPositionManager is ILiquityBase {
 
     function getPositionColl(address _borrower) external view returns (uint);
 
-    function getTCR(uint _price) external view returns (uint);
-
     function openPosition(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
 
     function addColl(address _upperHint, address _lowerHint, uint _amount) external;

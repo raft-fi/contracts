@@ -856,7 +856,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         _requireAmountGreaterThanZero(_rAmount);
         _requireRBalanceCoversRedemption(contractsCache.rToken, msg.sender, _rAmount);
 
-        totals.totalRSupplyAtStart = getEntireSystemDebt();
+        totals.totalRSupplyAtStart = contractsCache.rToken.totalSupply();
         // Confirm redeemer's balance is less than total R supply
         assert(contractsCache.rToken.balanceOf(msg.sender) <= totals.totalRSupplyAtStart);
 
@@ -1171,12 +1171,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         emit PositionIndexUpdated(addressToMove, index);
 
         PositionOwners.pop();
-    }
-
-    // --- TCR functions ---
-
-    function getTCR(uint _price) external view override returns (uint) {
-        return _getTCR(_price);
     }
 
     // --- Redemption fee functions ---
@@ -1494,7 +1488,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         }
     }
 
-    // --- ICR and TCR getters ---
+    // --- ICR getters ---
 
     // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
     function _getNewNominalICRFromPositionChange
