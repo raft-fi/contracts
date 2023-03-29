@@ -208,14 +208,14 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     }
 
     modifier onlyActivePosition() {
-        if (Positions[msg.sender].status != IPositionManager.PositionStatus.active) {
+        if (Positions[msg.sender].status != PositionStatus.active) {
             revert PositionManagerPositionNotActive();
         }
         _;
     }
 
     modifier onlyNonActivePosition() {
-        if (Positions[msg.sender].status == IPositionManager.PositionStatus.active) {
+        if (Positions[msg.sender].status == PositionStatus.active) {
             revert PositionMaangerPositionActive();
         }
         _;
@@ -323,9 +323,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         _requireICRisAboveMCR(vars.ICR);
 
         // Set the position struct's properties
-        _setPositionStatus(msg.sender, 1);
-        _increasePositionColl(msg.sender, _collAmount);
-        _increasePositionDebt(msg.sender, vars.compositeDebt);
+        Positions[msg.sender].status = PositionStatus.active;
+        Positions[msg.sender].coll = _collAmount;
+        Positions[msg.sender].debt = vars.compositeDebt;
 
         _updatePositionRewardSnapshots(msg.sender);
         vars.stake = _updateStakeAndTotalStakes(msg.sender);
@@ -410,7 +410,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         _applyPendingRewards(contractsCache.activePool, contractsCache.defaultPool, msg.sender);
 
         // Get the collChange based on whether or not collateralToken was sent in the transaction
-        (vars.collChange, vars.isCollIncrease) = _getCollChange(_collDeposit, _collWithdrawal);
+        (vars.collChange, vars.isCollIncrease) = _collDeposit != 0 ? (_collDeposit, true) : (_collWithdrawal, false);
 
         vars.netDebtChange = _rChange;
 
@@ -438,14 +438,15 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             _requireSufficientRBalance(contractsCache.rToken, msg.sender, vars.netDebtChange);
         }
 
-        (vars.newColl, vars.newDebt) = _updatePositionFromAdjustment(vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease);
+        Positions[msg.sender].coll = vars.isCollIncrease ? vars.coll + vars.collChange : vars.coll - vars.collChange;
+        Positions[msg.sender].debt = _isDebtIncrease ? vars.debt + vars.netDebtChange : vars.debt - vars.netDebtChange;
         vars.stake = _updateStakeAndTotalStakes(msg.sender);
 
         // Re-insert position in to the sorted list
         vars.newNICR = _getNewNominalICRFromPositionChange(vars.coll, vars.debt, vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease);
         sortedPositions.reInsert(msg.sender, vars.newNICR, _upperHint, _lowerHint);
 
-        emit PositionUpdated(msg.sender, vars.newDebt, vars.newColl, vars.stake, PositionManagerOperation.adjustPosition);
+        emit PositionUpdated(msg.sender, Positions[msg.sender].debt, Positions[msg.sender].coll, vars.stake, PositionManagerOperation.adjustPosition);
         emit RBorrowingFeePaid(msg.sender, vars.rFee);
 
         // Use the unmodified _rChange here, as we don't send the fee to the user
@@ -1348,32 +1349,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         return Positions[_borrower].coll;
     }
 
-    // --- Position property setters---
-
-    function _setPositionStatus(address _borrower, uint _num) internal {
-        Positions[_borrower].status = PositionStatus(_num);
-    }
-
-    function _increasePositionColl(address _borrower, uint _collIncrease) internal returns (uint newColl) {
-        newColl = Positions[_borrower].coll + _collIncrease;
-        Positions[_borrower].coll = newColl;
-    }
-
-    function _decreasePositionColl(address _borrower, uint _collDecrease) internal returns (uint newColl) {
-        newColl = Positions[_borrower].coll - _collDecrease;
-        Positions[_borrower].coll = newColl;
-    }
-
-    function _increasePositionDebt(address _borrower, uint _debtIncrease) internal returns (uint newDebt) {
-        newDebt = Positions[_borrower].debt + _debtIncrease;
-        Positions[_borrower].debt = newDebt;
-    }
-
-    function _decreasePositionDebt(address _borrower, uint _debtDecrease) internal returns (uint newDebt) {
-        newDebt = Positions[_borrower].debt - _debtDecrease;
-        Positions[_borrower].debt = newDebt;
-    }
-
     // --- Helper functions ---
 
     function _triggerBorrowingFee(IRToken _rToken, uint _rAmount, uint _maxFeePercentage) internal returns (uint rFee) {
@@ -1389,39 +1364,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     function _getUSDValue(uint _coll, uint _price) internal pure returns (uint usdValue) {
         usdValue = _price * _coll / DECIMAL_PRECISION;
-    }
-
-    function _getCollChange(
-        uint _collReceived,
-        uint _requestedCollWithdrawal
-    )
-        internal
-        pure
-        returns(uint collChange, bool isCollIncrease)
-    {
-        if (_collReceived != 0) {
-            collChange = _collReceived;
-            isCollIncrease = true;
-        } else {
-            collChange = _requestedCollWithdrawal;
-        }
-    }
-
-    // Update position's coll and debt based on whether they increase or decrease
-    function _updatePositionFromAdjustment
-    (
-        uint _collChange,
-        bool _isCollIncrease,
-        uint _debtChange,
-        bool _isDebtIncrease
-    )
-        private
-        returns (uint newColl, uint newDebt)
-    {
-        newColl = _isCollIncrease ? _increasePositionColl(msg.sender, _collChange)
-                                  : _decreasePositionColl(msg.sender, _collChange);
-        newDebt = _isDebtIncrease ? _increasePositionDebt(msg.sender, _debtChange)
-                                  : _decreasePositionDebt(msg.sender, _debtChange);
     }
 
     function _moveTokensFromAdjustment
