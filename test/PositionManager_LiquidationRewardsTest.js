@@ -22,8 +22,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
   let sortedPositions
   let positionManager
   let nameRegistry
-  let activePool
-  let defaultPool
   let functionCaller
 
   let contracts
@@ -43,8 +41,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
     nameRegistry = contracts.nameRegistry
-    activePool = contracts.activePool
-    defaultPool = contracts.defaultPool
     functionCaller = contracts.functionCaller
     wstETHTokenMock = contracts.wstETHTokenMock
 
@@ -106,9 +102,8 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(alice_Coll, A_collAfterL1.add(A_collAfterL1.mul(th.applyLiquidationFee(D_coll)).div(A_collAfterL1.add(C_coll)))), 1000)
     assert.isAtMost(th.getDifference(carol_Coll, C_coll.add(C_coll.mul(th.applyLiquidationFee(D_coll)).div(A_collAfterL1.add(C_coll)))), 1000)
 
-
-    const entireSystemColl = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance()).toString()
-    assert.equal(entireSystemColl, A_coll.add(C_coll).add(th.applyLiquidationFee(B_coll.add(D_coll))))
+    const entireSystemColl = await wstETHTokenMock.balanceOf(positionManager.address)
+    assert.equal(entireSystemColl.toString(), A_coll.add(C_coll).add(th.applyLiquidationFee(B_coll.add(D_coll))).toString())
 
     // check R gas compensation
     assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
@@ -183,8 +178,8 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(dennis_Coll, expected_D), 1000)
     assert.isAtMost(th.getDifference(erin_Coll, expected_E), 1000)
 
-    const entireSystemColl = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance()).toString()
-    assert.equal(entireSystemColl, A_coll.add(B_coll).add(D_coll).add(E_coll).add(th.applyLiquidationFee(C_coll.add(F_coll))))
+    const entireSystemColl = await wstETHTokenMock.balanceOf(positionManager.address)
+    assert.equal(entireSystemColl.toString(), A_coll.add(B_coll).add(D_coll).add(E_coll).add(th.applyLiquidationFee(C_coll.add(F_coll))).toString())
 
     // check R gas compensation
     assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
@@ -298,7 +293,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     )
     assert.isAtMost(th.getDifference(freddy_ETHReward, gainedETH), 1000)
 
-    const entireSystemColl = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance()).toString()
+    const entireSystemColl = await wstETHTokenMock.balanceOf(positionManager.address)
     assert.isAtMost(th.getDifference(entireSystemColl, F_coll.add(gainedETH)), 1000)
 
     // check R gas compensation
@@ -344,7 +339,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Bob adds 1 ETH to his position
     const addedColl1 = toBN(dec(1, 'ether'))
     await priceFeed.setPrice(dec(200, 18))
-    wstETHTokenMock.approve(activePool.address, addedColl1, { from: B})
+    wstETHTokenMock.approve(positionManager.address, addedColl1, { from: B})
     await positionManager.addColl(B, B, addedColl1, { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
@@ -370,7 +365,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Bob adds 1 ETH to his position
     const addedColl2 = toBN(dec(1, 'ether'))
     await priceFeed.setPrice(dec(200, 18))
-    wstETHTokenMock.approve(activePool.address, addedColl2, { from: B})
+    wstETHTokenMock.approve(positionManager.address, addedColl2, { from: B})
     await positionManager.addColl(B, B, addedColl2, { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
@@ -412,7 +407,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Bob adds ETH to his position
     const addedColl = toBN(dec(1, 'ether'))
-    wstETHTokenMock.approve(activePool.address, addedColl, { from: bob})
+    wstETHTokenMock.approve(positionManager.address, addedColl, { from: bob})
     await positionManager.addColl(bob, bob, addedColl, { from: bob })
 
     // Alice withdraws R
@@ -463,7 +458,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Bob adds ETH to his position
     const addedColl = toBN(dec(1, 'ether'))
-    wstETHTokenMock.approve(activePool.address, addedColl, { from: bob})
+    wstETHTokenMock.approve(positionManager.address, addedColl, { from: bob})
     await positionManager.addColl(bob, bob, addedColl, { from: bob })
 
     // D opens position
@@ -536,9 +531,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // A, B, C, D open positions
     const { collateral: A_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
-    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    wstETHTokenMock.approve(positionManager.address, _998_Ether, { from: carol})
     const { collateral: C_coll } = await openPosition({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
-    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: carol})
+    wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: carol})
     const { collateral: D_coll } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
@@ -558,8 +553,8 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     const carol_ETHReward_1 = await positionManager.getPendingCollateralTokenReward(carol)
 
     //Expect 1000 + 1000*0.995 ETH in system now
-    const entireSystemColl_1 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance()).toString()
-    assert.equal(entireSystemColl_1, A_coll.add(B_coll).add(C_coll).add(th.applyLiquidationFee(D_coll)))
+    const entireSystemColl_1 = await wstETHTokenMock.balanceOf(positionManager.address)
+    assert.equal(entireSystemColl_1.toString(), A_coll.add(B_coll).add(C_coll).add(th.applyLiquidationFee(D_coll)).toString())
 
     const totalColl = A_coll.add(B_coll).add(C_coll)
     th.assertIsApproximatelyEqual(alice_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(A_coll).div(totalColl))
@@ -568,15 +563,15 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Carol adds 1 ETH to her position, brings it to 1992.01 total coll
     const C_addedColl = toBN(dec(1, 'ether'))
-    wstETHTokenMock.approve(activePool.address, dec(1, 'ether'), { from: carol})
+    wstETHTokenMock.approve(positionManager.address, dec(1, 'ether'), { from: carol})
     await positionManager.addColl(carol, carol, dec(1, 'ether'), { from: carol })
 
     //Expect 1996 ETH in system now
-    const entireSystemColl_2 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_2 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).add(C_addedColl))
 
     // E opens with another 1996 ETH
-    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    wstETHTokenMock.approve(positionManager.address, entireSystemColl_2, { from: erin})
     const { collateral: E_coll } = await openPosition({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
@@ -626,7 +621,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(carol_Coll, expected_C_coll), 1000)
 
     //Expect 3982.02 ETH in system now
-    const entireSystemColl_3 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance()).toString()
+    const entireSystemColl_3 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
 
     // check R gas compensation
@@ -638,9 +633,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // A, B, C open positions
     const { collateral: A_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
-    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    wstETHTokenMock.approve(positionManager.address, _998_Ether, { from: carol})
     const { collateral: C_coll } = await openPosition({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
-    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
+    wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: dennis})
     const { collateral: D_coll } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
@@ -660,8 +655,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     const carol_ETHReward_1 = await positionManager.getPendingCollateralTokenReward(carol)
 
     //Expect 1995 ETH in system now
-    const entireSystemColl_1 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance()).toString()
-    assert.equal(entireSystemColl_1, A_coll.add(B_coll).add(C_coll).add(th.applyLiquidationFee(D_coll)))
+    const entireSystemColl_1 = await wstETHTokenMock.balanceOf(positionManager.address)
+    assert.equal(entireSystemColl_1.toString(), A_coll.add(B_coll).add(C_coll).add(th.applyLiquidationFee(D_coll)).toString())
+
 
     const totalColl = A_coll.add(B_coll).add(C_coll)
     th.assertIsApproximatelyEqual(alice_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(A_coll).div(totalColl))
@@ -672,19 +668,20 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     bringing them to 2.995, 2.995, 1992.01 total coll each. */
 
     const addedColl = toBN(dec(1, 'ether'))
-    wstETHTokenMock.approve(activePool.address, addedColl, { from: alice})
+    wstETHTokenMock.approve(positionManager.address, addedColl, { from: alice})
     await positionManager.addColl(alice, alice, addedColl, { from: alice })
-    wstETHTokenMock.approve(activePool.address, addedColl, { from: bob})
+    wstETHTokenMock.approve(positionManager.address, addedColl, { from: bob})
     await positionManager.addColl(bob, bob, addedColl, { from: bob })
-    wstETHTokenMock.approve(activePool.address, addedColl, { from: carol})
+    wstETHTokenMock.approve(positionManager.address, addedColl, { from: carol})
     await positionManager.addColl(carol, carol, addedColl, { from: carol })
 
     //Expect 1998 ETH in system now
-    const entireSystemColl_2 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance()).toString()
+    const entireSystemColl_2 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).add(addedColl.mul(toBN(3))))
 
+
     // E opens with another 1998 ETH
-    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    wstETHTokenMock.approve(positionManager.address, entireSystemColl_2, { from: erin})
     const { collateral: E_coll } = await openPosition({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
@@ -734,8 +731,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(carol_Coll, expected_C_coll), 1000)
 
     //Expect 3986.01 ETH in system now
-    const entireSystemColl_3 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_3 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
+
 
     // check R gas compensation
     th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), dec(400, 18))
@@ -879,11 +877,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(alice_Coll, expected_A_coll), 1000)
     assert.isAtMost(th.getDifference(alice_RDebt, expected_A_debt), 10000)
 
-    const entireSystemColl = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
-    th.assertIsApproximatelyEqual(entireSystemColl, A_coll.add(B_coll).add(th.applyLiquidationFee(C_coll)).sub(withdrawnColl).add(th.applyLiquidationFee(D_coll)))
-    const entireSystemDebt = (await activePool.rDebt()).add(await defaultPool.rDebt())
-    th.assertIsApproximatelyEqual(entireSystemDebt, A_totalDebt.add(B_totalDebt).add(C_totalDebt).add(D_totalDebt))
-
     // check R gas compensation
     th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), dec(400, 18))
   })
@@ -893,9 +886,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // A, B, C, D open positions
     const { collateral: A_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
-    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    wstETHTokenMock.approve(positionManager.address, _998_Ether, { from: carol})
     const { collateral: C_coll } = await openPosition({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
-    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
+    wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: dennis})
     const { collateral: D_coll } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
@@ -915,8 +908,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     const carol_ETHReward_1 = await positionManager.getPendingCollateralTokenReward(carol)
 
     //Expect 1995 ETH in system now
-    const entireSystemColl_1 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_1 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_1, A_coll.add(B_coll).add(C_coll).add(th.applyLiquidationFee(D_coll)))
+
 
     const totalColl = A_coll.add(B_coll).add(C_coll)
     th.assertIsApproximatelyEqual(alice_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(A_coll).div(totalColl))
@@ -928,11 +922,12 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     await positionManager.withdrawColl(C_withdrawnColl, carol, carol, { from: carol })
 
     //Expect 1994 ETH in system now
-    const entireSystemColl_2 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_2 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).sub(C_withdrawnColl))
 
+
     // E opens with another 1994 ETH
-    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    wstETHTokenMock.approve(positionManager.address, entireSystemColl_2, { from: erin})
     const { collateral: E_coll } = await openPosition({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
@@ -982,8 +977,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(carol_Coll, expected_C_coll), 1000)
 
     //Expect 3978.03 ETH in system now
-    const entireSystemColl_3 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_3 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
+
 
     // check R gas compensation
     assert.equal((await rToken.balanceOf(owner)).toString(), dec(400, 18))
@@ -994,9 +990,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // A, B, C, D open positions
     const { collateral: A_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraParams: { from: alice } })
     const { collateral: B_coll } = await openPosition({ ICR: toBN(dec(400, 16)), extraRAmount: dec(110, 18), extraParams: { from: bob } })
-    wstETHTokenMock.approve(activePool.address, _998_Ether, { from: carol})
+    wstETHTokenMock.approve(positionManager.address, _998_Ether, { from: carol})
     const { collateral: C_coll } = await openPosition({ extraRAmount: dec(110, 18), amount: _998_Ether, extraParams: { from: carol } })
-    wstETHTokenMock.approve(activePool.address, dec(1000, 'ether'), { from: dennis})
+    wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: dennis})
     const { collateral: D_coll } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), amount: dec(1000, 'ether'), extraParams: { from: dennis } })
 
     // Price drops to 100 $/E
@@ -1016,8 +1012,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     const carol_ETHReward_1 = await positionManager.getPendingCollateralTokenReward(carol)
 
     //Expect 1995 ETH in system now
-    const entireSystemColl_1 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_1 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_1, A_coll.add(B_coll).add(C_coll).add(th.applyLiquidationFee(D_coll)))
+
 
     const totalColl = A_coll.add(B_coll).add(C_coll)
     th.assertIsApproximatelyEqual(alice_ETHReward_1.toString(), th.applyLiquidationFee(D_coll).mul(A_coll).div(totalColl))
@@ -1049,11 +1046,12 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(carol_Coll_1, C_coll.add(th.applyLiquidationFee(D_coll).mul(C_coll).div(totalColl_1)).sub(withdrawnColl)), 1000)
 
     //Expect 1993.5 ETH in system now
-    const entireSystemColl_2 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_2 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_2, totalColl.add(th.applyLiquidationFee(D_coll)).sub(withdrawnColl.mul(toBN(3))))
 
+
     // E opens with another 1993.5 ETH
-    wstETHTokenMock.approve(activePool.address, entireSystemColl_2, { from: erin})
+    wstETHTokenMock.approve(positionManager.address, entireSystemColl_2, { from: erin})
     const { collateral: E_coll } = await openPosition({ ICR: toBN(dec(200, 16)), amount: entireSystemColl_2, extraParams: { from: erin } })
 
     // Price drops to 100 $/E
@@ -1103,7 +1101,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(carol_Coll_2, expected_C_coll), 1000)
 
     //Expect 3977.0325 ETH in system now
-    const entireSystemColl_3 = (await activePool.collateralBalance()).add(await defaultPool.collateralBalance())
+    const entireSystemColl_3 = await wstETHTokenMock.balanceOf(positionManager.address)
     th.assertIsApproximatelyEqual(entireSystemColl_3, totalCollAfterL1.add(th.applyLiquidationFee(E_coll)))
 
     // check R gas compensation
@@ -1145,7 +1143,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Bob adds 1 ETH to his position
     const B_addedColl = toBN(dec(1, 'ether'))
-    wstETHTokenMock.approve(activePool.address, B_addedColl, { from: bob})
+    wstETHTokenMock.approve(positionManager.address, B_addedColl, { from: bob})
     await positionManager.addColl(bob, bob, B_addedColl, { from: bob })
 
     //Carol  withdraws 1 ETH from her position
@@ -1184,7 +1182,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
-    wstETHTokenMock.approve(activePool.address, D_addedColl, { from: dennis})
+    wstETHTokenMock.approve(positionManager.address, D_addedColl, { from: dennis})
     await positionManager.addColl(dennis, dennis, D_addedColl, { from: dennis })
 
     // Price drops to 1
@@ -1221,13 +1219,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(dennis_pendingETHReward, D_collAfterL3.sub(D_collAfterL2)), 1000000)
     assert.isAtMost(th.getDifference(erin_pendingETHReward, E_collAfterL3.sub(E_coll)), 1000000)
 
-    // Check systemic collateral
-    const activeColl = (await activePool.collateralBalance()).toString()
-    const defaultColl = (await defaultPool.collateralBalance()).toString()
-
-    assert.isAtMost(th.getDifference(activeColl, C_collAfterL1.add(D_collAfterL2.add(E_coll))), 1000000)
-    assert.isAtMost(th.getDifference(defaultColl, C_collAfterL3.sub(C_collAfterL1).add(D_collAfterL3.sub(D_collAfterL2)).add(E_collAfterL3.sub(E_coll))), 1000000)
-
     // Check system snapshots
     const totalStakesSnapshotAfterL3 = totalStakesSnapshotAfterL2.add(D_addedColl.add(E_coll).mul(totalStakesSnapshotAfterL2).div(totalCollateralSnapshotAfterL2))
     const totalCollateralSnapshotAfterL3 = C_coll.sub(C_withdrawnColl).add(D_coll).add(D_addedColl).add(E_coll).add(defaultedAmountAfterL2).add(th.applyLiquidationFee(F_coll))
@@ -1248,11 +1239,11 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     B: 8901 ETH
     C: 23.902 ETH
     */
-    wstETHTokenMock.approve(activePool.address, toBN('450000000000000000000'), { from: alice})
+    wstETHTokenMock.approve(positionManager.address, toBN('450000000000000000000'), { from: alice})
     const { collateral: A_coll } = await openPosition({ ICR: toBN(dec(90000, 16)), amount: toBN('450000000000000000000'), extraParams: { from: alice } })
-    wstETHTokenMock.approve(activePool.address, toBN('8901000000000000000000'), { from: bob})
+    wstETHTokenMock.approve(positionManager.address, toBN('8901000000000000000000'), { from: bob})
     const { collateral: B_coll } = await openPosition({ ICR: toBN(dec(1800000, 16)), amount: toBN('8901000000000000000000'), extraParams: { from: bob } })
-    wstETHTokenMock.approve(activePool.address, toBN('23902000000000000000'), { from: carol})
+    wstETHTokenMock.approve(positionManager.address, toBN('23902000000000000000'), { from: carol})
     const { collateral: C_coll } = await openPosition({ ICR: toBN(dec(4600, 16)), amount: toBN('23902000000000000000'), extraParams: { from: carol } })
 
     // Price drops
@@ -1278,12 +1269,12 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     await priceFeed.setPrice(dec(1, 27))
 
     // D opens position: 0.035 ETH
-    wstETHTokenMock.approve(activePool.address, toBN(dec(35, 15)), { from: dennis})
+    wstETHTokenMock.approve(positionManager.address, toBN(dec(35, 15)), { from: dennis})
     const { collateral: D_coll, totalDebt: D_totalDebt } = await openPosition({ extraRAmount: dec(100, 18), amount: toBN(dec(35, 15)), extraParams: { from: dennis } })
 
     // Bob adds 11.33909 ETH to his position
     const B_addedColl = toBN('11339090000000000000')
-    wstETHTokenMock.approve(activePool.address, B_addedColl, { from: bob})
+    wstETHTokenMock.approve(positionManager.address, B_addedColl, { from: bob})
     await positionManager.addColl(bob, bob, B_addedColl, { from: bob })
 
     // Carol withdraws 15 ETH from her position
@@ -1321,14 +1312,14 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     E: 10000 ETH
     F: 0.0007 ETH
     */
-    wstETHTokenMock.approve(activePool.address, toBN(dec(1, 22)), { from: erin})
+    wstETHTokenMock.approve(positionManager.address, toBN(dec(1, 22)), { from: erin})
     const { collateral: E_coll, totalDebt: E_totalDebt } = await openPosition({ extraRAmount: dec(100, 18), amount: toBN(dec(1, 22)), extraParams: { from: erin } })
-    wstETHTokenMock.approve(activePool.address, toBN('700000000000000'), { from: erin})
+    wstETHTokenMock.approve(positionManager.address, toBN('700000000000000'), { from: erin})
     const { collateral: F_coll, totalDebt: F_totalDebt } = await openPosition({ extraRAmount: dec(100, 18), amount: toBN('700000000000000'), extraParams: { from: freddy } })
 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
-    wstETHTokenMock.approve(activePool.address, D_addedColl, { from: dennis})
+    wstETHTokenMock.approve(positionManager.address, D_addedColl, { from: dennis})
     await positionManager.addColl(dennis, dennis, D_addedColl, { from: dennis })
 
     const D_collAfterL2 = D_coll.add(D_pendingRewardsAfterL2).add(D_addedColl)
@@ -1367,13 +1358,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     assert.isAtMost(th.getDifference(carol_pendingETHReward, C_collAfterL3.sub(C_collAfterL1)), 1000000)
     assert.isAtMost(th.getDifference(dennis_pendingETHReward, D_collAfterL3.sub(D_collAfterL2)), 1000000)
     assert.isAtMost(th.getDifference(erin_pendingETHReward, E_collAfterL3.sub(E_coll)), 1000000)
-
-    // Check systemic collateral
-    const activeColl = (await activePool.collateralBalance()).toString()
-    const defaultColl = (await defaultPool.collateralBalance()).toString()
-
-    assert.isAtMost(th.getDifference(activeColl, C_collAfterL1.add(D_collAfterL2.add(E_coll))), 1000000)
-    assert.isAtMost(th.getDifference(defaultColl, C_collAfterL3.sub(C_collAfterL1).add(D_collAfterL3.sub(D_collAfterL2)).add(E_collAfterL3.sub(E_coll))), 1000000)
 
     // Check system snapshots
     const totalStakesSnapshotAfterL3 = totalStakesSnapshotAfterL2.add(D_addedColl.add(E_coll).mul(totalStakesSnapshotAfterL2).div(totalCollateralSnapshotAfterL2))

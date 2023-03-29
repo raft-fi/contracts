@@ -24,7 +24,6 @@ contract('PositionManager', async accounts => {
   let rToken
   let sortedPositions
   let positionManager
-  let activePool
   let wstETHTokenMock
 
   let contracts
@@ -50,7 +49,6 @@ contract('PositionManager', async accounts => {
     rToken = contracts.rToken
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
-    activePool = contracts.activePool
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectCoreContracts(contracts, owner)
@@ -65,25 +63,25 @@ contract('PositionManager', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
 
     // Make 1 mega positions A at ~50% total collateral
-    wstETHTokenMock.approve(activePool.address, dec(2, 29), { from: A})
+    wstETHTokenMock.approve(positionManager.address, dec(2, 29), { from: A})
     await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
 
     // Make 5 large positions B, C, D, E, F at ~10% total collateral
-    wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: B})
+    wstETHTokenMock.approve(positionManager.address, dec(4, 28), { from: B})
     await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
-    wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: C})
+    wstETHTokenMock.approve(positionManager.address, dec(4, 28), { from: C})
     await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
-    wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: D})
+    wstETHTokenMock.approve(positionManager.address, dec(4, 28), { from: D})
     await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
-    wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: E})
+    wstETHTokenMock.approve(positionManager.address, dec(4, 28), { from: E})
     await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
-    wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: F})
+    wstETHTokenMock.approve(positionManager.address, dec(4, 28), { from: F})
     await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
 
     // Make 10 tiny positions at relatively negligible collateral (~1e-9 of total)
     const tinyPositions = accounts.slice(10, 20)
     for (account of tinyPositions) {
-      wstETHTokenMock.approve(activePool.address, dec(4, 28), { from: account})
+      wstETHTokenMock.approve(positionManager.address, dec(4, 28), { from: account})
       await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
     }
 

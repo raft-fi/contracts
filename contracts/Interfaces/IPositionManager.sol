@@ -95,8 +95,6 @@ interface IPositionManager is ILiquityBase {
 
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event RTokenAddressChanged(address _newRTokenAddress);
-    event ActivePoolAddressChanged(address _activePoolAddress);
-    event DefaultPoolAddressChanged(address _defaultPoolAddress);
     event SortedPositionsAddressChanged(address _sortedPositionsAddress);
     event FeeRecipientChanged(address _feeRecipient);
 
@@ -118,9 +116,8 @@ interface IPositionManager is ILiquityBase {
     // --- Functions ---
 
     function setAddresses(
-        address _activePoolAddress,
-        address _defaultPoolAddress,
         address _priceFeedAddress,
+        IERC20 _collateralToken,
         address _rTokenAddress,
         address _sortedPositionsAddress,
         address _feeRecipient
@@ -131,6 +128,7 @@ interface IPositionManager is ILiquityBase {
     function setFeeRecipient(address _feeRecipient) external;
     function feeRecipient() external view returns (address);
 
+    function collateralToken() external view returns (IERC20);
     function rToken() external view returns (IRToken);
 
     function getPositionOwnersCount() external view returns (uint);

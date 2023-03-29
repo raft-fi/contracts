@@ -15,12 +15,18 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     // --- Connected contract declarations ---
 
+    IERC20 public override collateralToken;
     IRToken public override rToken;
 
     address public override feeRecipient;
 
     // A doubly linked list of Positions, sorted by their sorted by their collateral ratios
     ISortedPositions public sortedPositions;
+
+    // --- Pools ---
+
+    uint256 private _activePoolCollateralBalance;
+    uint256 private _defaultPoolCollateralBalance;
 
     // --- Data structures ---
 
@@ -173,8 +179,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     }
 
     struct ContractsCache {
-        IActivePool activePool;
-        IDefaultPool defaultPool;
         IRToken rToken;
         ISortedPositions sortedPositions;
         address feeRecipient;
@@ -230,9 +234,8 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     // --- Setters ---
 
     function setAddresses(
-        address _activePoolAddress,
-        address _defaultPoolAddress,
         address _priceFeedAddress,
+        IERC20 _collateralToken,
         address _rTokenAddress,
         address _sortedPositionsAddress,
         address _feeRecipient
@@ -241,23 +244,18 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             revert PositionManagerAddressesAlreadySet();
         }
 
-        checkContract(_activePoolAddress);
-        checkContract(_defaultPoolAddress);
         checkContract(_priceFeedAddress);
         checkContract(_rTokenAddress);
         checkContract(_sortedPositionsAddress);
 
-        activePool = IActivePool(_activePoolAddress);
-        defaultPool = IDefaultPool(_defaultPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
+        collateralToken = _collateralToken;
         rToken = IRToken(_rTokenAddress);
         sortedPositions = ISortedPositions(_sortedPositionsAddress);
         feeRecipient = _feeRecipient;
 
         _addressesSet = true;
 
-        emit ActivePoolAddressChanged(_activePoolAddress);
-        emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit RTokenAddressChanged(_rTokenAddress);
         emit SortedPositionsAddressChanged(_sortedPositionsAddress);
@@ -297,8 +295,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         onlyNonActivePosition
     {
         ContractsCache memory contractsCache = ContractsCache(
-            activePool,
-            IDefaultPool(address(0)),
             rToken,
             ISortedPositions(address(0)),
             address(0)
@@ -335,10 +331,12 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         emit PositionCreated(msg.sender, vars.arrayIndex);
 
         // Move the collateralToken to the Active Pool, and mint the rAmount to the borrower
-        contractsCache.activePool.depositCollateral(msg.sender, _collAmount);
-        _withdrawR(contractsCache.activePool, contractsCache.rToken, msg.sender, _rAmount, vars.netDebt);
+        _activePoolCollateralBalance += _collAmount;
+        collateralToken.transferFrom(msg.sender, address(this), _collAmount);
+        contractsCache.rToken.mint(msg.sender, _rAmount);
+
         // Move the R gas compensation to the Gas Pool
-        _withdrawR(contractsCache.activePool, contractsCache.rToken, address(this), R_GAS_COMPENSATION, R_GAS_COMPENSATION);
+        contractsCache.rToken.mint(address(this), R_GAS_COMPENSATION);
 
         emit PositionUpdated(msg.sender, vars.compositeDebt, _collAmount, vars.stake, PositionManagerOperation.openPosition);
         emit RBorrowingFeePaid(msg.sender, vars.rFee);
@@ -389,8 +387,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         onlyActivePosition
     {
         ContractsCache memory contractsCache = ContractsCache(
-            activePool,
-            defaultPool,
             rToken,
             ISortedPositions(address(0)),
             address(0)
@@ -407,7 +403,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             revert NoCollateralOrDebtChange();
         }
 
-        _applyPendingRewards(contractsCache.activePool, contractsCache.defaultPool, msg.sender);
+        _applyPendingRewards(msg.sender);
 
         // Get the collChange based on whether or not collateralToken was sent in the transaction
         (vars.collChange, vars.isCollIncrease) = _collDeposit != 0 ? (_collDeposit, true) : (_collWithdrawal, false);
@@ -451,21 +447,18 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
         // Use the unmodified _rChange here, as we don't send the fee to the user
         _moveTokensFromAdjustment(
-            contractsCache.activePool,
             contractsCache.rToken,
             vars.collChange,
             vars.isCollIncrease,
             _rChange,
-            _isDebtIncrease,
-            vars.netDebtChange
+            _isDebtIncrease
         );
     }
 
     function closePosition() external override onlyActivePosition {
-        IActivePool activePoolCached = activePool;
         IRToken rTokenCached = rToken;
 
-        _applyPendingRewards(activePoolCached, defaultPool, msg.sender);
+        _applyPendingRewards(msg.sender);
 
         uint coll = Positions[msg.sender].coll;
         uint debt = Positions[msg.sender].debt;
@@ -478,11 +471,12 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         emit PositionUpdated(msg.sender, 0, 0, 0, PositionManagerOperation.closePosition);
 
         // Burn the repaid R from the user's balance and the gas compensation from the Gas Pool
-        _repayR(activePoolCached, rTokenCached, msg.sender, debt - R_GAS_COMPENSATION);
-        _repayR(activePoolCached, rTokenCached, address(this), R_GAS_COMPENSATION);
+        rTokenCached.burn(msg.sender, debt - R_GAS_COMPENSATION);
+        rTokenCached.burn(address(this), R_GAS_COMPENSATION);
 
         // Send the collateral back to the user
-        activePoolCached.withdrawCollateral(msg.sender, coll);
+        _activePoolCollateralBalance -= coll;
+        collateralToken.transfer(msg.sender, coll);
     }
 
     // --- Position Liquidation functions ---
@@ -500,8 +494,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     // Liquidate one position
     function _liquidate(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
         address _borrower,
         uint _ICR
     )
@@ -515,7 +507,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         vars.pendingDebtReward,
         vars.pendingCollReward) = getEntireDebtAndColl(_borrower);
 
-        _movePendingPositionRewardsToActivePool(_activePool, _defaultPool, vars.pendingDebtReward, vars.pendingCollReward);
+        _movePendingPositionRewardsToActivePool(vars.pendingCollReward);
         _removeStake(_borrower);
 
         singleLiquidation.collGasCompensation = _getCollGasCompensation(singleLiquidation.entirePositionColl);
@@ -546,42 +538,33 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     * starting from the one with the lowest collateral ratio in the system, and moving upwards
     */
     function liquidatePositions(uint _n) external override {
-        ContractsCache memory contractsCache = ContractsCache(
-            activePool,
-            defaultPool,
-            IRToken(address(0)),
-            sortedPositions,
-            address(0)
-        );
         LocalVariables_OuterLiquidationFunction memory vars;
 
         vars.price = priceFeed.fetchPrice();
 
         // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
-        LiquidationTotals memory totals = _getTotalsFromLiquidatePositionsSequence(contractsCache.activePool, contractsCache.defaultPool, vars.price, _n);
+        LiquidationTotals memory totals = _getTotalsFromLiquidatePositionsSequence(vars.price, _n);
 
         if (totals.totalCollInSequence == 0) {
             revert NothingToLiquidate();
         }
 
         _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
-        _redistributeDebtAndColl(contractsCache.activePool, contractsCache.defaultPool, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
+        _redistributeDebtAndColl(totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
 
         // Update system snapshots
-        _updateSystemSnapshots_excludeCollRemainder(contractsCache.activePool, totals.totalCollGasCompensation);
+        _updateSystemSnapshots_excludeCollRemainder(totals.totalCollGasCompensation);
 
         vars.liquidatedDebt = totals.totalDebtInSequence;
         vars.liquidatedColl = totals.totalCollInSequence - totals.totalCollGasCompensation;
         emit Liquidation(vars.liquidatedDebt, vars.liquidatedColl, totals.totalCollGasCompensation, totals.totalRGasCompensation);
 
         // Send gas compensation to caller
-        _sendGasCompensation(contractsCache.activePool, msg.sender, totals.totalRGasCompensation, totals.totalCollGasCompensation);
+        _sendGasCompensation(msg.sender, totals.totalRGasCompensation, totals.totalCollGasCompensation);
     }
 
     function _getTotalsFromLiquidatePositionsSequence
     (
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
         uint _price,
         uint _n
     )
@@ -597,7 +580,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR);
+                singleLiquidation = _liquidate(vars.user, vars.ICR);
 
                 // Add liquidation values to their respective running totals
                 totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
@@ -614,46 +597,41 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             revert PositionArrayEmpty();
         }
 
-        IActivePool activePoolCached = activePool;
-        IDefaultPool defaultPoolCached = defaultPool;
-
         LocalVariables_OuterLiquidationFunction memory vars;
 
         vars.price = priceFeed.fetchPrice();
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
-        LiquidationTotals memory totals = _getTotalsFromBatchLiquidate(activePoolCached, defaultPoolCached, vars.price, _positionArray);
+        LiquidationTotals memory totals = _getTotalsFromBatchLiquidate(vars.price, _positionArray);
 
         if (totals.totalCollInSequence == 0) {
             revert NothingToLiquidate();
         }
 
         _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
-        _redistributeDebtAndColl(activePoolCached, defaultPoolCached, totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
+        _redistributeDebtAndColl(totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
 
         // Update system snapshots
-        _updateSystemSnapshots_excludeCollRemainder(activePoolCached, totals.totalCollGasCompensation);
+        _updateSystemSnapshots_excludeCollRemainder(totals.totalCollGasCompensation);
 
         vars.liquidatedDebt = totals.totalDebtInSequence;
         vars.liquidatedColl = totals.totalCollInSequence - totals.totalCollGasCompensation;
         emit Liquidation(vars.liquidatedDebt, vars.liquidatedColl, totals.totalCollGasCompensation, totals.totalRGasCompensation);
 
         // Send gas compensation to caller
-        _sendGasCompensation(activePoolCached, msg.sender, totals.totalRGasCompensation, totals.totalCollGasCompensation);
+        _sendGasCompensation(msg.sender, totals.totalRGasCompensation, totals.totalCollGasCompensation);
     }
 
     function _offset(address liquidator, uint256 debtToBurn, uint256 collToSendToLiquidator) internal {
         if (debtToBurn == 0) { return; }
 
-        activePool.decreaseRDebt(debtToBurn);
         rToken.burn(liquidator, debtToBurn);
-        activePool.withdrawCollateral(liquidator, collToSendToLiquidator);
+        _activePoolCollateralBalance -= collToSendToLiquidator;
+        collateralToken.transfer(liquidator, collToSendToLiquidator);
     }
 
     function _getTotalsFromBatchLiquidate
     (
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
         uint _price,
         address[] memory _positionArray
     )
@@ -668,7 +646,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(_activePool, _defaultPool, vars.user, vars.ICR);
+                singleLiquidation = _liquidate(vars.user, vars.ICR);
 
                 // Add liquidation values to their respective running totals
                 totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
@@ -694,24 +672,21 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         return newTotals;
     }
 
-    function _sendGasCompensation(IActivePool _activePool, address _liquidator, uint _R, uint _collateralToken) internal {
+    function _sendGasCompensation(address _liquidator, uint _R, uint _collateral) internal {
         if (_R > 0) {
             rToken.transfer(_liquidator, _R);
         }
 
-        if (_collateralToken > 0) {
-            _activePool.withdrawCollateral(_liquidator, _collateralToken);
+        if (_collateral > 0) {
+            _activePoolCollateralBalance -= _collateral;
+            collateralToken.transfer(_liquidator, _collateral);
         }
     }
 
     // Move a Position's pending debt and collateral rewards from distributions, from the Default Pool to the Active Pool
-    function _movePendingPositionRewardsToActivePool(IActivePool _activePool, IDefaultPool _defaultPool, uint _R, uint _collateralToken) internal {
-        _defaultPool.decreaseRDebt(_R);
-        _activePool.increaseRDebt(_R);
-
-        _defaultPool.withdrawCollateral(address(this), _collateralToken);
-        IERC20(_defaultPool.collateralToken()).approve(address(_activePool), _collateralToken);
-        _activePool.depositCollateral(address(this), _collateralToken);
+    function _movePendingPositionRewardsToActivePool(uint _collateral) internal {
+        _defaultPoolCollateralBalance -= _collateral;
+        _activePoolCollateralBalance += _collateral;
     }
 
     // --- Redemption functions ---
@@ -783,13 +758,11 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     * The debt recorded on the position's struct is zero'd elsewhere, in _closePosition.
     * Any surplus collateralToken left in the position, is sent to the Coll surplus pool, and can be later claimed by the borrower.
     */
-    function _redeemClosePosition(ContractsCache memory _contractsCache, address _borrower, uint _R, uint _collateralToken) internal {
+    function _redeemClosePosition(ContractsCache memory _contractsCache, address _borrower, uint _R, uint _collateral) internal {
         _contractsCache.rToken.burn(address(this), _R);
-        // Update Active Pool R, and send collateralToken to account
-        _contractsCache.activePool.decreaseRDebt(_R);
 
-        _contractsCache.activePool.withdrawCollateral(address(this), _collateralToken);
-        _contractsCache.activePool.collateralToken().transfer(_borrower, _collateralToken);
+        _activePoolCollateralBalance -= _collateral;
+        collateralToken.transfer(_borrower, _collateral);
     }
 
     function _isValidFirstRedemptionHint(ISortedPositions _sortedPositions, address _firstRedemptionHint, uint _price) internal view returns (bool) {
@@ -845,8 +818,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         }
 
         ContractsCache memory contractsCache = ContractsCache(
-            activePool,
-            defaultPool,
             rToken,
             sortedPositions,
             feeRecipient
@@ -881,7 +852,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             // Save the address of the Position preceding the current one, before potentially modifying the list
             address nextUserToCheck = contractsCache.sortedPositions.getPrev(currentBorrower);
 
-            _applyPendingRewards(contractsCache.activePool, contractsCache.defaultPool, currentBorrower);
+            _applyPendingRewards(currentBorrower);
 
             SingleRedemptionValues memory singleRedemption = _redeemCollateralFromPosition(
                 contractsCache,
@@ -916,7 +887,8 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         _requireUserAcceptsFee(totals.collateralTokenFee, totals.totalCollateralTokenDrawn, _maxFeePercentage);
 
         // Send the collateralToken fee to the recipient
-        contractsCache.activePool.withdrawCollateral(feeRecipient, totals.collateralTokenFee);
+        _activePoolCollateralBalance -= totals.collateralTokenFee;
+        collateralToken.transfer(feeRecipient, totals.collateralTokenFee);
 
         totals.collateralTokenToSendToRedeemer = totals.totalCollateralTokenDrawn - totals.collateralTokenFee;
 
@@ -924,9 +896,10 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateralToken to msg.sender
         contractsCache.rToken.burn(msg.sender, totals.totalRToRedeem);
-        // Update Active Pool R, and send collateralToken to account
-        contractsCache.activePool.decreaseRDebt(totals.totalRToRedeem);
-        contractsCache.activePool.withdrawCollateral(msg.sender, totals.collateralTokenToSendToRedeemer);
+
+        // Send collateralToken to account
+        _activePoolCollateralBalance -= totals.collateralTokenToSendToRedeemer;
+        collateralToken.transfer(msg.sender, totals.collateralTokenToSendToRedeemer);
     }
 
     // --- Helper functions ---
@@ -951,7 +924,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Position
-    function _applyPendingRewards(IActivePool _activePool, IDefaultPool _defaultPool, address _borrower) internal {
+    function _applyPendingRewards(address _borrower) internal {
         if (hasPendingRewards(_borrower)) {
             _requirePositionIsActive(_borrower);
 
@@ -966,7 +939,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
             _updatePositionRewardSnapshots(_borrower);
 
             // Transfer from DefaultPool to ActivePool
-            _movePendingPositionRewardsToActivePool(_activePool, _defaultPool, pendingRDebtReward, pendingCollateralTokenReward);
+            _movePendingPositionRewardsToActivePool(pendingCollateralTokenReward);
 
             emit PositionUpdated(
                 _borrower,
@@ -1063,7 +1036,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         }
     }
 
-    function _redistributeDebtAndColl(IActivePool _activePool, IDefaultPool _defaultPool, uint _debt, uint _coll) internal {
+    function _redistributeDebtAndColl(uint _debt, uint _coll) internal {
         if (_debt == 0) { return; }
 
         /*
@@ -1093,12 +1066,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
         emit LTermsUpdated(L_CollateralBalance, L_RDebt);
 
-        // Transfer coll and debt from ActivePool to DefaultPool
-        _activePool.decreaseRDebt(_debt);
-        _defaultPool.increaseRDebt(_debt);
-        _activePool.withdrawCollateral(address(this), _coll);
-        IERC20(_activePool.collateralToken()).approve(address(_defaultPool), _coll);
-        _defaultPool.depositCollateral(address(this), _coll);
+        // Transfer coll from ActivePool to DefaultPool
+        _activePoolCollateralBalance -= _coll;
+        _defaultPoolCollateralBalance += _coll;
     }
 
     function _closePosition(address _borrower, PositionStatus closedStatus) internal {
@@ -1128,12 +1098,9 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     *
     * The collateralToken as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
     */
-    function _updateSystemSnapshots_excludeCollRemainder(IActivePool _activePool, uint _collRemainder) internal {
+    function _updateSystemSnapshots_excludeCollRemainder(uint _collRemainder) internal {
         totalStakesSnapshot = totalStakes;
-
-        uint activeColl = _activePool.collateralBalance();
-        uint liquidatedColl = defaultPool.collateralBalance();
-        totalCollateralSnapshot = activeColl - _collRemainder + liquidatedColl;
+        totalCollateralSnapshot = _activePoolCollateralBalance - _collRemainder + _defaultPoolCollateralBalance;
 
         emit SystemSnapshotsUpdated(totalStakesSnapshot, totalCollateralSnapshot);
     }
@@ -1182,12 +1149,12 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     * then,
     * 2) increases the baseRate based on the amount redeemed, as a proportion of total supply
     */
-    function _updateBaseRateFromRedemption(uint _collateralTokenDrawn,  uint _price, uint _totalRSupply) internal returns (uint) {
+    function _updateBaseRateFromRedemption(uint _collateralDrawn,  uint _price, uint _totalRSupply) internal returns (uint) {
         uint decayedBaseRate = _calcDecayedBaseRate();
 
         /* Convert the drawn collateralToken back to R at face value rate (1 R:1 USD), in order to get
         * the fraction of total supply that was redeemed at face value. */
-        uint redeemedRFraction = _collateralTokenDrawn * _price / _totalRSupply;
+        uint redeemedRFraction = _collateralDrawn * _price / _totalRSupply;
 
         uint newBaseRate = decayedBaseRate + redeemedRFraction / BETA;
         newBaseRate = Math.min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
@@ -1218,17 +1185,17 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
         );
     }
 
-    function _getRedemptionFee(uint _collateralTokenDrawn) internal view returns (uint) {
-        return _calcRedemptionFee(getRedemptionRate(), _collateralTokenDrawn);
+    function _getRedemptionFee(uint _collateralDrawn) internal view returns (uint) {
+        return _calcRedemptionFee(getRedemptionRate(), _collateralDrawn);
     }
 
-    function getRedemptionFeeWithDecay(uint _collateralTokenDrawn) external view override returns (uint) {
-        return _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralTokenDrawn);
+    function getRedemptionFeeWithDecay(uint _collateralDrawn) external view override returns (uint) {
+        return _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
     }
 
-    function _calcRedemptionFee(uint _redemptionRate, uint _collateralTokenDrawn) internal pure returns (uint redemptionFee) {
-        redemptionFee = _redemptionRate * _collateralTokenDrawn / DECIMAL_PRECISION;
-        if (redemptionFee >= _collateralTokenDrawn) {
+    function _calcRedemptionFee(uint _redemptionRate, uint _collateralDrawn) internal pure returns (uint redemptionFee) {
+        redemptionFee = _redemptionRate * _collateralDrawn / DECIMAL_PRECISION;
+        if (redemptionFee >= _collateralDrawn) {
             revert FeeEatsUpAllReturnedCollateral();
         }
     }
@@ -1368,39 +1335,27 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     function _moveTokensFromAdjustment
     (
-        IActivePool _activePool,
         IRToken _rToken,
         uint _collChange,
         bool _isCollIncrease,
         uint _rChange,
-        bool _isDebtIncrease,
-        uint _netDebtChange
+        bool _isDebtIncrease
     )
         private
     {
         if (_isDebtIncrease) {
-            _withdrawR(_activePool, _rToken, msg.sender, _rChange, _netDebtChange);
+            _rToken.mint(msg.sender, _rChange);
         } else {
-            _repayR(_activePool, _rToken, msg.sender, _rChange);
+            _rToken.burn(msg.sender, _rChange);
         }
 
         if (_isCollIncrease) {
-            _activePool.depositCollateral(msg.sender, _collChange);
+            _activePoolCollateralBalance += _collChange;
+            collateralToken.transferFrom(msg.sender, address(this), _collChange);
         } else {
-            _activePool.withdrawCollateral(msg.sender, _collChange);
+            _activePoolCollateralBalance -= _collChange;
+            collateralToken.transfer(msg.sender, _collChange);
         }
-    }
-
-    // Issue the specified amount of R to _account and increases the total active debt (_netDebtIncrease potentially includes a rFee)
-    function _withdrawR(IActivePool _activePool, IRToken _rToken, address _account, uint _rAmount, uint _netDebtIncrease) internal {
-        _activePool.increaseRDebt(_netDebtIncrease);
-        _rToken.mint(_account, _rAmount);
-    }
-
-    // Burn the specified amount of R from _account and decreases the total active debt
-    function _repayR(IActivePool _activePool, IRToken _rToken, address _account, uint _R) internal {
-        _activePool.decreaseRDebt(_R);
-        _rToken.burn(_account, _R);
     }
 
     // --- 'Require' wrapper functions ---

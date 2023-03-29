@@ -673,7 +673,7 @@ class TestHelper {
       amount = ICR.mul(totalDebt).div(price)
     }
 
-    await contracts.wstETHTokenMock.approve(contracts.activePool.address, amount, extraParams)
+    await contracts.wstETHTokenMock.approve(contracts.positionManager.address, amount, extraParams)
     const tx = await contracts.positionManager.openPosition(maxFeePercentage, rAmount, upperHint, lowerHint, amount, extraParams)
 
     return {

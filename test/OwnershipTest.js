@@ -12,8 +12,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
   let rToken
   let sortedPositions
   let positionManager
-  let activePool
-  let defaultPool
 
   before(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
@@ -22,8 +20,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     rToken = contracts.rToken
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
-    activePool = contracts.activePool
-    defaultPool = contracts.defaultPool
   })
 
   const testZeroAddress = async (contract, params, skipLast = 0) => {
@@ -56,7 +52,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('PositionManager', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(positionManager, 6, 1)
+      await testSetAddresses(positionManager, 5, 1)
     })
 
     it("setBorrowingSpread(): reverts when called by non-owner, or with wrong values", async () => {
@@ -69,12 +65,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
       // Owner can successfully set spread
       const txOwner = await positionManager.setBorrowingSpread(100, { from: owner })
       assert.isTrue(txOwner.receipt.status)
-    })
-  })
-
-  describe('ActivePool', async accounts => {
-    it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(activePool, 2)
     })
   })
 

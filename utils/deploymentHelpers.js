@@ -2,19 +2,13 @@ const SortedPositions = artifacts.require("./SortedPositions.sol")
 const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
-const ActivePool = artifacts.require("./ActivePool.sol");
-const DefaultPool = artifacts.require("./DefaultPool.sol");
 const FunctionCaller = artifacts.require("./TestContracts/FunctionCaller.sol")
 const HintHelpers = artifacts.require("./HintHelpers.sol")
 
-const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
-const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
 const RTokenTester = artifacts.require("./RTokenTester.sol")
 const WstETHTokenMock = artifacts.require("./WstETHTokenMock.sol")
-
-const th = require("./testHelpers.js").TestHelper
 
 /* "Liquity core" consists of all contracts in the core Liquity system.
 
@@ -40,19 +34,15 @@ class DeploymentHelper {
     const sortedPositions = await SortedPositions.new()
     const positionManager = await PositionManager.new()
     const wstETHTokenMock = await WstETHTokenMock.new()
-    const activePool = await ActivePool.new(wstETHTokenMock.address)
-    const defaultPool = await DefaultPool.new(wstETHTokenMock.address)
     const functionCaller = await FunctionCaller.new()
     const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
       positionManager.address
     )
     RToken.setAsDeployed(rToken)
-    DefaultPool.setAsDeployed(defaultPool)
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
     SortedPositions.setAsDeployed(sortedPositions)
     PositionManager.setAsDeployed(positionManager)
-    ActivePool.setAsDeployed(activePool)
     FunctionCaller.setAsDeployed(functionCaller)
     HintHelpers.setAsDeployed(hintHelpers)
 
@@ -62,8 +52,6 @@ class DeploymentHelper {
       sortedPositions,
       positionManager,
       wstETHTokenMock,
-      activePool,
-      defaultPool,
       functionCaller,
       hintHelpers
     }
@@ -95,8 +83,6 @@ class DeploymentHelper {
     testerContracts.sortedPositions = await SortedPositions.new()
     testerContracts.wstETHTokenMock = await WstETHTokenMock.new();
     // Actual tester contracts
-    testerContracts.activePool = await ActivePoolTester.new(testerContracts.wstETHTokenMock.address)
-    testerContracts.defaultPool = await DefaultPoolTester.new(testerContracts.wstETHTokenMock.address)
     testerContracts.math = await LiquityMathTester.new()
     testerContracts.positionManager = await PositionManagerTester.new()
     testerContracts.functionCaller = await FunctionCaller.new()
@@ -111,8 +97,6 @@ class DeploymentHelper {
     const priceFeedTestnet = await PriceFeedTestnet.new()
     const sortedPositions = await SortedPositions.new()
     const positionManager = await PositionManager.new()
-    const activePool = await ActivePool.new()
-    const defaultPool = await DefaultPool.new()
     const functionCaller = await FunctionCaller.new()
     const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
@@ -123,8 +107,6 @@ class DeploymentHelper {
       rToken,
       sortedPositions,
       positionManager,
-      activePool,
-      defaultPool,
       functionCaller,
       hintHelpers
     }
@@ -160,22 +142,11 @@ class DeploymentHelper {
 
     // set contracts in the Position Manager
     await contracts.positionManager.setAddresses(
-      contracts.activePool.address,
-      contracts.defaultPool.address,
       contracts.priceFeedTestnet.address,
+      contracts.wstETHTokenMock.address,
       contracts.rToken.address,
       contracts.sortedPositions.address,
       feeRecipient
-    )
-
-    // set contracts in the Pools
-    await contracts.activePool.setAddresses(
-      contracts.positionManager.address,
-      contracts.defaultPool.address
-    )
-
-    await contracts.defaultPool.setAddresses(
-      contracts.positionManager.address
     )
 
     // set contracts in HintHelpers

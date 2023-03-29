@@ -67,8 +67,6 @@ class MainnetDeploymentHelper {
     const priceFeedFactory = await this.getFactory("PriceFeed")
     const sortedPositionsFactory = await this.getFactory("SortedPositions")
     const positionManagerFactory = await this.getFactory("PositionManager")
-    const activePoolFactory = await this.getFactory("ActivePool")
-    const defaultPoolFactory = await this.getFactory("DefaultPool")
     const hintHelpersFactory = await this.getFactory("HintHelpers")
     const rTokenFactory = await this.getFactory("RToken")
     const tellorCallerFactory = await this.getFactory("TellorCaller")
@@ -77,8 +75,6 @@ class MainnetDeploymentHelper {
     const priceFeed = await this.loadOrDeploy(priceFeedFactory, 'priceFeed', deploymentState)
     const sortedPositions = await this.loadOrDeploy(sortedPositionsFactory, 'sortedPositions', deploymentState)
     const positionManager = await this.loadOrDeploy(positionManagerFactory, 'positionManager', deploymentState)
-    const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState)
-    const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState)
     const hintHelpers = await this.loadOrDeploy(hintHelpersFactory, 'hintHelpers', deploymentState)
     const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, [tellorMasterAddr])
 
@@ -98,8 +94,6 @@ class MainnetDeploymentHelper {
       await this.verifyContract('priceFeed', deploymentState)
       await this.verifyContract('sortedPositions', deploymentState)
       await this.verifyContract('positionManager', deploymentState)
-      await this.verifyContract('activePool', deploymentState)
-      await this.verifyContract('defaultPool', deploymentState)
       await this.verifyContract('hintHelpers', deploymentState)
       await this.verifyContract('tellorCaller', deploymentState, [tellorMasterAddr])
       await this.verifyContract('rToken', deploymentState, rTokenParams)
@@ -110,8 +104,6 @@ class MainnetDeploymentHelper {
       rToken,
       sortedPositions,
       positionManager,
-      activePool,
-      defaultPool,
       hintHelpers,
       tellorCaller
     }
@@ -163,27 +155,10 @@ class MainnetDeploymentHelper {
     // set contracts in the Position Manager
     await this.isOwnershipRenounced(contracts.positionManager) ||
       await this.sendAndWaitForTransaction(contracts.positionManager.setAddresses(
-        contracts.activePool.address,
-        contracts.defaultPool.address,
         contracts.priceFeed.address,
+        '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0',
         contracts.rToken.address,
         contracts.sortedPositions.address,
-	{gasPrice}
-      ))
-
-    // set contracts in the Pools
-
-    await this.isOwnershipRenounced(contracts.activePool) ||
-      await this.sendAndWaitForTransaction(contracts.activePool.setAddresses(
-        contracts.positionManager.address,
-        contracts.defaultPool.address,
-	{gasPrice}
-      ))
-
-    await this.isOwnershipRenounced(contracts.defaultPool) ||
-      await this.sendAndWaitForTransaction(contracts.defaultPool.setAddresses(
-        contracts.positionManager.address,
-        contracts.activePool.address,
 	{gasPrice}
       ))
 
