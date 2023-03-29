@@ -35,9 +35,6 @@ error PositionManagerOnlyOnePositionInSystem();
 /// @dev Amount is zero.
 error PositionManagerAmountIsZero();
 
-/// @dev Cannot redeem when TCR < MCR.
-error PositionManagerRedemptionTCRBelowMCR();
-
 /// @dev Nothing to liquidate.
 error NothingToLiquidate();
 
