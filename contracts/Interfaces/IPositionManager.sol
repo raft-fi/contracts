@@ -131,6 +131,10 @@ interface IPositionManager is ILiquityBase {
     function collateralToken() external view returns (IERC20);
     function rToken() external view returns (IRToken);
 
+    function positions(
+        address _borrower
+    ) external view returns (uint debt, uint coll, uint stake, PositionStatus status, uint128 arrayIndex);
+
     function getPositionOwnersCount() external view returns (uint);
 
     function getPositionFromPositionOwnersArray(uint _index) external view returns (address);
@@ -180,14 +184,6 @@ interface IPositionManager is ILiquityBase {
 
     function getBorrowingFee(uint rDebt) external view returns (uint);
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
-
-    function getPositionStatus(address _borrower) external view returns (PositionStatus);
-
-    function getPositionStake(address _borrower) external view returns (uint);
-
-    function getPositionDebt(address _borrower) external view returns (uint);
-
-    function getPositionColl(address _borrower) external view returns (uint);
 
     function openPosition(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
 

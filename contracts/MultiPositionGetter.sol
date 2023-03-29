@@ -79,7 +79,7 @@ contract MultiPositionGetter {
                 _positions[idx].stake,
                 /* status */,
                 /* arrayIndex */
-            ) = positionManager.Positions(currentPositionowner);
+            ) = positionManager.positions(currentPositionowner);
             (
                 _positions[idx].snapshotCollateralBalance,
                 _positions[idx].snapshotRDebt
@@ -108,7 +108,7 @@ contract MultiPositionGetter {
                 _positions[idx].stake,
                 /* status */,
                 /* arrayIndex */
-            ) = positionManager.Positions(currentPositionowner);
+            ) = positionManager.positions(currentPositionowner);
             (
                 _positions[idx].snapshotCollateralBalance,
                 _positions[idx].snapshotRDebt

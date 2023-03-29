@@ -79,9 +79,9 @@ contract('SortedPositions', async accounts => {
       await openPosition({ ICR: toBN(dec(2000, 18)), extraParams: { from: carol } })
 
       // Confirm position statuses became active
-      assert.equal((await positionManager.Positions(alice))[3], '1')
-      assert.equal((await positionManager.Positions(bob))[3], '1')
-      assert.equal((await positionManager.Positions(carol))[3], '1')
+      assert.equal((await positionManager.positions(alice))[3], '1')
+      assert.equal((await positionManager.positions(bob))[3], '1')
+      assert.equal((await positionManager.positions(carol))[3], '1')
 
       // Check sorted list contains positions
       assert.isTrue(await sortedPositions.contains(alice))
@@ -95,8 +95,8 @@ contract('SortedPositions', async accounts => {
       await openPosition({ ICR: toBN(dec(2000, 18)), extraParams: { from: carol } })
 
       // Confirm positions have non-existent status
-      assert.equal((await positionManager.Positions(dennis))[3], '0')
-      assert.equal((await positionManager.Positions(erin))[3], '0')
+      assert.equal((await positionManager.positions(dennis))[3], '0')
+      assert.equal((await positionManager.positions(erin))[3], '0')
 
       // Check sorted list do not contain positions
       assert.isFalse(await sortedPositions.contains(dennis))
@@ -121,9 +121,9 @@ contract('SortedPositions', async accounts => {
       await positionManager.closePosition({ from:carol })
 
       // Confirm position statuses became closed
-      assert.equal((await positionManager.Positions(alice))[3], '2')
-      assert.equal((await positionManager.Positions(bob))[3], '2')
-      assert.equal((await positionManager.Positions(carol))[3], '2')
+      assert.equal((await positionManager.positions(alice))[3], '2')
+      assert.equal((await positionManager.positions(bob))[3], '2')
+      assert.equal((await positionManager.positions(carol))[3], '2')
 
       // Check sorted list does not contain positions
       assert.isFalse(await sortedPositions.contains(alice))
@@ -150,18 +150,18 @@ contract('SortedPositions', async accounts => {
       await positionManager.closePosition({ from:carol })
 
       // Confirm position statuses became closed
-      assert.equal((await positionManager.Positions(alice))[3], '2')
-      assert.equal((await positionManager.Positions(bob))[3], '2')
-      assert.equal((await positionManager.Positions(carol))[3], '2')
+      assert.equal((await positionManager.positions(alice))[3], '2')
+      assert.equal((await positionManager.positions(bob))[3], '2')
+      assert.equal((await positionManager.positions(carol))[3], '2')
 
       await openPosition({ ICR: toBN(dec(1000, 16)), extraParams: { from: alice } })
       await openPosition({ ICR: toBN(dec(2000, 18)), extraParams: { from: bob } })
       await openPosition({ ICR: toBN(dec(3000, 18)), extraParams: { from: carol } })
 
       // Confirm position statuses became open again
-      assert.equal((await positionManager.Positions(alice))[3], '1')
-      assert.equal((await positionManager.Positions(bob))[3], '1')
-      assert.equal((await positionManager.Positions(carol))[3], '1')
+      assert.equal((await positionManager.positions(alice))[3], '1')
+      assert.equal((await positionManager.positions(bob))[3], '1')
+      assert.equal((await positionManager.positions(carol))[3], '1')
 
       // Check sorted list does  contain positions
       assert.isTrue(await sortedPositions.contains(alice))

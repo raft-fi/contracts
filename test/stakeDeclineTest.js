@@ -93,13 +93,13 @@ contract('PositionManager', async accounts => {
     console.log(`totalCollateralSnapshot after L1: ${await positionManager.totalCollateralSnapshot()}`)
     console.log(`Snapshots ratio after L1: ${await getSnapshotsRatio()}`)
     console.log(`B pending ETH reward after L1: ${await positionManager.getPendingCollateralTokenReward(B)}`)
-    console.log(`B stake after L1: ${(await positionManager.Positions(B))[2]}`)
+    console.log(`B stake after L1: ${(await positionManager.positions(B))[2]}`)
 
     // adjust position B 1 wei: apply rewards
     await priceFeed.setPrice(dec(200, 18))
     await positionManager.adjustPosition(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // B repays 1 wei
     await priceFeed.setPrice(dec(50, 18))
-    console.log(`B stake after A1: ${(await positionManager.Positions(B))[2]}`)
+    console.log(`B stake after A1: ${(await positionManager.positions(B))[2]}`)
     console.log(`Snapshots ratio after A1: ${await getSnapshotsRatio()}`)
 
     // Loop over tiny positions, and alternately:
@@ -107,12 +107,12 @@ contract('PositionManager', async accounts => {
     // - Adjust B's collateral by 1 wei
     for (let [idx, position] of tinyPositions.entries()) {
       await positionManager.liquidate(position)
-      console.log(`B stake after L${idx + 2}: ${(await positionManager.Positions(B))[2]}`)
+      console.log(`B stake after L${idx + 2}: ${(await positionManager.positions(B))[2]}`)
       console.log(`Snapshots ratio after L${idx + 2}: ${await getSnapshotsRatio()}`)
       await priceFeed.setPrice(dec(200, 18))
       await positionManager.adjustPosition(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // A repays 1 wei
       await priceFeed.setPrice(dec(50, 18))
-      console.log(`B stake after A${idx + 2}: ${(await positionManager.Positions(B))[2]}`)
+      console.log(`B stake after A${idx + 2}: ${(await positionManager.positions(B))[2]}`)
     }
   })
 

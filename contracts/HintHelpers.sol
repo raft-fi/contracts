@@ -89,15 +89,16 @@ contract HintHelpers is LiquityBase, Ownable2Step, CheckContract {
         }
 
         while (currentPositionUser != address(0) && remainingR > 0 && _maxIterations-- > 0) {
-            uint netRDebt = _getNetDebt(positionManager.getPositionDebt(currentPositionUser))
+            (uint userDebt,,,,) = positionManager.positions(currentPositionUser);
+            uint netRDebt = _getNetDebt(userDebt)
                 + positionManager.getPendingRDebtReward(currentPositionUser);
 
             if (netRDebt > remainingR) {
                 if (netRDebt > MIN_NET_DEBT) {
                     uint maxRedeemableR = Math.min(remainingR, netRDebt - MIN_NET_DEBT);
 
-                    uint collateralBalance = positionManager.getPositionColl(currentPositionUser)
-                         + positionManager.getPendingCollateralTokenReward(currentPositionUser);
+                    (,uint collateralBalance,,,) = positionManager.positions(currentPositionUser);
+                    collateralBalance += positionManager.getPendingCollateralTokenReward(currentPositionUser);
 
                     uint newColl = collateralBalance - maxRedeemableR * DECIMAL_PRECISION / _price;
                     uint newDebt = netRDebt - maxRedeemableR;
