@@ -27,9 +27,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     uint256 private _activePoolCollateralBalance;
     uint256 private _defaultPoolCollateralBalance;
 
-    // --- Data structures ---
-
-    uint constant public SECONDS_IN_ONE_MINUTE = 60;
     /*
      * Half-life of 12h. 12h = 720 min
      * (1/2) = d^720 => d = (1/2)^(1/720)
@@ -39,16 +36,11 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     uint256 public constant override MAX_BORROWING_SPREAD = DECIMAL_PRECISION / 100; // 1%
     uint256 public constant MAX_BORROWING_FEE = DECIMAL_PRECISION / 100 * 5; // 5%
 
-    // During bootsrap period redemptions are not allowed
-    uint constant public BOOTSTRAP_PERIOD = 14 days;
-
     /*
     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
     * Corresponds to (1 / ALPHA) in the white paper.
     */
     uint constant public BETA = 2;
-
-    uint public immutable override deploymentStartTime;
 
     uint256 public override borrowingSpread;
     uint256 public baseRate;
@@ -234,8 +226,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         collateralToken = _collateralToken;
         rToken = new RToken(this, msg.sender);
         sortedPositions.maxSize = _positionsSize;
-
-        deploymentStartTime = block.timestamp;
 
         emit PositionManagerDeployed(_priceFeed, _collateralToken, rToken, msg.sender);
     }
@@ -780,9 +770,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > DECIMAL_PRECISION) {
             revert PositionManagerMaxFeePercentageOutOfRange();
         }
-        if (block.timestamp < deploymentStartTime + BOOTSTRAP_PERIOD) {
-            revert PositionManagerRedemptionNotAllowed();
-        }
 
         ContractsCache memory contractsCache = ContractsCache(
             rToken,
@@ -1221,7 +1208,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     function _updateLastFeeOpTime() internal {
         uint timePassed = block.timestamp - lastFeeOperationTime;
 
-        if (timePassed >= SECONDS_IN_ONE_MINUTE) {
+        if (timePassed >= 1 minutes) {
             lastFeeOperationTime = block.timestamp;
             emit LastFeeOpTimeUpdated(block.timestamp);
         }
@@ -1235,7 +1222,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     }
 
     function _minutesPassedSinceLastFeeOp() internal view returns (uint) {
-        return (block.timestamp - lastFeeOperationTime) / SECONDS_IN_ONE_MINUTE;
+        return (block.timestamp - lastFeeOperationTime) / 1 minutes;
     }
 
     // --- 'require' wrapper functions ---
