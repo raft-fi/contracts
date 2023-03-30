@@ -44,7 +44,6 @@ contract('Gas compensation tests', async accounts => {
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
-    sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
     positionManagerTester = contracts.positionManager
     wstETHTokenMock = contracts.wstETHTokenMock
@@ -307,7 +306,7 @@ contract('Gas compensation tests', async accounts => {
     // E opens with 4405.45 ETH, 32598.35 R
     await openPosition({ ICR: toBN('27028668628933700000'), extraParams: { from: erin } })
     const erin_ICR = (await positionManager.getCurrentICR(erin, price)).toString()
-    // Expect Erin's ICR = (4405.45 * 200) / (32598.35) = 2702.87%
+    // Expect erin's ICR = (4405.45 * 200) / (32598.35) = 2702.87%
     assert.isAtMost(th.getDifference(erin_ICR, '27028668628933700000'), 100000)
 
     // H opens with 1 ETH, 180 R

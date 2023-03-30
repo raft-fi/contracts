@@ -5,7 +5,6 @@ pragma solidity 0.8.19;
 import "./IFeeCollector.sol";
 import "./ILiquityBase.sol";
 import "./IRToken.sol";
-import "./ISortedPositions.sol";
 
 /// @dev Max fee percentage must be between borrowing spread and 100%.
 error PositionManagerInvalidMaxFeePercentage();
@@ -92,7 +91,6 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
         IPriceFeed _priceFeed,
         IERC20 _collateralToken,
         IRToken _rToken,
-        ISortedPositions _sortedPositions,
         address _feeRecipient
     );
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _RGasCompensation);
@@ -123,7 +121,9 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
         address _borrower
     ) external view returns (uint debt, uint coll, uint stake, PositionStatus status, uint128 arrayIndex);
 
-    function sortedPositions() external view returns (ISortedPositions);
+    function sortedPositions() external view returns (address first, address last, uint256 maxSize, uint256 size);
+
+    function sortedPositionsNodes(address _id) external view returns(bool exists, address nextId, address prevId);
 
     function getPositionOwnersCount() external view returns (uint);
 

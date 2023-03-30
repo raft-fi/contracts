@@ -19,7 +19,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
   let priceFeed
   let rToken
-  let sortedPositions
   let positionManager
   let nameRegistry
 
@@ -33,7 +32,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
-    sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
     nameRegistry = contracts.nameRegistry
     wstETHTokenMock = contracts.wstETHTokenMock
@@ -56,7 +54,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L1: B liquidated
     const txB = await positionManager.liquidate(bob)
     assert.isTrue(txB.receipt.status)
-    assert.isFalse(await sortedPositions.contains(bob))
+    assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -71,7 +69,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L2: D Liquidated
     const txD = await positionManager.liquidate(dennis)
     assert.isTrue(txB.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     // Get entire coll of A and C
     const alice_Coll = ((await positionManager.positions(alice))[1]
@@ -113,7 +111,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L1: C liquidated
     const txC = await positionManager.liquidate(carol)
     assert.isTrue(txC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(carol))
+    assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -129,7 +127,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L2: F Liquidated
     const txF = await positionManager.liquidate(freddy)
     assert.isTrue(txF.receipt.status)
-    assert.isFalse(await sortedPositions.contains(freddy))
+    assert.isFalse((await positionManager.sortedPositionsNodes(freddy))[0])
 
     // Get entire coll of A, B, D and E
     const alice_Coll = ((await positionManager.positions(alice))[1]
@@ -189,7 +187,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L1: A liquidated
     const txA = await positionManager.liquidate(alice)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(alice))
+    assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -202,7 +200,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L2: B Liquidated
     const txB = await positionManager.liquidate(bob)
     assert.isTrue(txB.receipt.status)
-    assert.isFalse(await sortedPositions.contains(bob))
+    assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -215,7 +213,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L3: C Liquidated
     const txC = await positionManager.liquidate(carol)
     assert.isTrue(txC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(carol))
+    assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -228,7 +226,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L4: D Liquidated
     const txD = await positionManager.liquidate(dennis)
     assert.isTrue(txD.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -241,7 +239,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // L5: E Liquidated
     const txE = await positionManager.liquidate(erin)
     assert.isTrue(txE.receipt.status)
-    assert.isFalse(await sortedPositions.contains(erin))
+    assert.isFalse((await positionManager.sortedPositionsNodes(erin))[0])
 
     // Get entire coll of A, B, D, E and F
     const alice_Coll = ((await positionManager.positions(alice))[1]
@@ -310,7 +308,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // console.log(`ICR A: ${await positionManager.getCurrentICR(A, price)}`)
     const txA = await positionManager.liquidate(A)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(A))
+    assert.isFalse((await positionManager.sortedPositionsNodes(A))[0])
 
     // Check entireColl for each position:
     const B_entireColl_1 = (await th.getEntireCollAndDebt(contracts, B)).entireColl
@@ -338,7 +336,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate C
     const txC = await positionManager.liquidate(C)
     assert.isTrue(txC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(C))
+    assert.isFalse((await positionManager.sortedPositionsNodes(C))[0])
 
     const B_entireColl_2 = (await th.getEntireCollAndDebt(contracts, B)).entireColl
     const D_entireColl_2 = (await th.getEntireCollAndDebt(contracts, D)).entireColl
@@ -364,7 +362,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate E
     const txE = await positionManager.liquidate(E)
     assert.isTrue(txE.receipt.status)
-    assert.isFalse(await sortedPositions.contains(E))
+    assert.isFalse((await positionManager.sortedPositionsNodes(E))[0])
 
     const totalCollAfterL3 = B_collAfterL2.add(addedColl2).add(D_collAfterL2)
     const B_collAfterL3 = B_collAfterL2.add(addedColl2).add(th.applyLiquidationFee(E_collAfterL2).mul(B_collAfterL2.add(addedColl2)).div(totalCollAfterL3))
@@ -392,7 +390,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Carol
     const txC = await positionManager.liquidate(carol)
     assert.isTrue(txC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(carol))
+    assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -411,7 +409,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Alice
     const txA = await positionManager.liquidate(alice)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(alice))
+    assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
     // Expect Bob now holds all Ether and rDebt in the system: 2 + 0.4975+0.4975*0.995+0.995 Ether and 110*3 R (10 each for gas compensation)
     const bob_Coll = ((await positionManager.positions(bob))[1]
@@ -443,7 +441,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Carol
     const txC = await positionManager.liquidate(carol)
     assert.isTrue(txC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(carol))
+    assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -462,7 +460,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate D
     const txA = await positionManager.liquidate(dennis)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     /* Bob rewards:
      L1: 1/2*0.995 ETH, 55 R
@@ -534,7 +532,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Dennis
     const txD = await positionManager.liquidate(dennis)
     assert.isTrue(txD.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -569,10 +567,10 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
 
-    // Liquidate Erin
+    // Liquidate erin
     const txE = await positionManager.liquidate(erin)
     assert.isTrue(txE.receipt.status)
-    assert.isFalse(await sortedPositions.contains(erin))
+    assert.isFalse((await positionManager.sortedPositionsNodes(erin))[0])
 
     /* Expected ETH rewards:
      Carol = 1992.01/1996 * 1996*0.995 = 1982.05 ETH
@@ -636,7 +634,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Dennis
     const txD = await positionManager.liquidate(dennis)
     assert.isTrue(txD.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -679,10 +677,10 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
 
-    // Liquidate Erin
+    // Liquidate erin
     const txE = await positionManager.liquidate(erin)
     assert.isTrue(txE.receipt.status)
-    assert.isFalse(await sortedPositions.contains(erin))
+    assert.isFalse((await positionManager.sortedPositionsNodes(erin))[0])
 
     /* Expected ETH rewards:
      Carol = 1992.01/1998 * 1998*0.995 = 1982.04995 ETH
@@ -745,7 +743,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Carol
     const txC = await positionManager.liquidate(carol)
     assert.isTrue(txC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(carol))
+    assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -763,7 +761,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Alice
     const txA = await positionManager.liquidate(alice)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(alice))
+    assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
     // Expect Bob now holds all Ether and rDebt in the system: 2.5 Ether and 300 R
     // 1 + 0.995/2 - 0.5 + 1.4975*0.995
@@ -799,7 +797,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Carol
     const txC = await positionManager.liquidate(carol)
     assert.isTrue(txC.receipt.status)
-    assert.isFalse(await sortedPositions.contains(carol))
+    assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -817,7 +815,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate D
     const txA = await positionManager.liquidate(dennis)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     /* Bob rewards:
      L1: 0.4975 ETH, 55 R
@@ -889,7 +887,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Dennis
     const txD = await positionManager.liquidate(dennis)
     assert.isTrue(txD.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -925,10 +923,10 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
 
-    // Liquidate Erin
+    // Liquidate erin
     const txE = await positionManager.liquidate(erin)
     assert.isTrue(txE.receipt.status)
-    assert.isFalse(await sortedPositions.contains(erin))
+    assert.isFalse((await positionManager.sortedPositionsNodes(erin))[0])
 
     /* Expected ETH rewards:
      Carol = 1990.01/1994 * 1994*0.995 = 1980.05995 ETH
@@ -993,7 +991,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate Dennis
     const txD = await positionManager.liquidate(dennis)
     assert.isTrue(txD.receipt.status)
-    assert.isFalse(await sortedPositions.contains(dennis))
+    assert.isFalse((await positionManager.sortedPositionsNodes(dennis))[0])
 
     // Price bounces back to 200 $/E
     await priceFeed.setPrice(dec(200, 18))
@@ -1049,10 +1047,10 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
 
-    // Liquidate Erin
+    // Liquidate erin
     const txE = await positionManager.liquidate(erin)
     assert.isTrue(txE.receipt.status)
-    assert.isFalse(await sortedPositions.contains(erin))
+    assert.isFalse((await positionManager.sortedPositionsNodes(erin))[0])
 
     /* Expected ETH rewards:
      Carol = 1990.51/1993.5 * 1993.5*0.995 = 1980.55745 ETH
@@ -1114,7 +1112,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate A
     const txA = await positionManager.liquidate(alice)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(alice))
+    assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
     // Check rewards for B and C
     const B_pendingRewardsAfterL1 = th.applyLiquidationFee(A_coll).mul(B_coll).div(B_coll.add(C_coll))
@@ -1151,7 +1149,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate B
     const txB = await positionManager.liquidate(bob)
     assert.isTrue(txB.receipt.status)
-    assert.isFalse(await sortedPositions.contains(bob))
+    assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
     // Check rewards for C and D
     const C_pendingRewardsAfterL2 = C_collAfterL1.mul(th.applyLiquidationFee(B_collAfterL1)).div(C_collAfterL1.add(D_coll))
@@ -1183,7 +1181,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate F
     const txF = await positionManager.liquidate(freddy)
     assert.isTrue(txF.receipt.status)
-    assert.isFalse(await sortedPositions.contains(freddy))
+    assert.isFalse((await positionManager.sortedPositionsNodes(freddy))[0])
 
     // Grab remaining positions' collateral
     const carol_rawColl = (await positionManager.positions(carol))[1].toString()
@@ -1244,7 +1242,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate A
     const txA = await positionManager.liquidate(alice)
     assert.isTrue(txA.receipt.status)
-    assert.isFalse(await sortedPositions.contains(alice))
+    assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
     // Check rewards for B and C
     const B_pendingRewardsAfterL1 = th.applyLiquidationFee(A_coll).mul(B_coll).div(B_coll.add(C_coll))
@@ -1282,7 +1280,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate B
     const txB = await positionManager.liquidate(bob)
     assert.isTrue(txB.receipt.status)
-    assert.isFalse(await sortedPositions.contains(bob))
+    assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
     // Check rewards for C and D
     const C_pendingRewardsAfterL2 = C_collAfterL1.mul(th.applyLiquidationFee(B_collAfterL1)).div(C_collAfterL1.add(D_coll))
@@ -1322,7 +1320,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Liquidate F
     const txF = await positionManager.liquidate(freddy)
     assert.isTrue(txF.receipt.status)
-    assert.isFalse(await sortedPositions.contains(freddy))
+    assert.isFalse((await positionManager.sortedPositionsNodes(freddy))[0])
 
     // Grab remaining positions' collateral
     const carol_rawColl = (await positionManager.positions(carol))[1].toString()

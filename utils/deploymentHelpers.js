@@ -1,4 +1,3 @@
-const SortedPositions = artifacts.require("./SortedPositions.sol")
 const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
@@ -31,17 +30,14 @@ class DeploymentHelper {
     const priceFeedTestnet = await PriceFeedTestnet.new({ from: feeRecipient })
     const wstETHTokenMock = await WstETHTokenMock.new({ from: feeRecipient })
     const positionManager = await PositionManagerTester.new(priceFeedTestnet.address, wstETHTokenMock.address, maxBytes32, { from: feeRecipient })
-    const sortedPositions = await SortedPositions.at(await positionManager.sortedPositions())
     const rToken = await RTokenTester.at(await positionManager.rToken(), feeRecipient)
     RTokenTester.setAsDeployed(rToken)
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
-    SortedPositions.setAsDeployed(sortedPositions)
     PositionManagerTester.setAsDeployed(positionManager)
 
     const coreContracts = {
       priceFeedTestnet,
       rToken,
-      sortedPositions,
       positionManager,
       wstETHTokenMock
     }
@@ -70,7 +66,6 @@ class DeploymentHelper {
 
     // Contract without testers (yet)
     testerContracts.priceFeedTestnet = await PriceFeedTestnet.new()
-    testerContracts.sortedPositions = await SortedPositions.new()
     testerContracts.wstETHTokenMock = await WstETHTokenMock.new();
     // Actual tester contracts
     testerContracts.math = await LiquityMathTester.new()
@@ -83,7 +78,6 @@ class DeploymentHelper {
 
   static async deployLiquityCoreTruffle() {
     const priceFeedTestnet = await PriceFeedTestnet.new()
-    const sortedPositions = await SortedPositions.new()
     const positionManager = await PositionManager.new()
     const rToken = await RToken.new(
       positionManager.address
@@ -91,7 +85,6 @@ class DeploymentHelper {
     const coreContracts = {
       priceFeedTestnet,
       rToken,
-      sortedPositions,
       positionManager
     }
     return coreContracts

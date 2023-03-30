@@ -5,7 +5,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
 
   let priceFeed
   let rToken
-  let sortedPositions
   let positionManager
   let feeRecipient
 
@@ -14,7 +13,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
 
     priceFeed = coreContracts.priceFeedTestnet
     rToken = coreContracts.rToken
-    sortedPositions = coreContracts.sortedPositions
     positionManager = coreContracts.positionManager
     feeRecipient = owner
   })
@@ -33,14 +31,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     const recordedClvTokenAddress = await positionManager.rToken()
 
     assert.equal(rTokenAddress, recordedClvTokenAddress)
-  })
-
-  it('Sets the correct SortedPositions address in PositionManager', async () => {
-    const sortedPositionsAddress = sortedPositions.address
-
-    const recordedSortedPositionsAddress = await positionManager.sortedPositions()
-
-    assert.equal(sortedPositionsAddress, recordedSortedPositionsAddress)
   })
 
   // Fee recipient in PositionM

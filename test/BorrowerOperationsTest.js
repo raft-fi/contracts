@@ -28,7 +28,6 @@ contract('BorrowerOperations', async accounts => {
 
   let priceFeed
   let rToken
-  let sortedPositions
   let positionManager
   let wstETHTokenMock
 
@@ -54,7 +53,6 @@ contract('BorrowerOperations', async accounts => {
       priceFeed = contracts.priceFeedTestnet
       wstETHTokenMock = contracts.wstETHTokenMock
       rToken = contracts.rToken
-      sortedPositions = contracts.sortedPositions
       positionManager = contracts.positionManager
 
       R_GAS_COMPENSATION = await positionManager.R_GAS_COMPENSATION()
@@ -127,8 +125,8 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // check Alice is in list before
-      const alicePositionInList_Before = await sortedPositions.contains(alice)
-      const listIsEmpty_Before = await sortedPositions.isEmpty()
+      const alicePositionInList_Before = (await positionManager.sortedPositionsNodes(alice))[0]
+      const listIsEmpty_Before = (await positionManager.sortedPositions())[3] = 0
       assert.equal(alicePositionInList_Before, true)
       assert.equal(listIsEmpty_Before, false)
 
@@ -136,8 +134,8 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.addColl(alice, alice, dec(1, 'ether'), { from: alice })
 
       // check Alice is still in list after
-      const alicePositionInList_After = await sortedPositions.contains(alice)
-      const listIsEmpty_After = await sortedPositions.isEmpty()
+      const alicePositionInList_After = (await positionManager.sortedPositionsNodes(alice))[0]
+      const listIsEmpty_After = (await positionManager.sortedPositions())[3] == 0
       assert.equal(alicePositionInList_After, true)
       assert.equal(listIsEmpty_After, false)
     })
@@ -182,7 +180,7 @@ contract('BorrowerOperations', async accounts => {
 
       await priceFeed.setPrice(DEFAULT_PRICE);
 
-      assert.isFalse(await sortedPositions.contains(carol))
+      assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
       const L_CollateralBalance = await positionManager.L_CollateralBalance()
       const L_RDebt = await positionManager.L_RDebt()
@@ -307,7 +305,7 @@ contract('BorrowerOperations', async accounts => {
       // Bob gets liquidated
       await positionManager.liquidate(bob)
 
-      assert.isFalse(await sortedPositions.contains(bob))
+      assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
       // Bob attempts to add collateral to his closed position
       try {
@@ -427,7 +425,7 @@ contract('BorrowerOperations', async accounts => {
       const alice_Position_Before = await positionManager.positions(alice)
       const status_Before = alice_Position_Before[3]
       assert.equal(status_Before, 1)
-      assert.isTrue(await sortedPositions.contains(alice))
+      assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // Alice attempts to withdraw all collateral
       await assertRevert(
@@ -444,7 +442,7 @@ contract('BorrowerOperations', async accounts => {
       const alice_Position_Before = await positionManager.positions(alice)
       const status_Before = alice_Position_Before[3]
       assert.equal(status_Before, 1)
-      assert.isTrue(await sortedPositions.contains(alice))
+      assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // Withdraw some collateral
       await positionManager.withdrawColl(dec(100, 'finney'), alice, alice, { from: alice })
@@ -453,7 +451,7 @@ contract('BorrowerOperations', async accounts => {
       const alice_Position_After = await positionManager.positions(alice)
       const status_After = alice_Position_After[3]
       assert.equal(status_After, 1)
-      assert.isTrue(await sortedPositions.contains(alice))
+      assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
     })
 
     it("withdrawColl(): reduces the Position's collateral by the correct amount", async () => {
@@ -1948,7 +1946,7 @@ contract('BorrowerOperations', async accounts => {
       const aliceColl = await getPositionEntireColl(alice)
       const aliceDebt = await getPositionEntireColl(alice)
       const status_Before = (await positionManager.positions(alice))[3]
-      const isInSortedList_Before = await sortedPositions.contains(alice)
+      const isInSortedList_Before = (await positionManager.sortedPositionsNodes(alice))[0]
 
       assert.equal(status_Before, 1)  // 1: Active
       assert.isTrue(isInSortedList_Before)
@@ -2115,7 +2113,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Liquidate Bob
       await positionManager.liquidate(bob)
-      assert.isFalse(await sortedPositions.contains(bob))
+      assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
       // Price bounces back
       await priceFeed.setPrice(dec(200, 18))
@@ -2135,7 +2133,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Liquidate Carol
       await positionManager.liquidate(carol)
-      assert.isFalse(await sortedPositions.contains(carol))
+      assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
       // Get Alice's pending reward snapshots after Carol's liquidation. Check above 0
       const L_ETH_Snapshot_A_AfterLiquidation = (await positionManager.rewardSnapshots(alice))[0]
@@ -2170,7 +2168,7 @@ contract('BorrowerOperations', async accounts => {
       const status_Before = alice_Position_Before[3]
 
       assert.equal(status_Before, 1)
-      assert.isTrue(await sortedPositions.contains(alice))
+      assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // to compensate borrowing fees
       await rToken.transfer(alice, await rToken.balanceOf(dennis), { from: dennis })
@@ -2182,7 +2180,7 @@ contract('BorrowerOperations', async accounts => {
       const status_After = alice_Position_After[3]
 
       assert.equal(status_After, 2)
-      assert.isFalse(await sortedPositions.contains(alice))
+      assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
     })
 
     it("closePosition(): reduces position manager's raw ether raw ether by correct amount", async () => {
@@ -2442,12 +2440,12 @@ contract('BorrowerOperations', async accounts => {
       await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: A})
       const txA = await positionManager.openPosition(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN(1))), A, A, dec(100, 30), { from: A })
       assert.isTrue(txA.receipt.status)
-      assert.isTrue(await sortedPositions.contains(A))
+      assert.isTrue((await positionManager.sortedPositionsNodes(A))[0])
 
       await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: C})
       const txC = await positionManager.openPosition(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN(dec(47789898, 22)))), A, A, dec(100, 30), { from: C })
       assert.isTrue(txC.receipt.status)
-      assert.isTrue(await sortedPositions.contains(C))
+      assert.isTrue((await positionManager.sortedPositionsNodes(C))[0])
     })
 
     it("openPosition(): reverts if net debt < minimum net debt", async () => {
@@ -2926,16 +2924,16 @@ contract('BorrowerOperations', async accounts => {
 
     it("openPosition(): inserts Position to Sorted Positions list", async () => {
       // Check before
-      const alicePositionInList_Before = await sortedPositions.contains(alice)
-      const listIsEmpty_Before = await sortedPositions.isEmpty()
+      const alicePositionInList_Before = (await positionManager.sortedPositionsNodes(alice))[0]
+      const listIsEmpty_Before = (await positionManager.sortedPositions())[3] == 0
       assert.equal(alicePositionInList_Before, false)
       assert.equal(listIsEmpty_Before, true)
 
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // check after
-      const alicePositionInList_After = await sortedPositions.contains(alice)
-      const listIsEmpty_After = await sortedPositions.isEmpty()
+      const alicePositionInList_After = (await positionManager.sortedPositionsNodes(alice))[0]
+      const listIsEmpty_After = (await positionManager.sortedPositions())[3] == 0
       assert.equal(alicePositionInList_After, true)
       assert.equal(listIsEmpty_After, false)
     })
@@ -2999,7 +2997,7 @@ contract('BorrowerOperations', async accounts => {
       const alice_Position_1 = await positionManager.positions(alice)
       const status_1 = alice_Position_1[3]
       assert.equal(status_1, 1)
-      assert.isTrue(await sortedPositions.contains(alice))
+      assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // to compensate borrowing fees
       await rToken.transfer(alice, dec(10000, 18), { from: whale })
@@ -3011,7 +3009,7 @@ contract('BorrowerOperations', async accounts => {
       const alice_Position_2 = await positionManager.positions(alice)
       const status_2 = alice_Position_2[3]
       assert.equal(status_2, 2)
-      assert.isFalse(await sortedPositions.contains(alice))
+      assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
       // Re-open Position
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
@@ -3020,7 +3018,7 @@ contract('BorrowerOperations', async accounts => {
       const alice_Position_3 = await positionManager.positions(alice)
       const status_3 = alice_Position_3[3]
       assert.equal(status_3, 1)
-      assert.isTrue(await sortedPositions.contains(alice))
+      assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
     })
 
     it("openPosition(): increases the Position's R debt by the correct amount", async () => {
