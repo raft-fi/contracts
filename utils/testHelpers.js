@@ -212,55 +212,6 @@ class TestHelper {
     )
   }
 
-  static async logActiveAccounts(contracts, n) {
-    const count = await contracts.sortedPositions.getSize()
-    const price = await contracts.priceFeedTestnet.getPrice()
-
-    n = (typeof n == 'undefined') ? count : n
-
-    let account = await contracts.sortedPositions.getLast()
-    const head = await contracts.sortedPositions.getFirst()
-
-    console.log(`Total active accounts: ${count}`)
-    console.log(`First ${n} accounts, in ascending ICR order:`)
-
-    let i = 0
-    while (i < n) {
-      const squeezedAddr = this.squeezeAddr(account)
-      const coll = (await contracts.positionManager.positions(account))[1]
-      const debt = (await contracts.positionManager.positions(account))[0]
-      const ICR = await contracts.positionManager.getCurrentICR(account, price)
-
-      console.log(`Acct: ${squeezedAddr}  coll:${coll}  debt: ${debt}  ICR: ${ICR}`)
-
-      if (account == head) { break; }
-
-      account = await contracts.sortedPositions.getPrev(account)
-
-      i++
-    }
-  }
-
-  static async logAccountsArray(accounts, positionManager, price, n) {
-    const length = accounts.length
-
-    n = (typeof n == 'undefined') ? length : n
-
-    console.log(`Number of accounts in array: ${length}`)
-    console.log(`First ${n} accounts of array:`)
-
-    for (let i = 0; i < accounts.length; i++) {
-      const account = accounts[i]
-
-      const squeezedAddr = this.squeezeAddr(account)
-      const coll = (await positionManager.positions(account))[1]
-      const debt = (await positionManager.positions(account))[0]
-      const ICR = await positionManager.getCurrentICR(account, price)
-
-      console.log(`Acct: ${squeezedAddr}  coll:${coll}  debt: ${debt}  ICR: ${ICR}`)
-    }
-  }
-
   static logBN(label, x) {
     x = x.toString().padStart(18, '0')
     // TODO: thousand separators

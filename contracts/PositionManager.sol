@@ -5,13 +5,13 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/IPositionManager.sol";
 import "./Interfaces/IRToken.sol";
-import "./Interfaces/ISortedPositions.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./FeeCollector.sol";
 import "./SortedPositions.sol";
 import "./RToken.sol";
 
 contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
+    using SortedPositions for SortedPositions.Data;
     string constant public NAME = "PositionManager";
 
     // --- Connected contract declarations ---
@@ -20,7 +20,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     IRToken public immutable override rToken;
 
     // A doubly linked list of Positions, sorted by their sorted by their collateral ratios
-    ISortedPositions immutable public sortedPositions;
+    SortedPositions.Data public override sortedPositions;
 
     // --- Pools ---
 
@@ -177,7 +177,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     struct ContractsCache {
         IRToken rToken;
-        ISortedPositions sortedPositions;
         address feeRecipient;
     }
     // --- Variable container structs for redemptions ---
@@ -234,11 +233,11 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         priceFeed = _priceFeed;
         collateralToken = _collateralToken;
         rToken = new RToken(this, msg.sender);
-        sortedPositions = new SortedPositions(_positionsSize, this);
+        sortedPositions.maxSize = _positionsSize;
 
         deploymentStartTime = block.timestamp;
 
-        emit PositionManagerDeployed(_priceFeed, _collateralToken, rToken, sortedPositions, msg.sender);
+        emit PositionManagerDeployed(_priceFeed, _collateralToken, rToken, msg.sender);
     }
 
     // --- Getters ---
@@ -267,7 +266,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     {
         ContractsCache memory contractsCache = ContractsCache(
             rToken,
-            ISortedPositions(address(0)),
             address(0)
         );
         LocalVariables_openPosition memory vars;
@@ -297,7 +295,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         _updatePositionRewardSnapshots(msg.sender);
         vars.stake = _updateStakeAndTotalStakes(msg.sender);
 
-        sortedPositions.insert(msg.sender, vars.NICR, _upperHint, _lowerHint);
+        sortedPositions.insert(this, msg.sender, vars.NICR, _upperHint, _lowerHint);
         vars.arrayIndex = _addPositionOwnerToArray(msg.sender);
         emit PositionCreated(msg.sender, vars.arrayIndex);
 
@@ -359,7 +357,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     {
         ContractsCache memory contractsCache = ContractsCache(
             rToken,
-            ISortedPositions(address(0)),
             address(0)
         );
         LocalVariables_adjustPosition memory vars;
@@ -411,7 +408,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
         // Re-insert position in to the sorted list
         vars.newNICR = _getNewNominalICRFromPositionChange(vars.coll, vars.debt, vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease);
-        sortedPositions.reInsert(msg.sender, vars.newNICR, _upperHint, _lowerHint);
+        sortedPositions.reInsert(this, msg.sender, vars.newNICR, _upperHint, _lowerHint);
 
         emit PositionUpdated(msg.sender, positions[msg.sender].debt, positions[msg.sender].coll, vars.stake, PositionManagerOperation.adjustPosition);
         emit RBorrowingFeePaid(msg.sender, vars.rFee);
@@ -544,10 +541,9 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     {
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
-        ISortedPositions sortedPositionsCached = sortedPositions;
 
         for (vars.i = 0; vars.i < _n; vars.i++) {
-            vars.user = sortedPositionsCached.getLast();
+            vars.user = sortedPositions.last;
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
@@ -705,7 +701,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
                 return singleRedemption;
             }
 
-            _contractsCache.sortedPositions.reInsert(_borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
+            sortedPositions.reInsert(this, _borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
 
             positions[_borrower].debt = newDebt;
             positions[_borrower].coll = newColl;
@@ -736,15 +732,15 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         collateralToken.transfer(_borrower, _collateral);
     }
 
-    function _isValidFirstRedemptionHint(ISortedPositions _sortedPositions, address _firstRedemptionHint, uint _price) internal view returns (bool) {
+    function _isValidFirstRedemptionHint(address _firstRedemptionHint, uint _price) internal view returns (bool) {
         if (_firstRedemptionHint == address(0) ||
-            !_sortedPositions.contains(_firstRedemptionHint) ||
+            !sortedPositions.nodes[_firstRedemptionHint].exists ||
             getCurrentICR(_firstRedemptionHint, _price) < MCR
         ) {
             return false;
         }
 
-        address nextPosition = _sortedPositions.getNext(_firstRedemptionHint);
+        address nextPosition = sortedPositions.nodes[_firstRedemptionHint].nextId;
         return nextPosition == address(0) || getCurrentICR(nextPosition, _price) < MCR;
     }
 
@@ -790,7 +786,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
         ContractsCache memory contractsCache = ContractsCache(
             rToken,
-            sortedPositions,
             feeRecipient
         );
         RedemptionTotals memory totals;
@@ -806,13 +801,13 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         totals.remainingR = _rAmount;
         address currentBorrower;
 
-        if (_isValidFirstRedemptionHint(contractsCache.sortedPositions, _firstRedemptionHint, totals.price)) {
+        if (_isValidFirstRedemptionHint(_firstRedemptionHint, totals.price)) {
             currentBorrower = _firstRedemptionHint;
         } else {
-            currentBorrower = contractsCache.sortedPositions.getLast();
+            currentBorrower = sortedPositions.last;
             // Find the first position with ICR >= MCR
             while (currentBorrower != address(0) && getCurrentICR(currentBorrower, totals.price) < MCR) {
-                currentBorrower = contractsCache.sortedPositions.getPrev(currentBorrower);
+                currentBorrower = sortedPositions.nodes[currentBorrower].prevId;
             }
         }
 
@@ -821,7 +816,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         while (currentBorrower != address(0) && totals.remainingR > 0 && _maxIterations > 0) {
             _maxIterations--;
             // Save the address of the Position preceding the current one, before potentially modifying the list
-            address nextUserToCheck = contractsCache.sortedPositions.getPrev(currentBorrower);
+            address nextUserToCheck = sortedPositions.nodes[currentBorrower].prevId;
 
             _applyPendingRewards(currentBorrower);
 
@@ -1258,7 +1253,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     }
 
     function _requireMoreThanOnePositionInSystem(uint positionOwnersArrayLength) internal view {
-        if (positionOwnersArrayLength <= 1 || sortedPositions.getSize() <= 1) {
+        if (positionOwnersArrayLength <= 1 || sortedPositions.size <= 1) {
             revert PositionManagerOnlyOnePositionInSystem();
         }
     }
@@ -1397,5 +1392,9 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     function getCompositeDebt(uint _debt) external pure override returns (uint) {
         return _getCompositeDebt(_debt);
+    }
+
+    function sortedPositionsNodes(address _id) external view override returns(bool exists, address nextId, address prevId) {
+        return (sortedPositions.nodes[_id].exists, sortedPositions.nodes[_id].nextId, sortedPositions.nodes[_id].prevId);
     }
 }
