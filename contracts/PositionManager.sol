@@ -133,17 +133,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     }
     // --- Variable container structs for redemptions ---
 
-    struct RedemptionTotals {
-        uint remainingR;
-        uint totalRToRedeem;
-        uint totalCollateralTokenDrawn;
-        uint collateralTokenFee;
-        uint collateralTokenToSendToRedeemer;
-        uint decayedBaseRate;
-        uint price;
-        uint totalRSupplyAtStart;
-    }
-
     struct SingleRedemptionValues {
         uint rLot;
         uint collateralTokenLot;
@@ -675,33 +664,28 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > DECIMAL_PRECISION) {
             revert PositionManagerMaxFeePercentageOutOfRange();
         }
-        
-        RedemptionTotals memory totals;
-
-        totals.price = priceFeed.fetchPrice();
         _requireAmountGreaterThanZero(_rAmount);
         _requireRBalanceCoversRedemption(rToken, msg.sender, _rAmount);
 
-        totals.totalRSupplyAtStart = rToken.totalSupply();
-        // Confirm redeemer's balance is less than total R supply
-        assert(rToken.balanceOf(msg.sender) <= totals.totalRSupplyAtStart);
-
-        totals.remainingR = _rAmount;
         address currentBorrower;
 
-        if (_isValidFirstRedemptionHint(_firstRedemptionHint, totals.price)) {
+        uint256 price = priceFeed.fetchPrice();
+        if (_isValidFirstRedemptionHint(_firstRedemptionHint, price)) {
             currentBorrower = _firstRedemptionHint;
         } else {
             currentBorrower = sortedPositions.last;
             // Find the first position with ICR >= MCR
-            while (currentBorrower != address(0) && getCurrentICR(currentBorrower, totals.price) < MCR) {
+            while (currentBorrower != address(0) && getCurrentICR(currentBorrower, price) < MCR) {
                 currentBorrower = sortedPositions.nodes[currentBorrower].prevId;
             }
         }
 
+        uint256 remainingR = _rAmount;
+        uint256 totalRToRedeem;
+        uint256 totalCollateralTokenDrawn;
         // Loop through the Positions starting from the one with lowest collateral ratio until _amount of R is exchanged for collateral
         if (_maxIterations == 0) { _maxIterations = type(uint256).max; }
-        while (currentBorrower != address(0) && totals.remainingR > 0 && _maxIterations > 0) {
+        while (currentBorrower != address(0) && remainingR > 0 && _maxIterations > 0) {
             _maxIterations--;
             // Save the address of the Position preceding the current one, before potentially modifying the list
             address nextUserToCheck = sortedPositions.nodes[currentBorrower].prevId;
@@ -710,8 +694,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
             SingleRedemptionValues memory singleRedemption = _redeemCollateralFromPosition(
                 currentBorrower,
-                totals.remainingR,
-                totals.price,
+                remainingR,
+                price,
                 _upperPartialRedemptionHint,
                 _lowerPartialRedemptionHint,
                 _partialRedemptionHintNICR
@@ -719,40 +703,39 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
             if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Position
 
-            totals.totalRToRedeem += singleRedemption.rLot;
-            totals.totalCollateralTokenDrawn += singleRedemption.collateralTokenLot;
+            totalRToRedeem += singleRedemption.rLot;
+            totalCollateralTokenDrawn += singleRedemption.collateralTokenLot;
 
-            totals.remainingR -= singleRedemption.rLot;
+            remainingR -= singleRedemption.rLot;
             currentBorrower = nextUserToCheck;
         }
 
-        if (totals.totalCollateralTokenDrawn == 0) {
+        if (totalCollateralTokenDrawn == 0) {
             revert UnableToRedeemAnyAmount();
         }
 
         // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
         // Use the saved total R supply value, from before it was reduced by the redemption.
-        _updateBaseRateFromRedemption(totals.totalCollateralTokenDrawn, totals.price, totals.totalRSupplyAtStart);
+        _updateBaseRateFromRedemption(totalCollateralTokenDrawn, price, rToken.totalSupply());
 
         // Calculate the collateralToken fee
-        totals.collateralTokenFee = _getRedemptionFee(totals.totalCollateralTokenDrawn);
+        uint256 collateralTokenFee = _getRedemptionFee(totalCollateralTokenDrawn);
 
-        _requireUserAcceptsFee(totals.collateralTokenFee, totals.totalCollateralTokenDrawn, _maxFeePercentage);
+        _requireUserAcceptsFee(collateralTokenFee, totalCollateralTokenDrawn, _maxFeePercentage);
 
         // Send the collateralToken fee to the recipient
-        _activePoolCollateralBalance -= totals.collateralTokenFee;
-        collateralToken.transfer(feeRecipient, totals.collateralTokenFee);
+        _activePoolCollateralBalance -= collateralTokenFee;
+        collateralToken.transfer(feeRecipient, collateralTokenFee);
 
-        totals.collateralTokenToSendToRedeemer = totals.totalCollateralTokenDrawn - totals.collateralTokenFee;
-
-        emit Redemption(_rAmount, totals.totalRToRedeem, totals.totalCollateralTokenDrawn, totals.collateralTokenFee);
+        emit Redemption(_rAmount, totalRToRedeem, totalCollateralTokenDrawn, collateralTokenFee);
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateralToken to msg.sender
-        rToken.burn(msg.sender, totals.totalRToRedeem);
+        rToken.burn(msg.sender, totalRToRedeem);
 
         // Send collateralToken to account
-        _activePoolCollateralBalance -= totals.collateralTokenToSendToRedeemer;
-        collateralToken.transfer(msg.sender, totals.collateralTokenToSendToRedeemer);
+        uint256 collateralTokenToSendToRedeemer = totalCollateralTokenDrawn - collateralTokenFee;
+        _activePoolCollateralBalance -= collateralTokenToSendToRedeemer;
+        collateralToken.transfer(msg.sender, collateralTokenToSendToRedeemer);
     }
 
     // --- Helper functions ---
