@@ -16,7 +16,6 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     rToken = coreContracts.rToken
     sortedPositions = coreContracts.sortedPositions
     positionManager = coreContracts.positionManager
-    functionCaller = coreContracts.functionCaller
     feeRecipient = owner
 
     await deploymentHelper.connectCoreContracts(coreContracts, feeRecipient)

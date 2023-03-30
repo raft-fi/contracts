@@ -62,7 +62,6 @@ contract('BorrowerOperations', async accounts => {
       rToken = contracts.rToken
       sortedPositions = contracts.sortedPositions
       positionManager = contracts.positionManager
-      hintHelpers = contracts.hintHelpers
 
       R_GAS_COMPENSATION = await positionManager.R_GAS_COMPENSATION()
       MIN_NET_DEBT = await positionManager.MIN_NET_DEBT()

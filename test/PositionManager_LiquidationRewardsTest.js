@@ -22,7 +22,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
   let sortedPositions
   let positionManager
   let nameRegistry
-  let functionCaller
 
   let contracts
 
@@ -41,7 +40,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
     nameRegistry = contracts.nameRegistry
-    functionCaller = contracts.functionCaller
     wstETHTokenMock = contracts.wstETHTokenMock
 
     await deploymentHelper.connectCoreContracts(contracts, owner)
