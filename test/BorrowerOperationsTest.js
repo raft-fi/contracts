@@ -126,7 +126,7 @@ contract('BorrowerOperations', async accounts => {
 
       // check Alice is in list before
       const alicePositionInList_Before = (await positionManager.sortedPositionsNodes(alice))[0]
-      const listIsEmpty_Before = (await positionManager.sortedPositions())[3] = 0
+      const listIsEmpty_Before = (await positionManager.sortedPositions())[3] == 0
       assert.equal(alicePositionInList_Before, true)
       assert.equal(listIsEmpty_Before, false)
 
