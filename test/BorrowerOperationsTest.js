@@ -2894,16 +2894,6 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(status_After, 1)
     })
 
-    it("openPosition(): adds Position owner to PositionOwners array", async () => {
-      const PositionOwnersCount_Before = (await positionManager.getPositionOwnersCount()).toString();
-      assert.equal(PositionOwnersCount_Before, '0')
-
-      await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-
-      const PositionOwnersCount_After = (await positionManager.getPositionOwnersCount()).toString();
-      assert.equal(PositionOwnersCount_After, '1')
-    })
-
     it("openPosition(): creates a stake and adds it to total stakes", async () => {
       const aliceStakeBefore = await getPositionStake(alice)
       const totalStakesBefore = await positionManager.totalStakes()

@@ -101,8 +101,7 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
     event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
     event LTermsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
     event PositionSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
-    event PositionIndexUpdated(address _borrower, uint _newIndex);
-    event PositionCreated(address indexed _borrower, uint arrayIndex);
+    event PositionCreated(address indexed _borrower);
     event RBorrowingFeePaid(address indexed _borrower, uint _rFee);
 
     // --- Functions ---
@@ -113,15 +112,11 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
 
     function positions(
         address _borrower
-    ) external view returns (uint debt, uint coll, uint stake, PositionStatus status, uint128 arrayIndex);
+    ) external view returns (uint debt, uint coll, uint stake, PositionStatus status);
 
     function sortedPositions() external view returns (address first, address last, uint256 maxSize, uint256 size);
 
     function sortedPositionsNodes(address _id) external view returns(bool exists, address nextId, address prevId);
-
-    function getPositionOwnersCount() external view returns (uint);
-
-    function getPositionFromPositionOwnersArray(uint _index) external view returns (address);
 
     function getNominalICR(address _borrower) external view returns (uint);
     function getCurrentICR(address _borrower, uint _price) external view returns (uint);

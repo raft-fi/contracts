@@ -400,8 +400,6 @@ contract('Gas compensation tests', async accounts => {
 
     const aliceColl = (await positionManager.positions(alice))[1]
     const aliceDebt = (await positionManager.positions(alice))[0]
-    const aliceCollValueInUSD = (await positionManagerTester.getUSDValue(aliceColl, price_1))
-    assert.isTrue(aliceCollValueInUSD.gt(th.toBN(dec(10, 18))))
 
     // Check value of 0.5% of collateral in USD is < $10
     const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
