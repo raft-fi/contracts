@@ -38,20 +38,12 @@ contract PositionManagerTester is PositionManager {
         return baseRate;
     }
 
-    function minutesPassedSinceLastFeeOp() external view returns (uint) {
-        return _minutesPassedSinceLastFeeOp();
-    }
-
     function setLastFeeOpTimeToNow() external {
         lastFeeOperationTime = block.timestamp;
     }
 
     function setBaseRate(uint _baseRate) external {
         baseRate = _baseRate;
-    }
-
-    function callGetRedemptionFee(uint _ETHDrawn) external view returns (uint) {
-        return _getRedemptionFee(_ETHDrawn);
     }
 
     function getActualDebtFromComposite(uint _debtVal) external pure returns (uint) {

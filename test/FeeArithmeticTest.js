@@ -339,28 +339,6 @@ contract('Fee arithmetic tests', async accounts => {
     positionManagerTester = contracts.positionManager
   })
 
-  it("minutesPassedSinceLastFeeOp(): returns minutes passed for no time increase", async () => {
-    await positionManagerTester.setLastFeeOpTimeToNow()
-    const minutesPassed = await positionManagerTester.minutesPassedSinceLastFeeOp()
-
-    assert.equal(minutesPassed, '0')
-  })
-
-  it("minutesPassedSinceLastFeeOp(): returns minutes passed between time of last fee operation and current block.timestamp, rounded down to nearest minutes", async () => {
-    for (testPair of secondsToMinutesRoundedDown) {
-      await positionManagerTester.setLastFeeOpTimeToNow()
-
-      const seconds = testPair[0]
-      const expectedHoursPassed = testPair[1]
-
-      await th.fastForwardTime(seconds, web3.currentProvider)
-
-      const minutesPassed = await positionManagerTester.minutesPassedSinceLastFeeOp()
-
-      assert.equal(expectedHoursPassed.toString(), minutesPassed.toString())
-    }
-  })
-
   it("decayBaseRateFromBorrowing(): returns the initial base rate for no time increase", async () => {
     await positionManagerTester.setBaseRate(dec(5, 17))
     await positionManagerTester.setLastFeeOpTimeToNow()

@@ -306,7 +306,9 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         if (!_isDebtIncrease && _rChange > 0) {
             _requireAtLeastMinNetDebt(_getNetDebt(vars.debt) - vars.netDebtChange);
             _requireValidRRepayment(vars.debt, vars.netDebtChange);
-            _requireSufficientRBalance(rToken, msg.sender, vars.netDebtChange);
+            if (rToken.balanceOf(msg.sender) < vars.netDebtChange) {
+                revert RepayNotEnoughR();
+            }
         }
 
         positions[msg.sender].coll = vars.isCollIncrease ? vars.coll + vars.collChange : vars.coll - vars.collChange;
@@ -330,7 +332,9 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint coll = positions[msg.sender].coll;
         uint debt = positions[msg.sender].debt;
 
-        _requireSufficientRBalance(rToken, msg.sender, debt - R_GAS_COMPENSATION);
+        if (rToken.balanceOf(msg.sender) < debt - R_GAS_COMPENSATION) {
+            revert RepayNotEnoughR();
+        }
 
         _removeStake(msg.sender);
         _closePosition(msg.sender, PositionStatus.closedByOwner);
@@ -635,8 +639,12 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > DECIMAL_PRECISION) {
             revert PositionManagerMaxFeePercentageOutOfRange();
         }
-        _requireAmountGreaterThanZero(_rAmount);
-        _requireRBalanceCoversRedemption(rToken, msg.sender, _rAmount);
+        if (_rAmount == 0) {
+            revert PositionManagerAmountIsZero();
+        }
+        if (rToken.balanceOf(msg.sender) < _rAmount) {
+            revert PositionManagerRedemptionAmountExceedsBalance();
+        }
 
         address currentBorrower;
 
@@ -690,7 +698,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         _updateBaseRateFromRedemption(totalCollateralTokenDrawn, price, rToken.totalSupply());
 
         // Calculate the collateralToken fee
-        uint256 collateralTokenFee = _getRedemptionFee(totalCollateralTokenDrawn);
+        uint256 collateralTokenFee = _calcRedemptionFee(getRedemptionRate(), totalCollateralTokenDrawn);
 
         _requireUserAcceptsFee(collateralTokenFee, totalCollateralTokenDrawn, _maxFeePercentage);
 
@@ -955,10 +963,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         );
     }
 
-    function _getRedemptionFee(uint _collateralDrawn) internal view returns (uint) {
-        return _calcRedemptionFee(getRedemptionRate(), _collateralDrawn);
-    }
-
     function getRedemptionFeeWithDecay(uint _collateralDrawn) external view override returns (uint) {
         return _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
     }
@@ -1032,14 +1036,10 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     }
 
     function _calcDecayedBaseRate() internal view returns (uint) {
-        uint minutesPassed = _minutesPassedSinceLastFeeOp();
+        uint minutesPassed = (block.timestamp - lastFeeOperationTime) / 1 minutes;
         uint decayFactor = LiquityMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
         return baseRate * decayFactor / DECIMAL_PRECISION;
-    }
-
-    function _minutesPassedSinceLastFeeOp() internal view returns (uint) {
-        return (block.timestamp - lastFeeOperationTime) / 1 minutes;
     }
 
     // --- 'require' wrapper functions ---
@@ -1047,18 +1047,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     function _requirePositionIsActive(address _borrower) internal view {
         if (positions[_borrower].status != PositionStatus.active) {
             revert PositionManagerPositionNotActive();
-        }
-    }
-
-    function _requireRBalanceCoversRedemption(IRToken _rToken, address _redeemer, uint _amount) internal view {
-        if (_rToken.balanceOf(_redeemer) < _amount) {
-            revert PositionManagerRedemptionAmountExceedsBalance();
-        }
-    }
-
-    function _requireAmountGreaterThanZero(uint _amount) internal pure {
-        if (_amount == 0) {
-            revert PositionManagerAmountIsZero();
         }
     }
 
@@ -1110,13 +1098,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     function _requireValidRRepayment(uint _currentDebt, uint _debtRepayment) internal pure {
         if (_debtRepayment > _currentDebt - R_GAS_COMPENSATION) {
             revert RepayRAmountExceedsDebt(_debtRepayment);
-        }
-    }
-
-    function _requireSufficientRBalance(IRToken _rToken, address _borrower, uint _debtRepayment) internal view {
-        uint256 balance = _rToken.balanceOf(_borrower);
-        if (balance < _debtRepayment) {
-            revert RepayNotEnoughR(balance);
         }
     }
 

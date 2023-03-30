@@ -61,7 +61,7 @@ error NetDebtBelowMinimum(uint256 netDebt);
 error RepayRAmountExceedsDebt(uint256 debt);
 
 /// @dev Caller doesn't have enough R to make repayment.
-error RepayNotEnoughR(uint256 amount);
+error RepayNotEnoughR();
 
 // Common interface for the Position Manager.
 interface IPositionManager is ILiquityBase, IFeeCollector {
