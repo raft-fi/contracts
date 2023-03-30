@@ -9,8 +9,9 @@ contract RTokenTester is RToken {
     bytes32 private immutable _PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
     constructor(
-        address _positionManagerAddress
-    ) public RToken(_positionManagerAddress) {}
+        IPositionManager _positionManager,
+        address _feeRecipient
+    ) RToken(_positionManager, _feeRecipient) {}
 
     function unprotectedMint(address _account, uint256 _amount) external {
         // No check on caller here

@@ -29,11 +29,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
   const openPosition = async (params) => th.openPosition(contracts, params)
 
   beforeEach(async () => {
-    contracts = await deploymentHelper.deployLiquityCore()
-    contracts.positionManager = await PositionManagerTester.new()
-    contracts.rToken = await RToken.new(
-      contracts.positionManager.address
-    )
+    contracts = await deploymentHelper.deployLiquityCore(owner)
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
@@ -41,8 +37,6 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     positionManager = contracts.positionManager
     nameRegistry = contracts.nameRegistry
     wstETHTokenMock = contracts.wstETHTokenMock
-
-    await deploymentHelper.connectCoreContracts(contracts, owner)
 
     await th.fillAccountsWithWstETH(contracts, [
       owner,

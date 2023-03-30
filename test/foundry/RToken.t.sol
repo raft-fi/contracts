@@ -5,18 +5,19 @@ import "forge-std/Test.sol";
 import "../../contracts/RToken.sol";
 
 contract RTokenTest is Test {
-    address public constant POSITIONS_MANAGER = address(12345);
+    IPositionManager public constant POSITION_MANAGER = IPositionManager(address(12345));
 
     address public constant USER = address(1);
+    address public constant FEE_RECIPIENT = address(2);
 
     IRToken public token;
 
     function setUp() public {
-        token = new RToken(POSITIONS_MANAGER);
+        token = new RToken(POSITION_MANAGER, FEE_RECIPIENT);
     }
 
     function testMaxFlashMint(uint256 simulatedTotalSupply) public {
-        vm.prank(POSITIONS_MANAGER);
+        vm.prank(address(token.positionManager()));
         token.mint(USER, simulatedTotalSupply);
 
         uint256 technicalLimit = type(uint256).max - simulatedTotalSupply;
@@ -30,15 +31,12 @@ contract RTokenTest is Test {
     }
 
     function testSetFeeRecipient() public {
-        vm.expectRevert(InvalidAddressInput.selector);
-        token.setFlashFeeRecipient(address(0));
-
-        token.setFlashFeeRecipient(USER);
-        assertEq(token.flashMintFeeRecipient(), USER);
+        token.setFeeRecipient(FEE_RECIPIENT);
+        assertEq(token.feeRecipient(), FEE_RECIPIENT);
 
         vm.prank(USER);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        token.setFlashFeeRecipient(address(1));
+        token.setFeeRecipient(address(1));
     }
 
     function testFlashFee(uint256 amount, uint256 percentage) public {
@@ -61,26 +59,26 @@ contract RTokenTest is Test {
     }
 
     function testMint(uint256 amount) public {
-        vm.prank(POSITIONS_MANAGER);
+        vm.prank(address(token.positionManager()));
         token.mint(USER, amount);
         assertEq(token.balanceOf(USER), amount);
     }
 
     function testUnauthorizedMintOrBurn() public {
         vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCall.selector, USER));
+        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, USER));
         token.mint(USER, 1);
 
         vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCall.selector, USER));
+        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, USER));
         token.burn(USER, 1);
     }
 
     function testBurn(uint256 amountToMint, uint256 amountToBurn) public {
-        vm.prank(POSITIONS_MANAGER);
+        vm.prank(address(token.positionManager()));
         token.mint(USER, amountToMint);
-        
-        vm.prank(POSITIONS_MANAGER);
+
+        vm.prank(address(token.positionManager()));
         if (amountToBurn > amountToMint) {
             vm.expectRevert(bytes("ERC20: burn amount exceeds balance"));
         }

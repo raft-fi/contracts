@@ -9,6 +9,15 @@ for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
 
+    constructor(
+        IPriceFeed _priceFeed,
+        IERC20 _collateralToken,
+        uint256 _positionsSize
+    )
+        PositionManager(_priceFeed, _collateralToken, _positionsSize)
+    {
+    }
+
     function computeICR(uint _coll, uint _debt, uint _price) external pure returns (uint) {
         return LiquityMath._computeCR(_coll, _debt, _price);
     }

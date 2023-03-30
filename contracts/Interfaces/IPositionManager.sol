@@ -2,20 +2,16 @@
 
 pragma solidity 0.8.19;
 
+import "./IFeeCollector.sol";
 import "./ILiquityBase.sol";
 import "./IRToken.sol";
+import "./ISortedPositions.sol";
 
 /// @dev Max fee percentage must be between borrowing spread and 100%.
 error PositionManagerInvalidMaxFeePercentage();
 
 /// @dev Position is active.
 error PositionMaangerPositionActive();
-
-/// @dev Dependencies' addresses have already been set.
-error PositionManagerAddressesAlreadySet();
-
-/// @dev Dependencies' addresses have not been set yet.
-error PositionManagerAddressesNotSet();
 
 /// @dev Max fee percentage must be between 0.5% and 100%.
 error PositionManagerMaxFeePercentageOutOfRange();
@@ -71,9 +67,8 @@ error RepayRAmountExceedsDebt(uint256 debt);
 /// @dev Caller doesn't have enough R to make repayment.
 error RepayNotEnoughR(uint256 amount);
 
-
 // Common interface for the Position Manager.
-interface IPositionManager is ILiquityBase {
+interface IPositionManager is ILiquityBase, IFeeCollector {
     enum PositionStatus {
         nonExistent,
         active,
@@ -93,11 +88,13 @@ interface IPositionManager is ILiquityBase {
 
     // --- Events ---
 
-    event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event RTokenAddressChanged(address _newRTokenAddress);
-    event SortedPositionsAddressChanged(address _sortedPositionsAddress);
-    event FeeRecipientChanged(address _feeRecipient);
-
+    event PositionManagerDeployed(
+        IPriceFeed _priceFeed,
+        IERC20 _collateralToken,
+        IRToken _rToken,
+        ISortedPositions _sortedPositions,
+        address _feeRecipient
+    );
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _RGasCompensation);
     event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
     event PositionUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, PositionManagerOperation _operation);
@@ -115,18 +112,9 @@ interface IPositionManager is ILiquityBase {
 
     // --- Functions ---
 
-    function setAddresses(
-        address _priceFeedAddress,
-        IERC20 _collateralToken,
-        address _rTokenAddress,
-        address _sortedPositionsAddress,
-        address _feeRecipient
-    ) external;
+    function MAX_BORROWING_SPREAD() external view returns (uint256);
 
     function deploymentStartTime() external view returns (uint);
-
-    function setFeeRecipient(address _feeRecipient) external;
-    function feeRecipient() external view returns (address);
 
     function collateralToken() external view returns (IERC20);
     function rToken() external view returns (IRToken);
@@ -134,6 +122,8 @@ interface IPositionManager is ILiquityBase {
     function positions(
         address _borrower
     ) external view returns (uint debt, uint coll, uint stake, PositionStatus status, uint128 arrayIndex);
+
+    function sortedPositions() external view returns (ISortedPositions);
 
     function getPositionOwnersCount() external view returns (uint);
 

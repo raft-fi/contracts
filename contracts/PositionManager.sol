@@ -2,26 +2,25 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/IPositionManager.sol";
 import "./Interfaces/IRToken.sol";
 import "./Interfaces/ISortedPositions.sol";
 import "./Dependencies/LiquityBase.sol";
-import "./Dependencies/CheckContract.sol";
+import "./FeeCollector.sol";
+import "./SortedPositions.sol";
+import "./RToken.sol";
 
-contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionManager {
+contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     string constant public NAME = "PositionManager";
 
     // --- Connected contract declarations ---
 
-    IERC20 public override collateralToken;
-    IRToken public override rToken;
-
-    address public override feeRecipient;
+    IERC20 public immutable override collateralToken;
+    IRToken public immutable override rToken;
 
     // A doubly linked list of Positions, sorted by their sorted by their collateral ratios
-    ISortedPositions public sortedPositions;
+    ISortedPositions immutable public sortedPositions;
 
     // --- Pools ---
 
@@ -37,7 +36,7 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
     uint256 public constant REDEMPTION_FEE_FLOOR = DECIMAL_PRECISION / 1000 * 5; // 0.5%
-    uint256 public constant MAX_BORROWING_SPREAD = DECIMAL_PRECISION / 100; // 1%
+    uint256 public constant override MAX_BORROWING_SPREAD = DECIMAL_PRECISION / 100; // 1%
     uint256 public constant MAX_BORROWING_FEE = DECIMAL_PRECISION / 100 * 5; // 5%
 
     // During bootsrap period redemptions are not allowed
@@ -99,8 +98,6 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
     // Error trackers for the position redistribution calculation
     uint public lastCollateralTokenError_Redistribution;
     uint public lastRDebtError_Redistribution;
-
-    bool private _addressesSet;
 
     /*
     * --- Variable container structs for liquidations ---
@@ -227,47 +224,21 @@ contract PositionManager is LiquityBase, Ownable2Step, CheckContract, IPositionM
 
     // --- Constructor ---
 
-    constructor() {
-        deploymentStartTime = block.timestamp;
-    }
-
-    // --- Setters ---
-
-    function setAddresses(
-        address _priceFeedAddress,
+    constructor(
+        IPriceFeed _priceFeed,
         IERC20 _collateralToken,
-        address _rTokenAddress,
-        address _sortedPositionsAddress,
-        address _feeRecipient
-    ) external override onlyOwner {
-        if (_addressesSet) {
-            revert PositionManagerAddressesAlreadySet();
-        }
-
-        checkContract(_priceFeedAddress);
-        checkContract(_rTokenAddress);
-        checkContract(_sortedPositionsAddress);
-
-        priceFeed = IPriceFeed(_priceFeedAddress);
+        uint256 _positionsSize
+    )
+        FeeCollector(msg.sender)
+    {
+        priceFeed = _priceFeed;
         collateralToken = _collateralToken;
-        rToken = IRToken(_rTokenAddress);
-        sortedPositions = ISortedPositions(_sortedPositionsAddress);
-        feeRecipient = _feeRecipient;
+        rToken = new RToken(this, msg.sender);
+        sortedPositions = new SortedPositions(_positionsSize, this);
 
-        _addressesSet = true;
+        deploymentStartTime = block.timestamp;
 
-        emit PriceFeedAddressChanged(_priceFeedAddress);
-        emit RTokenAddressChanged(_rTokenAddress);
-        emit SortedPositionsAddressChanged(_sortedPositionsAddress);
-        emit FeeRecipientChanged(_feeRecipient);
-    }
-
-    function setFeeRecipient(address _feeRecipient) external override onlyOwner {
-        if (! _addressesSet) {
-            revert PositionManagerAddressesNotSet();
-        }
-        feeRecipient = _feeRecipient;
-        emit FeeRecipientChanged(_feeRecipient);
+        emit PositionManagerDeployed(_priceFeed, _collateralToken, rToken, sortedPositions, msg.sender);
     }
 
     // --- Getters ---

@@ -10,15 +10,13 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   let feeRecipient
 
   before(async () => {
-    const coreContracts = await deploymentHelper.deployLiquityCore()
+    const coreContracts = await deploymentHelper.deployLiquityCore(owner)
 
     priceFeed = coreContracts.priceFeedTestnet
     rToken = coreContracts.rToken
     sortedPositions = coreContracts.sortedPositions
     positionManager = coreContracts.positionManager
     feeRecipient = owner
-
-    await deploymentHelper.connectCoreContracts(coreContracts, feeRecipient)
   })
 
   it('Sets the correct PriceFeed address in PositionManager', async () => {

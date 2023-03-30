@@ -1,7 +1,5 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
-const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
-const RTokenTester = artifacts.require("./RTokenTester.sol")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
@@ -35,7 +33,6 @@ contract('PositionManager', async accounts => {
   let rToken
   let sortedPositions
   let positionManager
-  let hintHelpers
   let wstETHTokenMock
 
   let contracts
@@ -46,20 +43,13 @@ contract('PositionManager', async accounts => {
   const withdrawR = async (params) => th.withdrawR(contracts, params)
 
   beforeEach(async () => {
-    contracts = await deploymentHelper.deployLiquityCore()
-    contracts.positionManager = await PositionManagerTester.new()
-    contracts.rToken = await RTokenTester.new(
-      contracts.positionManager.address
-    )
+    contracts = await deploymentHelper.deployLiquityCore(owner)
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
-    hintHelpers = contracts.hintHelpers
     wstETHTokenMock = contracts.wstETHTokenMock
-
-    await deploymentHelper.connectCoreContracts(contracts, owner)
 
     await th.fillAccountsWithWstETH(contracts, [
       owner,
@@ -1394,7 +1384,7 @@ contract('PositionManager', async accounts => {
 
     // Hints for redeeming 20 R
     const partialRedemptionHintNICR = toBN("1550000000000000000")
-    const upperPartialRedemptionHint = alice; 
+    const upperPartialRedemptionHint = alice;
     const lowerPartialRedemptionHint = dennis;
 
     // skip bootstrapping phase
@@ -1465,7 +1455,7 @@ contract('PositionManager', async accounts => {
 
     // Hints for redeeming 20 R
     const partialRedemptionHintNICR = toBN("1550000000000000000")
-    const upperPartialRedemptionHint = alice; 
+    const upperPartialRedemptionHint = alice;
     const lowerPartialRedemptionHint = dennis;
 
     // skip bootstrapping phase
@@ -1542,7 +1532,7 @@ contract('PositionManager', async accounts => {
 
     // Hints for redeeming 20 R
     const partialRedemptionHintNICR = toBN("1550000000000000000")
-    const upperPartialRedemptionHint = alice; 
+    const upperPartialRedemptionHint = alice;
     const lowerPartialRedemptionHint = dennis;
 
     // skip bootstrapping phase

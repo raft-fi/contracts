@@ -39,19 +39,13 @@ contract('PositionManager', async accounts => {
   }
 
   beforeEach(async () => {
-    contracts = await deploymentHelper.deployLiquityCore()
-    contracts.positionManager = await PositionManagerTester.new()
-    contracts.rToken = await RTokenTester.new(
-      contracts.positionManager.address
-    )
+    contracts = await deploymentHelper.deployLiquityCore(owner)
 
     priceFeed = contracts.priceFeedTestnet
     rToken = contracts.rToken
     sortedPositions = contracts.sortedPositions
     positionManager = contracts.positionManager
     wstETHTokenMock = contracts.wstETHTokenMock
-
-    await deploymentHelper.connectCoreContracts(contracts, owner)
 
     await th.fillAccountsWithWstETH(contracts, [
       A, B, C, D, E, F

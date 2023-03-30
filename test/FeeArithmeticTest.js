@@ -2,7 +2,6 @@ const Decimal = require("decimal.js");
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const { BNConverter } = require("../utils/BNConverter.js")
 const testHelpers = require("../utils/testHelpers.js")
-const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 
 const th = testHelpers.TestHelper
@@ -331,17 +330,13 @@ contract('Fee arithmetic tests', async accounts => {
   ]
 
   before(async () => {
-    positionManagerTester = await PositionManagerTester.new()
-    PositionManagerTester.setAsDeployed(positionManagerTester)
-
     mathTester = await LiquityMathTester.new()
     LiquityMathTester.setAsDeployed(mathTester)
   })
 
   beforeEach(async () => {
-    contracts = await deploymentHelper.deployLiquityCore()
-
-    await deploymentHelper.connectCoreContracts(contracts, owner)
+    contracts = await deploymentHelper.deployLiquityCore(owner)
+    positionManagerTester = contracts.positionManager
   })
 
   it("minutesPassedSinceLastFeeOp(): returns minutes passed for no time increase", async () => {
