@@ -15,9 +15,6 @@ error PositionMaangerPositionActive();
 /// @dev Max fee percentage must be between 0.5% and 100%.
 error PositionManagerMaxFeePercentageOutOfRange();
 
-/// @dev Redemptions are not allowed during bootstrap phase.
-error PositionManagerRedemptionNotAllowed();
-
 /// @dev Position is not active (either does not exist or closed).
 error PositionManagerPositionNotActive();
 
@@ -111,9 +108,6 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
     // --- Functions ---
 
     function MAX_BORROWING_SPREAD() external view returns (uint256);
-
-    function deploymentStartTime() external view returns (uint);
-
     function collateralToken() external view returns (IERC20);
     function rToken() external view returns (IRToken);
 
