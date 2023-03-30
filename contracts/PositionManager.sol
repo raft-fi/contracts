@@ -398,35 +398,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         return singleLiquidation;
     }
 
-    /*
-    * Liquidate a sequence of positions. Closes a maximum number of n under-collateralized Positions,
-    * starting from the one with the lowest collateral ratio in the system, and moving upwards
-    */
-    function liquidatePositions(uint _n) external override {
-        // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
-        LiquidationTotals memory totals = _getTotalsFromLiquidatePositionsSequence(priceFeed.fetchPrice(), _n);
-
-        if (totals.totalCollInSequence == 0) {
-            revert NothingToLiquidate();
-        }
-
-        _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
-        _redistributeDebtAndColl(totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
-
-        // Update system snapshots
-        _updateSystemSnapshots_excludeCollRemainder(totals.totalCollGasCompensation);
-
-        emit Liquidation(
-            totals.totalDebtInSequence,
-            totals.totalCollInSequence - totals.totalCollGasCompensation,
-            totals.totalCollGasCompensation,
-            totals.totalRGasCompensation
-        );
-
-        // Send gas compensation to caller
-        _sendGasCompensation(msg.sender, totals.totalRGasCompensation, totals.totalCollGasCompensation);
-    }
-
     function _getTotalsFromLiquidatePositionsSequence
     (
         uint _price,

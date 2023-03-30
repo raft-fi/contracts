@@ -122,9 +122,6 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
     function getCurrentICR(address _borrower, uint _price) external view returns (uint);
 
     function liquidate(address _borrower) external;
-
-    function liquidatePositions(uint _n) external;
-
     function batchLiquidatePositions(address[] calldata _positionArray) external;
 
     function redeemCollateral(
