@@ -2,8 +2,6 @@ const SortedPositions = artifacts.require("./SortedPositions.sol")
 const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
-const FunctionCaller = artifacts.require("./TestContracts/FunctionCaller.sol")
-const HintHelpers = artifacts.require("./HintHelpers.sol")
 
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
@@ -34,8 +32,6 @@ class DeploymentHelper {
     const sortedPositions = await SortedPositions.new()
     const positionManager = await PositionManager.new()
     const wstETHTokenMock = await WstETHTokenMock.new()
-    const functionCaller = await FunctionCaller.new()
-    const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
       positionManager.address
     )
@@ -43,17 +39,13 @@ class DeploymentHelper {
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
     SortedPositions.setAsDeployed(sortedPositions)
     PositionManager.setAsDeployed(positionManager)
-    FunctionCaller.setAsDeployed(functionCaller)
-    HintHelpers.setAsDeployed(hintHelpers)
 
     const coreContracts = {
       priceFeedTestnet,
       rToken,
       sortedPositions,
       positionManager,
-      wstETHTokenMock,
-      functionCaller,
-      hintHelpers
+      wstETHTokenMock
     }
     return coreContracts
   }
@@ -85,8 +77,6 @@ class DeploymentHelper {
     // Actual tester contracts
     testerContracts.math = await LiquityMathTester.new()
     testerContracts.positionManager = await PositionManagerTester.new()
-    testerContracts.functionCaller = await FunctionCaller.new()
-    testerContracts.hintHelpers = await HintHelpers.new()
     testerContracts.rToken =  await RTokenTester.new(
       testerContracts.positionManager.address
     )
@@ -97,8 +87,6 @@ class DeploymentHelper {
     const priceFeedTestnet = await PriceFeedTestnet.new()
     const sortedPositions = await SortedPositions.new()
     const positionManager = await PositionManager.new()
-    const functionCaller = await FunctionCaller.new()
-    const hintHelpers = await HintHelpers.new()
     const rToken = await RToken.new(
       positionManager.address
     )
@@ -106,9 +94,7 @@ class DeploymentHelper {
       priceFeedTestnet,
       rToken,
       sortedPositions,
-      positionManager,
-      functionCaller,
-      hintHelpers
+      positionManager
     }
     return coreContracts
   }
@@ -136,10 +122,6 @@ class DeploymentHelper {
       contracts.positionManager.address
     )
 
-    // set contract addresses in the FunctionCaller
-    await contracts.functionCaller.setPositionManagerAddress(contracts.positionManager.address)
-    await contracts.functionCaller.setSortedPositionsAddress(contracts.sortedPositions.address)
-
     // set contracts in the Position Manager
     await contracts.positionManager.setAddresses(
       contracts.priceFeedTestnet.address,
@@ -147,12 +129,6 @@ class DeploymentHelper {
       contracts.rToken.address,
       contracts.sortedPositions.address,
       feeRecipient
-    )
-
-    // set contracts in HintHelpers
-    await contracts.hintHelpers.setAddresses(
-      contracts.sortedPositions.address,
-      contracts.positionManager.address
     )
   }
 }

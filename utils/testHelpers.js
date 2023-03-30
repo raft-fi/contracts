@@ -448,18 +448,6 @@ class TestHelper {
     return [event.args[1], event.args[2]]
   }
 
-  static async getBorrowerOpsListHint(contracts, newColl, newDebt) {
-    const newNICR = await contracts.hintHelpers.computeNominalCR(newColl, newDebt)
-    const {
-      hintAddress: approxfullListHint,
-      latestRandomSeed
-    } = await contracts.hintHelpers.getApproxHint(newNICR, 5, this.latestRandomSeed)
-    this.latestRandomSeed = latestRandomSeed
-
-    const {0: upperHint, 1: lowerHint} = await contracts.sortedPositions.findInsertPosition(newNICR, approxfullListHint, approxfullListHint)
-    return {upperHint, lowerHint}
-  }
-
   static async getEntireCollAndDebt(contracts, account) {
     // console.log(`account: ${account}`)
     const rawColl = (await contracts.positionManager.positions(account))[1]
@@ -525,96 +513,6 @@ class TestHelper {
 
   // --- positionManager gas functions ---
 
-  static async openPosition_allAccounts(accounts, contracts, ETHAmount, rAmount) {
-    const gasCostList = []
-    const totalDebt = await this.getOpenPositionTotalDebt(contracts, rAmount)
-
-    for (const account of accounts) {
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, ETHAmount, totalDebt)
-
-      const tx = await contracts.positionManager.openPosition(this._100pct, rAmount, upperHint, lowerHint, { from: account, value: ETHAmount })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async openPosition_allAccounts_randomETH(minETH, maxETH, accounts, contracts, rAmount) {
-    const gasCostList = []
-    const totalDebt = await this.getOpenPositionTotalDebt(contracts, rAmount)
-
-    for (const account of accounts) {
-      const randCollAmount = this.randAmountInWei(minETH, maxETH)
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, randCollAmount, totalDebt)
-
-      const tx = await contracts.positionManager.openPosition(this._100pct, rAmount, upperHint, lowerHint, { from: account, value: randCollAmount })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async openPosition_allAccounts_randomETH_ProportionalR(minETH, maxETH, accounts, contracts, proportion) {
-    const gasCostList = []
-
-    for (const account of accounts) {
-      const randCollAmount = this.randAmountInWei(minETH, maxETH)
-      const proportionalR = (web3.utils.toBN(proportion)).mul(web3.utils.toBN(randCollAmount))
-      const totalDebt = await this.getOpenPositionTotalDebt(contracts, proportionalR)
-
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, randCollAmount, totalDebt)
-
-      const tx = await contracts.positionManager.openPosition(this._100pct, proportionalR, upperHint, lowerHint, { from: account, value: randCollAmount })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async openPosition_allAccounts_randomETH_randomR(minETH, maxETH, accounts, contracts, minRProportion, maxRProportion, logging = false) {
-    const gasCostList = []
-    const price = await contracts.priceFeedTestnet.getPrice()
-    const _1e18 = web3.utils.toBN('1000000000000000000')
-
-    let i = 0
-    for (const account of accounts) {
-
-      const randCollAmount = this.randAmountInWei(minETH, maxETH)
-      // console.log(`randCollAmount ${randCollAmount }`)
-      const randRProportion = this.randAmountInWei(minRProportion, maxRProportion)
-      const proportionalR = (web3.utils.toBN(randRProportion)).mul(web3.utils.toBN(randCollAmount).div(_1e18))
-      const totalDebt = await this.getOpenPositionTotalDebt(contracts, proportionalR)
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, randCollAmount, totalDebt)
-
-      const feeFloor = this.dec(5, 16)
-      const tx = await contracts.positionManager.openPosition(this._100pct, proportionalR, upperHint, lowerHint, { from: account, value: randCollAmount })
-
-      if (logging && tx.receipt.status) {
-        i++
-        const ICR = await contracts.positionManager.getCurrentICR(account, price)
-        // console.log(`${i}. Position opened. addr: ${this.squeezeAddr(account)} coll: ${randCollAmount} debt: ${proportionalR} ICR: ${ICR}`)
-      }
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async openPosition_allAccounts_randomR(minR, maxR, accounts, contracts, ETHAmount) {
-    const gasCostList = []
-
-    for (const account of accounts) {
-      const randRAmount = this.randAmountInWei(minR, maxR)
-      const totalDebt = await this.getOpenPositionTotalDebt(contracts, randRAmount)
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, ETHAmount, totalDebt)
-
-      const tx = await contracts.positionManager.openPosition(this._100pct, randRAmount, upperHint, lowerHint, { from: account, value: ETHAmount })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
   static async closePosition_allAccounts(accounts, contracts) {
     const gasCostList = []
 
@@ -622,24 +520,6 @@ class TestHelper {
       const tx = await contracts.positionManager.closePosition({ from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async openPosition_allAccounts_decreasingRAmounts(accounts, contracts, ETHAmount, maxRAmount) {
-    const gasCostList = []
-
-    let i = 0
-    for (const account of accounts) {
-      const rAmount = (maxRAmount - i).toString()
-      const RAmountWei = web3.utils.toWei(rAmount, 'ether')
-      const totalDebt = await this.getOpenPositionTotalDebt(contracts, RAmountWei)
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, ETHAmount, totalDebt)
-
-      const tx = await contracts.positionManager.openPosition(this._100pct, RAmountWei, upperHint, lowerHint, { from: account, value: ETHAmount })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-      i += 1
     }
     return this.getGasMetrics(gasCostList)
   }
@@ -906,79 +786,6 @@ class TestHelper {
       gasCostList.push(gas)
     }
     return this.getGasMetrics(gasCostList)
-  }
-
-  static async getCurrentICR_allAccounts(accounts, contracts, functionCaller) {
-    const gasCostList = []
-    const price = await contracts.priceFeedTestnet.getPrice()
-
-    for (const account of accounts) {
-      const tx = await functionCaller.positionManager_getCurrentICR(account, price)
-      const gas = this.gasUsed(tx) - 21000
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  // --- Redemption functions ---
-
-  static async redeemCollateral(redeemer, contracts, rAmount, gasPrice = 0, maxFee = this._100pct) {
-    const price = await contracts.priceFeedTestnet.getPrice()
-    const tx = await this.performRedemptionTx(redeemer, price, contracts, rAmount, maxFee, gasPrice)
-    const gas = await this.gasUsed(tx)
-    return gas
-  }
-
-  static async redeemCollateralAndGetTxObject(redeemer, contracts, rAmount, gasPrice, maxFee = this._100pct) {
-    // console.log("GAS PRICE:  " + gasPrice)
-    if (gasPrice == undefined){
-      gasPrice = 0;
-    }
-    const price = await contracts.priceFeedTestnet.getPrice()
-    const tx = await this.performRedemptionTx(redeemer, price, contracts, rAmount, maxFee, gasPrice)
-    return tx
-  }
-
-  static async redeemCollateral_allAccounts_randomAmount(min, max, accounts, contracts) {
-    const gasCostList = []
-    const price = await contracts.priceFeedTestnet.getPrice()
-
-    for (const redeemer of accounts) {
-      const randRAmount = this.randAmountInWei(min, max)
-
-      await this.performRedemptionTx(redeemer, price, contracts, randRAmount)
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async performRedemptionTx(redeemer, price, contracts, rAmount, maxFee = 0, gasPrice_toUse = 0) {
-    const redemptionhint = await contracts.hintHelpers.getRedemptionHints(rAmount, price, gasPrice_toUse)
-
-    const firstRedemptionHint = redemptionhint[0]
-    const partialRedemptionNewICR = redemptionhint[1]
-
-    const {
-      hintAddress: approxPartialRedemptionHint,
-      latestRandomSeed
-    } = await contracts.hintHelpers.getApproxHint(partialRedemptionNewICR, 50, this.latestRandomSeed)
-    this.latestRandomSeed = latestRandomSeed
-
-    const exactPartialRedemptionHint = (await contracts.sortedPositions.findInsertPosition(partialRedemptionNewICR,
-      approxPartialRedemptionHint,
-      approxPartialRedemptionHint))
-
-    const tx = await contracts.positionManager.redeemCollateral(rAmount,
-      firstRedemptionHint,
-      exactPartialRedemptionHint[0],
-      exactPartialRedemptionHint[1],
-      partialRedemptionNewICR,
-      0, maxFee,
-      { from: redeemer, gasPrice: gasPrice_toUse},
-    )
-
-    return tx
   }
 
   // --- Composite functions ---
