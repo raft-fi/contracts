@@ -94,14 +94,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     * in order to avoid the error: "CompilerError: Stack too deep".
     **/
 
-    struct LocalVariables_LiquidationSequence {
-        uint i;
-        uint ICR;
-        address user;
-        uint entireSystemDebt;
-        uint entireSystemColl;
-    }
-
      struct LocalVariables_adjustPosition {
         uint price;
         uint collChange;
@@ -115,16 +107,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint rFee;
         uint newDebt;
         uint newColl;
-        uint stake;
-    }
-
-    struct LocalVariables_openPosition {
-        uint price;
-        uint rFee;
-        uint netDebt;
-        uint compositeDebt;
-        uint ICR;
-        uint NICR;
         uint stake;
     }
 
@@ -193,13 +175,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     // --- Constructor ---
 
-    constructor(
-        IPriceFeed _priceFeed,
-        IERC20 _collateralToken,
-        uint256 _positionsSize
-    )
-        FeeCollector(msg.sender)
-    {
+    constructor(IPriceFeed _priceFeed, IERC20 _collateralToken, uint256 _positionsSize) FeeCollector(msg.sender) {
         priceFeed = _priceFeed;
         collateralToken = _collateralToken;
         rToken = new RToken(this, msg.sender);
@@ -222,34 +198,27 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         validMaxFeePercentageWhen(_maxFeePercentage, true)
         onlyNonActivePosition
     {
-        LocalVariables_openPosition memory vars;
-
-        vars.rFee;
-        vars.netDebt = _rAmount;
-
-        vars.rFee = _triggerBorrowingFee(rToken, _rAmount, _maxFeePercentage);
-        vars.netDebt += vars.rFee;
-        _requireAtLeastMinNetDebt(vars.netDebt);
+        uint256 rFee = _triggerBorrowingFee(rToken, _rAmount, _maxFeePercentage);
+        uint256 netDebt = _rAmount + rFee;
+        _requireAtLeastMinNetDebt(netDebt);
 
         // ICR is based on the composite debt, i.e. the requested R amount + R borrowing fee + R gas comp.
-        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
-        assert(vars.compositeDebt > 0);
+        uint256 compositeDebt = _getCompositeDebt(netDebt);
+        assert(compositeDebt > 0);
 
-        vars.price = priceFeed.fetchPrice();
-        vars.ICR = LiquityMath._computeCR(_collAmount, vars.compositeDebt, vars.price);
-        vars.NICR = LiquityMath._computeNominalCR(_collAmount, vars.compositeDebt);
-
-        _requireICRisAboveMCR(vars.ICR);
+        _requireICRisAboveMCR(LiquityMath._computeCR(_collAmount, compositeDebt, priceFeed.fetchPrice()));
 
         // Set the position struct's properties
         positions[msg.sender].status = PositionStatus.active;
         positions[msg.sender].coll = _collAmount;
-        positions[msg.sender].debt = vars.compositeDebt;
+        positions[msg.sender].debt = compositeDebt;
 
         _updatePositionRewardSnapshots(msg.sender);
-        vars.stake = _updateStakeAndTotalStakes(msg.sender);
+        uint256 stake = _updateStakeAndTotalStakes(msg.sender);
 
-        sortedPositions.insert(this, msg.sender, vars.NICR, _upperHint, _lowerHint);
+        sortedPositions.insert(
+            this, msg.sender, LiquityMath._computeNominalCR(_collAmount, compositeDebt), _upperHint, _lowerHint
+        );
         emit PositionCreated(msg.sender);
 
         // Move the collateralToken to the Active Pool, and mint the rAmount to the borrower
@@ -260,8 +229,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         // Move the R gas compensation to the Gas Pool
         rToken.mint(address(this), R_GAS_COMPENSATION);
 
-        emit PositionUpdated(msg.sender, vars.compositeDebt, _collAmount, vars.stake, PositionManagerOperation.openPosition);
-        emit RBorrowingFeePaid(msg.sender, vars.rFee);
+        emit PositionUpdated(msg.sender, compositeDebt, _collAmount, stake, PositionManagerOperation.openPosition);
+        emit RBorrowingFeePaid(msg.sender, rFee);
     }
 
     // Send collateralToken to a position
@@ -477,18 +446,13 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         internal
         returns(LiquidationTotals memory totals)
     {
-        LocalVariables_LiquidationSequence memory vars;
-        LiquidationValues memory singleLiquidation;
+        for (uint256 i = 0; i < _n; i++) {
+            address user = sortedPositions.last;
+            uint256 ICR = getCurrentICR(user, _price);
 
-        for (vars.i = 0; vars.i < _n; vars.i++) {
-            vars.user = sortedPositions.last;
-            vars.ICR = getCurrentICR(vars.user, _price);
-
-            if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(vars.user, vars.ICR);
-
+            if (ICR < MCR) {
                 // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
+                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR));
 
             } else break;  // break if the loop reaches a Position with ICR >= MCR
         }
@@ -542,18 +506,13 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         internal
         returns(LiquidationTotals memory totals)
     {
-        LocalVariables_LiquidationSequence memory vars;
-        LiquidationValues memory singleLiquidation;
+        for (uint256 i = 0; i < _positionArray.length; i++) {
+            address user = _positionArray[i];
+            uint256 ICR = getCurrentICR(user, _price);
 
-        for (vars.i = 0; vars.i < _positionArray.length; vars.i++) {
-            vars.user = _positionArray[vars.i];
-            vars.ICR = getCurrentICR(vars.user, _price);
-
-            if (vars.ICR < MCR) {
-                singleLiquidation = _liquidate(vars.user, vars.ICR);
-
+            if (ICR < MCR) {
                 // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
+                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR));
             }
         }
     }
