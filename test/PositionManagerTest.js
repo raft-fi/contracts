@@ -113,69 +113,6 @@ contract('PositionManager', async accounts => {
     assert.equal(totalStakes_After, A_collateral)
   })
 
-  it("liquidate(): Removes the correct position from the PositionOwners array, and moves the last array element to the new empty slot", async () => {
-    // --- SETUP ---
-    await openPosition({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-    await deploymentHelper.mintR(rToken, owner);
-
-    // Alice, Bob, Carol, Dennis, erin open positions with consecutively decreasing collateral ratio
-    await openPosition({ ICR: toBN(dec(218, 16)), extraParams: { from: alice } })
-    await openPosition({ ICR: toBN(dec(216, 16)), extraParams: { from: bob } })
-    await openPosition({ ICR: toBN(dec(214, 16)), extraParams: { from: carol } })
-    await openPosition({ ICR: toBN(dec(212, 16)), extraParams: { from: dennis } })
-    await openPosition({ ICR: toBN(dec(210, 16)), extraParams: { from: erin } })
-
-    // At this stage, PositionOwners array should be: [W, A, B, C, D, E]
-
-    // Drop price
-    await priceFeed.setPrice(dec(100, 18))
-
-    const arrayLength_Before = await positionManager.getPositionOwnersCount()
-    assert.equal(arrayLength_Before, 6)
-
-    // Liquidate carol
-    await positionManager.liquidate(carol)
-
-    // Check Carol no longer has an active position
-    assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
-
-    // Check length of array has decreased by 1
-    const arrayLength_After = await positionManager.getPositionOwnersCount()
-    assert.equal(arrayLength_After, 5)
-
-    /* After Carol is removed from array, the last element (erin's address) should have been moved to fill
-    the empty slot left by Carol, and the array length decreased by one.  The final PositionOwners array should be:
-
-    [W, A, B, E, D]
-
-    Check all remaining positions in the array are in the correct order */
-    const position_0 = await positionManager.PositionOwners(0)
-    const position_1 = await positionManager.PositionOwners(1)
-    const position_2 = await positionManager.PositionOwners(2)
-    const position_3 = await positionManager.PositionOwners(3)
-    const position_4 = await positionManager.PositionOwners(4)
-
-    assert.equal(position_0, whale)
-    assert.equal(position_1, alice)
-    assert.equal(position_2, bob)
-    assert.equal(position_3, erin)
-    assert.equal(position_4, dennis)
-
-    // Check correct indices recorded on the active position structs
-    const whale_arrayIndex = (await positionManager.positions(whale))[4]
-    const alice_arrayIndex = (await positionManager.positions(alice))[4]
-    const bob_arrayIndex = (await positionManager.positions(bob))[4]
-    const dennis_arrayIndex = (await positionManager.positions(dennis))[4]
-    const erin_arrayIndex = (await positionManager.positions(erin))[4]
-
-    // [W, A, B, E, D]
-    assert.equal(whale_arrayIndex, 0)
-    assert.equal(alice_arrayIndex, 1)
-    assert.equal(bob_arrayIndex, 2)
-    assert.equal(erin_arrayIndex, 3)
-    assert.equal(dennis_arrayIndex, 4)
-  })
-
   it("liquidate(): updates the snapshots of total stakes and total collateral", async () => {
     // --- SETUP ---
     await deploymentHelper.mintR(rToken, owner);
@@ -276,16 +213,8 @@ contract('PositionManager', async accounts => {
     const alice_ICR = (await positionManager.getCurrentICR(alice, price)).toString()
     assert.equal(alice_ICR, '1050000000000000000')
 
-    const activePositionsCount_Before = await positionManager.getPositionOwnersCount()
-
-    assert.equal(activePositionsCount_Before, 2)
-
     // Liquidate the position
     await positionManager.liquidate(alice, { from: owner })
-
-    // Check Alice's position is removed, and bob remains
-    const activePositionsCount_After = await positionManager.getPositionOwnersCount()
-    assert.equal(activePositionsCount_After, 1)
 
     const alice_isInSortedList = (await positionManager.sortedPositionsNodes(alice))[0]
     assert.isFalse(alice_isInSortedList)
@@ -600,9 +529,6 @@ contract('PositionManager', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
 
     await positionManager.liquidatePositions(3)
-
-    const PositionOwnersArrayLength = await positionManager.getPositionOwnersCount()
-    assert.equal(PositionOwnersArrayLength, '3')
 
     // Check Alice, Bob, Carol positions have been closed
     const alicePositionStatus = ((await positionManager.positions(alice))[3]).toString()

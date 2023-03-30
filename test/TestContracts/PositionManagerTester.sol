@@ -58,11 +58,6 @@ contract PositionManagerTester is PositionManager {
         return _getNetDebt(_debtVal);
     }
 
-    function callInternalRemovePositionOwner(address _positionOwner) external {
-        uint positionOwnersArrayLength = PositionOwners.length;
-        _removePositionOwner(_positionOwner, positionOwnersArrayLength);
-    }
-
     function getNewICRFromPositionChange
     (
         uint _coll,
@@ -78,9 +73,5 @@ contract PositionManagerTester is PositionManager {
     returns (uint)
     {
         return _getNewICRFromPositionChange(_coll, _debt, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
-    }
-
-    function getUSDValue(uint _coll, uint _price) external pure returns (uint) {
-        return _getUSDValue(_coll, _price);
     }
 }

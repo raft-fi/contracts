@@ -54,7 +54,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint coll;
         uint stake;
         PositionStatus status;
-        uint128 arrayIndex;
     }
 
     mapping (address => Position) public override positions;
@@ -83,9 +82,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     // Object containing the CollateralToken and R snapshots for a given active position
     struct RewardSnapshot { uint collateralBalance; uint rDebt;}
-
-    // Array of all active position addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
-    address[] public PositionOwners;
 
     // Error trackers for the position redistribution calculation
     uint public lastCollateralTokenError_Redistribution;
@@ -130,7 +126,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint ICR;
         uint NICR;
         uint stake;
-        uint arrayIndex;
     }
 
     struct LiquidationValues {
@@ -213,16 +208,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         emit PositionManagerDeployed(_priceFeed, _collateralToken, rToken, msg.sender);
     }
 
-    // --- Getters ---
-
-    function getPositionOwnersCount() external view override returns (uint) {
-        return PositionOwners.length;
-    }
-
-    function getPositionFromPositionOwnersArray(uint _index) external view override returns (address) {
-        return PositionOwners[_index];
-    }
-
     // --- Borrower Position Operations ---
 
     function openPosition(
@@ -265,8 +250,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         vars.stake = _updateStakeAndTotalStakes(msg.sender);
 
         sortedPositions.insert(this, msg.sender, vars.NICR, _upperHint, _lowerHint);
-        vars.arrayIndex = _addPositionOwnerToArray(msg.sender);
-        emit PositionCreated(msg.sender, vars.arrayIndex);
+        emit PositionCreated(msg.sender);
 
         // Move the collateralToken to the Active Pool, and mint the rAmount to the borrower
         _activePoolCollateralBalance += _collAmount;
@@ -983,9 +967,9 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     function _closePosition(address _borrower, PositionStatus closedStatus) internal {
         assert(closedStatus != PositionStatus.nonExistent && closedStatus != PositionStatus.active);
-
-        uint PositionOwnersArrayLength = PositionOwners.length;
-        _requireMoreThanOnePositionInSystem(PositionOwnersArrayLength);
+        if (sortedPositions.size <= 1) {
+            revert PositionManagerOnlyOnePositionInSystem();
+        }
 
         positions[_borrower].status = closedStatus;
         positions[_borrower].coll = 0;
@@ -994,7 +978,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         rewardSnapshots[_borrower].collateralBalance = 0;
         rewardSnapshots[_borrower].rDebt = 0;
 
-        _removePositionOwner(_borrower, PositionOwnersArrayLength);
         sortedPositions.remove(_borrower);
     }
 
@@ -1013,42 +996,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         totalCollateralSnapshot = _activePoolCollateralBalance - _collRemainder + _defaultPoolCollateralBalance;
 
         emit SystemSnapshotsUpdated(totalStakesSnapshot, totalCollateralSnapshot);
-    }
-
-    function _addPositionOwnerToArray(address _borrower) internal returns (uint128 index) {
-        /* Max array size is 2**128 - 1, i.e. ~3e30 positions. No risk of overflow, since positions have minimum R
-        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 R dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
-
-        // Push the Positionowner to the array
-        PositionOwners.push(_borrower);
-
-        // Record the index of the new Positionowner on their Position struct
-        index = uint128(PositionOwners.length - 1);
-        positions[_borrower].arrayIndex = index;
-    }
-
-    /*
-    * Remove a Position owner from the PositionOwners array, not preserving array order. Removing owner 'B' does the following:
-    * [A B C D E] => [A E C D], and updates E's Position struct to point to its new array index.
-    */
-    function _removePositionOwner(address _borrower, uint PositionOwnersArrayLength) internal {
-        PositionStatus positionStatus = positions[_borrower].status;
-        // It’s set in caller function `_closePosition`
-        assert(positionStatus != PositionStatus.nonExistent && positionStatus != PositionStatus.active);
-
-        uint128 index = positions[_borrower].arrayIndex;
-        uint length = PositionOwnersArrayLength;
-        uint idxLast = length - 1;
-
-        assert(index <= idxLast);
-
-        address addressToMove = PositionOwners[idxLast];
-
-        PositionOwners[index] = addressToMove;
-        positions[addressToMove].arrayIndex = index;
-        emit PositionIndexUpdated(addressToMove, index);
-
-        PositionOwners.pop();
     }
 
     // --- Redemption fee functions ---
@@ -1196,12 +1143,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         }
     }
 
-    function _requireMoreThanOnePositionInSystem(uint positionOwnersArrayLength) internal view {
-        if (positionOwnersArrayLength <= 1 || sortedPositions.size <= 1) {
-            revert PositionManagerOnlyOnePositionInSystem();
-        }
-    }
-
     function _requireAmountGreaterThanZero(uint _amount) internal pure {
         if (_amount == 0) {
             revert PositionManagerAmountIsZero();
@@ -1219,10 +1160,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         if (rFee > 0) {
             _rToken.mint(feeRecipient, rFee);
         }
-    }
-
-    function _getUSDValue(uint _coll, uint _price) internal pure returns (uint usdValue) {
-        usdValue = _price * _coll / DECIMAL_PRECISION;
     }
 
     function _moveTokensFromAdjustment(uint _collChange, bool _isCollIncrease, uint _rChange, bool _isDebtIncrease)
