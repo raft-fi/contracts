@@ -10,7 +10,7 @@ const mv = testHelpers.MoneyValues
 
 const GAS_PRICE = 10000000
 
-/// TODO: fix skipped tests as part of https://github.com/tempusfinance/raft/issues/14
+/// TODO IMPORTANT: fix skipped tests as part of https://github.com/tempusfinance/raft/issues/14
 contract('Gas compensation tests', async accounts => {
   const [
     owner, liquidator,
@@ -50,7 +50,6 @@ contract('Gas compensation tests', async accounts => {
   })
 
   // --- Raw gas compensation calculations ---
-
   it('_getCollGasCompensation(): returns the 0.5% of collaterall if it is < $10 in value', async () => {
     /*
     ETH:USD price = 1
@@ -216,8 +215,6 @@ contract('Gas compensation tests', async accounts => {
     assert.equal(compositeDebt, '323450000000000000000')
   })
 
-  /// ***
-
   // gets debt + 50 when 0.5% of coll > 10
   it('getCompositeDebt(): returns (debt + 50) when 0.5% of collateral > $10 in value', async () => {
     const price = await priceFeed.getPrice()
@@ -319,6 +316,8 @@ contract('Gas compensation tests', async accounts => {
   // --- Event emission in single liquidation ---
 
   it('Gas compensation from pool-offset liquidations. Liquidation event emits the correct gas compensation and total liquidated coll and debt', async () => {
+    const liquidationProtocolFee = dec(5, 17) // 50%
+    await positionManager.setLiquidationProtocolFee(liquidationProtocolFee);
     await deploymentHelper.mintR(rToken, liquidator);
     await openPosition({ ICR: toBN(dec(2000, 18)), extraParams: { from: whale } })
 
@@ -344,18 +343,20 @@ contract('Gas compensation tests', async accounts => {
     // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
     const liquidationTxA = await positionManager.liquidate(alice, { from: liquidator, gasPrice: GAS_PRICE })
 
-    const expectedGasComp_A = aliceColl.mul(th.toBN(5)).div(th.toBN(1000))
-    const expectedLiquidatedColl_A = aliceColl.sub(expectedGasComp_A)
+    const expectedLiquidationProtocolFee_A = await positionManagerTester.getCollLiquidationProtocolFee(aliceColl, aliceDebt, price_1, liquidationProtocolFee)
+    const expectedLiquidatedColl_A = aliceColl
     const expectedLiquidatedDebt_A =  aliceDebt
 
-    const [loggedDebt_A, loggedColl_A, loggedGasComp_A, ] = th.getEmittedLiquidationValues(liquidationTxA)
+    const [loggedDebt_A, loggedColl_A, loggedProtocolLiquidationFee_A, loggedGasComp_A ] = th.getEmittedLiquidationValues(liquidationTxA)
 
     assert.isAtMost(th.getDifference(expectedLiquidatedDebt_A, loggedDebt_A), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_A, loggedColl_A), 1000)
-    assert.isAtMost(th.getDifference(expectedGasComp_A, loggedGasComp_A), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidationProtocolFee_A, loggedProtocolLiquidationFee_A), 1000)
+    assert.equal(loggedGasComp_A, 0)
 
     // --- Price drops to 101 ---
     await priceFeed.setPrice(dec(101, 18))
+    const price_2 = await priceFeed.getPrice()
 
     // Check collateral value in USD is < $10
     const bobColl = (await positionManager.positions(bob))[1]
@@ -364,19 +365,22 @@ contract('Gas compensation tests', async accounts => {
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
     const liquidationTxB = await positionManager.liquidate(bob, { from: liquidator, gasPrice: GAS_PRICE })
 
-    const expectedGasComp_B = bobColl.mul(th.toBN(5)).div(th.toBN(1000))
-    const expectedLiquidatedColl_B = bobColl.sub(expectedGasComp_B)
+    const expectedLiquidationProtocolFee_B = await positionManagerTester.getCollLiquidationProtocolFee(bobColl, bobDebt, price_2, liquidationProtocolFee)
+    const expectedLiquidatedColl_B = bobColl
     const expectedLiquidatedDebt_B =  bobDebt
 
-    const [loggedDebt_B, loggedColl_B, loggedGasComp_B, ] = th.getEmittedLiquidationValues(liquidationTxB)
+    const [loggedDebt_B, loggedColl_B, loggedProtocolLiquidationFee_B, loggedGasComp_B] = th.getEmittedLiquidationValues(liquidationTxB)
 
     assert.isAtMost(th.getDifference(expectedLiquidatedDebt_B, loggedDebt_B), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_B, loggedColl_B), 1000)
-    assert.isAtMost(th.getDifference(expectedGasComp_B, loggedGasComp_B), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidationProtocolFee_B, loggedProtocolLiquidationFee_B), 1000)
+    assert.equal(loggedGasComp_B, 0)
   })
 
 
   it('gas compensation from pool-offset liquidations. Liquidation event emits the correct gas compensation and total liquidated coll and debt', async () => {
+    const liquidationProtocolFee = dec(32, 16) // 32%
+    await positionManager.setLiquidationProtocolFee(liquidationProtocolFee);
     await deploymentHelper.mintR(rToken, liquidator);
     await priceFeed.setPrice(dec(400, 18))
     await openPosition({ ICR: toBN(dec(2000, 18)), extraParams: { from: whale } })
@@ -410,19 +414,20 @@ contract('Gas compensation tests', async accounts => {
     // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
     const liquidationTxA = await positionManager.liquidate(alice, { from: liquidator, gasPrice: GAS_PRICE })
 
-    const expectedGasComp_A = _0pt5percent_aliceColl
-    const expectedLiquidatedColl_A = aliceColl.sub(expectedGasComp_A)
+    const expectedLiquidationProtocolFee_A = await positionManagerTester.getCollLiquidationProtocolFee(aliceColl, aliceDebt, price_1, liquidationProtocolFee)
+    const expectedLiquidatedColl_A = aliceColl
     const expectedLiquidatedDebt_A =  aliceDebt
 
-    const [loggedDebt_A, loggedColl_A, loggedGasComp_A, ] = th.getEmittedLiquidationValues(liquidationTxA)
+    const [loggedDebt_A, loggedColl_A, loggedProtocolLiquidationFee_A, loggedGasComp_A ] = th.getEmittedLiquidationValues(liquidationTxA)
 
     assert.isAtMost(th.getDifference(expectedLiquidatedDebt_A, loggedDebt_A), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_A, loggedColl_A), 1000)
-    assert.isAtMost(th.getDifference(expectedGasComp_A, loggedGasComp_A), 1000)
-
-      // --- Price changes to 335 ---
-      await priceFeed.setPrice(dec(335, 18))
-      const price_2 = await priceFeed.getPrice()
+    assert.isAtMost(th.getDifference(expectedLiquidationProtocolFee_A, loggedProtocolLiquidationFee_A), 1000)
+    assert.equal(loggedGasComp_A, 0)
+    
+    // --- Price changes to 335 ---
+    await priceFeed.setPrice(dec(335, 18))
+    const price_2 = await priceFeed.getPrice()
 
     const bobColl = (await positionManager.positions(bob))[1]
     const bobDebt = (await positionManager.positions(bob))[0]
@@ -433,20 +438,22 @@ contract('Gas compensation tests', async accounts => {
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives
     const liquidationTxB = await positionManager.liquidate(bob, { from: liquidator, gasPrice: GAS_PRICE })
 
-    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
-    const expectedGasComp_B = _0pt5percent_bobColl
-    const expectedLiquidatedColl_B = bobColl.sub(expectedGasComp_B)
+    const expectedLiquidationProtocolFee_B = await positionManagerTester.getCollLiquidationProtocolFee(bobColl, bobDebt, price_2, liquidationProtocolFee)
+    const expectedLiquidatedColl_B = bobColl
     const expectedLiquidatedDebt_B =  bobDebt
 
-    const [loggedDebt_B, loggedColl_B, loggedGasComp_B, ] = th.getEmittedLiquidationValues(liquidationTxB)
+    const [loggedDebt_B, loggedColl_B, loggedProtocolLiquidationFee_B, loggedGasComp_B ] = th.getEmittedLiquidationValues(liquidationTxB)
 
     assert.isAtMost(th.getDifference(expectedLiquidatedDebt_B, loggedDebt_B), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_B, loggedColl_B), 1000)
-    assert.isAtMost(th.getDifference(expectedGasComp_B, loggedGasComp_B), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidationProtocolFee_B, loggedProtocolLiquidationFee_B), 1000)
+    assert.equal(loggedGasComp_B, 0)
   })
 
 
   it('gas compensation from pool-offset liquidations: 0.5% collateral > $10 in value. Liquidation event emits the correct gas compensation and total liquidated coll and debt', async () => {
+    const liquidationProtocolFee = dec(8, 16) // 8%
+    await positionManager.setLiquidationProtocolFee(liquidationProtocolFee);
     await deploymentHelper.mintR(rToken, liquidator);
     // open positions
     await priceFeed.setPrice(dec(400, 18))
@@ -464,7 +471,6 @@ contract('Gas compensation tests', async accounts => {
 
     const aliceColl = (await positionManager.positions(alice))[1]
     const aliceDebt = (await positionManager.positions(alice))[0]
-    const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
 
     const aliceICR = await positionManager.getCurrentICR(alice, price_1)
     assert.isTrue(aliceICR.lt(mv._MCR))
@@ -472,19 +478,19 @@ contract('Gas compensation tests', async accounts => {
     // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
     const liquidationTxA = await positionManager.liquidate(alice, { from: liquidator, gasPrice: GAS_PRICE })
 
-    const expectedGasComp_A = _0pt5percent_aliceColl
-    const expectedLiquidatedColl_A = aliceColl.sub(_0pt5percent_aliceColl)
+    const expectedLiquidationProtocolFee_A = await positionManagerTester.getCollLiquidationProtocolFee(aliceColl, aliceDebt, price_1, liquidationProtocolFee)
+    const expectedLiquidatedColl_A = aliceColl
     const expectedLiquidatedDebt_A =  aliceDebt
 
-    const [loggedDebt_A, loggedColl_A, loggedGasComp_A, ] = th.getEmittedLiquidationValues(liquidationTxA)
+    const [loggedDebt_A, loggedColl_A, loggedLiquidationProtocolFee_A, loggedGasComp_A ] = th.getEmittedLiquidationValues(liquidationTxA)
 
     assert.isAtMost(th.getDifference(expectedLiquidatedDebt_A, loggedDebt_A), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_A, loggedColl_A), 1000)
-    assert.isAtMost(th.getDifference(expectedGasComp_A, loggedGasComp_A), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidationProtocolFee_A, loggedLiquidationProtocolFee_A), 1000)
+    assert.equal(loggedGasComp_A, 0)
 
     const bobColl = (await positionManager.positions(bob))[1]
     const bobDebt = (await positionManager.positions(bob))[0]
-    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
 
     const bobICR = await positionManager.getCurrentICR(bob, price_1)
     assert.isTrue(bobICR.lt(mv._MCR))
@@ -492,15 +498,204 @@ contract('Gas compensation tests', async accounts => {
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
     const liquidationTxB = await positionManager.liquidate(bob, { from: liquidator, gasPrice: GAS_PRICE })
 
-    const expectedGasComp_B = _0pt5percent_bobColl
-    const expectedLiquidatedColl_B = bobColl.sub(_0pt5percent_bobColl)
+    const expectedLiquidationProtocolFee_B = await positionManagerTester.getCollLiquidationProtocolFee(bobColl, bobDebt, price_1, liquidationProtocolFee)
+    const expectedLiquidatedColl_B = bobColl
     const expectedLiquidatedDebt_B =  bobDebt
 
-    const [loggedDebt_B, loggedColl_B, loggedGasComp_B, ] = th.getEmittedLiquidationValues(liquidationTxB)
+    const [loggedDebt_B, loggedColl_B, loggedProtocolLiquidationFee_B, loggedGasComp_B ] = th.getEmittedLiquidationValues(liquidationTxB)
 
     assert.isAtMost(th.getDifference(expectedLiquidatedDebt_B, loggedDebt_B), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_B, loggedColl_B), 1000)
-    assert.isAtMost(th.getDifference(expectedGasComp_B, loggedGasComp_B), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidationProtocolFee_B, loggedProtocolLiquidationFee_B), 1000)
+    assert.equal(loggedGasComp_B, 0)
+  })
+
+  // liquidatePositions - full redistribution
+  it('liquidatePositions(): full redistribution. Compensates the correct amount, and liquidates the remainder', async () => {
+    await priceFeed.setPrice(dec(1000, 18))
+
+    await openPosition({ ICR: toBN(dec(200, 18)), extraParams: { from: whale } })
+
+    // A-D open positions
+    await openPosition({ ICR: toBN(dec(118, 16)), extraRAmount: dec(2000, 18), extraParams: { from: alice } })
+    await openPosition({ ICR: toBN(dec(226, 16)), extraRAmount: dec(8000, 18), extraParams: { from: bob } })
+    await openPosition({ ICR: toBN(dec(488, 16)), extraRAmount: dec(600, 18), extraParams: { from: carol } })
+    await openPosition({ ICR: toBN(dec(445, 16)), extraRAmount: dec(1, 23), extraParams: { from: dennis } })
+
+    // price drops to 200
+    await priceFeed.setPrice(dec(200, 18))
+    const price = await priceFeed.getPrice()
+
+    // Check A, B, C, D have ICR < MCR
+    assert.isTrue((await positionManager.getCurrentICR(alice, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(bob, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(carol, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(dennis, price)).lt(mv._MCR))
+
+    // --- Check value of of A's collateral is < $10, and value of B,C,D collateral are > $10  ---
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const carolColl = (await positionManager.positions(carol))[1]
+    const dennisColl = (await positionManager.positions(dennis))[1]
+
+    // --- Check value of 0.5% of A, B, and C's collateral is <$10, and value of 0.5% of D's collateral is > $10 ---
+    const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
+    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
+    const _0pt5percent_carolColl = carolColl.div(web3.utils.toBN('200'))
+    const _0pt5percent_dennisColl = dennisColl.div(web3.utils.toBN('200'))
+
+    const collGasCompensation = await positionManagerTester.getCollGasCompensation(price)
+    assert.equal(collGasCompensation, dec(1 , 18))
+
+    /* Expect total gas compensation =
+        0.5% of [A_coll + B_coll + C_coll + D_coll]
+    */
+    const expectedCollGasComp = _0pt5percent_aliceColl
+          .add(_0pt5percent_bobColl)
+          .add(_0pt5percent_carolColl)
+          .add(_0pt5percent_dennisColl)
+
+    // Liquidate positions A-D
+    const liquidatorRBalance_before = web3.utils.toBN(await rToken.balanceOf(liquidator))
+    const liquidatorCollBalance_before = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
+    await positionManager.batchLiquidatePositions([alice, bob, carol, dennis], { from: liquidator, gasPrice: GAS_PRICE })
+    const liquidatorCollBalance_after = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
+    const liquidatorRBalance_after = web3.utils.toBN(await rToken.balanceOf(liquidator))
+    
+    // Check liquidator's balance has increased by the expected compensation amount
+    
+    const collCompensationReceived = (liquidatorCollBalance_after.sub(liquidatorCollBalance_before)).toString()
+    const rCompensationReceived = (liquidatorRBalance_after.sub(liquidatorRBalance_before)).toString()
+
+    const expectedRCompensation = toBN(dec(200, 18)).mul(toBN(4))
+
+    assert.isAtMost(th.getDifference(expectedCollGasComp, collCompensationReceived), 1000)
+    assert.isAtMost(th.getDifference(expectedRCompensation, rCompensationReceived), 1000)
+  })
+
+  //  --- event emission in liquidation sequence ---
+  it('liquidatePositions(): full offset. Liquidation event emits the correct gas compensation and total liquidated coll and debt', async () => {
+    await deploymentHelper.mintR(rToken, liquidator);
+    await priceFeed.setPrice(dec(1000, 18))
+
+    await openPosition({ ICR: toBN(dec(2000, 18)), extraParams: { from: whale } })
+
+    // A-F open positions
+    const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(518, 16)), extraRAmount: dec(2000, 18), extraParams: { from: alice } })
+    const { totalDebt: B_totalDebt } = await openPosition({ ICR: toBN(dec(526, 16)), extraRAmount: dec(8000, 18), extraParams: { from: bob } })
+    const { totalDebt: C_totalDebt } = await openPosition({ ICR: toBN(dec(508, 16)), extraRAmount: dec(600, 18), extraParams: { from: carol } })
+    const { totalDebt: D_totalDebt } = await openPosition({ ICR: toBN(dec(545, 16)), extraRAmount: dec(1, 23), extraParams: { from: dennis } })
+    await openPosition({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: erin } })
+    await openPosition({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: flyn } })
+
+    // price drops to 200
+    await priceFeed.setPrice(dec(200, 18))
+    const price = await priceFeed.getPrice()
+
+    // Check A, B, C, D have ICR < MCR
+    assert.isTrue((await positionManager.getCurrentICR(alice, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(bob, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(carol, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(dennis, price)).lt(mv._MCR))
+
+    // Check E, F have ICR > MCR
+    assert.isTrue((await positionManager.getCurrentICR(erin, price)).gt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(flyn, price)).gt(mv._MCR))
+
+
+    // --- Check value of of A's collateral is < $10, and value of B,C,D collateral are > $10  ---
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const carolColl = (await positionManager.positions(carol))[1]
+    const dennisColl = (await positionManager.positions(dennis))[1]
+
+    const collGasCompensation = await positionManagerTester.getCollGasCompensation(price)
+    assert.equal(collGasCompensation, dec(1, 18))
+
+    /* Expect liquidated coll =
+       [A_coll + B_coll + C_coll + D_coll]
+    */
+    const expectedLiquidatedColl = aliceColl
+          .add(bobColl)
+          .add(carolColl)
+          .add(dennisColl)
+
+    // Expect liquidatedDebt = 51 + 190 + 1025 + 13510 = 14646 R
+    const expectedLiquidatedDebt = A_totalDebt.add(B_totalDebt).add(C_totalDebt).add(D_totalDebt)
+
+    // Liquidate positions A-D
+    const liquidationTxData = await positionManager.batchLiquidatePositions([alice, bob, carol, dennis], { from: liquidator, gasPrice: GAS_PRICE })
+
+    // Get data from the liquidation event logs
+    const [loggedDebt, loggedColl, ,loggedGasComp, ] = th.getEmittedLiquidationValues(liquidationTxData)
+
+    assert.isAtMost(th.getDifference(expectedLiquidatedDebt, loggedDebt), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidatedColl, loggedColl), 1000)
+    assert.equal(0, loggedGasComp)
+  })
+
+  it('liquidatePositions(): full redistribution. Liquidation event emits the correct gas compensation and total liquidated coll and debt', async () => {
+    await priceFeed.setPrice(dec(1000, 18))
+
+    await openPosition({ ICR: toBN(dec(2000, 18)), extraParams: { from: whale } })
+
+    // A-F open positions
+    const { totalDebt: A_totalDebt } = await openPosition({ ICR: toBN(dec(118, 16)), extraRAmount: dec(2000, 18), extraParams: { from: alice } })
+    const { totalDebt: B_totalDebt } = await openPosition({ ICR: toBN(dec(226, 16)), extraRAmount: dec(8000, 18), extraParams: { from: bob } })
+    const { totalDebt: C_totalDebt } = await openPosition({ ICR: toBN(dec(488, 16)), extraRAmount: dec(600, 18), extraParams: { from: carol } })
+    const { totalDebt: D_totalDebt } = await openPosition({ ICR: toBN(dec(345, 16)), extraRAmount: dec(1, 23), extraParams: { from: dennis } })
+    await openPosition({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: erin } })
+    await openPosition({ ICR: toBN(dec(10, 18)), extraRAmount: dec(1, 23), extraParams: { from: flyn } })
+
+    // price drops to 200
+    await priceFeed.setPrice(dec(200, 18))
+    const price = await priceFeed.getPrice()
+
+    // Check A, B, C, D have ICR < MCR
+    assert.isTrue((await positionManager.getCurrentICR(alice, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(bob, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(carol, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(dennis, price)).lt(mv._MCR))
+
+    const aliceColl = (await positionManager.positions(alice))[1]
+    const bobColl = (await positionManager.positions(bob))[1]
+    const carolColl = (await positionManager.positions(carol))[1]
+    const dennisColl = (await positionManager.positions(dennis))[1]
+
+    // --- Check value of 0.5% of A, B, and C's collateral is <$10, and value of 0.5% of D's collateral is > $10 ---
+    const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
+    const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
+    const _0pt5percent_carolColl = carolColl.div(web3.utils.toBN('200'))
+    const _0pt5percent_dennisColl = dennisColl.div(web3.utils.toBN('200'))
+
+    /* Expect total gas compensation =
+    0.5% of [A_coll + B_coll + C_coll + D_coll]
+    */
+    const expectedGasComp = _0pt5percent_aliceColl
+      .add(_0pt5percent_bobColl)
+      .add(_0pt5percent_carolColl)
+      .add(_0pt5percent_dennisColl).toString()
+
+    /* Expect liquidated coll =
+    0.95% of [A_coll + B_coll + C_coll + D_coll]
+    */
+    const expectedLiquidatedColl = aliceColl.sub(_0pt5percent_aliceColl)
+      .add(bobColl.sub(_0pt5percent_bobColl))
+      .add(carolColl.sub(_0pt5percent_carolColl))
+      .add(dennisColl.sub(_0pt5percent_dennisColl))
+
+    // Expect liquidatedDebt = 51 + 190 + 1025 + 13510 = 14646 R
+    const expectedLiquidatedDebt = A_totalDebt.add(B_totalDebt).add(C_totalDebt).add(D_totalDebt)
+
+    // Liquidate positions A-D
+    const liquidationTxData = await positionManager.batchLiquidatePositions([alice, bob, carol, dennis], { from: liquidator, gasPrice: GAS_PRICE })
+
+    // Get data from the liquidation event logs
+    const [loggedDebt, loggedColl, , loggedGasComp, ] = th.getEmittedLiquidationValues(liquidationTxData)
+
+    assert.isAtMost(th.getDifference(expectedLiquidatedDebt, loggedDebt), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidatedColl, loggedColl), 1000)
+    assert.isAtMost(th.getDifference(expectedGasComp, loggedGasComp), 1000)
   })
 
   // --- Position ordering by ICR tests ---

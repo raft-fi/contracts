@@ -8,13 +8,13 @@ import "../../contracts/PositionManager.sol";
 for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
-
     constructor(
         IPriceFeed _priceFeed,
         IERC20 _collateralToken,
-        uint256 _positionsSize
+        uint256 _positionsSize,
+        uint256 _liquidationProtocolFee
     )
-        PositionManager(_priceFeed, _collateralToken, _positionsSize)
+        PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee)
     {
     }
 
@@ -24,6 +24,10 @@ contract PositionManagerTester is PositionManager {
 
     function getCollGasCompensation(uint _coll) external pure returns (uint) {
         return _getCollGasCompensation(_coll);
+    }
+
+    function getCollLiquidationProtocolFee(uint _entireColl, uint _entireDebt, uint _price, uint _fee) external pure returns (uint) {
+        return _getCollLiquidationProtocolFee(_entireColl, _entireDebt, _price, _fee);
     }
 
     function getRGasCompensation() external pure returns (uint) {

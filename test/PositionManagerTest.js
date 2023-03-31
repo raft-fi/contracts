@@ -89,7 +89,7 @@ contract('PositionManager', async accounts => {
     const alice_Position_isInSortedList = (await positionManager.sortedPositionsNodes(alice))[0]
     assert.isFalse(alice_Position_isInSortedList)
   })
-
+  
   it("liquidate(): removes the Position's stake from the total stakes", async () => {
     // --- SETUP ---
     await deploymentHelper.mintR(rToken, owner);

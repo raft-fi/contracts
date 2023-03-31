@@ -2,6 +2,8 @@ const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
 
+const { TestHelper: th } = require("./testHelpers.js")
+
 const deployLiquity = async () => {
   const priceFeedTestnet = await PriceFeedTestnet.new()
   const positionManager = await PositionManager.new()
