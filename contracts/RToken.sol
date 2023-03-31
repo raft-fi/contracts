@@ -14,7 +14,7 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
 
     uint256 public override flashMintFeePercentage;
 
-    /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownershit to @param feeRecipient.
+    /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownership to @param feeRecipient.
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
     /// @param feeRecipient Address of flash mint fee recipient.
     constructor(IPositionManager positionManager, address feeRecipient)
