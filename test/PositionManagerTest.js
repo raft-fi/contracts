@@ -751,6 +751,54 @@ contract('PositionManager', async accounts => {
     th.assertIsApproximatelyEqual((await rToken.balanceOf(whale)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(rGasCompensation).add(rGasCompensation))
   })
 
+  it('simulateBatchLiquidatePositions(): returns correct liquidation values', async () => {
+    // --- SETUP ---
+    await deploymentHelper.mintR(contracts.rToken, whale);
+    await openPosition({ ICR: toBN(dec(100, 18)), extraParams: { from: whale } })
+
+    const { totalDebt: A_debt, collateral: A_coll } = await openPosition({ ICR: toBN(dec(202, 16)), extraParams: { from: alice } })
+    const { totalDebt: B_debt, collateral: B_coll } = await openPosition({ ICR: toBN(dec(210, 16)), extraParams: { from: bob } })
+    await openPosition({ ICR: toBN(dec(195, 16)), extraParams: { from: carol } })
+    await openPosition({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
+    await openPosition({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
+
+    assert.isTrue((await positionManager.sortedPositionsNodes(carol))[0])
+
+    // Check full sorted list size is 6
+    assert.equal(((await positionManager.sortedPositions())[3]).toString(), '6')
+
+    // Whale transfers to Carol so she can close her position
+    await rToken.transfer(carol, dec(100, 18), { from: whale })
+
+    // --- TEST ---
+
+    // Price drops to 1ETH:100R, reducing A, B, C ICR below MCR
+    await priceFeed.setPrice(dec(100, 18));
+    const price = await priceFeed.getPrice()
+
+    // Carol liquidated, and her position is closed
+    await positionManager.closePosition({ from: carol })
+
+    // Confirm positions A-B are ICR < 110%
+    assert.isTrue((await positionManager.getCurrentICR(alice, price)).lt(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(bob, price)).lt(mv._MCR))
+
+    // Confirm D-E are ICR > 110%
+    assert.isTrue((await positionManager.getCurrentICR(dennis, price)).gte(mv._MCR))
+    assert.isTrue((await positionManager.getCurrentICR(erin, price)).gte(mv._MCR))
+
+
+    // Liquidate - position C in between the ones to be liquidated!
+    const liquidationArray = [alice, carol, bob, dennis, erin]
+    const totals = await positionManager.simulateBatchLiquidatePositions(liquidationArray, price);
+    
+    assert.equal(totals.totalCollInSequence, A_coll.add(B_coll).toString());
+    assert.equal(totals.totalDebtInSequence, A_debt.add(B_debt).toString());
+    assert.equal(totals.totalDebtToOffset, A_debt.add(B_debt).toString());
+    assert.equal(totals.totalDebtToRedistribute, '0');
+    assert.equal(totals.totalCollToRedistribute, '0');
+  })
+
   // --- redemptions ---
 
   it('redeemCollateral(): cancels the provided R with debt from Positions with the lowest ICRs and sends an equivalent amount of Ether', async () => {

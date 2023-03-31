@@ -68,6 +68,18 @@ error LiquidationProtocolFeeOutOfBound();
 
 // Common interface for the Position Manager.
 interface IPositionManager is ILiquityBase, IFeeCollector {
+    struct LiquidationTotals {
+        uint totalCollInSequence;
+        uint totalDebtInSequence;
+        uint totalCollGasCompensation;
+        uint totalRGasCompensation;
+        uint totalDebtToOffset;
+        uint totalCollToSendToProtocol;
+        uint totalCollToSendToLiquidator;
+        uint totalDebtToRedistribute;
+        uint totalCollToRedistribute;
+    }
+    
     enum PositionStatus {
         nonExistent,
         active,
@@ -142,6 +154,8 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
         uint _maxIterations,
         uint _maxFee
     ) external;
+
+    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price) external view returns (LiquidationTotals memory totals);
 
     function getPendingCollateralTokenReward(address _borrower) external view returns (uint);
 

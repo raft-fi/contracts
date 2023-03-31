@@ -124,17 +124,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint collToRedistribute;
     }
 
-    struct LiquidationTotals {
-        uint totalCollInSequence;
-        uint totalDebtInSequence;
-        uint totalCollGasCompensation;
-        uint totalRGasCompensation;
-        uint totalDebtToOffset;
-        uint totalCollToSendToProtocol;
-        uint totalCollToSendToLiquidator;
-        uint totalDebtToRedistribute;
-        uint totalCollToRedistribute;
-    }
     // --- Variable container structs for redemptions ---
 
     struct SingleRedemptionValues {
@@ -390,13 +379,20 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         internal
         returns (LiquidationValues memory singleLiquidation)
     {
-        uint256 pendingCollReward;
-
-        (singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl,,pendingCollReward) 
-            = getEntireDebtAndColl(_borrower);
-
+        (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) = _calculateLiquidationValues(_borrower, _ICR, _price);
+        
         _movePendingPositionRewardsToActivePool(pendingCollReward);
         _removeStake(_borrower);
+
+        _closePosition(_borrower, PositionStatus.closedByLiquidation);
+        emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl, PositionManagerOperation.liquidate);
+        emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.liquidate);
+        return singleLiquidation;
+    }
+
+    function _calculateLiquidationValues(address _borrower, uint256 _ICR, uint256 _price) internal view returns (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) {
+        (singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl,,pendingCollReward) 
+            = getEntireDebtAndColl(_borrower);
 
         singleLiquidation.rGasCompensation = R_GAS_COMPENSATION;
         if (_ICR <= _100pct) { // redistribution
@@ -416,10 +412,22 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
             singleLiquidation.collToRedistribute = 0;
         }
 
-        _closePosition(_borrower, PositionStatus.closedByLiquidation);
-        emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl, PositionManagerOperation.liquidate);
-        emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.liquidate);
-        return singleLiquidation;
+        return (singleLiquidation, pendingCollReward);
+    }
+
+    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price)
+    external view override returns (LiquidationTotals memory totals) {
+        uint256 _positionArrayLength = _positionArray.length;
+        for (uint256 i = 0; i < _positionArrayLength; ++i) {
+            address user = _positionArray[i];
+            uint256 ICR = getCurrentICR(user, _price);
+
+            if (ICR < MCR) {
+                // Add liquidation values to their respective running totals
+                (LiquidationValues memory singleLiquidation,) = _calculateLiquidationValues(user, ICR, _price);
+                totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
+            }
+        }
     }
 
     /*
@@ -431,7 +439,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         }
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
-        LiquidationTotals memory totals = _getTotalsFromBatchLiquidate(priceFeed.fetchPrice(), _positionArray);
+        LiquidationTotals memory totals = _batchLiquidate(_positionArray);
 
         if (totals.totalCollInSequence == 0) {
             revert NothingToLiquidate();
@@ -464,18 +472,17 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         collateralToken.transfer(feeRecipient, collToSendToProtocol);
     }
 
-    function _getTotalsFromBatchLiquidate(uint _price, address[] memory _positionArray)
-        internal
-        returns(LiquidationTotals memory totals)
+    function _batchLiquidate(address[] memory _positionArray) internal returns (LiquidationTotals memory totals)
     {
+        uint256 price = priceFeed.fetchPrice();
         uint256 _positionArrayLength = _positionArray.length;
         for (uint256 i = 0; i < _positionArrayLength; ++i) {
             address user = _positionArray[i];
-            uint256 ICR = getCurrentICR(user, _price);
+            uint256 ICR = getCurrentICR(user, price);
 
             if (ICR < MCR) {
                 // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR, _price));
+                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR, price));
             }
         }
     }
