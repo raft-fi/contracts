@@ -63,4 +63,10 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
     function _flashFee(address token, uint256 amount) internal view virtual override returns (uint256) {
         return token == address(this) ? amount * flashMintFeePercentage / PERCENTAGE_BASE : 0;
     }
+
+    /// @dev Inherited from ERC20FlashMint. Defines flash mint fee receiver.
+    /// @return Address that will receive flash mint fees.
+    function _flashFeeReceiver() internal view virtual override returns (address) {
+        return feeRecipient;
+    }
 }
