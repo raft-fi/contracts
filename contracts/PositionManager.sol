@@ -110,14 +110,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint collToRedistribute;
     }
 
-    // --- Variable container structs for redemptions ---
-
-    struct SingleRedemptionValues {
-        uint rLot;
-        uint collateralTokenLot;
-        bool cancelledPartial;
-    }
-
     // --- Modifiers ---
 
     modifier validMaxFeePercentageWhen(uint256 _maxFeePercentage, bool condition) {
@@ -349,15 +341,12 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Inner single liquidation functions ---
 
     // Liquidate one position
-    function _liquidate(
-        address _borrower,
-        uint _ICR,
-        uint _price
-    )
+    function _liquidate(address _borrower, uint _ICR, uint _price)
         internal
         returns (LiquidationValues memory singleLiquidation)
     {
-        (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) = _calculateLiquidationValues(_borrower, _ICR, _price);
+        uint256 pendingCollReward;
+        (singleLiquidation, pendingCollReward) = _calculateLiquidationValues(_borrower, _ICR, _price);
 
         _movePendingPositionRewardsToActivePool(pendingCollReward);
         _removeStake(_borrower);
@@ -365,7 +354,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         _closePosition(_borrower, PositionStatus.closedByLiquidation);
         emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl, PositionManagerOperation.liquidate);
         emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.liquidate);
-        return singleLiquidation;
     }
 
     function _calculateLiquidationValues(address _borrower, uint256 _ICR, uint256 _price) internal view returns (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) {
@@ -512,17 +500,14 @@ contract PositionManager is FeeCollector, IPositionManager {
         address _lowerPartialRedemptionHint,
         uint _partialRedemptionHintNICR
     )
-        internal returns (SingleRedemptionValues memory singleRedemption)
+        internal returns (uint256 rLot)
     {
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position minus the liquidation reserve
-        singleRedemption.rLot = Math.min(_maxRamount, positions[_borrower].debt - MathUtils.R_GAS_COMPENSATION);
-
-        // Get the CollateralTokenLot of equivalent value in USD
-        singleRedemption.collateralTokenLot = singleRedemption.rLot * MathUtils.DECIMAL_PRECISION / _price;
+        rLot = Math.min(_maxRamount, positions[_borrower].debt - MathUtils.R_GAS_COMPENSATION);
 
         // Decrease the debt and collateral of the current Position according to the R lot and corresponding collateralToken to send
-        uint newDebt = positions[_borrower].debt - singleRedemption.rLot;
-        uint newColl = positions[_borrower].coll - singleRedemption.collateralTokenLot;
+        uint newDebt = positions[_borrower].debt - rLot;
+        uint newColl = positions[_borrower].coll - rLot * MathUtils.DECIMAL_PRECISION / _price;
 
         if (newDebt == MathUtils.R_GAS_COMPENSATION) {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
@@ -541,25 +526,22 @@ contract PositionManager is FeeCollector, IPositionManager {
             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
             */
             if (newNICR != _partialRedemptionHintNICR || MathUtils.getNetDebt(newDebt) < MathUtils.MIN_NET_DEBT) {
-                singleRedemption.cancelledPartial = true;
-                return singleRedemption;
+                rLot = 0;
+            } else {
+                sortedPositions.reInsert(this, _borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
+
+                positions[_borrower].debt = newDebt;
+                positions[_borrower].coll = newColl;
+                _updateStakeAndTotalStakes(_borrower);
+
+                emit PositionUpdated(
+                    _borrower,
+                    newDebt, newColl,
+                    positions[_borrower].stake,
+                    PositionManagerOperation.redeemCollateral
+                );
             }
-
-            sortedPositions.reInsert(this, _borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
-
-            positions[_borrower].debt = newDebt;
-            positions[_borrower].coll = newColl;
-            _updateStakeAndTotalStakes(_borrower);
-
-            emit PositionUpdated(
-                _borrower,
-                newDebt, newColl,
-                positions[_borrower].stake,
-                PositionManagerOperation.redeemCollateral
-            );
         }
-
-        return singleRedemption;
     }
 
     /*
@@ -645,8 +627,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         uint256 remainingR = _rAmount;
-        uint256 totalRToRedeem;
-        uint256 totalCollateralTokenDrawn;
         // Loop through the Positions starting from the one with lowest collateral ratio until _amount of R is exchanged for collateral
         if (_maxIterations == 0) { _maxIterations = type(uint256).max; }
         while (currentBorrower != address(0) && remainingR > 0 && _maxIterations > 0) {
@@ -656,7 +636,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
             _applyPendingRewards(currentBorrower);
 
-            SingleRedemptionValues memory singleRedemption = _redeemCollateralFromPosition(
+            uint256 rLot = _redeemCollateralFromPosition(
                 currentBorrower,
                 remainingR,
                 price,
@@ -665,14 +645,13 @@ contract PositionManager is FeeCollector, IPositionManager {
                 _partialRedemptionHintNICR
             );
 
-            if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Position
+            if (rLot == 0) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Position
 
-            totalRToRedeem += singleRedemption.rLot;
-            totalCollateralTokenDrawn += singleRedemption.collateralTokenLot;
-
-            remainingR -= singleRedemption.rLot;
+            remainingR -= rLot;
             currentBorrower = nextUserToCheck;
         }
+        uint256 totalRRedeemed = _rAmount - remainingR;
+        uint256 totalCollateralTokenDrawn = totalRRedeemed * MathUtils.DECIMAL_PRECISION / price;
 
         if (totalCollateralTokenDrawn == 0) {
             revert UnableToRedeemAnyAmount();
@@ -691,10 +670,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         _activePoolCollateralBalance -= collateralTokenFee;
         collateralToken.transfer(feeRecipient, collateralTokenFee);
 
-        emit Redemption(_rAmount, totalRToRedeem, totalCollateralTokenDrawn, collateralTokenFee);
+        emit Redemption(_rAmount, totalRRedeemed, totalCollateralTokenDrawn, collateralTokenFee);
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateralToken to msg.sender
-        rToken.burn(msg.sender, totalRToRedeem);
+        rToken.burn(msg.sender, totalRRedeemed);
 
         // Send collateralToken to account
         uint256 collateralTokenToSendToRedeemer = totalCollateralTokenDrawn - collateralTokenFee;
