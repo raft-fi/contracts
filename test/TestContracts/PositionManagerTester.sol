@@ -38,10 +38,6 @@ contract PositionManagerTester is PositionManager {
         return baseRate;
     }
 
-    function minutesPassedSinceLastFeeOp() external view returns (uint) {
-        return _minutesPassedSinceLastFeeOp();
-    }
-
     function setLastFeeOpTimeToNow() external {
         lastFeeOperationTime = block.timestamp;
     }
@@ -50,17 +46,8 @@ contract PositionManagerTester is PositionManager {
         baseRate = _baseRate;
     }
 
-    function callGetRedemptionFee(uint _ETHDrawn) external view returns (uint) {
-        return _getRedemptionFee(_ETHDrawn);
-    }
-
     function getActualDebtFromComposite(uint _debtVal) external pure returns (uint) {
         return _getNetDebt(_debtVal);
-    }
-
-    function callInternalRemovePositionOwner(address _positionOwner) external {
-        uint positionOwnersArrayLength = PositionOwners.length;
-        _removePositionOwner(_positionOwner, positionOwnersArrayLength);
     }
 
     function getNewICRFromPositionChange
@@ -78,9 +65,5 @@ contract PositionManagerTester is PositionManager {
     returns (uint)
     {
         return _getNewICRFromPositionChange(_coll, _debt, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
-    }
-
-    function getUSDValue(uint _coll, uint _price) external pure returns (uint) {
-        return _getUSDValue(_coll, _price);
     }
 }
