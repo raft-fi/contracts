@@ -402,26 +402,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         return singleLiquidation;
     }
 
-    function _getTotalsFromLiquidatePositionsSequence
-    (
-        uint _price,
-        uint _n
-    )
-        internal
-        returns(LiquidationTotals memory totals)
-    {
-        for (uint256 i = 0; i < _n; ++i) {
-            address user = sortedPositions.last;
-            uint256 ICR = getCurrentICR(user, _price);
-
-            if (ICR < MCR) {
-                // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR));
-
-            } else break;  // break if the loop reaches a Position with ICR >= MCR
-        }
-    }
-
     /*
     * Attempt to liquidate a custom list of positions provided by the caller.
     */
@@ -462,11 +442,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         collateralToken.transfer(liquidator, collToSendToLiquidator);
     }
 
-    function _getTotalsFromBatchLiquidate
-    (
-        uint _price,
-        address[] memory _positionArray
-    )
+    function _getTotalsFromBatchLiquidate(uint _price, address[] memory _positionArray)
         internal
         returns(LiquidationTotals memory totals)
     {
