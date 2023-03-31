@@ -96,22 +96,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     * in order to avoid the error: "CompilerError: Stack too deep".
     **/
 
-     struct LocalVariables_adjustPosition {
-        uint price;
-        uint collChange;
-        uint netDebtChange;
-        bool isCollIncrease;
-        uint debt;
-        uint coll;
-        uint oldICR;
-        uint newICR;
-        uint newNICR;
-        uint rFee;
-        uint newDebt;
-        uint newColl;
-        uint stake;
-    }
-
     struct LiquidationValues {
         uint entirePositionDebt;
         uint entirePositionColl;
@@ -194,7 +178,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         validMaxFeePercentageWhen(_maxFeePercentage, true)
         onlyNonActivePosition
     {
-        uint256 rFee = _triggerBorrowingFee(rToken, _rAmount, _maxFeePercentage);
+        uint256 rFee = _triggerBorrowingFee(_rAmount, _maxFeePercentage);
         uint256 netDebt = _rAmount + rFee;
         _requireAtLeastMinNetDebt(netDebt);
 
@@ -231,26 +215,29 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     // Send collateralToken to a position
     function addColl(address _upperHint, address _lowerHint, uint256 _collDeposit) external override {
-        _adjustPosition(0, 0, false, _upperHint, _lowerHint, 0, _collDeposit);
+        _adjustPosition(_collDeposit, true, 0, false, _upperHint, _lowerHint, 0);
     }
 
     // Withdraw collateralToken from a position
     function withdrawColl(uint _collWithdrawal, address _upperHint, address _lowerHint) external override {
-        _adjustPosition(_collWithdrawal, 0, false, _upperHint, _lowerHint, 0, 0);
+        _adjustPosition(_collWithdrawal, false, 0, false, _upperHint, _lowerHint, 0);
     }
 
     // Withdraw R tokens from a position: mint new R tokens to the owner, and increase the position's debt accordingly
     function withdrawR(uint _maxFeePercentage, uint _rAmount, address _upperHint, address _lowerHint) external override {
-        _adjustPosition(0, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage, 0);
+        _adjustPosition(0, false, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage);
     }
 
     // Repay R tokens to a Position: Burn the repaid R tokens, and reduce the position's debt accordingly
     function repayR(uint _rAmount, address _upperHint, address _lowerHint) external override {
-        _adjustPosition(0, _rAmount, false, _upperHint, _lowerHint, 0, 0);
+        _adjustPosition(0, false, _rAmount, false, _upperHint, _lowerHint, 0);
     }
 
     function adjustPosition(uint _maxFeePercentage, uint _collWithdrawal, uint _rChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint256 _collDeposit) external override {
-        _adjustPosition(_collWithdrawal, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, _collDeposit);
+        if (_collWithdrawal != 0 && _collDeposit != 0) {
+            revert NotSingularCollateralChange();
+        }
+        _adjustPosition(_collDeposit + _collWithdrawal, _collDeposit != 0, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage);
     }
 
     /*
@@ -261,76 +248,65 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     * If both are positive, it will revert.
     */
     function _adjustPosition(
-        uint _collWithdrawal,
+        uint _collChange,
+        bool _isCollIncrease,
         uint _rChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
-        uint _maxFeePercentage,
-        uint256 _collDeposit
+        uint _maxFeePercentage
     )
         internal
         validMaxFeePercentageWhen(_maxFeePercentage, _isDebtIncrease)
         onlyActivePosition
     {
-        LocalVariables_adjustPosition memory vars;
-
         if (_isDebtIncrease && _rChange == 0) {
             revert DebtIncreaseZeroDebtChange();
         }
-        if (_collDeposit != 0 && _collWithdrawal != 0) {
-            revert NotSingularCollateralChange();
+        if (_isCollIncrease && _collChange == 0) {
+            revert CollateralIncreaseZeroCollateralChange();
         }
-        if (_collDeposit == 0 && _collWithdrawal == 0 && _rChange == 0) {
+        if (_collChange == 0 && _rChange == 0) {
             revert NoCollateralOrDebtChange();
+        }
+        if (!_isCollIncrease && _collChange > positions[msg.sender].coll) {
+            revert WithdrawingMoreThanAvailableCollateral();
         }
 
         _applyPendingRewards(msg.sender);
 
-        // Get the collChange based on whether or not collateralToken was sent in the transaction
-        (vars.collChange, vars.isCollIncrease) = _collDeposit != 0 ? (_collDeposit, true) : (_collWithdrawal, false);
-
-        vars.netDebtChange = _rChange;
-
-        // If the adjustment incorporates a debt increase, then trigger a borrowing fee
-        if (_isDebtIncrease) {
-            vars.rFee = _triggerBorrowingFee(rToken, _rChange, _maxFeePercentage);
-            vars.netDebtChange += vars.rFee; // The raw debt change includes the fee
-        }
-
-        vars.debt = positions[msg.sender].debt;
-        vars.coll = positions[msg.sender].coll;
-
-        // Get the position's old ICR before the adjustment, and what its new ICR will be after the adjustment
-        vars.price = priceFeed.fetchPrice();
-        vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
-        vars.newICR = _getNewICRFromPositionChange(vars.coll, vars.debt, vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease, vars.price);
-        assert(_collWithdrawal <= vars.coll);
-
-        _requireICRisAboveMCR(vars.newICR);
+        uint256 netDebtChange = _rChange + (_isDebtIncrease ? _triggerBorrowingFee(_rChange, _maxFeePercentage) : 0);
 
         // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough R
         if (!_isDebtIncrease && _rChange > 0) {
-            _requireAtLeastMinNetDebt(_getNetDebt(vars.debt) - vars.netDebtChange);
-            _requireValidRRepayment(vars.debt, vars.netDebtChange);
-            if (rToken.balanceOf(msg.sender) < vars.netDebtChange) {
+            _requireAtLeastMinNetDebt(_getNetDebt(positions[msg.sender].debt) - netDebtChange);
+            _requireValidRRepayment(positions[msg.sender].debt, netDebtChange);
+            if (rToken.balanceOf(msg.sender) < netDebtChange) {
                 revert RepayNotEnoughR();
             }
         }
 
-        positions[msg.sender].coll = vars.isCollIncrease ? vars.coll + vars.collChange : vars.coll - vars.collChange;
-        positions[msg.sender].debt = _isDebtIncrease ? vars.debt + vars.netDebtChange : vars.debt - vars.netDebtChange;
-        vars.stake = _updateStakeAndTotalStakes(msg.sender);
+        positions[msg.sender].coll = _isCollIncrease ? positions[msg.sender].coll + _collChange : positions[msg.sender].coll - _collChange;
+        positions[msg.sender].debt = _isDebtIncrease ? positions[msg.sender].debt + netDebtChange : positions[msg.sender].debt - netDebtChange;
+
+        _requireICRisAboveMCR(
+            LiquityMath._computeCR(positions[msg.sender].coll, positions[msg.sender].debt, priceFeed.fetchPrice())
+        );
 
         // Re-insert position in to the sorted list
-        vars.newNICR = _getNewNominalICRFromPositionChange(vars.coll, vars.debt, vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease);
-        sortedPositions.reInsert(this, msg.sender, vars.newNICR, _upperHint, _lowerHint);
+        sortedPositions.reInsert(
+            this, 
+            msg.sender,
+            LiquityMath._computeNominalCR(positions[msg.sender].coll, positions[msg.sender].debt),
+            _upperHint,
+            _lowerHint
+        );
 
-        emit PositionUpdated(msg.sender, positions[msg.sender].debt, positions[msg.sender].coll, vars.stake, PositionManagerOperation.adjustPosition);
-        emit RBorrowingFeePaid(msg.sender, vars.rFee);
+        emit PositionUpdated(msg.sender, positions[msg.sender].debt, positions[msg.sender].coll, _updateStakeAndTotalStakes(msg.sender), PositionManagerOperation.adjustPosition);
+        emit RBorrowingFeePaid(msg.sender, netDebtChange - _rChange);
 
         // Use the unmodified _rChange here, as we don't send the fee to the user
-        _moveTokensFromAdjustment(vars.collChange, vars.isCollIncrease, _rChange, _isDebtIncrease);
+        _moveTokensFromAdjustment(_collChange, _isCollIncrease, _rChange, _isDebtIncrease);
     }
 
     function closePosition() external override onlyActivePosition {
@@ -1071,14 +1047,14 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     // --- Helper functions ---
 
-    function _triggerBorrowingFee(IRToken _rToken, uint _rAmount, uint _maxFeePercentage) internal returns (uint rFee) {
+    function _triggerBorrowingFee(uint _rAmount, uint _maxFeePercentage) internal returns (uint rFee) {
         _decayBaseRateFromBorrowing(); // decay the baseRate state variable
         rFee = _getBorrowingFee(_rAmount);
 
         _requireUserAcceptsFee(rFee, _rAmount, _maxFeePercentage);
 
         if (rFee > 0) {
-            _rToken.mint(feeRecipient, rFee);
+            rToken.mint(feeRecipient, rFee);
         }
     }
 
@@ -1118,63 +1094,6 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         if (_debtRepayment > _currentDebt - R_GAS_COMPENSATION) {
             revert RepayRAmountExceedsDebt(_debtRepayment);
         }
-    }
-
-    // --- ICR getters ---
-
-    // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
-    function _getNewNominalICRFromPositionChange
-    (
-        uint _coll,
-        uint _debt,
-        uint _collChange,
-        bool _isCollIncrease,
-        uint _debtChange,
-        bool _isDebtIncrease
-    )
-        pure
-        internal
-        returns (uint newNICR)
-    {
-        (uint newColl, uint newDebt) = _getNewPositionAmounts(_coll, _debt, _collChange, _isCollIncrease, _debtChange, _isDebtIncrease);
-
-        newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
-    }
-
-    // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
-    function _getNewICRFromPositionChange
-    (
-        uint _coll,
-        uint _debt,
-        uint _collChange,
-        bool _isCollIncrease,
-        uint _debtChange,
-        bool _isDebtIncrease,
-        uint _price
-    )
-        pure
-        internal
-        returns (uint newICR)
-    {
-        (uint newColl, uint newDebt) = _getNewPositionAmounts(_coll, _debt, _collChange, _isCollIncrease, _debtChange, _isDebtIncrease);
-
-        newICR = LiquityMath._computeCR(newColl, newDebt, _price);
-    }
-
-    function _getNewPositionAmounts(
-        uint _coll,
-        uint _debt,
-        uint _collChange,
-        bool _isCollIncrease,
-        uint _debtChange,
-        bool _isDebtIncrease
-    )
-        internal
-        pure
-        returns (uint newColl, uint newDebt)
-    {
-        newColl = _isCollIncrease ? _coll + _collChange :  _coll - _collChange;
-        newDebt = _isDebtIncrease ? _debt + _debtChange : _debt - _debtChange;
     }
 
     function getCompositeDebt(uint _debt) external pure override returns (uint) {

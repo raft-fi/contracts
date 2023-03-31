@@ -45,8 +45,14 @@ error BorrowingSpreadExceedsMaximum();
 /// @dev Debt increase requires non-zero debt change.
 error DebtIncreaseZeroDebtChange();
 
+/// @dev Trying to withdraw more collateral than what user has available.
+error WithdrawingMoreThanAvailableCollateral();
+
 /// @dev Cannot withdraw and add collateral at the same time.
 error NotSingularCollateralChange();
+
+/// @dev Collateral increase requires non-zero collateral change.
+error CollateralIncreaseZeroCollateralChange();
 
 /// @dev There must be either a collateral change or a debt change.
 error NoCollateralOrDebtChange();
