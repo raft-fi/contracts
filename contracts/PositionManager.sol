@@ -119,8 +119,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
-    modifier onlyActivePosition() {
-        if (positions[msg.sender].status != PositionStatus.active) {
+    modifier onlyActivePosition(address _borrower) {
+        if (positions[_borrower].status != PositionStatus.active) {
             revert PositionManagerPositionNotActive();
         }
         _;
@@ -252,7 +252,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     )
         internal
         validMaxFeePercentageWhen(_maxFeePercentage, _isDebtIncrease)
-        onlyActivePosition
+        onlyActivePosition(msg.sender)
     {
         if (_isDebtIncrease && _rChange == 0) {
             revert DebtIncreaseZeroDebtChange();
@@ -303,7 +303,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _moveTokensFromAdjustment(_collChange, _isCollIncrease, _rChange, _isDebtIncrease);
     }
 
-    function closePosition() external override onlyActivePosition {
+    function closePosition() external override onlyActivePosition(msg.sender) {
         _applyPendingRewards(msg.sender);
 
         uint coll = positions[msg.sender].coll;
@@ -330,9 +330,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Position Liquidation functions ---
 
     // Single liquidation function. Closes the position if its ICR is lower than the minimum collateral ratio.
-    function liquidate(address _borrower) external override {
-        _requirePositionIsActive(_borrower);
-
+    function liquidate(address _borrower) external override onlyActivePosition(_borrower) {
         address[] memory borrowers = new address[](1);
         borrowers[0] = _borrower;
         batchLiquidatePositions(borrowers);
@@ -705,7 +703,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Position
     function _applyPendingRewards(address _borrower) internal {
         if (hasPendingRewards(_borrower)) {
-            _requirePositionIsActive(_borrower);
 
             // Compute pending rewards
             uint pendingCollateralTokenReward = getPendingCollateralTokenReward(_borrower);
@@ -1016,14 +1013,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 excessCollateral = _entireColl - debtValue;
 
         return excessCollateral * _fee / MathUtils.DECIMAL_PRECISION;
-    }
-
-    // --- 'require' wrapper functions ---
-
-    function _requirePositionIsActive(address _borrower) internal view {
-        if (positions[_borrower].status != PositionStatus.active) {
-            revert PositionManagerPositionNotActive();
-        }
     }
 
     // --- Helper functions ---
