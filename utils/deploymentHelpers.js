@@ -2,7 +2,7 @@ const PositionManager = artifacts.require("./PositionManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const RToken = artifacts.require("./RToken.sol")
 
-const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
+const MathUtilsTester = artifacts.require("./MathUtilsTester.sol")
 const PositionManagerTester = artifacts.require("./PositionManagerTester.sol")
 const RTokenTester = artifacts.require("./RTokenTester.sol")
 const WstETHTokenMock = artifacts.require("./WstETHTokenMock.sol")
@@ -34,15 +34,18 @@ class DeploymentHelper {
     const wstETHTokenMock = await WstETHTokenMock.new({ from: feeRecipient })
     const positionManager = await PositionManagerTester.new(priceFeedTestnet.address, wstETHTokenMock.address, maxBytes32, LIQUIDATION_PROTOCOL_FEE, { from: feeRecipient })
     const rToken = await RTokenTester.at(await positionManager.rToken(), feeRecipient)
+    const math = await MathUtilsTester.new({ from: feeRecipient })
     RTokenTester.setAsDeployed(rToken)
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
     PositionManagerTester.setAsDeployed(positionManager)
+    MathUtilsTester.setAsDeployed(math)
 
     const coreContracts = {
       priceFeedTestnet,
       rToken,
       positionManager,
-      wstETHTokenMock
+      wstETHTokenMock,
+      math
     }
     return coreContracts
   }
@@ -71,7 +74,7 @@ class DeploymentHelper {
     testerContracts.priceFeedTestnet = await PriceFeedTestnet.new()
     testerContracts.wstETHTokenMock = await WstETHTokenMock.new();
     // Actual tester contracts
-    testerContracts.math = await LiquityMathTester.new()
+    testerContracts.math = await MathUtilsTester.new()
     testerContracts.positionManager = await PositionManagerTester.new(dec(50, 16))
     testerContracts.rToken =  await RTokenTester.new(
       testerContracts.positionManager.address

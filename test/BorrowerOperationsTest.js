@@ -42,6 +42,7 @@ contract('BorrowerOperations', async accounts => {
 
   let R_GAS_COMPENSATION
   let MIN_NET_DEBT
+  let MCR
 
   before(async () => {
 
@@ -55,8 +56,9 @@ contract('BorrowerOperations', async accounts => {
       rToken = contracts.rToken
       positionManager = contracts.positionManager
 
-      R_GAS_COMPENSATION = await positionManager.R_GAS_COMPENSATION()
-      MIN_NET_DEBT = await positionManager.MIN_NET_DEBT()
+      R_GAS_COMPENSATION = await contracts.math.R_GAS_COMPENSATION()
+      MIN_NET_DEBT = await contracts.math.MIN_NET_DEBT()
+      MCR = await contracts.math.MCR()
 
       await th.fillAccountsWithWstETH(contracts, [
         owner, alice, bob, carol, dennis, whale,
@@ -1151,7 +1153,6 @@ contract('BorrowerOperations', async accounts => {
 
     it("adjustPosition(): Reverts if repaid amount is greater than current debt", async () => {
       const { totalDebt } = await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
-      R_GAS_COMPENSATION = await positionManager.R_GAS_COMPENSATION()
       const repayAmount = totalDebt.sub(R_GAS_COMPENSATION).add(toBN(1))
       await openPosition({ extraRAmount: repayAmount, ICR: toBN(dec(150, 16)), extraParams: { from: bob } })
 

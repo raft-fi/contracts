@@ -36,6 +36,8 @@ contract('PositionManager', async accounts => {
 
   let contracts
 
+  let R_GAS_COMPENSATION
+
   const getOpenPositionRAmount = async (totalDebt) => th.getOpenPositionRAmount(contracts, totalDebt)
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
   const openPosition = async (params) => th.openPosition(contracts, params)
@@ -48,6 +50,8 @@ contract('PositionManager', async accounts => {
     rToken = contracts.rToken
     positionManager = contracts.positionManager
     wstETHTokenMock = contracts.wstETHTokenMock
+
+    R_GAS_COMPENSATION = await contracts.math.R_GAS_COMPENSATION()
 
     await th.fillAccountsWithWstETH(contracts, [
       owner,
@@ -64,9 +68,6 @@ contract('PositionManager', async accounts => {
     const price = await priceFeed.getPrice()
     const ICR_Before = await positionManager.getCurrentICR(alice, price)
     assert.equal(ICR_Before, dec(4, 18))
-
-    const MCR = (await positionManager.MCR()).toString()
-    assert.equal(MCR.toString(), '1100000000000000000')
 
     // Alice increases debt to 180 R, lowering her ICR to 1.11
     const A_RWithdrawal = await getNetBorrowingAmount(dec(130, 18))
@@ -680,8 +681,7 @@ contract('PositionManager', async accounts => {
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
     assert.equal((await positionManager.positions(carol))[3].toString(), '0')
 
-    const rGasCompensation = await positionManager.R_GAS_COMPENSATION();
-    th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(rGasCompensation).add(rGasCompensation))
+    th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(R_GAS_COMPENSATION).add(R_GAS_COMPENSATION))
   })
 
   it("batchLiquidatePositions(): skips if a position has been closed", async () => {
@@ -747,8 +747,7 @@ contract('PositionManager', async accounts => {
     assert.equal(((await positionManager.sortedPositions())[3]).toString(), '3')
 
     // Check liquidator has only been reduced by A-B
-    const rGasCompensation = await positionManager.R_GAS_COMPENSATION();
-    th.assertIsApproximatelyEqual((await rToken.balanceOf(whale)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(rGasCompensation).add(rGasCompensation))
+    th.assertIsApproximatelyEqual((await rToken.balanceOf(whale)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(R_GAS_COMPENSATION).add(R_GAS_COMPENSATION))
   })
 
   it('simulateBatchLiquidatePositions(): returns correct liquidation values', async () => {

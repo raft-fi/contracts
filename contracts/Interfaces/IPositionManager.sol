@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "./IFeeCollector.sol";
-import "./ILiquityBase.sol";
+import "./IPriceFeed.sol";
 import "./IRToken.sol";
 
 /// @dev Max fee percentage must be between borrowing spread and 100%.
@@ -73,7 +73,7 @@ error RepayNotEnoughR();
 error LiquidationProtocolFeeOutOfBound();
 
 // Common interface for the Position Manager.
-interface IPositionManager is ILiquityBase, IFeeCollector {
+interface IPositionManager is IFeeCollector {
     struct LiquidationTotals {
         uint totalCollInSequence;
         uint totalDebtInSequence;
@@ -85,7 +85,7 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
         uint totalDebtToRedistribute;
         uint totalCollToRedistribute;
     }
-    
+
     enum PositionStatus {
         nonExistent,
         active,
@@ -136,6 +136,7 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
     function MAX_LIQUIDATION_PROTOCOL_FEE() external view returns (uint256);
     function collateralToken() external view returns (IERC20);
     function rToken() external view returns (IRToken);
+    function priceFeed() external view returns (IPriceFeed);
 
     function positions(
         address _borrower

@@ -3,14 +3,14 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "./Dependencies/MathUtils.sol";
 import "./Interfaces/IPositionManager.sol";
 import "./Interfaces/IRToken.sol";
-import "./Dependencies/LiquityBase.sol";
 import "./FeeCollector.sol";
 import "./SortedPositions.sol";
 import "./RToken.sol";
 
-contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
+contract PositionManager is FeeCollector, IPositionManager {
     using SortedPositions for SortedPositions.Data;
     string constant public NAME = "PositionManager";
 
@@ -18,6 +18,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     IERC20 public immutable override collateralToken;
     IRToken public immutable override rToken;
+    IPriceFeed public immutable override priceFeed;
+
     uint256 public override liquidationProtocolFee;
 
     // A doubly linked list of Positions, sorted by their sorted by their collateral ratios
@@ -33,10 +35,10 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
      * (1/2) = d^720 => d = (1/2)^(1/720)
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
-    uint256 public constant REDEMPTION_FEE_FLOOR = DECIMAL_PRECISION / 1000 * 5; // 0.5%
-    uint256 public constant override MAX_BORROWING_SPREAD = DECIMAL_PRECISION / 100; // 1%
-    uint256 public constant MAX_BORROWING_FEE = DECIMAL_PRECISION / 100 * 5; // 5%
-    uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = DECIMAL_PRECISION / 100 * 80; // 80%
+    uint256 public constant REDEMPTION_FEE_FLOOR = MathUtils.DECIMAL_PRECISION / 1000 * 5; // 0.5%
+    uint256 public constant override MAX_BORROWING_SPREAD = MathUtils.DECIMAL_PRECISION / 100; // 1%
+    uint256 public constant MAX_BORROWING_FEE = MathUtils.DECIMAL_PRECISION / 100 * 5; // 5%
+    uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = MathUtils.DECIMAL_PRECISION / 100 * 80; // 80%
 
     /*
     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
@@ -119,7 +121,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     // --- Modifiers ---
 
     modifier validMaxFeePercentageWhen(uint256 _maxFeePercentage, bool condition) {
-        if (condition && (_maxFeePercentage < borrowingSpread || _maxFeePercentage > DECIMAL_PRECISION)) {
+        if (condition && (_maxFeePercentage < borrowingSpread || _maxFeePercentage > MathUtils.DECIMAL_PRECISION)) {
             revert PositionManagerInvalidMaxFeePercentage();
         }
         _;
@@ -183,10 +185,10 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         _requireAtLeastMinNetDebt(netDebt);
 
         // ICR is based on the composite debt, i.e. the requested R amount + R borrowing fee + R gas comp.
-        uint256 compositeDebt = _getCompositeDebt(netDebt);
+        uint256 compositeDebt = MathUtils.getCompositeDebt(netDebt);
         assert(compositeDebt > 0);
 
-        _requireICRisAboveMCR(LiquityMath._computeCR(_collAmount, compositeDebt, priceFeed.fetchPrice()));
+        _requireICRisAboveMCR(MathUtils.computeCR(_collAmount, compositeDebt, priceFeed.fetchPrice()));
 
         // Set the position struct's properties
         positions[msg.sender].status = PositionStatus.active;
@@ -197,7 +199,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint256 stake = _updateStakeAndTotalStakes(msg.sender);
 
         sortedPositions.insert(
-            this, msg.sender, LiquityMath._computeNominalCR(_collAmount, compositeDebt), _upperHint, _lowerHint
+            this, msg.sender, MathUtils.computeNominalCR(_collAmount, compositeDebt), _upperHint, _lowerHint
         );
         emit PositionCreated(msg.sender);
 
@@ -207,7 +209,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         rToken.mint(msg.sender, _rAmount);
 
         // Move the R gas compensation to the Gas Pool
-        rToken.mint(address(this), R_GAS_COMPENSATION);
+        rToken.mint(address(this), MathUtils.R_GAS_COMPENSATION);
 
         emit PositionUpdated(msg.sender, compositeDebt, _collAmount, stake, PositionManagerOperation.openPosition);
         emit RBorrowingFeePaid(msg.sender, rFee);
@@ -279,7 +281,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
         // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough R
         if (!_isDebtIncrease && _rChange > 0) {
-            _requireAtLeastMinNetDebt(_getNetDebt(positions[msg.sender].debt) - netDebtChange);
+            _requireAtLeastMinNetDebt(MathUtils.getNetDebt(positions[msg.sender].debt) - netDebtChange);
             _requireValidRRepayment(positions[msg.sender].debt, netDebtChange);
             if (rToken.balanceOf(msg.sender) < netDebtChange) {
                 revert RepayNotEnoughR();
@@ -290,14 +292,14 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         positions[msg.sender].debt = _isDebtIncrease ? positions[msg.sender].debt + netDebtChange : positions[msg.sender].debt - netDebtChange;
 
         _requireICRisAboveMCR(
-            LiquityMath._computeCR(positions[msg.sender].coll, positions[msg.sender].debt, priceFeed.fetchPrice())
+            MathUtils.computeCR(positions[msg.sender].coll, positions[msg.sender].debt, priceFeed.fetchPrice())
         );
 
         // Re-insert position in to the sorted list
         sortedPositions.reInsert(
-            this, 
+            this,
             msg.sender,
-            LiquityMath._computeNominalCR(positions[msg.sender].coll, positions[msg.sender].debt),
+            MathUtils.computeNominalCR(positions[msg.sender].coll, positions[msg.sender].debt),
             _upperHint,
             _lowerHint
         );
@@ -315,7 +317,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint coll = positions[msg.sender].coll;
         uint debt = positions[msg.sender].debt;
 
-        if (rToken.balanceOf(msg.sender) < debt - R_GAS_COMPENSATION) {
+        if (rToken.balanceOf(msg.sender) < debt - MathUtils.R_GAS_COMPENSATION) {
             revert RepayNotEnoughR();
         }
 
@@ -325,8 +327,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         emit PositionUpdated(msg.sender, 0, 0, 0, PositionManagerOperation.closePosition);
 
         // Burn the repaid R from the user's balance and the gas compensation from the Gas Pool
-        rToken.burn(msg.sender, debt - R_GAS_COMPENSATION);
-        rToken.burn(address(this), R_GAS_COMPENSATION);
+        rToken.burn(msg.sender, debt - MathUtils.R_GAS_COMPENSATION);
+        rToken.burn(address(this), MathUtils.R_GAS_COMPENSATION);
 
         // Send the collateral back to the user
         _activePoolCollateralBalance -= coll;
@@ -356,7 +358,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         returns (LiquidationValues memory singleLiquidation)
     {
         (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) = _calculateLiquidationValues(_borrower, _ICR, _price);
-        
+
         _movePendingPositionRewardsToActivePool(pendingCollReward);
         _removeStake(_borrower);
 
@@ -367,12 +369,12 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     }
 
     function _calculateLiquidationValues(address _borrower, uint256 _ICR, uint256 _price) internal view returns (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) {
-        (singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl,,pendingCollReward) 
+        (singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl,,pendingCollReward)
             = getEntireDebtAndColl(_borrower);
 
-        singleLiquidation.rGasCompensation = R_GAS_COMPENSATION;
-        if (_ICR <= _100pct) { // redistribution
-            singleLiquidation.collGasCompensation = _getCollGasCompensation(singleLiquidation.entirePositionColl);
+        singleLiquidation.rGasCompensation = MathUtils.R_GAS_COMPENSATION;
+        if (_ICR <= MathUtils._100pct) { // redistribution
+            singleLiquidation.collGasCompensation = MathUtils.getCollGasCompensation(singleLiquidation.entirePositionColl);
             singleLiquidation.debtToOffset = 0;
             singleLiquidation.collToSendToProtocol = 0;
             singleLiquidation.collToSendToLiquidator = 0;
@@ -398,7 +400,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
             address user = _positionArray[i];
             uint256 ICR = getCurrentICR(user, _price);
 
-            if (ICR < MCR) {
+            if (ICR < MathUtils.MCR) {
                 // Add liquidation values to their respective running totals
                 (LiquidationValues memory singleLiquidation,) = _calculateLiquidationValues(user, ICR, _price);
                 totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
@@ -456,7 +458,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
             address user = _positionArray[i];
             uint256 ICR = getCurrentICR(user, price);
 
-            if (ICR < MCR) {
+            if (ICR < MathUtils.MCR) {
                 // Add liquidation values to their respective running totals
                 totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR, price));
             }
@@ -513,24 +515,24 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         internal returns (SingleRedemptionValues memory singleRedemption)
     {
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position minus the liquidation reserve
-        singleRedemption.rLot = Math.min(_maxRamount, positions[_borrower].debt - R_GAS_COMPENSATION);
+        singleRedemption.rLot = Math.min(_maxRamount, positions[_borrower].debt - MathUtils.R_GAS_COMPENSATION);
 
         // Get the CollateralTokenLot of equivalent value in USD
-        singleRedemption.collateralTokenLot = singleRedemption.rLot * DECIMAL_PRECISION / _price;
+        singleRedemption.collateralTokenLot = singleRedemption.rLot * MathUtils.DECIMAL_PRECISION / _price;
 
         // Decrease the debt and collateral of the current Position according to the R lot and corresponding collateralToken to send
         uint newDebt = positions[_borrower].debt - singleRedemption.rLot;
         uint newColl = positions[_borrower].coll - singleRedemption.collateralTokenLot;
 
-        if (newDebt == R_GAS_COMPENSATION) {
+        if (newDebt == MathUtils.R_GAS_COMPENSATION) {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
             _removeStake(_borrower);
             _closePosition(_borrower, PositionStatus.closedByRedemption);
-            _redeemClosePosition(_borrower, R_GAS_COMPENSATION, newColl);
+            _redeemClosePosition(_borrower, MathUtils.R_GAS_COMPENSATION, newColl);
             emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.redeemCollateral);
 
         } else {
-            uint newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
+            uint newNICR = MathUtils.computeNominalCR(newColl, newDebt);
 
             /*
             * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
@@ -538,7 +540,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
             *
             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
             */
-            if (newNICR != _partialRedemptionHintNICR || _getNetDebt(newDebt) < MIN_NET_DEBT) {
+            if (newNICR != _partialRedemptionHintNICR || MathUtils.getNetDebt(newDebt) < MathUtils.MIN_NET_DEBT) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
             }
@@ -577,13 +579,13 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     function _isValidFirstRedemptionHint(address _firstRedemptionHint, uint _price) internal view returns (bool) {
         if (_firstRedemptionHint == address(0) ||
             !sortedPositions.nodes[_firstRedemptionHint].exists ||
-            getCurrentICR(_firstRedemptionHint, _price) < MCR
+            getCurrentICR(_firstRedemptionHint, _price) < MathUtils.MCR
         ) {
             return false;
         }
 
         address nextPosition = sortedPositions.nodes[_firstRedemptionHint].nextId;
-        return nextPosition == address(0) || getCurrentICR(nextPosition, _price) < MCR;
+        return nextPosition == address(0) || getCurrentICR(nextPosition, _price) < MathUtils.MCR;
     }
 
     /* Send _rAmount R to the system and redeem the corresponding amount of collateral from as many Positions as are needed to fill the redemption
@@ -619,7 +621,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         external
         override
     {
-        if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > DECIMAL_PRECISION) {
+        if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > MathUtils.DECIMAL_PRECISION) {
             revert PositionManagerMaxFeePercentageOutOfRange();
         }
         if (_rAmount == 0) {
@@ -636,8 +638,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
             currentBorrower = _firstRedemptionHint;
         } else {
             currentBorrower = sortedPositions.last;
-            // Find the first position with ICR >= MCR
-            while (currentBorrower != address(0) && getCurrentICR(currentBorrower, price) < MCR) {
+            // Find the first position with ICR >= MathUtils.MCR
+            while (currentBorrower != address(0) && getCurrentICR(currentBorrower, price) < MathUtils.MCR) {
                 currentBorrower = sortedPositions.nodes[currentBorrower].prevId;
             }
         }
@@ -683,7 +685,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         // Calculate the collateralToken fee
         uint256 collateralTokenFee = _calcRedemptionFee(getRedemptionRate(), totalCollateralTokenDrawn);
 
-        _requireUserAcceptsFee(collateralTokenFee, totalCollateralTokenDrawn, _maxFeePercentage);
+        MathUtils.checkIfValidFee(collateralTokenFee, totalCollateralTokenDrawn, _maxFeePercentage);
 
         // Send the collateralToken fee to the recipient
         _activePoolCollateralBalance -= collateralTokenFee;
@@ -706,14 +708,14 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     function getNominalICR(address _borrower) public view override returns (uint nicr) {
         (uint currentCollateralToken, uint currentRDebt) = _getCurrentPositionAmounts(_borrower);
 
-        nicr = LiquityMath._computeNominalCR(currentCollateralToken, currentRDebt);
+        nicr = MathUtils.computeNominalCR(currentCollateralToken, currentRDebt);
     }
 
     // Return the current collateral ratio (ICR) of a given Position. Takes a position's pending coll and debt rewards from redistributions into account.
     function getCurrentICR(address _borrower, uint _price) public view override returns (uint icr) {
         (uint currentCollateralToken, uint currentRDebt) = _getCurrentPositionAmounts(_borrower);
 
-        icr = LiquityMath._computeCR(currentCollateralToken, currentRDebt, _price);
+        icr = MathUtils.computeCR(currentCollateralToken, currentRDebt, _price);
     }
 
     function _getCurrentPositionAmounts(address _borrower) internal view returns (uint currentCollateralToken, uint currentRDebt) {
@@ -763,7 +765,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
         if (rewardPerUnitStaked == 0 || positions[_borrower].status != PositionStatus.active) { return 0; }
 
-        pendingCollateralTokenReward = positions[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+        pendingCollateralTokenReward = positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
     }
 
     // Get the borrower's pending accumulated R reward, earned by their stake
@@ -773,7 +775,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
         if (rewardPerUnitStaked == 0 || positions[_borrower].status != PositionStatus.active) { return 0; }
 
-        pendingRDebtReward = positions[_borrower].stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+        pendingRDebtReward = positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
     }
 
     function hasPendingRewards(address _borrower) public view override returns (bool) {
@@ -848,8 +850,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         * 4) Store these errors for use in the next correction when this function is called.
         * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
         */
-        uint collateralTokenNumerator = _coll * DECIMAL_PRECISION + lastCollateralTokenError_Redistribution;
-        uint RDebtNumerator = _debt * DECIMAL_PRECISION + lastRDebtError_Redistribution;
+        uint collateralTokenNumerator = _coll * MathUtils.DECIMAL_PRECISION + lastCollateralTokenError_Redistribution;
+        uint RDebtNumerator = _debt * MathUtils.DECIMAL_PRECISION + lastRDebtError_Redistribution;
 
         // Get the per-unit-staked terms
         uint collateralTokenRewardPerUnitStaked = collateralTokenNumerator / totalStakes;
@@ -918,8 +920,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint redeemedRFraction = _collateralDrawn * _price / _totalRSupply;
 
         uint newBaseRate = decayedBaseRate + redeemedRFraction / BETA;
-        newBaseRate = Math.min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
-        //assert(newBaseRate <= DECIMAL_PRECISION); // This is already enforced in the line above
+        newBaseRate = Math.min(newBaseRate, MathUtils.DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
+        //assert(newBaseRate <= MathUtils.DECIMAL_PRECISION); // This is already enforced in the line above
         assert(newBaseRate > 0); // Base rate is always non-zero after redemption
 
         // Update the baseRate state variable
@@ -942,7 +944,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     function _calcRedemptionRate(uint _baseRate) internal pure returns (uint) {
         return Math.min(
             REDEMPTION_FEE_FLOOR + _baseRate,
-            DECIMAL_PRECISION // cap at a maximum of 100%
+            MathUtils.DECIMAL_PRECISION // cap at a maximum of 100%
         );
     }
 
@@ -951,7 +953,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     }
 
     function _calcRedemptionFee(uint _redemptionRate, uint _collateralDrawn) internal pure returns (uint redemptionFee) {
-        redemptionFee = _redemptionRate * _collateralDrawn / DECIMAL_PRECISION;
+        redemptionFee = _redemptionRate * _collateralDrawn / MathUtils.DECIMAL_PRECISION;
         if (redemptionFee >= _collateralDrawn) {
             revert FeeEatsUpAllReturnedCollateral();
         }
@@ -992,13 +994,13 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     }
 
     function _calcBorrowingFee(uint _borrowingRate, uint _rDebt) internal pure returns (uint) {
-        return _borrowingRate * _rDebt / DECIMAL_PRECISION;
+        return _borrowingRate * _rDebt / MathUtils.DECIMAL_PRECISION;
     }
 
     // Updates the baseRate state variable based on time elapsed since the last redemption or R borrowing operation.
     function _decayBaseRateFromBorrowing() internal {
         uint decayedBaseRate = _calcDecayedBaseRate();
-        assert(decayedBaseRate <= DECIMAL_PRECISION);  // The baseRate can decay to 0
+        assert(decayedBaseRate <= MathUtils.DECIMAL_PRECISION);  // The baseRate can decay to 0
 
         baseRate = decayedBaseRate;
         emit BaseRateUpdated(decayedBaseRate);
@@ -1020,21 +1022,21 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     function _calcDecayedBaseRate() internal view returns (uint) {
         uint minutesPassed = (block.timestamp - lastFeeOperationTime) / 1 minutes;
-        uint decayFactor = LiquityMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
+        uint decayFactor = MathUtils.decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
-        return baseRate * decayFactor / DECIMAL_PRECISION;
+        return baseRate * decayFactor / MathUtils.DECIMAL_PRECISION;
     }
 
     /// ---- Liquidation fee functions ---
-    
+
     function _getCollLiquidationProtocolFee(uint _entireColl, uint _entireDebt, uint _price, uint _fee) internal pure returns (uint) {
-        assert(_fee <= DECIMAL_PRECISION);
-        
+        assert(_fee <= MathUtils.DECIMAL_PRECISION);
+
         // the value of the position's debt, denominated in collateral token
-        uint256 debtValue = _entireDebt * DECIMAL_PRECISION / _price; 
+        uint256 debtValue = _entireDebt * MathUtils.DECIMAL_PRECISION / _price;
         uint256 excessCollateral = _entireColl - debtValue;
-        
-        return excessCollateral * _fee / DECIMAL_PRECISION;
+
+        return excessCollateral * _fee / MathUtils.DECIMAL_PRECISION;
     }
 
     // --- 'require' wrapper functions ---
@@ -1051,7 +1053,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         _decayBaseRateFromBorrowing(); // decay the baseRate state variable
         rFee = _getBorrowingFee(_rAmount);
 
-        _requireUserAcceptsFee(rFee, _rAmount, _maxFeePercentage);
+        MathUtils.checkIfValidFee(rFee, _rAmount, _maxFeePercentage);
 
         if (rFee > 0) {
             rToken.mint(feeRecipient, rFee);
@@ -1079,25 +1081,25 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     // --- 'Require' wrapper functions ---
 
     function _requireICRisAboveMCR(uint _newICR) internal pure {
-        if (_newICR < MCR) {
+        if (_newICR < MathUtils.MCR) {
             revert NewICRLowerThanMCR(_newICR);
         }
     }
 
     function _requireAtLeastMinNetDebt(uint _netDebt) internal pure {
-        if (_netDebt < MIN_NET_DEBT) {
+        if (_netDebt < MathUtils.MIN_NET_DEBT) {
             revert NetDebtBelowMinimum(_netDebt);
         }
     }
 
     function _requireValidRRepayment(uint _currentDebt, uint _debtRepayment) internal pure {
-        if (_debtRepayment > _currentDebt - R_GAS_COMPENSATION) {
+        if (_debtRepayment > _currentDebt - MathUtils.R_GAS_COMPENSATION) {
             revert RepayRAmountExceedsDebt(_debtRepayment);
         }
     }
 
     function getCompositeDebt(uint _debt) external pure override returns (uint) {
-        return _getCompositeDebt(_debt);
+        return MathUtils.getCompositeDebt(_debt);
     }
 
     function sortedPositionsNodes(address _id) external view override returns(bool exists, address nextId, address prevId) {

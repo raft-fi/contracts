@@ -19,11 +19,11 @@ contract PositionManagerTester is PositionManager {
     }
 
     function computeICR(uint _coll, uint _debt, uint _price) external pure returns (uint) {
-        return LiquityMath._computeCR(_coll, _debt, _price);
+        return MathUtils.computeCR(_coll, _debt, _price);
     }
 
     function getCollGasCompensation(uint _coll) external pure returns (uint) {
-        return _getCollGasCompensation(_coll);
+        return MathUtils.getCollGasCompensation(_coll);
     }
 
     function getCollLiquidationProtocolFee(uint _entireColl, uint _entireDebt, uint _price, uint _fee) external pure returns (uint) {
@@ -31,12 +31,12 @@ contract PositionManagerTester is PositionManager {
     }
 
     function getRGasCompensation() external pure returns (uint) {
-        return R_GAS_COMPENSATION;
+        return MathUtils.R_GAS_COMPENSATION;
     }
 
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
         baseRate = _calcDecayedBaseRate();
-        assert(baseRate >= 0 && baseRate <= DECIMAL_PRECISION);
+        assert(baseRate >= 0 && baseRate <= MathUtils.DECIMAL_PRECISION);
 
         _updateLastFeeOpTime();
         return baseRate;
@@ -51,6 +51,6 @@ contract PositionManagerTester is PositionManager {
     }
 
     function getActualDebtFromComposite(uint _debtVal) external pure returns (uint) {
-        return _getNetDebt(_debtVal);
+        return MathUtils.getNetDebt(_debtVal);
     }
 }
