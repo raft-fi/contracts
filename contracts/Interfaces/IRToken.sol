@@ -40,6 +40,7 @@ interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender, IFeeCollector, I
     function flashMintFeePercentage() external view returns (uint256);
 
     /// @dev Sets new flash mint fee percentage. Callable only by owner.
+    /// @notice The proposed flash mint fee percentage cannot exceed `MAX_FLASH_MINT_FEE_PERCENTAGE`.
     /// @param feePercentage New flash fee percentage.
     function setFlashMintFeePercentage(uint256 feePercentage) external;
 }
