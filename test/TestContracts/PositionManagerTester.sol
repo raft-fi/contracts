@@ -53,21 +53,4 @@ contract PositionManagerTester is PositionManager {
     function getActualDebtFromComposite(uint _debtVal) external pure returns (uint) {
         return _getNetDebt(_debtVal);
     }
-
-    function getNewICRFromPositionChange
-    (
-        uint _coll,
-        uint _debt,
-        uint _collChange,
-        bool isCollIncrease,
-        uint _debtChange,
-        bool isDebtIncrease,
-        uint _price
-    )
-    external
-    pure
-    returns (uint)
-    {
-        return _getNewICRFromPositionChange(_coll, _debt, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
-    }
 }
