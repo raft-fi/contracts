@@ -140,16 +140,12 @@ contract PositionManager is FeeCollector, IPositionManager {
         collateralToken = _collateralToken;
         rToken = new RToken(this, msg.sender);
         sortedPositions.maxSize = _positionsSize;
-        _setLiquidationProtocolFee(_liquidationProtocolFee);
+        setLiquidationProtocolFee(_liquidationProtocolFee);
 
         emit PositionManagerDeployed(_priceFeed, _collateralToken, rToken, msg.sender);
     }
 
-    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) external override onlyOwner {
-        _setLiquidationProtocolFee(_liquidationProtocolFee);
-    }
-
-    function _setLiquidationProtocolFee(uint256 _liquidationProtocolFee) internal {
+    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) public override onlyOwner {
         if (_liquidationProtocolFee > MAX_LIQUIDATION_PROTOCOL_FEE) {
             revert LiquidationProtocolFeeOutOfBound();
         }
