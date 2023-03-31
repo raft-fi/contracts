@@ -636,7 +636,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
             _applyPendingRewards(currentBorrower);
 
-            (uint256 rLot) = _redeemCollateralFromPosition(
+            uint256 rLot = _redeemCollateralFromPosition(
                 currentBorrower,
                 remainingR,
                 price,
