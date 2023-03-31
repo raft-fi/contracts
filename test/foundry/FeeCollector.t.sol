@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import "../../contracts/FeeCollector.sol";
+import "../TestContracts/FeeCollectorTester.sol";
 
 contract FeeCollectorTest is Test {
     IFeeCollector public feeCollector;
@@ -11,7 +11,7 @@ contract FeeCollectorTest is Test {
     address public constant FEE_RECIPIENT2 = address(2);
 
     function setUp() public {
-        feeCollector = new FeeCollector(FEE_RECIPIENT1);
+        feeCollector = new FeeCollectorTester(FEE_RECIPIENT1);
     }
 
     function testSetFeeRecipient() public {

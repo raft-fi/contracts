@@ -4,9 +4,10 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./Interfaces/IFeeCollector.sol";
 
-contract FeeCollector is Ownable2Step, IFeeCollector {
+abstract contract FeeCollector is Ownable2Step, IFeeCollector {
     address public override feeRecipient;
 
+    /// @param _feeRecipient Address of the fee recipient to initialize contract with.
     constructor(address _feeRecipient) {
         if (_feeRecipient == address(0)) {
             revert InvalidFeeRecipient();
@@ -15,12 +16,12 @@ contract FeeCollector is Ownable2Step, IFeeCollector {
         feeRecipient = _feeRecipient;
     }
 
-    function setFeeRecipient(address _feeRecipient) external onlyOwner {
-        if (_feeRecipient == address(0)) {
+    function setFeeRecipient(address newFeeRecipient) external onlyOwner {
+        if (newFeeRecipient == address(0)) {
             revert InvalidFeeRecipient();
         }
 
-        feeRecipient = _feeRecipient;
-        emit FeeRecipientChanged(_feeRecipient);
+        feeRecipient = newFeeRecipient;
+        emit FeeRecipientChanged(newFeeRecipient);
     }
 }
