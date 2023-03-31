@@ -134,7 +134,7 @@
 //         uint price = priceFeedTestnet.getPrice();
 //         uint rAmount = _rAmount;
 //         uint compositeDebt = rAmount + R_GAS_COMPENSATION;
-//         uint ICR = LiquityMath._computeCR(ETH, compositeDebt, price);
+//         uint ICR = MathUtils.computeCR(ETH, compositeDebt, price);
 //         if (ICR < ratio) {
 //             compositeDebt = ETH * price / ratio;
 //             rAmount = compositeDebt - R_GAS_COMPENSATION;

@@ -50,7 +50,8 @@ contract('Gas compensation tests', async accounts => {
   })
 
   // --- Raw gas compensation calculations ---
-  it('_getCollGasCompensation(): returns the 0.5% of collaterall if it is < $10 in value', async () => {
+
+  it('getCollGasCompensation(): returns the 0.5% of collateral if it is < $10 in value', async () => {
     /*
     ETH:USD price = 1
     coll = 1 ETH: $1 in value
@@ -79,7 +80,7 @@ contract('Gas compensation tests', async accounts => {
     assert.equal(gasCompensation_3, '25000000')
   })
 
-  it('_getCollGasCompensation(): returns 0.5% of collaterall when 0.5% of collateral < $10 in value', async () => {
+  it('getCollGasCompensation(): returns 0.5% of collaterall when 0.5% of collateral < $10 in value', async () => {
     const price = await priceFeed.getPrice()
     assert.equal(price, dec(200, 18))
 
@@ -170,7 +171,7 @@ contract('Gas compensation tests', async accounts => {
   // --- Composite debt calculations ---
 
   // gets debt + 50 when 0.5% of coll < $10
-  it('_getCompositeDebt(): returns (debt + 50) when collateral < $10 in value', async () => {
+  it('getCompositeDebt(): returns (debt + 50) when collateral < $10 in value', async () => {
     const price = await priceFeed.getPrice()
     assert.equal(price, dec(200, 18))
 
@@ -424,7 +425,7 @@ contract('Gas compensation tests', async accounts => {
     assert.isAtMost(th.getDifference(expectedLiquidatedColl_A, loggedColl_A), 1000)
     assert.isAtMost(th.getDifference(expectedLiquidationProtocolFee_A, loggedProtocolLiquidationFee_A), 1000)
     assert.equal(loggedGasComp_A, 0)
-    
+
     // --- Price changes to 335 ---
     await priceFeed.setPrice(dec(335, 18))
     const price_2 = await priceFeed.getPrice()
@@ -561,9 +562,9 @@ contract('Gas compensation tests', async accounts => {
     await positionManager.batchLiquidatePositions([alice, bob, carol, dennis], { from: liquidator, gasPrice: GAS_PRICE })
     const liquidatorCollBalance_after = web3.utils.toBN(await wstETHTokenMock.balanceOf(liquidator))
     const liquidatorRBalance_after = web3.utils.toBN(await rToken.balanceOf(liquidator))
-    
+
     // Check liquidator's balance has increased by the expected compensation amount
-    
+
     const collCompensationReceived = (liquidatorCollBalance_after.sub(liquidatorCollBalance_before)).toString()
     const rCompensationReceived = (liquidatorRBalance_after.sub(liquidatorRBalance_before)).toString()
 

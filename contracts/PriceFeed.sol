@@ -7,8 +7,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./Interfaces/IPriceFeed.sol";
 import "./Interfaces/ITellorCaller.sol";
 import "./Dependencies/AggregatorV3Interface.sol";
-import "./Dependencies/BaseMath.sol";
-import "./Dependencies/LiquityMath.sol";
+import "./Dependencies/MathUtils.sol";
 
 /*
 * PriceFeed for mainnet deployment, to be connected to Chainlink's live collateralToken:USD aggregator reference
@@ -18,7 +17,7 @@ import "./Dependencies/LiquityMath.sol";
 * switching oracles based on oracle failures, timeouts, and conditions for returning to the primary
 * Chainlink oracle.
 */
-contract PriceFeed is BaseMath, IPriceFeed {
+contract PriceFeed is IPriceFeed {
     string constant public NAME = "PriceFeed";
 
     AggregatorV3Interface public immutable priceAggregator;  // Mainnet Chainlink aggregator
@@ -348,7 +347,7 @@ contract PriceFeed is BaseMath, IPriceFeed {
         * - If price decreased, the percentage deviation is in relation to the the previous price.
         * - If price increased, the percentage deviation is in relation to the current price.
         */
-        uint percentDeviation = (maxPrice - minPrice) * DECIMAL_PRECISION / maxPrice;
+        uint percentDeviation = (maxPrice - minPrice) * MathUtils.DECIMAL_PRECISION / maxPrice;
 
         // Return true if price has more than doubled, or more than halved.
         return percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
@@ -401,7 +400,7 @@ contract PriceFeed is BaseMath, IPriceFeed {
         // Get the relative price difference between the oracles. Use the lower price as the denominator, i.e. the reference for the calculation.
         uint minPrice = Math.min(scaledTellorPrice, scaledChainlinkPrice);
         uint maxPrice = Math.max(scaledTellorPrice, scaledChainlinkPrice);
-        uint percentPriceDifference = (maxPrice - minPrice) * DECIMAL_PRECISION / minPrice;
+        uint percentPriceDifference = (maxPrice - minPrice) * MathUtils.DECIMAL_PRECISION / minPrice;
 
         /*
         * Return true if the relative price difference is <= 3%: if so, we assume both oracles are probably reporting

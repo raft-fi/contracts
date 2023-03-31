@@ -490,7 +490,7 @@ class TestHelper {
     if (!upperHint) upperHint = this.ZERO_ADDRESS
     if (!lowerHint) lowerHint = this.ZERO_ADDRESS
 
-    const MIN_DEBT = await this.getNetBorrowingAmount(contracts, await contracts.positionManager.MIN_NET_DEBT())
+    const MIN_DEBT = await this.getNetBorrowingAmount(contracts, await contracts.math.MIN_NET_DEBT())
     const rAmount = MIN_DEBT.add(extraRAmount)
 
     if (!ICR && !amount) ICR = this.toBN(this.dec(15, 17)) // 150%
