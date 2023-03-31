@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -7,36 +6,47 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
 import "./Interfaces/IRToken.sol";
 import "./FeeCollector.sol";
-import "./PositionManager.sol";
 import "./PositionManagerDependent.sol";
 
 contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCollector, IRToken {
+    uint256 public constant override PERCENTAGE_BASE = 10_000;
+    uint256 public constant override MAX_FLASH_MINT_FEE_PERCENTAGE = 500;
+
     uint256 public override flashMintFeePercentage;
 
-    uint256 public constant override MAX_FLASH_MINT_FEE_PERCENTAGE = 500;
-    uint256 public constant override PERCENTAGE_BASE = 10_000;
-
-    constructor(IPositionManager _positionManager, address _feeRecipient)
+    /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownership to @param feeRecipient.
+    /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
+    /// @param feeRecipient Address of flash mint fee recipient.
+    constructor(IPositionManager positionManager, address feeRecipient)
         ERC20Permit("R Stablecoin")
         ERC20("R Stablecoin", "R")
-        PositionManagerDependent(_positionManager)
-        FeeCollector(_feeRecipient)
+        PositionManagerDependent(positionManager)
+        FeeCollector(feeRecipient)
     {
         flashMintFeePercentage = 0;
 
-        transferOwnership(_feeRecipient);
+        transferOwnership(feeRecipient);
 
-        emit RDeployed(_positionManager, _feeRecipient);
+        emit RDeployed(positionManager, feeRecipient);
     }
 
-    function mint(address _account, uint256 _amount) external override onlyPositionManager {
-        _mint(_account, _amount);
+    function mint(address to, uint256 amount) external override onlyPositionManager {
+        _mint(to, amount);
     }
 
-    function burn(address _account, uint256 _amount) external override onlyPositionManager {
-        _burn(_account, _amount);
+    function burn(address from, uint256 amount) external override onlyPositionManager {
+        _burn(from, amount);
     }
 
+    function setFlashMintFeePercentage(uint256 feePercentage) public override onlyOwner {
+        if (feePercentage > MAX_FLASH_MINT_FEE_PERCENTAGE) {
+            revert FlashFeePercentageTooBig(feePercentage);
+        }
+        flashMintFeePercentage = feePercentage;
+    }
+
+    /// @dev Inherited from ERC20FlashMint. Defines maximum size of the flash mint.
+    /// @param token Token to be flash minted. Returns 0 amount in case of token != address(this).
     function maxFlashLoan(address token)
         public
         view
@@ -47,14 +57,10 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
         return token == address(this) ? Math.min(totalSupply() / 10, ERC20FlashMint.maxFlashLoan(address(this))) : 0;
     }
 
+    /// @dev Inherited from ERC20FlashMint. Defines flash mint fee for the flash mint of @param amount tokens.
+    /// @param token Token to be flash minted. Returns 0 fee in case of token != address(this).
+    /// @param amount Size of the flash mint.
     function _flashFee(address token, uint256 amount) internal view virtual override returns (uint256) {
         return token == address(this) ? amount * flashMintFeePercentage / PERCENTAGE_BASE : 0;
-    }
-
-    function setFlashMintFeePercentage(uint256 _feePercentage) public override onlyOwner {
-        if (_feePercentage > MAX_FLASH_MINT_FEE_PERCENTAGE) {
-            revert FlashFeePercentageTooBig(_feePercentage);
-        }
-        flashMintFeePercentage = _feePercentage;
     }
 }
