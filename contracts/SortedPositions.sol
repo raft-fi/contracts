@@ -56,7 +56,7 @@ error PositionsNICRZero();
 */
 library SortedPositions {
 
-    event NodeAdded(address _id, uint _NICR);
+    event NodeAdded(address _id, uint256 _NICR);
     event NodeRemoved(address _id);
 
     // Information for a node in the list
