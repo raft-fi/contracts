@@ -470,7 +470,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         internal
         returns(LiquidationTotals memory totals)
     {
-        for (uint256 i = 0; i < _positionArray.length; i++) {
+        uint256 _positionArrayLength = _positionArray.length;
+        for (uint256 i = 0; i < _positionArrayLength; ++i) {
             address user = _positionArray[i];
             uint256 ICR = getCurrentICR(user, _price);
 
