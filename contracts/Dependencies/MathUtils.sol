@@ -12,7 +12,7 @@ library MathUtils {
     uint constant public _100pct = 1000000000000000000; // 1e18 == 100%
 
     // Minimum collateral ratio for individual positions
-    uint constant public MCR = 1100000000000000000; // 110%
+    uint constant public MCR = 110 * _100pct / 100; // 110%
 
     // Amount of R to be locked in gas pool on opening positions
     uint constant public R_GAS_COMPENSATION = 200e18;
