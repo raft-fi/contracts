@@ -18,6 +18,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     IERC20 public immutable override collateralToken;
     IRToken public immutable override rToken;
+    uint256 public override liquidationProtocolFee;
 
     // A doubly linked list of Positions, sorted by their sorted by their collateral ratios
     SortedPositions.Data public override sortedPositions;
@@ -35,6 +36,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     uint256 public constant REDEMPTION_FEE_FLOOR = DECIMAL_PRECISION / 1000 * 5; // 0.5%
     uint256 public constant override MAX_BORROWING_SPREAD = DECIMAL_PRECISION / 100; // 1%
     uint256 public constant MAX_BORROWING_FEE = DECIMAL_PRECISION / 100 * 5; // 5%
+    uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = DECIMAL_PRECISION / 100 * 80; // 80%
 
     /*
     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
@@ -116,6 +118,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint collGasCompensation;
         uint rGasCompensation;
         uint debtToOffset;
+        uint collToSendToProtocol;
         uint collToSendToLiquidator;
         uint debtToRedistribute;
         uint collToRedistribute;
@@ -127,6 +130,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint totalCollGasCompensation;
         uint totalRGasCompensation;
         uint totalDebtToOffset;
+        uint totalCollToSendToProtocol;
         uint totalCollToSendToLiquidator;
         uint totalDebtToRedistribute;
         uint totalCollToRedistribute;
@@ -164,13 +168,27 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
     // --- Constructor ---
 
-    constructor(IPriceFeed _priceFeed, IERC20 _collateralToken, uint256 _positionsSize) FeeCollector(msg.sender) {
+    constructor(IPriceFeed _priceFeed, IERC20 _collateralToken, uint256 _positionsSize, uint256 _liquidationProtocolFee) FeeCollector(msg.sender) {
         priceFeed = _priceFeed;
         collateralToken = _collateralToken;
         rToken = new RToken(this, msg.sender);
         sortedPositions.maxSize = _positionsSize;
+        _setLiquidationProtocolFee(_liquidationProtocolFee);
 
         emit PositionManagerDeployed(_priceFeed, _collateralToken, rToken, msg.sender);
+    }
+
+    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) external override onlyOwner {
+        _setLiquidationProtocolFee(_liquidationProtocolFee);
+    }
+
+    function _setLiquidationProtocolFee(uint256 _liquidationProtocolFee) internal {
+        if (_liquidationProtocolFee > MAX_LIQUIDATION_PROTOCOL_FEE) {
+            revert LiquidationProtocolFeeOutOfBound();
+        }
+
+        liquidationProtocolFee = _liquidationProtocolFee;
+        emit LiquidationProtocolFeeChanged(_liquidationProtocolFee);
     }
 
     // --- Borrower Position Operations ---
@@ -366,7 +384,8 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
     // Liquidate one position
     function _liquidate(
         address _borrower,
-        uint _ICR
+        uint _ICR,
+        uint _price
     )
         internal
         returns (LiquidationValues memory singleLiquidation)
@@ -379,19 +398,20 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         _movePendingPositionRewardsToActivePool(pendingCollReward);
         _removeStake(_borrower);
 
-        singleLiquidation.collGasCompensation = _getCollGasCompensation(singleLiquidation.entirePositionColl);
         singleLiquidation.rGasCompensation = R_GAS_COMPENSATION;
-        uint collToLiquidate = singleLiquidation.entirePositionColl - singleLiquidation.collGasCompensation;
-
-        if (_ICR <= _100pct) {
+        if (_ICR <= _100pct) { // redistribution
+            singleLiquidation.collGasCompensation = _getCollGasCompensation(singleLiquidation.entirePositionColl);
             singleLiquidation.debtToOffset = 0;
+            singleLiquidation.collToSendToProtocol = 0;
             singleLiquidation.collToSendToLiquidator = 0;
             singleLiquidation.debtToRedistribute = singleLiquidation.entirePositionDebt;
-            singleLiquidation.collToRedistribute = collToLiquidate;
+            singleLiquidation.collToRedistribute = singleLiquidation.entirePositionColl - singleLiquidation.collGasCompensation;
         }
-        else {
+        else { // offset
+            singleLiquidation.collGasCompensation = 0;
             singleLiquidation.debtToOffset = singleLiquidation.entirePositionDebt;
-            singleLiquidation.collToSendToLiquidator = collToLiquidate;
+            singleLiquidation.collToSendToProtocol = _getCollLiquidationProtocolFee(singleLiquidation.entirePositionColl, singleLiquidation.entirePositionDebt, _price, liquidationProtocolFee);
+            singleLiquidation.collToSendToLiquidator = singleLiquidation.entirePositionColl - singleLiquidation.collToSendToProtocol;
             singleLiquidation.debtToRedistribute = 0;
             singleLiquidation.collToRedistribute = 0;
         }
@@ -417,7 +437,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
             revert NothingToLiquidate();
         }
 
-        _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToLiquidator);
+        _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToProtocol, totals.totalCollToSendToLiquidator);
         _redistributeDebtAndColl(totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
 
         // Update system snapshots
@@ -426,6 +446,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         emit Liquidation(
             totals.totalDebtInSequence,
             totals.totalCollInSequence - totals.totalCollGasCompensation,
+            totals.totalCollToSendToProtocol,
             totals.totalCollGasCompensation,
             totals.totalRGasCompensation
         );
@@ -434,12 +455,13 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         _sendGasCompensation(msg.sender, totals.totalRGasCompensation, totals.totalCollGasCompensation);
     }
 
-    function _offset(address liquidator, uint256 debtToBurn, uint256 collToSendToLiquidator) internal {
+    function _offset(address liquidator, uint256 debtToBurn, uint256 collToSendToProtocol, uint256 collToSendToLiquidator) internal {
         if (debtToBurn == 0) { return; }
 
         rToken.burn(liquidator, debtToBurn);
-        _activePoolCollateralBalance -= collToSendToLiquidator;
+        _activePoolCollateralBalance -= collToSendToLiquidator + collToSendToProtocol;
         collateralToken.transfer(liquidator, collToSendToLiquidator);
+        collateralToken.transfer(feeRecipient, collToSendToProtocol);
     }
 
     function _getTotalsFromBatchLiquidate(uint _price, address[] memory _positionArray)
@@ -453,7 +475,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
 
             if (ICR < MCR) {
                 // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR));
+                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR, _price));
             }
         }
     }
@@ -469,6 +491,7 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         newTotals.totalDebtInSequence = oldTotals.totalDebtInSequence + singleLiquidation.entirePositionDebt;
         newTotals.totalCollInSequence = oldTotals.totalCollInSequence + singleLiquidation.entirePositionColl;
         newTotals.totalDebtToOffset = oldTotals.totalDebtToOffset + singleLiquidation.debtToOffset;
+        newTotals.totalCollToSendToProtocol = oldTotals.totalCollToSendToProtocol + singleLiquidation.collToSendToProtocol;
         newTotals.totalCollToSendToLiquidator = oldTotals.totalCollToSendToLiquidator + singleLiquidation.collToSendToLiquidator;
         newTotals.totalDebtToRedistribute = oldTotals.totalDebtToRedistribute + singleLiquidation.debtToRedistribute;
         newTotals.totalCollToRedistribute = oldTotals.totalCollToRedistribute + singleLiquidation.collToRedistribute;
@@ -1017,6 +1040,18 @@ contract PositionManager is LiquityBase, FeeCollector, IPositionManager {
         uint decayFactor = LiquityMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
         return baseRate * decayFactor / DECIMAL_PRECISION;
+    }
+
+    /// ---- Liquidation fee functions ---
+    
+    function _getCollLiquidationProtocolFee(uint _entireColl, uint _entireDebt, uint _price, uint _fee) internal pure returns (uint) {
+        assert(_fee <= DECIMAL_PRECISION);
+        
+        // the value of the position's debt, denominated in collateral token
+        uint256 debtValue = _entireDebt * DECIMAL_PRECISION / _price; 
+        uint256 excessCollateral = _entireColl - debtValue;
+        
+        return excessCollateral * _fee / DECIMAL_PRECISION;
     }
 
     // --- 'require' wrapper functions ---

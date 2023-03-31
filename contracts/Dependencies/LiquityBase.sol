@@ -25,7 +25,6 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     // Minimum amount of net R debt a position must have
     uint constant public MIN_NET_DEBT = 1800e18;
-    // uint constant public MIN_NET_DEBT = 0;
 
     uint constant public PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
@@ -42,7 +41,8 @@ contract LiquityBase is BaseMath, ILiquityBase {
         return _debt - R_GAS_COMPENSATION;
     }
 
-    // Return the amount of collateralToken to be drawn from a position's collateral and sent as gas compensation.
+    // Return the amount of collateralToken to be drawn from a position's collateral and sent as gas compensation
+    // during redistribution.
     function _getCollGasCompensation(uint _entireColl) internal pure returns (uint) {
         return _entireColl / PERCENT_DIVISOR;
     }

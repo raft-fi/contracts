@@ -63,6 +63,9 @@ error RepayRAmountExceedsDebt(uint256 debt);
 /// @dev Caller doesn't have enough R to make repayment.
 error RepayNotEnoughR();
 
+/// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
+error LiquidationProtocolFeeOutOfBound();
+
 // Common interface for the Position Manager.
 interface IPositionManager is ILiquityBase, IFeeCollector {
     enum PositionStatus {
@@ -90,7 +93,10 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
         IRToken _rToken,
         address _feeRecipient
     );
-    event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _RGasCompensation);
+
+    event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
+
+    event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _liquidationProtocolFee, uint _collGasCompensation, uint _RGasCompensation);
     event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
     event PositionUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, PositionManagerOperation _operation);
     event PositionLiquidated(address indexed _borrower, uint _debt, uint _coll, PositionManagerOperation _operation);
@@ -106,7 +112,10 @@ interface IPositionManager is ILiquityBase, IFeeCollector {
 
     // --- Functions ---
 
+    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) external;
+    function liquidationProtocolFee() external view returns (uint256);
     function MAX_BORROWING_SPREAD() external view returns (uint256);
+    function MAX_LIQUIDATION_PROTOCOL_FEE() external view returns (uint256);
     function collateralToken() external view returns (IERC20);
     function rToken() external view returns (IRToken);
 
