@@ -3,13 +3,9 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../../contracts/RToken.sol";
+import "./utils/TestSetup.t.sol";
 
-contract RTokenTest is Test {
-    IPositionManager public constant POSITION_MANAGER = IPositionManager(address(12345));
-
-    address public constant USER = address(1);
-    address public constant FEE_RECIPIENT = address(2);
-
+contract RTokenTest is TestSetup {
     IRToken public token;
 
     function setUp() public {
@@ -18,7 +14,7 @@ contract RTokenTest is Test {
 
     function testMaxFlashMint(uint256 simulatedTotalSupply) public {
         vm.prank(address(token.positionManager()));
-        token.mint(USER, simulatedTotalSupply);
+        token.mint(ALICE, simulatedTotalSupply);
 
         uint256 technicalLimit = type(uint256).max - simulatedTotalSupply;
         uint256 supplyLimit = simulatedTotalSupply / 10;
@@ -34,7 +30,7 @@ contract RTokenTest is Test {
         token.setFeeRecipient(FEE_RECIPIENT);
         assertEq(token.feeRecipient(), FEE_RECIPIENT);
 
-        vm.prank(USER);
+        vm.prank(ALICE);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         token.setFeeRecipient(address(1));
     }
@@ -47,7 +43,7 @@ contract RTokenTest is Test {
     }
 
     function testSetFlashFeePercentage() public {
-        vm.prank(USER);
+        vm.prank(ALICE);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         token.setFlashMintFeePercentage(1);
 
@@ -60,29 +56,29 @@ contract RTokenTest is Test {
 
     function testMint(uint256 amount) public {
         vm.prank(address(token.positionManager()));
-        token.mint(USER, amount);
-        assertEq(token.balanceOf(USER), amount);
+        token.mint(ALICE, amount);
+        assertEq(token.balanceOf(ALICE), amount);
     }
 
     function testUnauthorizedMintOrBurn() public {
-        vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, USER));
-        token.mint(USER, 1);
+        vm.prank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, ALICE));
+        token.mint(ALICE, 1);
 
-        vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, USER));
-        token.burn(USER, 1);
+        vm.prank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, ALICE));
+        token.burn(ALICE, 1);
     }
 
     function testBurn(uint256 amountToMint, uint256 amountToBurn) public {
         vm.prank(address(token.positionManager()));
-        token.mint(USER, amountToMint);
+        token.mint(ALICE, amountToMint);
 
         vm.prank(address(token.positionManager()));
         if (amountToBurn > amountToMint) {
             vm.expectRevert(bytes("ERC20: burn amount exceeds balance"));
         }
-        token.burn(USER, amountToBurn);
-        assertEq(token.balanceOf(USER), amountToBurn > amountToMint ? amountToMint : amountToMint - amountToBurn);
+        token.burn(ALICE, amountToBurn);
+        assertEq(token.balanceOf(ALICE), amountToBurn > amountToMint ? amountToMint : amountToMint - amountToBurn);
     }
 }

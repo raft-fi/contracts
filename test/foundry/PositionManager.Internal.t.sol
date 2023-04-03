@@ -3,14 +3,11 @@ pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 import "../TestContracts/PositionManagerTester.sol";
+import "./utils/TestSetup.t.sol";
 
-contract PositionManagerInternalTest is Test {
-    IPriceFeed public constant PRICE_FEED = IPriceFeed(address(12345));
-    IERC20 public constant COLLATERAL_TOKEN = IERC20(address(23456));
+contract PositionManagerInternalTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
     uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
-
-    address public constant USER = address(1);
 
     PositionManagerTester public positionManager;
 
