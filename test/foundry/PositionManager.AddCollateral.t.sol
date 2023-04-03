@@ -103,10 +103,8 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, uint256 positionCollateralBefore,, IPositionManager.PositionStatus positionStatusBefore) =
+        (, uint256 positionCollateralBefore,) =
             positionManager.positions(ALICE);
-
-        assertEq(uint256(positionStatusBefore), uint256(IPositionManager.PositionStatus.active));
 
         uint256 collateralTopUpAmount = 1 ether;
 
@@ -116,11 +114,10 @@ contract PositionManagerAddCollateralTest is TestSetup {
         positionManager.addColl(ALICE, ALICE, collateralTopUpAmount);
         vm.stopPrank();
 
-        (, uint256 positionCollateralAfter,, IPositionManager.PositionStatus positionStatusAfter) =
+        (, uint256 positionCollateralAfter,) =
             positionManager.positions(ALICE);
 
         assertEq(positionCollateralAfter, positionCollateralBefore + collateralTopUpAmount);
-        assertEq(uint256(positionStatusAfter), uint256(IPositionManager.PositionStatus.active));
     }
 
     // Active position: position is in the sorted list before and after
@@ -164,7 +161,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (,, uint256 aliceStakeBefore,) = positionManager.positions(ALICE);
+        (,, uint256 aliceStakeBefore) = positionManager.positions(ALICE);
         uint256 totalStakesBefore = positionManager.totalStakes();
 
         assertEq(totalStakesBefore, aliceStakeBefore);
@@ -176,7 +173,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         positionManager.addColl(ALICE, ALICE, collateralTopUpAmount);
         vm.stopPrank();
 
-        (,, uint256 aliceStakeAfter,) = positionManager.positions(ALICE);
+        (,, uint256 aliceStakeAfter) = positionManager.positions(ALICE);
         uint256 totalStakesAfter = positionManager.totalStakes();
 
         assertEq(aliceStakeAfter, aliceStakeBefore + collateralTopUpAmount);

@@ -84,9 +84,6 @@ contract('PositionManager', async accounts => {
     // close Position
     await positionManager.liquidate(alice, { from: owner });
 
-    // check the Position is successfully closed, and removed from sortedList
-    const status = (await positionManager.positions(alice))[3]
-    assert.equal(status, 3)  // status enum 3 corresponds to "Closed by liquidation"
     const alice_Position_isInSortedList = (await positionManager.sortedPositionsNodes(alice))[0]
     assert.isFalse(alice_Position_isInSortedList)
   })
@@ -228,8 +225,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(4, 18)), extraParams: { from: alice } })
     await openPosition({ ICR: toBN(dec(21, 17)), extraParams: { from: bob } })
 
-    assert.equal((await positionManager.positions(carol))[3], 0) // check position non-existent
-
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
     try {
@@ -257,8 +252,6 @@ contract('PositionManager', async accounts => {
     assert.isTrue(txCarol_L1.receipt.status)
 
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
-
-    assert.equal((await positionManager.positions(carol))[3], 3)  // check position closed by liquidation
 
     try {
       const txCarol_L2 = await positionManager.liquidate(carol)
@@ -395,11 +388,6 @@ contract('PositionManager', async accounts => {
     assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
     assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
-
-    // Check position statuses - A active (1),  B and C liquidated (3)
-    assert.equal((await positionManager.positions(alice))[3].toString(), '1')
-    assert.equal((await positionManager.positions(bob))[3].toString(), '3')
-    assert.equal((await positionManager.positions(carol))[3].toString(), '3')
   })
 
   // --- batchLiquidatePositions() ---
@@ -494,11 +482,6 @@ contract('PositionManager', async accounts => {
     assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
-    // Check all positions A-C are now closed by liquidation
-    assert.equal((await positionManager.positions(alice))[3].toString(), '3')
-    assert.equal((await positionManager.positions(bob))[3].toString(), '3')
-    assert.equal((await positionManager.positions(carol))[3].toString(), '3')
-
     // Check sorted list has been reduced to length 3
     assert.equal(((await positionManager.sortedPositions())[3]).toString(), '3')
   })
@@ -536,19 +519,10 @@ contract('PositionManager', async accounts => {
     assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
     assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
-    // Check all positions A-B are now closed by liquidation
-    assert.equal((await positionManager.positions(alice))[3].toString(), '3')
-    assert.equal((await positionManager.positions(bob))[3].toString(), '3')
-
     // Confirm positions C-E remain in the system
     assert.isTrue((await positionManager.sortedPositionsNodes(carol))[0])
     assert.isTrue((await positionManager.sortedPositionsNodes(dennis))[0])
     assert.isTrue((await positionManager.sortedPositionsNodes(erin))[0])
-
-    // Check all positions C-E are still active
-    assert.equal((await positionManager.positions(carol))[3].toString(), '1')
-    assert.equal((await positionManager.positions(dennis))[3].toString(), '1')
-    assert.equal((await positionManager.positions(erin))[3].toString(), '1')
 
     // Check sorted list has been reduced to length 4
     assert.equal(((await positionManager.sortedPositions())[3]).toString(), '4')
@@ -592,10 +566,6 @@ contract('PositionManager', async accounts => {
     assert.isTrue((await positionManager.sortedPositionsNodes(dennis))[0])
     assert.isTrue((await positionManager.sortedPositionsNodes(erin))[0])
     assert.isTrue((await positionManager.sortedPositionsNodes(whale))[0])
-
-    // Check all positions D-E and whale remain active
-    assert.equal((await positionManager.positions(dennis))[3].toString(), '1')
-    assert.equal((await positionManager.positions(erin))[3].toString(), '1')
     assert.isTrue((await positionManager.sortedPositionsNodes(whale))[0])
 
     // Check sorted list has been reduced to length 3
@@ -639,8 +609,6 @@ contract('PositionManager', async accounts => {
     await openPosition({ ICR: toBN(dec(2000, 16)), extraParams: { from: dennis } })
     await openPosition({ ICR: toBN(dec(1800, 16)), extraParams: { from: erin } })
 
-    assert.equal((await positionManager.positions(carol))[3], 0) // check position non-existent
-
     // Check full sorted list size is 6
     assert.equal(((await positionManager.sortedPositions())[3]).toString(), '5')
 
@@ -671,15 +639,12 @@ contract('PositionManager', async accounts => {
     assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
 
     // Check all positions A-B are now closed by liquidation
-    assert.equal((await positionManager.positions(alice))[3].toString(), '3')
-    assert.equal((await positionManager.positions(bob))[3].toString(), '3')
 
     // Check sorted list has been reduced to length 3
     assert.equal(((await positionManager.sortedPositions())[3]).toString(), '3')
 
     // Confirm position C non-existent
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
-    assert.equal((await positionManager.positions(carol))[3].toString(), '0')
 
     th.assertIsApproximatelyEqual((await rToken.balanceOf(owner)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(R_GAS_COMPENSATION).add(R_GAS_COMPENSATION))
   })
@@ -715,8 +680,6 @@ contract('PositionManager', async accounts => {
 
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
-    assert.equal((await positionManager.positions(carol))[3], 2)  // check position closed
-
     // Confirm positions A-B are ICR < 110%
     assert.isTrue((await positionManager.getCurrentICR(alice, price)).lt(mv._MCR))
     assert.isTrue((await positionManager.getCurrentICR(bob, price)).lt(mv._MCR))
@@ -736,15 +699,6 @@ contract('PositionManager', async accounts => {
     // Confirm positions A-B have been removed from the system
     assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
     assert.isFalse((await positionManager.sortedPositionsNodes(bob))[0])
-
-    // Check all positions A-B are now closed by liquidation
-    assert.equal((await positionManager.positions(alice))[3].toString(), '3')
-    assert.equal((await positionManager.positions(bob))[3].toString(), '3')
-    // Position C still closed by user
-    assert.equal((await positionManager.positions(carol))[3].toString(), '2')
-
-    // Check sorted list has been reduced to length 3
-    assert.equal(((await positionManager.sortedPositions())[3]).toString(), '3')
 
     // Check liquidator has only been reduced by A-B
     th.assertIsApproximatelyEqual((await rToken.balanceOf(whale)).toString(), preLiquidationBalance.sub(A_debt).sub(B_debt).add(R_GAS_COMPENSATION).add(R_GAS_COMPENSATION))
@@ -1127,14 +1081,6 @@ contract('PositionManager', async accounts => {
     assert.equal(bob_Debt, 0)
     assert.equal(carol_Debt, 0)
 
-    // check Alice, Bob and Carol positions are closed by redemption
-    const alice_Status = (await positionManager.positions(alice))[3]
-    const bob_Status = (await positionManager.positions(bob))[3]
-    const carol_Status = (await positionManager.positions(carol))[3]
-    assert.equal(alice_Status, 4)
-    assert.equal(bob_Status, 4)
-    assert.equal(carol_Status, 4)
-
     // check debt and coll of Dennis, erin has not been impacted by redemption
     const dennis_Debt = (await positionManager.positions(dennis))[0]
     const erin_Debt = (await positionManager.positions(erin))[0]
@@ -1183,14 +1129,6 @@ contract('PositionManager', async accounts => {
     assert.equal(alice_Debt, 0)
     assert.equal(bob_Debt, 0)
     th.assertIsApproximatelyEqual(carol_Debt, C_totalDebt)
-
-    // check Alice and Bob positions are closed, but Carol is not
-    const alice_Status = (await positionManager.positions(alice))[3]
-    const bob_Status = (await positionManager.positions(bob))[3]
-    const carol_Status = (await positionManager.positions(carol))[3]
-    assert.equal(alice_Status, 4)
-    assert.equal(bob_Status, 4)
-    assert.equal(carol_Status, 1)
   })
   it('redeemCollateral(): doesnt perform the final partial redemption in the sequence if the hint is out-of-date', async () => {
     // --- SETUP ---
@@ -2037,23 +1975,6 @@ contract('PositionManager', async accounts => {
 
     assert.equal(A_Debt, totalDebtA.toString())
     assert.equal(B_Debt, totalDebtB.toString())
-  })
-
-  it("getPositionStatus(): Returns status", async () => {
-    const { totalDebt: B_totalDebt } = await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: B } })
-    await openPosition({ ICR: toBN(dec(150, 16)), extraRAmount: B_totalDebt, extraParams: { from: A } })
-
-    // to be able to repay:
-    await rToken.transfer(B, B_totalDebt, { from: A })
-    await positionManager.closePosition({from: B})
-
-    const A_Status = (await positionManager.positions(A))[3]
-    const B_Status = (await positionManager.positions(B))[3]
-    const C_Status = (await positionManager.positions(C))[3]
-
-    assert.equal(A_Status, '1')  // active
-    assert.equal(B_Status, '2')  // closed by user
-    assert.equal(C_Status, '0')  // non-existent
   })
 
   it("hasPendingRewards(): Returns false it position is not active", async () => {
