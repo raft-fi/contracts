@@ -307,7 +307,6 @@ contract PositionManager is FeeCollector, IPositionManager {
             revert RepayNotEnoughR();
         }
 
-        _removeStake(msg.sender);
         _closePosition(msg.sender);
 
         emit PositionUpdated(msg.sender, 0, 0, 0, PositionManagerOperation.closePosition);
@@ -341,7 +340,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         (singleLiquidation, pendingCollReward) = _calculateLiquidationValues(_borrower, _ICR, _price);
 
         _movePendingPositionRewardsToActivePool(pendingCollReward);
-        _removeStake(_borrower);
 
         _closePosition(_borrower);
         emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl, PositionManagerOperation.liquidate);
@@ -503,7 +501,6 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (newDebt == MathUtils.R_GAS_COMPENSATION) {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
-            _removeStake(_borrower);
             _closePosition(_borrower);
             _redeemClosePosition(_borrower, MathUtils.R_GAS_COMPENSATION, newColl);
             emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.redeemCollateral);
@@ -771,13 +768,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         coll = positions[_borrower].coll + pendingCollateralTokenReward;
     }
 
-    // Remove borrower's stake from the totalStakes sum, and set their stake to 0
-    function _removeStake(address _borrower) internal {
-        uint256 stake = positions[_borrower].stake;
-        totalStakes = totalStakes - stake;
-        positions[_borrower].stake = 0;
-    }
-
     // Update borrower's stake based on their latest collateral value
     function _updateStakeAndTotalStakes(address _borrower) internal returns (uint256 newStake) {
         newStake = _computeNewStake(positions[_borrower].coll);
@@ -843,9 +833,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (sortedPositions.size <= 1) {
             revert PositionManagerOnlyOnePositionInSystem();
         }
-        positions[_borrower].coll = 0;
-        positions[_borrower].debt = 0;
-
+        totalStakes -= positions[_borrower].stake;
+        delete positions[_borrower];
+        
         rewardSnapshots[_borrower].collateralBalance = 0;
         rewardSnapshots[_borrower].rDebt = 0;
 
