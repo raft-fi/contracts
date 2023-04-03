@@ -3,14 +3,11 @@ pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 import "../../contracts/PositionManager.sol";
+import "./utils/TestSetup.t.sol";
 
-contract PositionManagerTest is Test {
-    IPriceFeed public constant PRICE_FEED = IPriceFeed(address(12345));
-    IERC20 public constant COLLATERAL_TOKEN = IERC20(address(23456));
+contract PositionManagerTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
     uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
-
-    address public constant USER = address(1);
 
     IPositionManager public positionManager;
 
@@ -24,7 +21,7 @@ contract PositionManagerTest is Test {
     }
 
     function testUnauthorizedSetBorrowingSpread() public {
-        vm.prank(USER);
+        vm.prank(ALICE);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         positionManager.setBorrowingSpread(100);
     }

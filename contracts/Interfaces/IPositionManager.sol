@@ -146,11 +146,18 @@ interface IPositionManager is IFeeCollector {
 
     function sortedPositionsNodes(address _id) external view returns(bool exists, address nextId, address prevId);
 
+    function totalStakes() external view returns (uint256);
+
+    function rewardSnapshots(address _borrower) external view returns (uint256 collateralBalance, uint256 debtBalance);
+
     function getNominalICR(address _borrower) external view returns (uint);
     function getCurrentICR(address _borrower, uint _price) external view returns (uint);
 
     function liquidate(address _borrower) external;
     function batchLiquidatePositions(address[] calldata _positionArray) external;
+
+    function L_CollateralBalance() external view returns (uint256);
+    function L_RDebt() external view returns (uint256);
 
     function redeemCollateral(
         uint _rAmount,

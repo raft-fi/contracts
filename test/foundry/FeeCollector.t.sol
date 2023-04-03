@@ -3,28 +3,26 @@ pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 import "../TestContracts/FeeCollectorTester.sol";
+import "./utils/TestSetup.t.sol";
 
-contract FeeCollectorTest is Test {
+contract FeeCollectorTest is TestSetup {
     IFeeCollector public feeCollector;
 
-    address public constant FEE_RECIPIENT1 = address(1);
-    address public constant FEE_RECIPIENT2 = address(2);
-
     function setUp() public {
-        feeCollector = new FeeCollectorTester(FEE_RECIPIENT1);
+        feeCollector = new FeeCollectorTester(FEE_RECIPIENT);
     }
 
     function testSetFeeRecipient() public {
-        assertEq(feeCollector.feeRecipient(), FEE_RECIPIENT1);
+        assertEq(feeCollector.feeRecipient(), FEE_RECIPIENT);
 
-        feeCollector.setFeeRecipient(FEE_RECIPIENT2);
-        assertEq(feeCollector.feeRecipient(), FEE_RECIPIENT2);
+        feeCollector.setFeeRecipient(NEW_FEE_RECIPIENT);
+        assertEq(feeCollector.feeRecipient(), NEW_FEE_RECIPIENT);
     }
 
     function testUnauthorizedSetFeeRecipient() public {
-        vm.prank(FEE_RECIPIENT1);
+        vm.prank(FEE_RECIPIENT);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        feeCollector.setFeeRecipient(FEE_RECIPIENT1);
+        feeCollector.setFeeRecipient(FEE_RECIPIENT);
     }
 
     function testInvalidSetFeeRecipient() public {
