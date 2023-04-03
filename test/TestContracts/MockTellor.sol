@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.19;
 
+import "../../contracts/Dependencies/ITellor.sol";
 
-contract MockTellor {
+contract MockTellor is ITellor {
 
     // --- Mock price data ---
 
@@ -45,7 +45,4 @@ contract MockTellor {
     function retrieveData(uint256, uint256) external view returns (uint256) {
         return price;
     }
-
-
-
 }
