@@ -211,9 +211,6 @@ contract('BorrowerOperations', async accounts => {
       const aliceColl = (await positionManager.getEntireDebtAndColl(alice))[1]
 
       // Check Position is active
-      const alice_Position_Before = await positionManager.positions(alice)
-      const status_Before = alice_Position_Before[3]
-      assert.equal(status_Before, 1)
       assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // Alice attempts to withdraw all collateral
@@ -228,18 +225,10 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // Check Position is active
-      const alice_Position_Before = await positionManager.positions(alice)
-      const status_Before = alice_Position_Before[3]
-      assert.equal(status_Before, 1)
       assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // Withdraw some collateral
       await positionManager.withdrawColl(dec(100, 'finney'), alice, alice, { from: alice })
-
-      // Check Position is still active
-      const alice_Position_After = await positionManager.positions(alice)
-      const status_After = alice_Position_After[3]
-      assert.equal(status_After, 1)
       assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
     })
 
@@ -251,7 +240,6 @@ contract('BorrowerOperations', async accounts => {
       await positionManager.withdrawColl(dec(1, 'ether'), alice, alice, { from: alice })
 
       // Check 1 ether remaining
-      const alice_Position_After = await positionManager.positions(alice)
       const aliceCollAfter = await getPositionEntireColl(alice)
 
       assert.isTrue(aliceCollAfter.eq(aliceCollBefore.sub(toBN(dec(1, 'ether')))))
@@ -1733,12 +1721,9 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
       const aliceColl = await getPositionEntireColl(alice)
       const aliceDebt = await getPositionEntireColl(alice)
-      const status_Before = (await positionManager.positions(alice))[3]
       const isInSortedList_Before = (await positionManager.sortedPositionsNodes(alice))[0]
 
-      assert.equal(status_Before, 1)  // 1: Active
       assert.isTrue(isInSortedList_Before)
-
       await assertRevert(
         positionManager.adjustPosition(th._100pct, aliceColl, aliceDebt, true, alice, alice, 0, { from: alice }),
         'BorrowerOps: An operation that would result in ICR < MCR is not permitted'
@@ -1950,12 +1935,6 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
 
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-      // Check Position is active
-      const alice_Position_Before = await positionManager.positions(alice)
-      const status_Before = alice_Position_Before[3]
-
-      assert.equal(status_Before, 1)
       assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // to compensate borrowing fees
@@ -1964,10 +1943,7 @@ contract('BorrowerOperations', async accounts => {
       // Close the position
       await positionManager.closePosition({ from: alice })
 
-      const alice_Position_After = await positionManager.positions(alice)
-      const status_After = alice_Position_After[3]
-
-      assert.equal(status_After, 2)
+      assert.equal((await positionManager.positions(alice))[0], 0)
       assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
     })
 
@@ -2651,14 +2627,10 @@ contract('BorrowerOperations', async accounts => {
     it("openPosition(): creates a new Position and assigns the correct collateral and debt amount", async () => {
       const debt_Before = await getPositionEntireDebt(alice)
       const coll_Before = await getPositionEntireColl(alice)
-      const status_Before = (await positionManager.positions(alice))[3]
 
       // check coll and debt before
       assert.equal(debt_Before, 0)
       assert.equal(coll_Before, 0)
-
-      // check non-existent status
-      assert.equal(status_Before, 0)
 
       const RRequest = MIN_NET_DEBT
       await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: alice })
@@ -2671,15 +2643,11 @@ contract('BorrowerOperations', async accounts => {
 
       const debt_After = await getPositionEntireDebt(alice)
       const coll_After = await getPositionEntireColl(alice)
-      const status_After = (await positionManager.positions(alice))[3]
 
       // check coll and debt after
       assert.isTrue(coll_After.gt('0'))
       assert.isTrue(debt_After.gt('0'))
       assert.isTrue(debt_After.eq(expectedDebt))
-
-      // check active status
-      assert.equal(status_After, 1)
     })
 
     it("openPosition(): creates a stake and adds it to total stakes", async () => {
@@ -2771,31 +2739,15 @@ contract('BorrowerOperations', async accounts => {
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
-      // Check Position is active
-      const alice_Position_1 = await positionManager.positions(alice)
-      const status_1 = alice_Position_1[3]
-      assert.equal(status_1, 1)
       assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
 
       // to compensate borrowing fees
       await rToken.transfer(alice, dec(10000, 18), { from: whale })
 
-      // Repay and close Position
       await positionManager.closePosition({ from: alice })
-
-      // Check Position is closed
-      const alice_Position_2 = await positionManager.positions(alice)
-      const status_2 = alice_Position_2[3]
-      assert.equal(status_2, 2)
       assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
-      // Re-open Position
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-      // Check Position is re-opened
-      const alice_Position_3 = await positionManager.positions(alice)
-      const status_3 = alice_Position_3[3]
-      assert.equal(status_3, 1)
       assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
     })
 

@@ -57,7 +57,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 debt;
         uint256 coll;
         uint256 stake;
-        PositionStatus status;
     }
 
     mapping (address => Position) public override positions;
@@ -120,14 +119,14 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     modifier onlyActivePosition(address _borrower) {
-        if (positions[_borrower].status != PositionStatus.active) {
+        if (positions[_borrower].debt == 0) {
             revert PositionManagerPositionNotActive();
         }
         _;
     }
 
     modifier onlyNonActivePosition() {
-        if (positions[msg.sender].status == PositionStatus.active) {
+        if (positions[msg.sender].debt != 0) {
             revert PositionMaangerPositionActive();
         }
         _;
@@ -179,7 +178,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         _requireICRisAboveMCR(MathUtils.computeCR(_collAmount, compositeDebt, priceFeed.fetchPrice()));
 
         // Set the position struct's properties
-        positions[msg.sender].status = PositionStatus.active;
         positions[msg.sender].coll = _collAmount;
         positions[msg.sender].debt = compositeDebt;
 
@@ -310,7 +308,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         _removeStake(msg.sender);
-        _closePosition(msg.sender, PositionStatus.closedByOwner);
+        _closePosition(msg.sender);
 
         emit PositionUpdated(msg.sender, 0, 0, 0, PositionManagerOperation.closePosition);
 
@@ -345,7 +343,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _movePendingPositionRewardsToActivePool(pendingCollReward);
         _removeStake(_borrower);
 
-        _closePosition(_borrower, PositionStatus.closedByLiquidation);
+        _closePosition(_borrower);
         emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl, PositionManagerOperation.liquidate);
         emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.liquidate);
     }
@@ -506,7 +504,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (newDebt == MathUtils.R_GAS_COMPENSATION) {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
             _removeStake(_borrower);
-            _closePosition(_borrower, PositionStatus.closedByRedemption);
+            _closePosition(_borrower);
             _redeemClosePosition(_borrower, MathUtils.R_GAS_COMPENSATION, newColl);
             emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.redeemCollateral);
 
@@ -732,22 +730,20 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // Get the borrower's pending accumulated collateralToken reward, earned by their stake
     function getPendingCollateralTokenReward(address _borrower) public view override returns (uint256 pendingCollateralTokenReward) {
-        uint256 snapshotCollateralBalance = rewardSnapshots[_borrower].collateralBalance;
-        uint256 rewardPerUnitStaked = L_CollateralBalance - snapshotCollateralBalance;
-
-        if (rewardPerUnitStaked == 0 || positions[_borrower].status != PositionStatus.active) { return 0; }
-
-        pendingCollateralTokenReward = positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
+        uint256 rewardPerUnitStaked = L_CollateralBalance - rewardSnapshots[_borrower].collateralBalance;
+ 
+        return (rewardPerUnitStaked == 0 || positions[_borrower].debt == 0)
+            ? 0 
+            : positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
     }
 
     // Get the borrower's pending accumulated R reward, earned by their stake
     function getPendingRDebtReward(address _borrower) public view override returns (uint256 pendingRDebtReward) {
-        uint256 snapshotRDebt = rewardSnapshots[_borrower].rDebt;
-        uint256 rewardPerUnitStaked = L_RDebt - snapshotRDebt;
+        uint256 rewardPerUnitStaked = L_RDebt - rewardSnapshots[_borrower].rDebt;
 
-        if (rewardPerUnitStaked == 0 || positions[_borrower].status != PositionStatus.active) { return 0; }
-
-        pendingRDebtReward = positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
+        return (rewardPerUnitStaked == 0 || positions[_borrower].debt == 0) 
+            ? 0
+            : positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
     }
 
     function hasPendingRewards(address _borrower) public view override returns (bool) {
@@ -756,7 +752,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         * this indicates that rewards have occured since the snapshot was made, and the user therefore has
         * pending rewards
         */
-        return positions[_borrower].status == PositionStatus.active && rewardSnapshots[_borrower].collateralBalance < L_CollateralBalance;
+        return positions[_borrower].debt > 0 && rewardSnapshots[_borrower].collateralBalance < L_CollateralBalance;
     }
 
     // Return the Positions entire debt and coll, including pending rewards from redistributions.
@@ -843,13 +839,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         _defaultPoolCollateralBalance += _coll;
     }
 
-    function _closePosition(address _borrower, PositionStatus closedStatus) internal {
-        assert(closedStatus != PositionStatus.nonExistent && closedStatus != PositionStatus.active);
+    function _closePosition(address _borrower) internal {
         if (sortedPositions.size <= 1) {
             revert PositionManagerOnlyOnePositionInSystem();
         }
-
-        positions[_borrower].status = closedStatus;
         positions[_borrower].coll = 0;
         positions[_borrower].debt = 0;
 

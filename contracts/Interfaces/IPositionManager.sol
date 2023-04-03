@@ -86,14 +86,6 @@ interface IPositionManager is IFeeCollector {
         uint totalCollToRedistribute;
     }
 
-    enum PositionStatus {
-        nonExistent,
-        active,
-        closedByOwner,
-        closedByLiquidation,
-        closedByRedemption
-    }
-
     enum PositionManagerOperation {
         applyPendingRewards,
         liquidate,
@@ -138,9 +130,7 @@ interface IPositionManager is IFeeCollector {
     function rToken() external view returns (IRToken);
     function priceFeed() external view returns (IPriceFeed);
 
-    function positions(
-        address _borrower
-    ) external view returns (uint debt, uint coll, uint stake, PositionStatus status);
+    function positions(address _borrower) external view returns (uint debt, uint coll, uint stake);
 
     function sortedPositions() external view returns (address first, address last, uint256 maxSize, uint256 size);
 
