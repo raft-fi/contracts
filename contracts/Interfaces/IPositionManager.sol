@@ -188,6 +188,4 @@ interface IPositionManager is IFeeCollector {
     function closePosition() external;
 
     function adjustPosition(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
-
-    function getCompositeDebt(uint256 _debt) external pure returns (uint256);
 }

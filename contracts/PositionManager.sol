@@ -199,12 +199,12 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function adjustPosition(
-        uint256 _maxFeePercentage, 
-        uint256 _collWithdrawal, 
-        uint256 _rChange, 
-        bool _isDebtIncrease, 
-        address _upperHint, 
-        address _lowerHint, 
+        uint256 _maxFeePercentage,
+        uint256 _collWithdrawal,
+        uint256 _rChange,
+        bool _isDebtIncrease,
+        address _upperHint,
+        address _lowerHint,
         uint256 _collDeposit
     ) external override onlyActivePosition(msg.sender) {
         if (_collWithdrawal != 0 && _collDeposit != 0) {
@@ -714,9 +714,9 @@ contract PositionManager is FeeCollector, IPositionManager {
     // Get the borrower's pending accumulated collateralToken reward, earned by their stake
     function getPendingCollateralTokenReward(address _borrower) public view override returns (uint256 pendingCollateralTokenReward) {
         uint256 rewardPerUnitStaked = L_CollateralBalance - rewardSnapshots[_borrower].collateralBalance;
- 
+
         return (rewardPerUnitStaked == 0 || positions[_borrower].debt == 0)
-            ? 0 
+            ? 0
             : positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
     }
 
@@ -724,7 +724,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     function getPendingRDebtReward(address _borrower) public view override returns (uint256 pendingRDebtReward) {
         uint256 rewardPerUnitStaked = L_RDebt - rewardSnapshots[_borrower].rDebt;
 
-        return (rewardPerUnitStaked == 0 || positions[_borrower].debt == 0) 
+        return (rewardPerUnitStaked == 0 || positions[_borrower].debt == 0)
             ? 0
             : positions[_borrower].stake * rewardPerUnitStaked / MathUtils.DECIMAL_PRECISION;
     }
@@ -821,7 +821,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
         totalStakes -= positions[_borrower].stake;
         delete positions[_borrower];
-        
+
         rewardSnapshots[_borrower].collateralBalance = 0;
         rewardSnapshots[_borrower].rDebt = 0;
 
@@ -1019,9 +1019,5 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function sortedPositionsNodes(address _id) external view override returns(bool exists, address nextId, address prevId) {
         return (sortedPositions.nodes[_id].exists, sortedPositions.nodes[_id].nextId, sortedPositions.nodes[_id].prevId);
-    }
-
-    function getCompositeDebt(uint256 _debt) external pure override returns (uint256) {
-        return MathUtils.getCompositeDebt(_debt);
     }
 }
