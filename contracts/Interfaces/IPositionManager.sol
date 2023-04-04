@@ -42,17 +42,11 @@ error FeeEatsUpAllReturnedCollateral();
 /// @dev Borrowing spread exceeds maximum.
 error BorrowingSpreadExceedsMaximum();
 
-/// @dev Debt increase requires non-zero debt change.
-error DebtIncreaseZeroDebtChange();
-
 /// @dev Trying to withdraw more collateral than what user has available.
 error WithdrawingMoreThanAvailableCollateral();
 
 /// @dev Cannot withdraw and add collateral at the same time.
 error NotSingularCollateralChange();
-
-/// @dev Collateral increase requires non-zero collateral change.
-error CollateralIncreaseZeroCollateralChange();
 
 /// @dev There must be either a collateral change or a debt change.
 error NoCollateralOrDebtChange();
@@ -176,8 +170,6 @@ interface IPositionManager is IFeeCollector {
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
 
     function openPosition(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
-
-    function addColl(address _upperHint, address _lowerHint, uint _amount) external;
 
     function closePosition() external;
 

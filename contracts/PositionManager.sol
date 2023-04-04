@@ -170,13 +170,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit PositionCreated(msg.sender);
     }
 
-    // Send collateralToken to a position
-    function addColl(
-        address _upperHint, address _lowerHint, uint256 _collDeposit
-    ) external override onlyActivePosition(msg.sender) {
-        _adjustPosition(_collDeposit, true, 0, false, _upperHint, _lowerHint, 0, true);
-    }
-
     function adjustPosition(
         uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
@@ -224,12 +217,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         internal
         validMaxFeePercentageWhen(_maxFeePercentage, _isDebtIncrease)
     {
-        if (_isDebtIncrease && _rChange == 0) {
-            revert DebtIncreaseZeroDebtChange();
-        }
-        if (_isCollIncrease && _collChange == 0) {
-            revert CollateralIncreaseZeroCollateralChange();
-        }
         if (_collChange == 0 && _rChange == 0) {
             revert NoCollateralOrDebtChange();
         }

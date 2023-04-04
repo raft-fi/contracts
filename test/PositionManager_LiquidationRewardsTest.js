@@ -330,7 +330,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     const addedColl1 = toBN(dec(1, 'ether'))
     await priceFeed.setPrice(dec(200, 18))
     wstETHTokenMock.approve(positionManager.address, addedColl1, { from: B})
-    await positionManager.addColl(B, B, addedColl1, { from: B })
+    await positionManager.managePosition(addedColl1, true, 0, false, B, B, 0, { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
     // Liquidate C
@@ -356,7 +356,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     const addedColl2 = toBN(dec(1, 'ether'))
     await priceFeed.setPrice(dec(200, 18))
     wstETHTokenMock.approve(positionManager.address, addedColl2, { from: B})
-    await positionManager.addColl(B, B, addedColl2, { from: B })
+    await positionManager.managePosition(addedColl2, true, 0, false, B, B, 0, { from: B })
     await priceFeed.setPrice(dec(100, 18))
 
     // Liquidate E
@@ -398,7 +398,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     //Bob adds ETH to his position
     const addedColl = toBN(dec(1, 'ether'))
     wstETHTokenMock.approve(positionManager.address, addedColl, { from: bob})
-    await positionManager.addColl(bob, bob, addedColl, { from: bob })
+    await positionManager.managePosition(addedColl, true, 0, false, bob, bob, 0, { from: bob })
 
     // Alice withdraws R
     await positionManager.managePosition(0, false, await getNetBorrowingAmount(A_totalDebt), true, alice, alice, th._100pct, { from: alice })
@@ -449,7 +449,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     //Bob adds ETH to his position
     const addedColl = toBN(dec(1, 'ether'))
     wstETHTokenMock.approve(positionManager.address, addedColl, { from: bob})
-    await positionManager.addColl(bob, bob, addedColl, { from: bob })
+    await positionManager.managePosition(addedColl, true, 0, false, bob, bob, 0, { from: bob })
 
     // D opens position
     const { collateral: D_coll, totalDebt: D_totalDebt } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: dennis } })
@@ -554,7 +554,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     //Carol adds 1 ETH to her position, brings it to 1992.01 total coll
     const C_addedColl = toBN(dec(1, 'ether'))
     wstETHTokenMock.approve(positionManager.address, dec(1, 'ether'), { from: carol})
-    await positionManager.addColl(carol, carol, dec(1, 'ether'), { from: carol })
+    await positionManager.managePosition(dec(1, 'ether'), true, 0, false, carol, carol, 0, { from: carol })
 
     //Expect 1996 ETH in system now
     const entireSystemColl_2 = await wstETHTokenMock.balanceOf(positionManager.address)
@@ -659,11 +659,11 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     const addedColl = toBN(dec(1, 'ether'))
     wstETHTokenMock.approve(positionManager.address, addedColl, { from: alice})
-    await positionManager.addColl(alice, alice, addedColl, { from: alice })
+    await positionManager.managePosition(addedColl, true, 0, false, alice, alice, 0, { from: alice })
     wstETHTokenMock.approve(positionManager.address, addedColl, { from: bob})
-    await positionManager.addColl(bob, bob, addedColl, { from: bob })
+    await positionManager.managePosition(addedColl, true, 0, false, bob, bob, 0, { from: bob })
     wstETHTokenMock.approve(positionManager.address, addedColl, { from: carol})
-    await positionManager.addColl(carol, carol, addedColl, { from: carol })
+    await positionManager.managePosition(addedColl, true, 0, false, carol, carol, 0, { from: carol })
 
     //Expect 1998 ETH in system now
     const entireSystemColl_2 = await wstETHTokenMock.balanceOf(positionManager.address)
@@ -1134,7 +1134,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     //Bob adds 1 ETH to his position
     const B_addedColl = toBN(dec(1, 'ether'))
     wstETHTokenMock.approve(positionManager.address, B_addedColl, { from: bob})
-    await positionManager.addColl(bob, bob, B_addedColl, { from: bob })
+    await positionManager.managePosition(B_addedColl, true, 0, false, bob, bob, 0, { from: bob })
 
     //Carol  withdraws 1 ETH from her position
     const C_withdrawnColl = toBN(dec(1, 'ether'))
@@ -1173,7 +1173,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
     wstETHTokenMock.approve(positionManager.address, D_addedColl, { from: dennis})
-    await positionManager.addColl(dennis, dennis, D_addedColl, { from: dennis })
+    await positionManager.managePosition(D_addedColl, true, 0, false, dennis, dennis, 0, { from: dennis })
 
     // Price drops to 1
     await priceFeed.setPrice(dec(1, 18))
@@ -1265,7 +1265,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // Bob adds 11.33909 ETH to his position
     const B_addedColl = toBN('11339090000000000000')
     wstETHTokenMock.approve(positionManager.address, B_addedColl, { from: bob})
-    await positionManager.addColl(bob, bob, B_addedColl, { from: bob })
+    await positionManager.managePosition(B_addedColl, true, 0, false, bob, bob, 0, { from: bob })
 
     // Carol withdraws 15 ETH from her position
     const C_withdrawnColl = toBN(dec(15, 'ether'))
@@ -1310,7 +1310,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     // D tops up
     const D_addedColl = toBN(dec(1, 'ether'))
     wstETHTokenMock.approve(positionManager.address, D_addedColl, { from: dennis})
-    await positionManager.addColl(dennis, dennis, D_addedColl, { from: dennis })
+    await positionManager.managePosition(D_addedColl, true, 0, false, dennis, dennis, 0, { from: dennis })
 
     const D_collAfterL2 = D_coll.add(D_pendingRewardsAfterL2).add(D_addedColl)
 

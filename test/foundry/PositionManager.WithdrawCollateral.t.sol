@@ -65,7 +65,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
         vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils._100pct));
-        positionManager.addColl(ALICE, ALICE, collateralTopUpAmount);
+        positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }
 
