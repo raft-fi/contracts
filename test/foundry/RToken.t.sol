@@ -8,7 +8,9 @@ import "./utils/TestSetup.t.sol";
 contract RTokenTest is TestSetup {
     IRToken public token;
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         token = new RToken(POSITION_MANAGER, FEE_RECIPIENT);
     }
 

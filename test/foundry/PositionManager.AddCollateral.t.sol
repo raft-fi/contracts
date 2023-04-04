@@ -16,9 +16,10 @@ contract PositionManagerAddCollateralTest is TestSetup {
     PriceFeedTestnet public priceFeed;
     IPositionManager public positionManager;
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         priceFeed = new PriceFeedTestnet();
-        collateralToken = new WstETHTokenMock();
         positionManager = new PositionManager(
             priceFeed,
             collateralToken,

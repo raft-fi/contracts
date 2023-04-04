@@ -18,10 +18,6 @@ contract PositionManagerTester is PositionManager {
     {
     }
 
-    function computeICR(uint _coll, uint _debt, uint _price) external pure returns (uint) {
-        return MathUtils.computeCR(_coll, _debt, _price);
-    }
-
     function getCollGasCompensation(uint _coll) external pure returns (uint) {
         return MathUtils.getCollGasCompensation(_coll);
     }

@@ -8,7 +8,9 @@ import "./utils/TestSetup.t.sol";
 contract FeeCollectorTest is TestSetup {
     IFeeCollector public feeCollector;
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         feeCollector = new FeeCollectorTester(FEE_RECIPIENT);
     }
 
