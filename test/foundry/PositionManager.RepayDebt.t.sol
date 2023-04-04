@@ -17,9 +17,10 @@ contract PositionManagerRepayDebtTest is TestSetup {
     IPositionManager public positionManager;
     IRToken public rToken;
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         priceFeed = new PriceFeedTestnet();
-        collateralToken = new WstETHTokenMock();
         positionManager = new PositionManager(
             priceFeed,
             collateralToken,

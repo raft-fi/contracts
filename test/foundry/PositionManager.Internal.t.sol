@@ -15,7 +15,9 @@ contract PositionManagerInternalTest is TestSetup {
     uint256[] public decayBaseRates;
     mapping(uint256 => uint256[]) public decayBaseRatesExpected;
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         positionManager =
             new PositionManagerTester(PRICE_FEED, COLLATERAL_TOKEN, POSITIONS_SIZE, LIQUIDATION_PROTOCOL_FEE);
 

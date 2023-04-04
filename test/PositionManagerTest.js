@@ -87,7 +87,7 @@ contract('PositionManager', async accounts => {
     const alice_Position_isInSortedList = (await positionManager.sortedPositionsNodes(alice))[0]
     assert.isFalse(alice_Position_isInSortedList)
   })
-  
+
   it("liquidate(): removes the Position's stake from the total stakes", async () => {
     // --- SETUP ---
     await deploymentHelper.mintR(rToken, owner);
@@ -744,7 +744,7 @@ contract('PositionManager', async accounts => {
     // Liquidate - position C in between the ones to be liquidated!
     const liquidationArray = [alice, carol, bob, dennis, erin]
     const totals = await positionManager.simulateBatchLiquidatePositions(liquidationArray, price);
-    
+
     assert.equal(totals.totalCollInSequence, A_coll.add(B_coll).toString());
     assert.equal(totals.totalDebtInSequence, A_debt.add(B_debt).toString());
     assert.equal(totals.totalDebtToOffset, A_debt.add(B_debt).toString());
@@ -1877,108 +1877,6 @@ contract('PositionManager', async accounts => {
 
     const carol_PendingETHReward = await positionManager.getPendingCollateralTokenReward(carol)
     assert.equal(carol_PendingETHReward, 0)
-  })
-
-  // --- computeICR ---
-
-  it("computeICR(): Returns 0 if position's coll is worth 0", async () => {
-    const price = 0
-    const coll = dec(1, 'ether')
-    const debt = dec(100, 18)
-
-    const ICR = (await positionManager.computeICR(coll, debt, price)).toString()
-
-    assert.equal(ICR, 0)
-  })
-
-  it("computeICR(): Returns 2^256-1 for ETH:USD = 100, coll = 1 ETH, debt = 100 R", async () => {
-    const price = dec(100, 18)
-    const coll = dec(1, 'ether')
-    const debt = dec(100, 18)
-
-    const ICR = (await positionManager.computeICR(coll, debt, price)).toString()
-
-    assert.equal(ICR, dec(1, 18))
-  })
-
-  it("computeICR(): returns correct ICR for ETH:USD = 100, coll = 200 ETH, debt = 30 R", async () => {
-    const price = dec(100, 18)
-    const coll = dec(200, 'ether')
-    const debt = dec(30, 18)
-
-    const ICR = (await positionManager.computeICR(coll, debt, price)).toString()
-
-    assert.isAtMost(th.getDifference(ICR, '666666666666666666666'), 1000)
-  })
-
-  it("computeICR(): returns correct ICR for ETH:USD = 250, coll = 1350 ETH, debt = 127 R", async () => {
-    const price = '250000000000000000000'
-    const coll = '1350000000000000000000'
-    const debt = '127000000000000000000'
-
-    const ICR = (await positionManager.computeICR(coll, debt, price))
-
-    assert.isAtMost(th.getDifference(ICR, '2657480314960630000000'), 1000000)
-  })
-
-  it("computeICR(): returns correct ICR for ETH:USD = 100, coll = 1 ETH, debt = 54321 R", async () => {
-    const price = dec(100, 18)
-    const coll = dec(1, 'ether')
-    const debt = '54321000000000000000000'
-
-    const ICR = (await positionManager.computeICR(coll, debt, price)).toString()
-
-    assert.isAtMost(th.getDifference(ICR, '1840908672520756'), 1000)
-  })
-
-
-  it("computeICR(): Returns 2^256-1 if position has non-zero coll and zero debt", async () => {
-    const price = dec(100, 18)
-    const coll = dec(1, 'ether')
-    const debt = 0
-
-    const ICR = web3.utils.toHex(await positionManager.computeICR(coll, debt, price))
-    const maxBytes32 = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-
-    assert.equal(ICR, maxBytes32)
-  })
-
-  // --- Getters ---
-
-  it("getPositionStake(): Returns stake", async () => {
-    const { collateral: A_coll } = await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: A } })
-    const { collateral: B_coll } = await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: B } })
-
-    const A_Stake = (await positionManager.positions(A))[2]
-    const B_Stake = (await positionManager.positions(B))[2]
-
-    assert.equal(A_Stake, A_coll.toString())
-    assert.equal(B_Stake, B_coll.toString())
-  })
-
-  it("getPositionColl(): Returns coll", async () => {
-    const { collateral: A_coll } = await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: A } })
-    const { collateral: B_coll } = await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: B } })
-
-    assert.equal((await positionManager.positions(A))[1], A_coll.toString())
-    assert.equal((await positionManager.positions(B))[1], B_coll.toString())
-  })
-
-  it("getPositionDebt(): Returns debt", async () => {
-    const { totalDebt: totalDebtA } = await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: A } })
-    const { totalDebt: totalDebtB } = await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: B } })
-
-    const A_Debt = (await positionManager.positions(A))[0]
-    const B_Debt = (await positionManager.positions(B))[0]
-
-    // Expect debt = requested + 0.5% fee + 50 (due to gas comp)
-
-    assert.equal(A_Debt, totalDebtA.toString())
-    assert.equal(B_Debt, totalDebtB.toString())
-  })
-
-  it("hasPendingRewards(): Returns false it position is not active", async () => {
-    assert.isFalse(await positionManager.hasPendingRewards(alice))
   })
 })
 

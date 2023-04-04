@@ -153,18 +153,6 @@ class TestHelper {
     return ICR
   }
 
-  static computeICR(coll, debt, price) {
-    const collBN = web3.utils.toBN(coll)
-    const debtBN = web3.utils.toBN(debt)
-    const priceBN = web3.utils.toBN(price)
-
-    const ICR = debtBN.eq(this.toBN('0')) ?
-      this.toBN('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
-      : collBN.mul(priceBN).div(debtBN)
-
-    return ICR
-  }
-
   static async ICRbetween100and110(account, positionManager, price) {
     const ICR = await positionManager.getCurrentICR(account, price)
     return (ICR.gt(MoneyValues._ICR100)) && (ICR.lt(MoneyValues._MCR))
