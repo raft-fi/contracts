@@ -2290,19 +2290,6 @@ contract('BorrowerOperations', async accounts => {
       const alice_RTokenBalance_After = await rToken.balanceOf(alice)
       assert.equal(alice_RTokenBalance_After, dec(10000, 18))
     })
-
-    // --- getCompositeDebt ---
-
-    it("getCompositeDebt(): returns debt + gas comp", async () => {
-      const res1 = await positionManager.getCompositeDebt('0')
-      assert.equal(res1, R_GAS_COMPENSATION.toString())
-
-      const res2 = await positionManager.getCompositeDebt(dec(90, 18))
-      th.assertIsApproximatelyEqual(res2, R_GAS_COMPENSATION.add(toBN(dec(90, 18))))
-
-      const res3 = await positionManager.getCompositeDebt(dec(24423422357345049, 12))
-      th.assertIsApproximatelyEqual(res3, R_GAS_COMPENSATION.add(toBN(dec(24423422357345049, 12))))
-    })
   })
 
 contract('Reset chain state', async accounts => { })

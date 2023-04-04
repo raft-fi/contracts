@@ -218,8 +218,7 @@ class TestHelper {
 
   // Adds the gas compensation (50 R)
   static async getCompositeDebt(contracts, debt) {
-    const compositeDebt = contracts.positionManager.getCompositeDebt(debt)
-    return compositeDebt
+    return contracts.math.getCompositeDebt(debt)
   }
 
   static async getPositionEntireColl(contracts, position) {
