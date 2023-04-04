@@ -82,7 +82,7 @@ library SortedPositions {
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
-    function insert(Data storage data, IPositionManager _positionManager, address _id, uint256 _NICR, address _prevId, address _nextId) internal {
+    function insert(Data storage data, IPositionManager _positionManager, address _id, uint256 _NICR, address _prevId, address _nextId) private {
         if (data.size == data.maxSize) {
             revert PositionsListFull();
         }
@@ -182,17 +182,15 @@ library SortedPositions {
      * @param _prevId Id of previous node for the new insert position
      * @param _nextId Id of next node for the new insert position
      */
-    function reInsert(Data storage data, IPositionManager _positionManager, address _id, uint256 _newNICR, address _prevId, address _nextId) internal {
-        if (!data.nodes[_id].exists) {
-            revert PositionsListDoesNotContainNode(_id);
-        }
+    function update(Data storage data, IPositionManager _positionManager, address _id, uint256 _newNICR, address _prevId, address _nextId) internal {
         if (_newNICR == 0) {
             revert PositionsNICRZero();
         }
 
-        // Remove node from the list
-        remove(data, _id);
-
+        if (data.nodes[_id].exists) {
+            // Remove node from the list
+            remove(data, _id);
+        }
         insert(data, _positionManager, _id, _newNICR, _prevId, _nextId);
     }
 

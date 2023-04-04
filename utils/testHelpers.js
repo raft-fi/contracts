@@ -384,6 +384,14 @@ class TestHelper {
     throw (`The transaction logs do not contain event ${eventName} and arg ${argName}`)
   }
 
+  static expectNoEventByName(tx, eventName) {
+    for (let i = 0; i < tx.logs.length; i++) {
+      if (tx.logs[i].event === eventName) {
+        throw (`Found event with the name ${eventName}`)
+      }
+    }
+  }
+
   static getAllEventsByName(tx, eventName) {
     const events = []
     for (let i = 0; i < tx.logs.length; i++) {
@@ -392,11 +400,6 @@ class TestHelper {
       }
     }
     return events
-  }
-
-  static getDebtAndCollFromPositionUpdatedEvents(positionUpdatedEvents, address) {
-    const event = positionUpdatedEvents.filter(event => event.args[0] === address)[0]
-    return [event.args[1], event.args[2]]
   }
 
   static async getEntireCollAndDebt(contracts, account) {
@@ -814,7 +817,7 @@ class TestHelper {
       // console.log("tx succeeded")
       assert.isFalse(tx.receipt.status) // when this assert fails, the expected revert didn't occur, i.e. the tx succeeded
     } catch (err) {
-      // console.log("tx failed")
+      console.log("tx failed: ", err.message)
       assert.include(err.message, "revert")
       // TODO !!!
 

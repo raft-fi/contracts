@@ -66,9 +66,6 @@ error NetDebtBelowMinimum(uint256 netDebt);
 /// @dev Amount repaid must not be larger than the Position's debt.
 error RepayRAmountExceedsDebt(uint256 debt);
 
-/// @dev Caller doesn't have enough R to make repayment.
-error RepayNotEnoughR();
-
 /// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
 error LiquidationProtocolFeeOutOfBound();
 
@@ -86,15 +83,6 @@ interface IPositionManager is IFeeCollector {
         uint totalCollToRedistribute;
     }
 
-    enum PositionManagerOperation {
-        applyPendingRewards,
-        liquidate,
-        redeemCollateral,
-        openPosition,
-        closePosition,
-        adjustPosition
-    }
-
     // --- Events ---
 
     event PositionManagerDeployed(
@@ -108,12 +96,11 @@ interface IPositionManager is IFeeCollector {
 
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _liquidationProtocolFee, uint _collGasCompensation, uint _RGasCompensation);
     event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
-    event PositionUpdated(address indexed _borrower, uint _debt, uint _coll, uint _stake, PositionManagerOperation _operation);
-    event PositionLiquidated(address indexed _borrower, uint _debt, uint _coll, PositionManagerOperation _operation);
+    event PositionLiquidated(address indexed _borrower, uint _debt, uint _coll);
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
     event BaseRateUpdated(uint _baseRate);
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
-    event TotalStakesUpdated(uint _newTotalStakes);
+    event StakesUpdated(address _borrower, uint256 _newStake, uint256 _newTotalStakes);
     event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
     event LTermsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
     event PositionSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
@@ -202,5 +189,5 @@ interface IPositionManager is IFeeCollector {
 
     function adjustPosition(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
 
-    function getCompositeDebt(uint _debt) external pure returns (uint);
+    function getCompositeDebt(uint256 _debt) external pure returns (uint256);
 }

@@ -1167,15 +1167,10 @@ contract('BorrowerOperations', async accounts => {
 
     it("adjustPosition(): reverts when R repaid is > debt of the position", async () => {
       await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      const bobOpenTx = (await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })).tx
+      await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
       const bobDebt = await getPositionEntireDebt(bob)
       assert.isTrue(bobDebt.gt(toBN('0')))
-
-      const bobFee = toBN(await th.getEventArgByIndex(bobOpenTx, 'RBorrowingFeePaid', 1))
-
-      // Alice transfers R to bob to compensate borrowing fees
-      await rToken.transfer(bob, bobFee, { from: alice })
 
       const remainingDebt = (await positionManager.positions(bob))[0].sub(R_GAS_COMPENSATION)
 
@@ -1865,65 +1860,6 @@ contract('BorrowerOperations', async accounts => {
 
     // --- openPosition() ---
 
-    it("openPosition(): emits a PositionUpdated event with the correct collateral and debt", async () => {
-      const txA = (await openPosition({ extraRAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })).tx
-      const txB = (await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })).tx
-      const txC = (await openPosition({ extraRAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })).tx
-
-      const A_Coll = await getPositionEntireColl(A)
-      const B_Coll = await getPositionEntireColl(B)
-      const C_Coll = await getPositionEntireColl(C)
-      const A_Debt = await getPositionEntireDebt(A)
-      const B_Debt = await getPositionEntireDebt(B)
-      const C_Debt = await getPositionEntireDebt(C)
-
-      const A_emittedDebt = toBN(th.getEventArgByName(txA, "PositionUpdated", "_debt"))
-      const A_emittedColl = toBN(th.getEventArgByName(txA, "PositionUpdated", "_coll"))
-      const B_emittedDebt = toBN(th.getEventArgByName(txB, "PositionUpdated", "_debt"))
-      const B_emittedColl = toBN(th.getEventArgByName(txB, "PositionUpdated", "_coll"))
-      const C_emittedDebt = toBN(th.getEventArgByName(txC, "PositionUpdated", "_debt"))
-      const C_emittedColl = toBN(th.getEventArgByName(txC, "PositionUpdated", "_coll"))
-
-      // Check emitted debt values are correct
-      assert.isTrue(A_Debt.eq(A_emittedDebt))
-      assert.isTrue(B_Debt.eq(B_emittedDebt))
-      assert.isTrue(C_Debt.eq(C_emittedDebt))
-
-      // Check emitted coll values are correct
-      assert.isTrue(A_Coll.eq(A_emittedColl))
-      assert.isTrue(B_Coll.eq(B_emittedColl))
-      assert.isTrue(C_Coll.eq(C_emittedColl))
-
-      const baseRateBefore = await positionManager.baseRate()
-
-      // Artificially make baseRate 5%
-      await positionManager.setBaseRate(dec(5, 16))
-      await positionManager.setLastFeeOpTimeToNow()
-
-      assert.isTrue((await positionManager.baseRate()).gt(baseRateBefore))
-
-      const txD = (await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })).tx
-      const txE = (await openPosition({ extraRAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })).tx
-      const D_Coll = await getPositionEntireColl(D)
-      const E_Coll = await getPositionEntireColl(E)
-      const D_Debt = await getPositionEntireDebt(D)
-      const E_Debt = await getPositionEntireDebt(E)
-
-      const D_emittedDebt = toBN(th.getEventArgByName(txD, "PositionUpdated", "_debt"))
-      const D_emittedColl = toBN(th.getEventArgByName(txD, "PositionUpdated", "_coll"))
-
-      const E_emittedDebt = toBN(th.getEventArgByName(txE, "PositionUpdated", "_debt"))
-      const E_emittedColl = toBN(th.getEventArgByName(txE, "PositionUpdated", "_coll"))
-
-      // Check emitted debt values are correct
-      assert.isTrue(D_Debt.eq(D_emittedDebt))
-      assert.isTrue(E_Debt.eq(E_emittedDebt))
-
-      // Check emitted coll values are correct
-      assert.isTrue(D_Coll.eq(D_emittedColl))
-      assert.isTrue(E_Coll.eq(E_emittedColl))
-    })
-
     it("openPosition(): Opens a position with net debt >= minimum net debt", async () => {
       // Add 1 wei to correct for rounding error in helper function
       await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: A})
@@ -2308,9 +2244,7 @@ contract('BorrowerOperations', async accounts => {
       const RRequest = toBN(dec(10000, 18))
       await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: C})
       const txC = await positionManager.openPosition(th._100pct, RRequest, ZERO_ADDRESS, ZERO_ADDRESS, dec(100, 'ether'), { from: C })
-      const _rFee = toBN(th.getEventArgByName(txC, "RBorrowingFeePaid", "_rFee"))
-
-      assert.isTrue(_rFee.eq(toBN(0)))
+      th.expectNoEventByName(txC, "RBorrowingFeePaid")
     })
 
     it("openPosition(): reverts when position ICR < MCR", async () => {

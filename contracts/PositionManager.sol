@@ -164,68 +164,53 @@ contract PositionManager is FeeCollector, IPositionManager {
     )
         external
         override
-        validMaxFeePercentageWhen(_maxFeePercentage, true)
         onlyNonActivePosition
     {
-        uint256 rFee = _triggerBorrowingFee(_rAmount, _maxFeePercentage);
-        uint256 netDebt = _rAmount + rFee;
-        _requireAtLeastMinNetDebt(netDebt);
-
-        // ICR is based on the composite debt, i.e. the requested R amount + R borrowing fee + R gas comp.
-        uint256 compositeDebt = MathUtils.getCompositeDebt(netDebt);
-        assert(compositeDebt > 0);
-
-        _requireICRisAboveMCR(MathUtils.computeCR(_collAmount, compositeDebt, priceFeed.fetchPrice()));
-
-        // Set the position struct's properties
-        positions[msg.sender].coll = _collAmount;
-        positions[msg.sender].debt = compositeDebt;
-
-        _updatePositionRewardSnapshots(msg.sender);
-        uint256 stake = _updateStakeAndTotalStakes(msg.sender);
-
-        sortedPositions.insert(
-            this, msg.sender, MathUtils.computeNominalCR(_collAmount, compositeDebt), _upperHint, _lowerHint
-        );
+        _adjustPosition(_collAmount, true, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage, true);
         emit PositionCreated(msg.sender);
-
-        // Move the collateralToken to the Active Pool, and mint the rAmount to the borrower
-        _activePoolCollateralBalance += _collAmount;
-        collateralToken.transferFrom(msg.sender, address(this), _collAmount);
-        rToken.mint(msg.sender, _rAmount);
-
-        // Move the R gas compensation to the Gas Pool
-        rToken.mint(address(this), MathUtils.R_GAS_COMPENSATION);
-
-        emit PositionUpdated(msg.sender, compositeDebt, _collAmount, stake, PositionManagerOperation.openPosition);
-        emit RBorrowingFeePaid(msg.sender, rFee);
     }
 
     // Send collateralToken to a position
-    function addColl(address _upperHint, address _lowerHint, uint256 _collDeposit) external override {
-        _adjustPosition(_collDeposit, true, 0, false, _upperHint, _lowerHint, 0);
+    function addColl(
+        address _upperHint, address _lowerHint, uint256 _collDeposit
+    ) external override onlyActivePosition(msg.sender) {
+        _adjustPosition(_collDeposit, true, 0, false, _upperHint, _lowerHint, 0, true);
     }
 
     // Withdraw collateralToken from a position
-    function withdrawColl(uint256 _collWithdrawal, address _upperHint, address _lowerHint) external override {
-        _adjustPosition(_collWithdrawal, false, 0, false, _upperHint, _lowerHint, 0);
+    function withdrawColl(
+        uint256 _collWithdrawal, address _upperHint, address _lowerHint
+    ) external override onlyActivePosition(msg.sender) {
+        _adjustPosition(_collWithdrawal, false, 0, false, _upperHint, _lowerHint, 0, true);
     }
 
     // Withdraw R tokens from a position: mint new R tokens to the owner, and increase the position's debt accordingly
-    function withdrawR(uint256 _maxFeePercentage, uint256 _rAmount, address _upperHint, address _lowerHint) external override {
-        _adjustPosition(0, false, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage);
+    function withdrawR(
+        uint256 _maxFeePercentage, uint256 _rAmount, address _upperHint, address _lowerHint
+    ) external override onlyActivePosition(msg.sender) {
+        _adjustPosition(0, false, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage, true);
     }
 
     // Repay R tokens to a Position: Burn the repaid R tokens, and reduce the position's debt accordingly
-    function repayR(uint256 _rAmount, address _upperHint, address _lowerHint) external override {
-        _adjustPosition(0, false, _rAmount, false, _upperHint, _lowerHint, 0);
+    function repayR(
+        uint256 _rAmount, address _upperHint, address _lowerHint
+    ) external override onlyActivePosition(msg.sender) {
+        _adjustPosition(0, false, _rAmount, false, _upperHint, _lowerHint, 0, true);
     }
 
-    function adjustPosition(uint256 _maxFeePercentage, uint256 _collWithdrawal, uint256 _rChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint256 _collDeposit) external override {
+    function adjustPosition(
+        uint256 _maxFeePercentage, 
+        uint256 _collWithdrawal, 
+        uint256 _rChange, 
+        bool _isDebtIncrease, 
+        address _upperHint, 
+        address _lowerHint, 
+        uint256 _collDeposit
+    ) external override onlyActivePosition(msg.sender) {
         if (_collWithdrawal != 0 && _collDeposit != 0) {
             revert NotSingularCollateralChange();
         }
-        _adjustPosition(_collDeposit + _collWithdrawal, _collDeposit != 0, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage);
+        _adjustPosition(_collDeposit + _collWithdrawal, _collDeposit != 0, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, true);
     }
 
     /*
@@ -242,11 +227,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
-        uint256 _maxFeePercentage
+        uint256 _maxFeePercentage,
+        bool _needsCollateralTransfer
     )
         internal
         validMaxFeePercentageWhen(_maxFeePercentage, _isDebtIncrease)
-        onlyActivePosition(msg.sender)
     {
         if (_isDebtIncrease && _rChange == 0) {
             revert DebtIncreaseZeroDebtChange();
@@ -263,38 +248,62 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         _applyPendingRewards(msg.sender);
 
-        uint256 netDebtChange = _rChange + (_isDebtIncrease ? _triggerBorrowingFee(_rChange, _maxFeePercentage) : 0);
+        _adjustCollateral(_collChange, _isCollIncrease, _needsCollateralTransfer);
+        _adjustDebt(_rChange, _isDebtIncrease, _maxFeePercentage);
 
-        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough R
-        if (!_isDebtIncrease && _rChange > 0) {
-            _requireAtLeastMinNetDebt(MathUtils.getNetDebt(positions[msg.sender].debt) - netDebtChange);
-            _requireValidRRepayment(positions[msg.sender].debt, netDebtChange);
-            if (rToken.balanceOf(msg.sender) < netDebtChange) {
-                revert RepayNotEnoughR();
-            }
-        }
+        _requireICRisAboveMCR();
 
-        positions[msg.sender].coll = _isCollIncrease ? positions[msg.sender].coll + _collChange : positions[msg.sender].coll - _collChange;
-        positions[msg.sender].debt = _isDebtIncrease ? positions[msg.sender].debt + netDebtChange : positions[msg.sender].debt - netDebtChange;
-
-        _requireICRisAboveMCR(
-            MathUtils.computeCR(positions[msg.sender].coll, positions[msg.sender].debt, priceFeed.fetchPrice())
-        );
-
-        // Re-insert position in to the sorted list
-        sortedPositions.reInsert(
+        sortedPositions.update(
             this,
             msg.sender,
             MathUtils.computeNominalCR(positions[msg.sender].coll, positions[msg.sender].debt),
             _upperHint,
             _lowerHint
         );
+    }
 
-        emit PositionUpdated(msg.sender, positions[msg.sender].debt, positions[msg.sender].coll, _updateStakeAndTotalStakes(msg.sender), PositionManagerOperation.adjustPosition);
-        emit RBorrowingFeePaid(msg.sender, netDebtChange - _rChange);
+    function _adjustDebt(uint256 _rChange, bool _isDebtIncrease, uint256 _maxFeePercentage) internal {
+        if (_rChange == 0) {
+            return;
+        }
 
-        // Use the unmodified _rChange here, as we don't send the fee to the user
-        _moveTokensFromAdjustment(_collChange, _isCollIncrease, _rChange, _isDebtIncrease);
+        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough R
+        if (_isDebtIncrease) {
+            uint256 debtChange = _rChange + _triggerBorrowingFee(_rChange, _maxFeePercentage);
+            if (positions[msg.sender].debt == 0) {
+                _requireAtLeastMinNetDebt(debtChange);
+                debtChange += MathUtils.R_GAS_COMPENSATION;
+                rToken.mint(address(this), MathUtils.R_GAS_COMPENSATION);
+            }
+            positions[msg.sender].debt += debtChange;
+            rToken.mint(msg.sender, _rChange);
+        }
+        else {
+            _requireAtLeastMinNetDebt(MathUtils.getNetDebt(positions[msg.sender].debt) - _rChange);
+            _requireValidRRepayment(positions[msg.sender].debt, _rChange);
+            positions[msg.sender].debt -= _rChange;
+            rToken.burn(msg.sender, _rChange);
+        }
+    }
+
+    function _adjustCollateral(uint256 _collChange, bool _isCollIncrease, bool _needsCollTransfer) internal {
+        if (_collChange == 0) {
+            return;
+        }
+        if (_isCollIncrease) {
+            positions[msg.sender].coll += _collChange;
+            _activePoolCollateralBalance += _collChange;
+            if (_needsCollTransfer) {
+                collateralToken.transferFrom(msg.sender, address(this), _collChange);
+            }
+        } else {
+            positions[msg.sender].coll -= _collChange;
+            _activePoolCollateralBalance -= _collChange;
+            if (_needsCollTransfer) {
+                collateralToken.transfer(msg.sender, _collChange);
+            }
+        }
+        _updateStakeAndTotalStakes(msg.sender);
     }
 
     function closePosition() external override onlyActivePosition(msg.sender) {
@@ -303,13 +312,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 coll = positions[msg.sender].coll;
         uint256 debt = positions[msg.sender].debt;
 
-        if (rToken.balanceOf(msg.sender) < debt - MathUtils.R_GAS_COMPENSATION) {
-            revert RepayNotEnoughR();
-        }
-
         _closePosition(msg.sender);
-
-        emit PositionUpdated(msg.sender, 0, 0, 0, PositionManagerOperation.closePosition);
 
         // Burn the repaid R from the user's balance and the gas compensation from the Gas Pool
         rToken.burn(msg.sender, debt - MathUtils.R_GAS_COMPENSATION);
@@ -342,8 +345,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _movePendingPositionRewardsToActivePool(pendingCollReward);
 
         _closePosition(_borrower);
-        emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl, PositionManagerOperation.liquidate);
-        emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.liquidate);
+        emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl);
     }
 
     function _calculateLiquidationValues(address _borrower, uint256 _ICR, uint256 _price) internal view returns (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) {
@@ -503,7 +505,6 @@ contract PositionManager is FeeCollector, IPositionManager {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
             _closePosition(_borrower);
             _redeemClosePosition(_borrower, MathUtils.R_GAS_COMPENSATION, newColl);
-            emit PositionUpdated(_borrower, 0, 0, 0, PositionManagerOperation.redeemCollateral);
 
         } else {
             uint256 newNICR = MathUtils.computeNominalCR(newColl, newDebt);
@@ -517,18 +518,11 @@ contract PositionManager is FeeCollector, IPositionManager {
             if (newNICR != _partialRedemptionHintNICR || MathUtils.getNetDebt(newDebt) < MathUtils.MIN_NET_DEBT) {
                 rLot = 0;
             } else {
-                sortedPositions.reInsert(this, _borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
+                sortedPositions.update(this, _borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
 
                 positions[_borrower].debt = newDebt;
                 positions[_borrower].coll = newColl;
                 _updateStakeAndTotalStakes(_borrower);
-
-                emit PositionUpdated(
-                    _borrower,
-                    newDebt, newColl,
-                    positions[_borrower].stake,
-                    PositionManagerOperation.redeemCollateral
-                );
             }
         }
     }
@@ -703,19 +697,11 @@ contract PositionManager is FeeCollector, IPositionManager {
             positions[_borrower].coll += pendingCollateralTokenReward;
             positions[_borrower].debt += pendingRDebtReward;
 
-            _updatePositionRewardSnapshots(_borrower);
-
             // Transfer from DefaultPool to ActivePool
             _movePendingPositionRewardsToActivePool(pendingCollateralTokenReward);
-
-            emit PositionUpdated(
-                _borrower,
-                positions[_borrower].debt,
-                positions[_borrower].coll,
-                positions[_borrower].stake,
-                PositionManagerOperation.applyPendingRewards
-            );
         }
+
+        _updatePositionRewardSnapshots(_borrower);
     }
 
     // Update borrower's snapshots of L_CollateralBalance and L_RDebt to reflect the current values
@@ -769,13 +755,13 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     // Update borrower's stake based on their latest collateral value
-    function _updateStakeAndTotalStakes(address _borrower) internal returns (uint256 newStake) {
-        newStake = _computeNewStake(positions[_borrower].coll);
+    function _updateStakeAndTotalStakes(address _borrower) internal {
+        uint256 newStake = _computeNewStake(positions[_borrower].coll);
         uint256 oldStake = positions[_borrower].stake;
         positions[_borrower].stake = newStake;
 
         totalStakes = totalStakes - oldStake + newStake;
-        emit TotalStakesUpdated(totalStakes);
+        emit StakesUpdated(_borrower, newStake, totalStakes);
     }
 
     // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
@@ -1004,32 +990,18 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (rFee > 0) {
             rToken.mint(feeRecipient, rFee);
-        }
-    }
-
-    function _moveTokensFromAdjustment(uint256 _collChange, bool _isCollIncrease, uint256 _rChange, bool _isDebtIncrease)
-        private
-    {
-        if (_isDebtIncrease) {
-            rToken.mint(msg.sender, _rChange);
-        } else {
-            rToken.burn(msg.sender, _rChange);
-        }
-
-        if (_isCollIncrease) {
-            _activePoolCollateralBalance += _collChange;
-            collateralToken.transferFrom(msg.sender, address(this), _collChange);
-        } else {
-            _activePoolCollateralBalance -= _collChange;
-            collateralToken.transfer(msg.sender, _collChange);
+            emit RBorrowingFeePaid(msg.sender, rFee);
         }
     }
 
     // --- 'Require' wrapper functions ---
 
-    function _requireICRisAboveMCR(uint256 _newICR) internal pure {
-        if (_newICR < MathUtils.MCR) {
-            revert NewICRLowerThanMCR(_newICR);
+    function _requireICRisAboveMCR() internal {
+        uint256 newICR = MathUtils.computeCR(
+            positions[msg.sender].coll, positions[msg.sender].debt, priceFeed.fetchPrice()
+        );
+        if (newICR < MathUtils.MCR) {
+            revert NewICRLowerThanMCR(newICR);
         }
     }
 
@@ -1045,11 +1017,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
     }
 
-    function getCompositeDebt(uint256 _debt) external pure override returns (uint256) {
-        return MathUtils.getCompositeDebt(_debt);
-    }
-
     function sortedPositionsNodes(address _id) external view override returns(bool exists, address nextId, address prevId) {
         return (sortedPositions.nodes[_id].exists, sortedPositions.nodes[_id].nextId, sortedPositions.nodes[_id].prevId);
+    }
+
+    function getCompositeDebt(uint256 _debt) external pure override returns (uint256) {
+        return MathUtils.getCompositeDebt(_debt);
     }
 }
