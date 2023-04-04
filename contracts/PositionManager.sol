@@ -177,13 +177,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         _adjustPosition(_collDeposit, true, 0, false, _upperHint, _lowerHint, 0, true);
     }
 
-    // Withdraw collateralToken from a position
-    function withdrawColl(
-        uint256 _collWithdrawal, address _upperHint, address _lowerHint
-    ) external override onlyActivePosition(msg.sender) {
-        _adjustPosition(_collWithdrawal, false, 0, false, _upperHint, _lowerHint, 0, true);
-    }
-
     function adjustPosition(
         uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
@@ -240,9 +233,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (_collChange == 0 && _rChange == 0) {
             revert NoCollateralOrDebtChange();
         }
-        if (!_isCollIncrease && _collChange > positions[msg.sender].coll) {
-            revert WithdrawingMoreThanAvailableCollateral();
-        }
 
         _applyPendingRewards(msg.sender);
 
@@ -288,10 +278,14 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (_collChange == 0) {
             return;
         }
+        if (positions[msg.sender].debt == 0) {
+            revert PositionManagerPositionNotActive();
+        }
+        if (!_isCollIncrease && _collChange > positions[msg.sender].coll) {
+            revert WithdrawingMoreThanAvailableCollateral();
+        }
+
         if (_isCollIncrease) {
-            if (positions[msg.sender].debt == 0) {
-                revert PositionManagerPositionNotActive();
-            }
             positions[msg.sender].coll += _collChange;
             _activePoolCollateralBalance += _collChange;
             if (_needsCollTransfer) {

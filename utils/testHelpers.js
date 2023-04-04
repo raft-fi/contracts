@@ -645,7 +645,7 @@ class TestHelper {
       // console.log(`newDebt: ${newDebt} `)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawColl(amount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(amount, false, 0, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -661,7 +661,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawColl(contracts, account, randCollAmount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawColl(randCollAmount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(randCollAmount, false, 0, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
       // console.log("gasCostlist length is " + gasCostList.length)

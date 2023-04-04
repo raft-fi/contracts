@@ -750,7 +750,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Bob withdraws 0.5 ETH from his position
     const withdrawnColl = toBN(dec(500, 'finney'))
-    await positionManager.withdrawColl(withdrawnColl, bob, bob, { from: bob })
+    await positionManager.managePosition(withdrawnColl, false, 0, false, bob, bob, 0, { from: bob })
 
     // Alice withdraws R
     await positionManager.managePosition(0, false, await getNetBorrowingAmount(A_totalDebt), true, alice, alice, th._100pct, { from: alice })
@@ -804,7 +804,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Bob  withdraws 0.5 ETH from his position
     const withdrawnColl = toBN(dec(500, 'finney'))
-    await positionManager.withdrawColl(withdrawnColl, bob, bob, { from: bob })
+    await positionManager.managePosition(withdrawnColl, false, 0, false, bob, bob, 0, { from: bob })
 
     // D opens position
     const { collateral: D_coll, totalDebt: D_totalDebt } = await openPosition({ ICR: toBN(dec(200, 16)), extraRAmount: dec(110, 18), extraParams: { from: dennis } })
@@ -909,7 +909,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Carol wthdraws 1 ETH from her position, brings it to 1990.01 total coll
     const C_withdrawnColl = toBN(dec(1, 'ether'))
-    await positionManager.withdrawColl(C_withdrawnColl, carol, carol, { from: carol })
+    await positionManager.managePosition(C_withdrawnColl, false, 0, false, carol, carol, 0, { from: carol })
 
     //Expect 1994 ETH in system now
     const entireSystemColl_2 = await wstETHTokenMock.balanceOf(positionManager.address)
@@ -1014,9 +1014,9 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     /* Alice, Bob, Carol each withdraw 0.5 ETH to their positions,
     bringing them to 1.495, 1.495, 1990.51 total coll each. */
     const withdrawnColl = toBN(dec(500, 'finney'))
-    await positionManager.withdrawColl(withdrawnColl, alice, alice, { from: alice })
-    await positionManager.withdrawColl(withdrawnColl, bob, bob, { from: bob })
-    await positionManager.withdrawColl(withdrawnColl, carol, carol, { from: carol })
+    await positionManager.managePosition(withdrawnColl, false, 0, false, alice, alice, 0, { from: alice })
+    await positionManager.managePosition(withdrawnColl, false, 0, false, bob, bob, 0, { from: bob })
+    await positionManager.managePosition(withdrawnColl, false, 0, false, carol, carol, 0, { from: carol })
 
     const alice_Coll_1 = ((await positionManager.positions(alice))[1]
       .add(await positionManager.getPendingCollateralTokenReward(alice)))
@@ -1138,7 +1138,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     //Carol  withdraws 1 ETH from her position
     const C_withdrawnColl = toBN(dec(1, 'ether'))
-    await positionManager.withdrawColl(C_withdrawnColl, carol, carol, { from: carol })
+    await positionManager.managePosition(C_withdrawnColl, false, 0, false, carol, carol, 0, { from: carol })
 
     const B_collAfterL1 = B_coll.add(B_pendingRewardsAfterL1).add(B_addedColl)
     const C_collAfterL1 = C_coll.add(C_pendingRewardsAfterL1).sub(C_withdrawnColl)
@@ -1269,7 +1269,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
 
     // Carol withdraws 15 ETH from her position
     const C_withdrawnColl = toBN(dec(15, 'ether'))
-    await positionManager.withdrawColl(C_withdrawnColl, carol, carol, { from: carol })
+    await positionManager.managePosition(C_withdrawnColl, false, 0, false, carol, carol, 0, { from: carol })
 
     const B_collAfterL1 = B_coll.add(B_pendingRewardsAfterL1).add(B_addedColl)
     const C_collAfterL1 = C_coll.add(C_pendingRewardsAfterL1).sub(C_withdrawnColl)

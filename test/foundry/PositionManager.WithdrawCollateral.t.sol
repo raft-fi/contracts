@@ -93,12 +93,12 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Bob successfully withdraws some collateral
         vm.prank(BOB);
-        positionManager.withdrawColl(0.1 ether, BOB, BOB);
+        positionManager.managePosition(0.1 ether, false, 0, false, BOB, BOB, 0);
 
         // Carol with no active position attempts to withdraw
         vm.prank(CAROL);
         vm.expectRevert(PositionManagerPositionNotActive.selector);
-        positionManager.withdrawColl(1 ether, CAROL, CAROL);
+        positionManager.managePosition(1 ether, false, 0, false, CAROL, CAROL, 0);
     }
 
     // Reverts when requested collateral withdrawal is > the position's collateral
@@ -136,12 +136,12 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         // Carol withdraws exactly all her collateral
         vm.prank(CAROL);
         vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, 0));
-        positionManager.withdrawColl(carolCollateral, CAROL, CAROL);
+        positionManager.managePosition(carolCollateral, false, 0, false, CAROL, CAROL, 0);
 
         // Bob attempts to withdraw 1 wei more than his collateral
         vm.prank(BOB);
         vm.expectRevert(WithdrawingMoreThanAvailableCollateral.selector);
-        positionManager.withdrawColl(bobCollateral + 1, BOB, BOB);
+        positionManager.managePosition(bobCollateral + 1, false, 0, false, BOB, BOB, 0);
     }
 
     // Succeeds when borrowing rate = 0% and withdrawal would bring the user's ICR < MCR
@@ -169,7 +169,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
         vm.prank(BOB);
         vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
-        positionManager.withdrawColl(1, BOB, BOB);
+        positionManager.managePosition(1, false, 0, false, BOB, BOB, 0);
     }
 
     // Reverts when borrowing rate > 0% and withdrawal would bring the user's ICR < MCR
@@ -198,7 +198,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
         vm.prank(BOB);
         vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
-        positionManager.withdrawColl(1, BOB, BOB);
+        positionManager.managePosition(1, false, 0, false, BOB, BOB, 0);
     }
 
     // Doesn’t allow a user to completely withdraw all collateral from their position (due to gas compensation)
@@ -230,7 +230,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         // Alice attempts to withdraw all collateral
         vm.prank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, 0));
-        positionManager.withdrawColl(aliceCollateral, ALICE, ALICE);
+        positionManager.managePosition(aliceCollateral, false, 0, false, ALICE, ALICE, 0);
     }
 
     // Leaves the position active when the user withdraws less than all the collateral
@@ -250,7 +250,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Alice withdraws some collateral
         vm.prank(ALICE);
-        positionManager.withdrawColl(1e17, ALICE, ALICE);
+        positionManager.managePosition(1e17, false, 0, false, ALICE, ALICE, 0);
 
         // Check position is still active
         (bool alicePositionExistsAfter,,) = positionManager.sortedPositionsNodes(ALICE);
@@ -274,7 +274,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Alice withdraws 1 ether
         vm.prank(ALICE);
-        positionManager.withdrawColl(withdrawAmount, ALICE, ALICE);
+        positionManager.managePosition(withdrawAmount, false, 0, false, ALICE, ALICE, 0);
 
         // Check 1 ether remaining
         (, uint256 aliceCollateralAfter,,) = positionManager.getEntireDebtAndColl(ALICE);
@@ -297,7 +297,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         uint256 withdrawAmount = 1 ether;
 
         vm.prank(ALICE);
-        positionManager.withdrawColl(withdrawAmount, ALICE, ALICE);
+        positionManager.managePosition(withdrawAmount, false, 0, false, ALICE, ALICE, 0);
 
         uint256 positionManagerBalanceAfter = collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerBalanceAfter, positionManagerBalance - withdrawAmount);
@@ -328,7 +328,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Alice withdraws 1 ether
         vm.prank(ALICE);
-        positionManager.withdrawColl(withdrawAmount, ALICE, ALICE);
+        positionManager.managePosition(withdrawAmount, false, 0, false, ALICE, ALICE, 0);
 
         // Check stake and total stakes get updated
         (,, uint256 aliceStakeAfter) = positionManager.positions(ALICE);
@@ -355,7 +355,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Alice withdraws 1 ether
         vm.prank(ALICE);
-        positionManager.withdrawColl(withdrawAmount, ALICE, ALICE);
+        positionManager.managePosition(withdrawAmount, false, 0, false, ALICE, ALICE, 0);
 
         uint256 aliceBalanceAfter = collateralToken.balanceOf(ALICE);
         assertEq(aliceBalanceAfter, aliceBalanceBefore + withdrawAmount);
@@ -447,9 +447,9 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Bob and Carol withdraw from their positions
         vm.prank(BOB);
-        positionManager.withdrawColl(bobWithdrawAmount, BOB, BOB);
+        positionManager.managePosition(bobWithdrawAmount, false, 0, false, BOB, BOB, 0);
         vm.prank(CAROL);
-        positionManager.withdrawColl(carolWithdrawAmount, CAROL, CAROL);
+        positionManager.managePosition(carolWithdrawAmount, false, 0, false, CAROL, CAROL, 0);
 
         // Check that both alice and Bob have had pending rewards applied in addition to their top-ups
         CollateralDebt memory bobBalanceAfter;
