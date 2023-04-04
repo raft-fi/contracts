@@ -401,7 +401,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     await positionManager.addColl(bob, bob, addedColl, { from: bob })
 
     // Alice withdraws R
-    await positionManager.withdrawR(th._100pct, await getNetBorrowingAmount(A_totalDebt), alice, alice, { from: alice })
+    await positionManager.managePosition(0, false, await getNetBorrowingAmount(A_totalDebt), true, alice, alice, th._100pct, { from: alice })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))
@@ -753,7 +753,7 @@ contract('PositionManager - Redistribution reward calculations', async accounts 
     await positionManager.withdrawColl(withdrawnColl, bob, bob, { from: bob })
 
     // Alice withdraws R
-    await positionManager.withdrawR(th._100pct, await getNetBorrowingAmount(A_totalDebt), alice, alice, { from: alice })
+    await positionManager.managePosition(0, false, await getNetBorrowingAmount(A_totalDebt), true, alice, alice, th._100pct, { from: alice })
 
     // Price drops to 100 $/E
     await priceFeed.setPrice(dec(100, 18))

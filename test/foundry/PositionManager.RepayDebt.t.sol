@@ -64,7 +64,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         vm.prank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, MathUtils.MIN_NET_DEBT - 1));
-        positionManager.repayR(repaymentAmount, ALICE, ALICE);
+        positionManager.managePosition(0, false, repaymentAmount, false, ALICE, ALICE, 0);
     }
 
     // Succeeds when it would leave position with net debt >= minimum net debt
@@ -83,7 +83,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.stopPrank();
 
         vm.prank(ALICE);
-        positionManager.repayR(1, ALICE, ALICE);
+        positionManager.managePosition(0, false, 1, false, ALICE, ALICE, 0);
 
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 100e30);
@@ -91,7 +91,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.stopPrank();
 
         vm.prank(BOB);
-        positionManager.repayR(19e25, BOB, BOB);
+        positionManager.managePosition(0, false, 19e25, false, BOB, BOB, 0);
     }
 
     // Reverts when borrowing rate = 0% and it would leave position with net debt < minimum net debt
@@ -113,7 +113,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         vm.prank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, MathUtils.MIN_NET_DEBT - 1));
-        positionManager.repayR(2, ALICE, ALICE);
+        positionManager.managePosition(0, false, 2, false, ALICE, ALICE, 0);
     }
 
     // Reverts when borrowing rate > 0% and it would leave position with net debt < minimum net debt
@@ -136,7 +136,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         vm.prank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, MathUtils.MIN_NET_DEBT - 1));
-        positionManager.repayR(2, ALICE, ALICE);
+        positionManager.managePosition(0, false, 2, false, ALICE, ALICE, 0);
     }
 
     // Reverts when calling address does not have active position
@@ -162,12 +162,12 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.stopPrank();
 
         vm.prank(BOB);
-        positionManager.repayR(10e18, BOB, BOB);
+        positionManager.managePosition(0, false, 10e18, false, BOB, BOB, 0);
 
         // Carol with no active position attempts to repay R
         vm.prank(CAROL);
         vm.expectRevert(PositionManagerPositionNotActive.selector);
-        positionManager.repayR(10e18, CAROL, CAROL);
+        positionManager.managePosition(0, false, 10e18, false, CAROL, CAROL, 0);
     }
 
     // Reverts when attempted repayment is > the debt of the position
@@ -196,12 +196,12 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         // Bob successfully repays some R
         vm.prank(BOB);
-        positionManager.repayR(10e18, BOB, BOB);
+        positionManager.managePosition(0, false, 10e18, false, BOB, BOB, 0);
 
         // Alice attempts to repay more than her debt
         vm.prank(ALICE);
-        vm.expectRevert(stdError.arithmeticError);
-        positionManager.repayR(aliceDebt + 1e18, ALICE, ALICE);
+        vm.expectRevert(abi.encodeWithSelector(RepayRAmountExceedsDebt.selector, aliceDebt + 1e18));
+        positionManager.managePosition(0, false, aliceDebt + 1e18, false, ALICE, ALICE, 0);
     }
 
     // Reduces R debt in position
@@ -230,7 +230,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         assertGt(aliceDebtBefore, 0);
 
         vm.prank(ALICE);
-        positionManager.repayR(aliceDebtBefore / 10, ALICE, ALICE);
+        positionManager.managePosition(0, false, aliceDebtBefore / 10, false, ALICE, ALICE, 0);
 
         (uint256 aliceDebtAfter,,,) = positionManager.getEntireDebtAndColl(ALICE);
         assertGt(aliceDebtAfter, 0);
@@ -266,7 +266,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         assertGt(aliceRTokenBalanceBefore, 0);
 
         vm.prank(ALICE);
-        positionManager.repayR(aliceDebtBefore / 10, ALICE, ALICE);
+        positionManager.managePosition(0, false, aliceDebtBefore / 10, false, ALICE, ALICE, 0);
 
         uint256 aliceRTokenBalanceAfter = rToken.balanceOf(ALICE);
         assertEq(aliceRTokenBalanceAfter, aliceRTokenBalanceBefore - aliceDebtBefore / 10);
@@ -308,6 +308,6 @@ contract PositionManagerRepayDebtTest is TestSetup {
         // Bob tries to repay 6 R
         vm.prank(BOB);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.repayR(6e18, BOB, BOB);
+        positionManager.managePosition(0, false, 6e18, false, BOB, BOB, 0);
     }
 }

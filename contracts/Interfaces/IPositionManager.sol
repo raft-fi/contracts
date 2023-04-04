@@ -181,11 +181,17 @@ interface IPositionManager is IFeeCollector {
 
     function withdrawColl(uint _amount, address _upperHint, address _lowerHint) external;
 
-    function withdrawR(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external;
-
-    function repayR(uint _amount, address _upperHint, address _lowerHint) external;
-
     function closePosition() external;
 
     function adjustPosition(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
+
+    function managePosition(
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _rChange,
+        bool _isDebtIncrease,
+        address _upperHint,
+        address _lowerHint,
+        uint256 _maxFeePercentage
+    ) external;
 }

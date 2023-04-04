@@ -534,7 +534,7 @@ class TestHelper {
       increasedTotalDebt = await this.getAmountWithBorrowingFee(contracts, rAmount)
     }
 
-    await contracts.positionManager.withdrawR(maxFeePercentage, rAmount, upperHint, lowerHint, extraParams)
+    await contracts.positionManager.managePosition(0, false, rAmount, true, upperHint, lowerHint, maxFeePercentage, extraParams)
 
     return {
       rAmount,
@@ -676,7 +676,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawR(contracts, account, amount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawR(this._100pct, amount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, amount, true, upperHint, lowerHint, this._100pct, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -692,7 +692,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawR(contracts, account, randRAmount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawR(this._100pct, randRAmount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, randRAmount, true, upperHint, lowerHint, this._100pct, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -706,7 +706,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromRepayR(contracts, account, amount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.repayR(amount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, amount, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -722,7 +722,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromRepayR(contracts, account, randRAmount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.repayR(randRAmount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, randRAmount, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
