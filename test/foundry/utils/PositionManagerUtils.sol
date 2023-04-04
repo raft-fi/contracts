@@ -85,6 +85,27 @@ library PositionManagerUtils {
         );
     }
 
+    function openPosition(
+        IPositionManager positionManager,
+        PriceFeedTestnet priceFeed,
+        IERC20 collateralToken,
+        uint256 extraRAmount,
+        uint256 icr,
+        uint256 amount
+    ) internal returns (OpenPositionResult memory result) {
+        result = openPosition(
+            positionManager,
+            priceFeed,
+            collateralToken,
+            MathUtils._100pct,
+            extraRAmount,
+            address(0),
+            address(0),
+            icr,
+            amount
+        );
+    }
+
     function getNetBorrowingAmount(IPositionManager _positionManager, uint256 _debtWithFee) internal view returns (uint256) {
         uint256 borrowingRate = _positionManager.getBorrowingRateWithDecay();
         uint256 result = _debtWithFee * 1e18 / (1e18 + borrowingRate);
