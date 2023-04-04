@@ -12,7 +12,6 @@ import "./RToken.sol";
 
 contract PositionManager is FeeCollector, IPositionManager {
     using SortedPositions for SortedPositions.Data;
-    string constant public NAME = "PositionManager";
 
     // --- Connected contract declarations ---
 
@@ -153,21 +152,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit LiquidationProtocolFeeChanged(_liquidationProtocolFee);
     }
 
-    function adjustPosition(
-        uint256 _maxFeePercentage,
-        uint256 _collWithdrawal,
-        uint256 _rChange,
-        bool _isDebtIncrease,
-        address _upperHint,
-        address _lowerHint,
-        uint256 _collDeposit
-    ) external override onlyActivePosition(msg.sender) {
-        if (_collWithdrawal != 0 && _collDeposit != 0) {
-            revert NotSingularCollateralChange();
-        }
-        _adjustPosition(_collDeposit + _collWithdrawal, _collDeposit != 0, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, true);
-    }
-
     function managePosition(
         uint256 _collChange,
         bool _isCollIncrease,
@@ -177,17 +161,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         address _lowerHint,
         uint256 _maxFeePercentage
     ) external override {
-        _adjustPosition(_collChange, _isCollIncrease, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, true);
+        _managePosition(_collChange, _isCollIncrease, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, true);
     }
-
-    /*
-    * _adjustPosition(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
-    *
-    * It therefore expects either a positive _collDeposit, or a positive _collWithdrawal argument.
-    *
-    * If both are positive, it will revert.
-    */
-    function _adjustPosition(
+    
+    function _managePosition(
         uint256 _collChange,
         bool _isCollIncrease,
         uint256 _rChange,

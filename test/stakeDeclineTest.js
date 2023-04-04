@@ -91,7 +91,7 @@ contract('PositionManager', async accounts => {
 
     // adjust position B 1 wei: apply rewards
     await priceFeed.setPrice(dec(200, 18))
-    await positionManager.adjustPosition(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // B repays 1 wei
+    await positionManager.managePosition(0, false, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, th._100pct, {from: B})  // B repays 1 wei
     await priceFeed.setPrice(dec(50, 18))
     console.log(`B stake after A1: ${(await positionManager.positions(B))[2]}`)
     console.log(`Snapshots ratio after A1: ${await getSnapshotsRatio()}`)
@@ -104,7 +104,7 @@ contract('PositionManager', async accounts => {
       console.log(`B stake after L${idx + 2}: ${(await positionManager.positions(B))[2]}`)
       console.log(`Snapshots ratio after L${idx + 2}: ${await getSnapshotsRatio()}`)
       await priceFeed.setPrice(dec(200, 18))
-      await positionManager.adjustPosition(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // A repays 1 wei
+      await positionManager.managePosition(0, false, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, th._100pct, {from: B})  // A repays 1 wei
       await priceFeed.setPrice(dec(50, 18))
       console.log(`B stake after A${idx + 2}: ${(await positionManager.positions(B))[2]}`)
     }

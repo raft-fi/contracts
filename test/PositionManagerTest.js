@@ -1798,7 +1798,7 @@ contract('PositionManager', async accounts => {
 
       await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: bob } })
       wstETHTokenMock.approve(positionManager.address, rAmount.mul(mv._1e18BN).div(price), { from: alice})
-      await positionManager.adjustPosition(th._100pct, 0, rAmount, true, alice, alice, rAmount.mul(mv._1e18BN).div(price), { from: alice })
+      await positionManager.managePosition(rAmount.mul(mv._1e18BN).div(price), true, rAmount, true, alice, alice, th._100pct, { from: alice })
     }
 
     const {
