@@ -153,23 +153,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit LiquidationProtocolFeeChanged(_liquidationProtocolFee);
     }
 
-    // --- Borrower Position Operations ---
-
-    function openPosition(
-        uint256 _maxFeePercentage,
-        uint256 _rAmount,
-        address _upperHint,
-        address _lowerHint,
-        uint256 _collAmount
-    )
-        external
-        override
-        onlyNonActivePosition
-    {
-        _adjustPosition(_collAmount, true, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage, true);
-        emit PositionCreated(msg.sender);
-    }
-
     function adjustPosition(
         uint256 _maxFeePercentage,
         uint256 _collWithdrawal,

@@ -41,7 +41,7 @@ library PositionManagerUtils {
         }
 
         collateralToken.approve(address(positionManager), amount);
-        positionManager.openPosition(maxFeePercentage, result.rAmount, upperHint, lowerHint, amount);
+        positionManager.managePosition(amount, true, result.rAmount, true, upperHint, lowerHint, maxFeePercentage);
 
         result.collateral = amount;
     }

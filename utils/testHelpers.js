@@ -495,7 +495,7 @@ class TestHelper {
     }
 
     await contracts.wstETHTokenMock.approve(contracts.positionManager.address, amount, extraParams)
-    const tx = await contracts.positionManager.openPosition(maxFeePercentage, rAmount, upperHint, lowerHint, amount, extraParams)
+    const tx = await contracts.positionManager.managePosition(amount, true, rAmount, true, upperHint, lowerHint, maxFeePercentage, extraParams)
 
     return {
       rAmount,
@@ -727,20 +727,6 @@ class TestHelper {
       gasCostList.push(gas)
     }
     return this.getGasMetrics(gasCostList)
-  }
-
-  // --- Composite functions ---
-
-  static async makePositionsIncreasingICR(accounts, contracts) {
-    let amountFinney = 2000
-
-    for (const account of accounts) {
-      const coll = web3.utils.toWei(amountFinney.toString(), 'finney')
-
-      await contracts.positionManager.openPosition(this._100pct, '200000000000000000000', account, account, { from: account, value: coll })
-
-      amountFinney += 10
-    }
   }
 
   static getLCAddressFromDeploymentTx(deployedLCTx) {

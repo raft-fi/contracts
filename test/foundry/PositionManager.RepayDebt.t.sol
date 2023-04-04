@@ -73,12 +73,14 @@ contract PositionManagerRepayDebtTest is TestSetup {
         // net debt = min net debt + 1 wei
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), 100e30);
-        positionManager.openPosition(
-            MathUtils._100pct,
+        positionManager.managePosition(
+            100e30,
+            true,
             PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT + 2),
+            true,
             ALICE,
             ALICE,
-            100e30
+            MathUtils._100pct
         );
         vm.stopPrank();
 
@@ -87,7 +89,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 100e30);
-        positionManager.openPosition(MathUtils._100pct, 20e25, BOB, BOB, 100e30);
+        positionManager.managePosition(100e30, true, 20e25, true, BOB, BOB, MathUtils._100pct);
         vm.stopPrank();
 
         vm.prank(BOB);
@@ -102,12 +104,14 @@ contract PositionManagerRepayDebtTest is TestSetup {
         // net debt = min net debt + 1 wei
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), 100e30);
-        positionManager.openPosition(
-            MathUtils._100pct,
+        positionManager.managePosition(
+            100e30,
+            true,
             PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT + 1),
+            true,
             ALICE,
             ALICE,
-            100e30
+            MathUtils._100pct
         );
         vm.stopPrank();
 
@@ -125,12 +129,14 @@ contract PositionManagerRepayDebtTest is TestSetup {
         // net debt = min net debt + 1 wei
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), 100e30);
-        positionManager.openPosition(
-            MathUtils._100pct,
+        positionManager.managePosition(
+            100e30,
+            true,
             PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT + 1),
+            true,
             ALICE,
             ALICE,
-            100e30
+            MathUtils._100pct
         );
         vm.stopPrank();
 

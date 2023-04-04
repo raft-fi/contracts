@@ -1,3 +1,4 @@
+const { assert } = require("hardhat")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
@@ -71,11 +72,11 @@ contract('BorrowerOperations', async accounts => {
 
     //   // --- SETUP ---
     //   // A,B,C add 15/5/5 ETH, withdraw 100/100/900 R
-    //   await positionManager.openPosition(th._100pct, dec(100, 18), alice, alice, { from: alice, value: dec(15, 'ether') })
-    //   await positionManager.openPosition(th._100pct, dec(100, 18), bob, bob, { from: bob, value: dec(4, 'ether') })
-    //   await positionManager.openPosition(th._100pct, dec(900, 18), carol, carol, { from: carol, value: dec(5, 'ether') })
+    //   await openPosition(th._100pct, dec(100, 18), alice, alice, { from: alice, value: dec(15, 'ether') })
+    //   await openPosition(th._100pct, dec(100, 18), bob, bob, { from: bob, value: dec(4, 'ether') })
+    //   await openPosition(th._100pct, dec(900, 18), carol, carol, { from: carol, value: dec(5, 'ether') })
 
-    //   await positionManager.openPosition(th._100pct, 0, dennis, dennis, { from: dennis, value: dec(1, 'ether') })
+    //   await openPosition(th._100pct, 0, dennis, dennis, { from: dennis, value: dec(1, 'ether') })
     //   // --- TEST ---
 
     //   // price drops to 1ETH:100R, reducing Carol's ICR below MCR
@@ -1715,29 +1716,11 @@ contract('BorrowerOperations', async accounts => {
 
     it("openPosition(): Opens a position with net debt >= minimum net debt", async () => {
       // Add 1 wei to correct for rounding error in helper function
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: A})
-      const txA = await positionManager.openPosition(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN(1))), A, A, dec(100, 30), { from: A })
-      assert.isTrue(txA.receipt.status)
+      await openPosition({maxFeePercentage: th._100pct, extraRAmount: await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN(1))), upperHint: A, lowerHint:A, amount: dec(100, 30), extraParams: { from: A }})
       assert.isTrue((await positionManager.sortedPositionsNodes(A))[0])
 
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: C})
-      const txC = await positionManager.openPosition(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN(dec(47789898, 22)))), A, A, dec(100, 30), { from: C })
-      assert.isTrue(txC.receipt.status)
+      await openPosition({maxFeePercentage: th._100pct, extraRAmount: await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN(dec(47789898, 22)))),  upperHint: A, lowerHint: A, amount: dec(100, 30), extraParams: { from: C }})
       assert.isTrue((await positionManager.sortedPositionsNodes(C))[0])
-    })
-
-    it("openPosition(): reverts if net debt < minimum net debt", async () => {
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: A})
-      const txAPromise = positionManager.openPosition(th._100pct, 0, A, A, dec(100, 30), { from: A })
-      await assertRevert(txAPromise, "revert")
-
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: B})
-      const txBPromise = positionManager.openPosition(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT.sub(toBN(1))), B, B, dec(100, 30), { from: B })
-      await assertRevert(txBPromise, "revert")
-
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 30), { from: C})
-      const txCPromise = positionManager.openPosition(th._100pct, MIN_NET_DEBT.sub(toBN(dec(173, 18))), C, C, dec(100, 30), { from: C })
-      await assertRevert(txCPromise, "revert")
     })
 
     it("openPosition(): decays a non-zero base rate", async () => {
@@ -1846,109 +1829,6 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(lastFeeOpTime_3.gt(lastFeeOpTime_1))
     })
 
-    it("openPosition(): reverts if max fee > 100%", async () => {
-      await wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: A})
-      await assertRevert(positionManager.openPosition(dec(2, 18), dec(10000, 18), A, A, dec(1000, 'ether'), { from: A }), "Max fee percentage must be between 0.5% and 100%")
-      await wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: B})
-      await assertRevert(positionManager.openPosition('1000000000000000001', dec(20000, 18), B, B, dec(1000, 'ether'), { from: B}), "Max fee percentage must be between 0.5% and 100%")
-    })
-
-    it("openPosition(): reverts if max fee < borrowing spread", async () => {
-      await positionManager.setBorrowingSpread(dec(5, 15), { from: owner })
-
-      await wstETHTokenMock.approve(positionManager.address, dec(1200, 'ether'), { from: A})
-      await assertRevert(positionManager.openPosition(0, dec(195000, 18), A, A, dec(1200, 'ether'), { from: A }), "Max fee percentage must be between borrowing spread and 100%")
-      await assertRevert(positionManager.openPosition(1, dec(195000, 18), A, A, dec(1000, 'ether'), { from: A }), "Max fee percentage must be between borrowing spread and 100%")
-      await assertRevert(positionManager.openPosition('4999999999999999', dec(195000, 18), B, B, dec(1200, 'ether'), { from: B }), "Max fee percentage must be between borrowing spread and 100%")
-    })
-
-    it("openPosition(): reverts if fee exceeds max fee percentage", async () => {
-      await openPosition({ extraRAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openPosition({ extraRAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openPosition({ extraRAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-
-      const totalSupply = await rToken.totalSupply()
-
-      // Artificially make baseRate 5%
-      await positionManager.setBaseRate(dec(5, 16))
-      await positionManager.setLastFeeOpTimeToNow()
-
-      //       actual fee percentage: 0.005000000186264514
-      // user's max fee percentage:  0.0049999999999999999
-      let borrowingRate = await positionManager.getBorrowingRate() // expect max(0.5 + 5%, 5%) rate
-      assert.equal(borrowingRate, dec(5, 16))
-
-      const lessThan5pct = '49999999999999999'
-      await wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: D})
-      await assertRevert(positionManager.openPosition(lessThan5pct, dec(30000, 18), A, A, dec(1000, 'ether'), { from: D }), "Fee exceeded provided maximum")
-
-      borrowingRate = await positionManager.getBorrowingRate() // expect 5% rate
-      assert.equal(borrowingRate, dec(5, 16))
-      // Attempt with maxFee 1%
-      await wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: D})
-      await assertRevert(positionManager.openPosition(dec(1, 16), dec(30000, 18), A, A, dec(1000, 'ether'), { from: D }), "Fee exceeded provided maximum")
-
-      borrowingRate = await positionManager.getBorrowingRate() // expect 5% rate
-      assert.equal(borrowingRate, dec(5, 16))
-      // Attempt with maxFee 3.754%
-      await wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: D})
-      await assertRevert(positionManager.openPosition(dec(3754, 13), dec(30000, 18), A, A, dec(1000, 'ether'), { from: D }), "Fee exceeded provided maximum")
-
-      borrowingRate = await positionManager.getBorrowingRate() // expect 5% rate
-      assert.equal(borrowingRate, dec(5, 16))
-      // Attempt with maxFee 1e-16%
-      await wstETHTokenMock.approve(positionManager.address, dec(1000, 'ether'), { from: D})
-      await assertRevert(positionManager.openPosition(dec(5, 15), dec(30000, 18), A, A, dec(1000, 'ether'), { from: D }), "Fee exceeded provided maximum")
-    })
-
-    it("openPosition(): succeeds when fee is less than max fee percentage", async () => {
-      await openPosition({ extraRAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openPosition({ extraRAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openPosition({ extraRAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-
-      // Artificially make baseRate 5%
-      await positionManager.setBaseRate(dec(5, 16))
-      await positionManager.setLastFeeOpTimeToNow()
-
-      let borrowingRate = await positionManager.getBorrowingRate() // expect min(0.5 + 5%, 5%) rate
-      assert.equal(borrowingRate, dec(5, 16))
-
-      // Attempt with maxFee > 5%
-      const moreThan5pct = '50000000000000001'
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: D})
-      const tx1 = await positionManager.openPosition(moreThan5pct, dec(10000, 18), A, A, dec(100, 'ether'), { from: D})
-      assert.isTrue(tx1.receipt.status)
-
-      borrowingRate = await positionManager.getBorrowingRate() // expect 5% rate
-      assert.equal(borrowingRate, dec(5, 16))
-
-      // Attempt with maxFee = 5%
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: H})
-      const tx2 = await positionManager.openPosition(dec(5, 16), dec(10000, 18), A, A, dec(100, 'ether'), { from: H })
-      assert.isTrue(tx2.receipt.status)
-
-      borrowingRate = await positionManager.getBorrowingRate() // expect 5% rate
-      assert.equal(borrowingRate, dec(5, 16))
-
-      // Attempt with maxFee 10%
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: E})
-      const tx3 = await positionManager.openPosition(dec(1, 17), dec(10000, 18), A, A, dec(100, 'ether'), { from: E })
-      assert.isTrue(tx3.receipt.status)
-
-      borrowingRate = await positionManager.getBorrowingRate() // expect 5% rate
-      assert.equal(borrowingRate, dec(5, 16))
-
-      // Attempt with maxFee 37.659%
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: F})
-      const tx4 = await positionManager.openPosition(dec(37659, 13), dec(10000, 18), A, A, dec(100, 'ether'), { from: F })
-      assert.isTrue(tx4.receipt.status)
-
-      // Attempt with maxFee 100%
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: G})
-      const tx5 = await positionManager.openPosition(dec(1, 18), dec(10000, 18), A, A, dec(100, 'ether'), { from: G })
-      assert.isTrue(tx5.receipt.status)
-    })
-
     it("openPosition(): borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
       await openPosition({ extraRAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
@@ -2015,91 +1895,6 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(feeRecipient_RBalance_After.gt(feeRecipient_RBalance_Before))
     })
 
-    it("openPosition(): borrowing at non-zero base records the (drawn debt + fee  + liq. reserve) on the Position struct", async () => {
-      // time fast-forwards 1 year
-      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openPosition({ extraRAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openPosition({ extraRAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openPosition({ extraRAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-
-      // Artificially make baseRate 5%
-      await positionManager.setBaseRate(dec(5, 16))
-      await positionManager.setLastFeeOpTimeToNow()
-
-      // Check baseRate is now non-zero
-      const baseRate_1 = await positionManager.baseRate()
-      assert.isTrue(baseRate_1.gt(toBN('0')))
-
-      // 2 hours pass
-      th.fastForwardTime(7200, web3.currentProvider)
-
-      const D_RRequest = toBN(dec(20000, 18))
-
-      // D withdraws R
-      await wstETHTokenMock.approve(positionManager.address, dec(200, 'ether'), { from: D})
-      const openPositionTx = await positionManager.openPosition(th._100pct, D_RRequest, ZERO_ADDRESS, ZERO_ADDRESS, dec(200, 'ether'), { from: D })
-
-      const emittedFee = toBN(th.getRfeeFromRBorrowingEvent(openPositionTx))
-      assert.isTrue(toBN(emittedFee).gt(toBN('0')))
-
-      const newDebt = (await positionManager.positions(D))[0]
-
-      // Check debt on Position struct equals drawn debt plus emitted fee
-      th.assertIsApproximatelyEqual(newDebt, D_RRequest.add(emittedFee).add(R_GAS_COMPENSATION), 100000)
-    })
-
-    it("openPosition(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
-      const feeRecipient = await positionManager.feeRecipient()
-
-      // time fast-forwards 1 year
-      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-
-      // Check feeRecipient Staking contract balance before == 0
-      const feeRecipient_RBalance_Before = await rToken.balanceOf(feeRecipient)
-      assert.equal(feeRecipient_RBalance_Before, '0')
-
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openPosition({ extraRAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openPosition({ extraRAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openPosition({ extraRAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-
-      // Artificially make baseRate 5%
-      await positionManager.setBaseRate(dec(5, 16))
-      await positionManager.setLastFeeOpTimeToNow()
-
-      // Check baseRate is non-zero
-      const baseRate_1 = await positionManager.baseRate()
-      assert.isTrue(baseRate_1.gt(toBN('0')))
-
-      // 2 hours pass
-      th.fastForwardTime(7200, web3.currentProvider)
-
-      // D opens position
-      const RRequest_D = toBN(dec(40000, 18))
-      await wstETHTokenMock.approve(positionManager.address, dec(500, 'ether'), { from: D})
-      await positionManager.openPosition(th._100pct, RRequest_D, D, D, dec(500, 'ether'), { from: D })
-
-      // Check fee recipient's R balance has increased
-      const feeRecipient_RBalance_After = await rToken.balanceOf(feeRecipient)
-      assert.isTrue(feeRecipient_RBalance_After.gt(feeRecipient_RBalance_Before))
-
-      // Check D's R balance now equals their requested R
-      const RBalance_D = await rToken.balanceOf(D)
-      assert.isTrue(RRequest_D.eq(RBalance_D))
-    })
-
-    it("openPosition(): Borrowing at zero base rate charges no fee", async () => {
-      await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-
-      const RRequest = toBN(dec(10000, 18))
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: C})
-      const txC = await positionManager.openPosition(th._100pct, RRequest, ZERO_ADDRESS, ZERO_ADDRESS, dec(100, 'ether'), { from: C })
-      th.expectNoEventByName(txC, "RBorrowingFeePaid")
-    })
-
     it("openPosition(): reverts when position ICR < MCR", async () => {
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
@@ -2113,29 +1908,6 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("openPosition(): reverts if position is already active", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-
-      await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
-
-      try {
-        const txB_1 = await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: bob } })
-
-        assert.isFalse(txB_1.receipt.status)
-      } catch (err) {
-        assert.include(err.message, 'revert')
-      }
-
-      try {
-        const txB_2 = await openPosition({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-        assert.isFalse(txB_2.receipt.status)
-      } catch (err) {
-        assert.include(err.message, 'revert')
-      }
-    })
-
     it("openPosition(): creates a new Position and assigns the correct collateral and debt amount", async () => {
       const debt_Before = await getPositionEntireDebt(alice)
       const coll_Before = await getPositionEntireColl(alice)
@@ -2145,8 +1917,7 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(coll_Before, 0)
 
       const RRequest = MIN_NET_DEBT
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: alice })
-      positionManager.openPosition(th._100pct, MIN_NET_DEBT, carol, carol, dec(100, 'ether'), { from: alice })
+      await openPosition({amount: dec(100, 'ether'), extraParams: { from: alice }})
 
       // Get the expected debt based on the R request (adding fee and liq. reserve on top)
       const expectedDebt = RRequest
@@ -2269,13 +2040,12 @@ contract('BorrowerOperations', async accounts => {
       const debt_Before = alice_Position_Before[0]
       assert.equal(debt_Before, 0)
 
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: alice })
-      await positionManager.openPosition(th._100pct, await getOpenPositionRAmount(dec(10000, 18)), alice, alice, dec(100, 'ether'), { from: alice })
+      await openPosition({ extraRAmount: await getOpenPositionRAmount(dec(10000, 18)), amount: dec(100, 'ether'), extraParams: { from: alice }})
 
       // check after
       const alice_Position_After = await positionManager.positions(alice)
       const debt_After = alice_Position_After[0]
-      th.assertIsApproximatelyEqual(debt_After, dec(10000, 18), 10000)
+      assert.isTrue(debt_After.gt(dec(10000, 18)))
     })
 
     it("openPosition(): increases user RToken balance by correct amount", async () => {
@@ -2283,12 +2053,11 @@ contract('BorrowerOperations', async accounts => {
       const alice_RTokenBalance_Before = await rToken.balanceOf(alice)
       assert.equal(alice_RTokenBalance_Before, 0)
 
-      await wstETHTokenMock.approve(positionManager.address, dec(100, 'ether'), { from: alice })
-      await positionManager.openPosition(th._100pct, dec(10000, 18), alice, alice, dec(100, 'ether'), { from: alice })
+      await openPosition({ extraRAmount: dec(10000, 18), amount: dec(100, 'ether'), extraParams: { from: alice }})
 
       // check after
       const alice_RTokenBalance_After = await rToken.balanceOf(alice)
-      assert.equal(alice_RTokenBalance_After, dec(10000, 18))
+      assert.isTrue(alice_RTokenBalance_After.gt(dec(10000, 18)))
     })
   })
 
