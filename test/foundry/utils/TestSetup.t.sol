@@ -17,6 +17,7 @@ contract TestSetup is Test {
     address public constant ALICE = address(1);
     address public constant BOB = address(2);
     address public constant CAROL = address(3);
+    address public constant DAVE = address(4);
 
     // Fee recipients
     address public constant FEE_RECIPIENT = address(100);
