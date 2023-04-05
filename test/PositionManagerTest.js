@@ -42,6 +42,9 @@ contract('PositionManager', async accounts => {
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
   const openPosition = async (params) => th.openPosition(contracts, params)
   const withdrawR = async (params) => th.withdrawR(contracts, params)
+  const getPositionEntireColl = async (position) => th.getPositionEntireColl(contracts, position)
+  const getPositionEntireDebt = async (position) => th.getPositionEntireDebt(contracts, position)
+  const getActualDebtFromComposite = async(debt) => th.getActualDebtFromComposite(debt, contracts)
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore(owner)
@@ -675,7 +678,16 @@ contract('PositionManager', async accounts => {
     const price = await priceFeed.getPrice()
 
     // Carol liquidated, and her position is closed
-    const txCarolClose = await positionManager.closePosition({ from: carol })
+    const txCarolClose = await positionManager.managePosition(
+      await getPositionEntireColl(carol),
+      false,
+      await getActualDebtFromComposite(await getPositionEntireDebt(carol)),
+      false,
+      carol,
+      carol,
+      0,
+      { from: carol }
+    )
     assert.isTrue(txCarolClose.receipt.status)
 
     assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
@@ -729,8 +741,16 @@ contract('PositionManager', async accounts => {
     await priceFeed.setPrice(dec(100, 18));
     const price = await priceFeed.getPrice()
 
-    // Carol liquidated, and her position is closed
-    await positionManager.closePosition({ from: carol })
+    await positionManager.managePosition(
+      await getPositionEntireColl(carol),
+      false,
+      await getActualDebtFromComposite(await getPositionEntireDebt(carol)),
+      false,
+      carol,
+      carol,
+      0,
+      { from: carol }
+    )
 
     // Confirm positions A-B are ICR < 110%
     assert.isTrue((await positionManager.getCurrentICR(alice, price)).lt(mv._MCR))

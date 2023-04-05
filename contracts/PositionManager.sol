@@ -179,15 +179,19 @@ contract PositionManager is FeeCollector, IPositionManager {
         _adjustDebt(_rChange, _isDebtIncrease, _maxFeePercentage);
         _adjustCollateral(_collChange, _isCollIncrease, _needsCollateralTransfer);
 
-        _requireICRisAboveMCR();
-
-        sortedPositions.update(
-            this,
-            msg.sender,
-            MathUtils.computeNominalCR(positions[msg.sender].coll, positions[msg.sender].debt),
-            _upperHint,
-            _lowerHint
-        );
+        if (positions[msg.sender].debt == 0) {
+            // position was closed, remove it
+            _removePositionFromSortedPositions(msg.sender);
+        } else {
+            _requireICRisAboveMCR();
+            sortedPositions.update(
+                this,
+                msg.sender,
+                MathUtils.computeNominalCR(positions[msg.sender].coll, positions[msg.sender].debt),
+                _upperHint,
+                _lowerHint
+            );
+        }
     }
 
     function _adjustDebt(uint256 _rChange, bool _isDebtIncrease, uint256 _maxFeePercentage) internal {
@@ -208,20 +212,29 @@ contract PositionManager is FeeCollector, IPositionManager {
             rToken.mint(msg.sender, _rChange);
         }
         else {
-            _requireValidRRepayment(positions[msg.sender].debt, _rChange);
-            _requireAtLeastMinNetDebt(MathUtils.getNetDebt(positions[msg.sender].debt) - _rChange);
-            positions[msg.sender].debt -= _rChange;
+            uint256 netDebt = MathUtils.getNetDebt(positions[msg.sender].debt);
+            if (netDebt == _rChange) {
+                rToken.burn(address(this), MathUtils.R_GAS_COMPENSATION);
+                rewardSnapshots[msg.sender].rDebt = 0;
+                positions[msg.sender].debt = 0;
+            } else {
+                _requireValidRRepayment(positions[msg.sender].debt, _rChange);
+                _requireAtLeastMinNetDebt(netDebt - _rChange);
+                positions[msg.sender].debt -= _rChange;
+            }
             rToken.burn(msg.sender, _rChange);
         }
 
         emit DebtChanged(msg.sender, _rChange, _isDebtIncrease);
     }
 
+    /// @dev Adjusts collateral of active position. Needs to be called after _adjustDebt.
     function _adjustCollateral(uint256 _collChange, bool _isCollIncrease, bool _needsCollTransfer) internal {
         if (_collChange == 0) {
             return;
         }
-        if (positions[msg.sender].debt == 0) {
+        bool fullWithdrawal = !_isCollIncrease && _collChange == positions[msg.sender].coll;
+        if (positions[msg.sender].debt == 0 && !fullWithdrawal) {
             revert PositionManagerPositionNotActive();
         }
         if (!_isCollIncrease && _collChange > positions[msg.sender].coll) {
@@ -237,6 +250,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         } else {
             positions[msg.sender].coll -= _collChange;
             _activePoolCollateralBalance -= _collChange;
+            if (fullWithdrawal) {
+                rewardSnapshots[msg.sender].collateralBalance = 0;
+            }
             if (_needsCollTransfer) {
                 collateralToken.transfer(msg.sender, _collChange);
             }
@@ -244,23 +260,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         _updateStakeAndTotalStakes(msg.sender);
 
         emit CollateralChanged(msg.sender, _collChange, _isCollIncrease);
-    }
-
-    function closePosition() external override onlyActivePosition(msg.sender) {
-        _applyPendingRewards(msg.sender);
-
-        uint256 coll = positions[msg.sender].coll;
-        uint256 debt = positions[msg.sender].debt;
-
-        _closePosition(msg.sender);
-
-        // Burn the repaid R from the user's balance and the gas compensation from the Gas Pool
-        rToken.burn(msg.sender, debt - MathUtils.R_GAS_COMPENSATION);
-        rToken.burn(address(this), MathUtils.R_GAS_COMPENSATION);
-
-        // Send the collateral back to the user
-        _activePoolCollateralBalance -= coll;
-        collateralToken.transfer(msg.sender, coll);
     }
 
     // --- Position Liquidation functions ---
@@ -756,15 +755,16 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function _closePosition(address _borrower) internal {
+        _removePositionFromSortedPositions(_borrower);
+        totalStakes -= positions[_borrower].stake;
+        delete positions[_borrower];
+        delete rewardSnapshots[_borrower];
+    }
+
+    function _removePositionFromSortedPositions(address _borrower) internal {
         if (sortedPositions.size <= 1) {
             revert PositionManagerOnlyOnePositionInSystem();
         }
-        totalStakes -= positions[_borrower].stake;
-        delete positions[_borrower];
-
-        rewardSnapshots[_borrower].collateralBalance = 0;
-        rewardSnapshots[_borrower].rDebt = 0;
-
         sortedPositions.remove(_borrower);
         emit PositionClosed(_borrower);
     }

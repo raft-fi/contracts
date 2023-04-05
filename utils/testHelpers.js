@@ -454,17 +454,6 @@ class TestHelper {
 
   // --- positionManager gas functions ---
 
-  static async closePosition_allAccounts(accounts, contracts) {
-    const gasCostList = []
-
-    for (const account of accounts) {
-      const tx = await contracts.positionManager.closePosition({ from: account })
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
   static async openPosition(contracts, {
     maxFeePercentage,
     extraRAmount,

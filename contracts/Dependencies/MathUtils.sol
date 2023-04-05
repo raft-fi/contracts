@@ -108,7 +108,9 @@ library MathUtils {
     }
 
     function getNetDebt(uint _debt) internal pure returns (uint) {
-        return _debt - R_GAS_COMPENSATION;
+        unchecked {
+            return _debt > R_GAS_COMPENSATION ? _debt - R_GAS_COMPENSATION : 0;
+        }
     }
 
     // Return the amount of collateralToken to be drawn from a position's collateral and sent as gas compensation.

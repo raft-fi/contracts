@@ -39,6 +39,7 @@ contract('BorrowerOperations', async accounts => {
   const openPosition = async (params) => th.openPosition(contracts, params)
   const getPositionEntireColl = async (position) => th.getPositionEntireColl(contracts, position)
   const getPositionEntireDebt = async (position) => th.getPositionEntireDebt(contracts, position)
+  const getActualDebtFromComposite = async (debt) => th.getActualDebtFromComposite(debt, contracts)
   const getPositionStake = async (position) => th.getPositionStake(contracts, position)
 
   let R_GAS_COMPENSATION
@@ -1350,19 +1351,6 @@ contract('BorrowerOperations', async accounts => {
 
     // --- closePosition() ---
 
-    it("closePosition(): reverts when calling address does not have active position", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
-
-      // Carol with no active position attempts to close her position
-      try {
-        const txCarol = await positionManager.closePosition({ from: carol })
-        assert.isFalse(txCarol.receipt.status)
-      } catch (err) {
-        assert.include(err.message, "revert")
-      }
-    })
-
     it.skip("closePosition(): reverts when position is the only one in the system", async () => {
       await openPosition({ extraRAmount: toBN(dec(100000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
@@ -1378,67 +1366,36 @@ contract('BorrowerOperations', async accounts => {
       await assertRevert(positionManager.closePosition({ from: alice }), "PositionManager: Only one position in the system")
     })
 
-    it("closePosition(): reduces a Position's collateral to zero", async () => {
+    it("closePosition(): reduces a Position's collateral, debt, and stake to zero", async () => {
+      const alice_wstETHBalance_Before = toBN(await wstETHTokenMock.balanceOf(alice))
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-
       await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const aliceCollBefore = await getPositionEntireColl(alice)
+      const aliceDebtBefore = await getPositionEntireDebt(alice)
       const dennisR = await rToken.balanceOf(dennis)
       assert.isTrue(aliceCollBefore.gt(toBN('0')))
-      assert.isTrue(dennisR.gt(toBN('0')))
-
-      // To compensate borrowing fees
-      await rToken.transfer(alice, dennisR.div(toBN(2)), { from: dennis })
-
-      // Alice attempts to close position
-      await positionManager.closePosition({ from: alice })
-
-      const aliceCollAfter = await getPositionEntireColl(alice)
-      assert.equal(aliceCollAfter, '0')
-    })
-
-    it("closePosition(): reduces a Position's debt to zero", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-      const aliceDebtBefore = await getPositionEntireColl(alice)
-      const dennisR = await rToken.balanceOf(dennis)
       assert.isTrue(aliceDebtBefore.gt(toBN('0')))
+      assert.isTrue((await getPositionStake(alice)).gt(toBN('0')))
+      assert.isTrue((await positionManager.totalStakes()).gt(toBN('0')))
       assert.isTrue(dennisR.gt(toBN('0')))
 
       // To compensate borrowing fees
       await rToken.transfer(alice, dennisR.div(toBN(2)), { from: dennis })
 
-      // Alice attempts to close position
-      await positionManager.closePosition({ from: alice })
-
-      const aliceCollAfter = await getPositionEntireColl(alice)
-      assert.equal(aliceCollAfter, '0')
-    })
-
-    it("closePosition(): sets Position's stake to zero", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-      const aliceStakeBefore = await getPositionStake(alice)
-      assert.isTrue(aliceStakeBefore.gt(toBN('0')))
-
-      const dennisR = await rToken.balanceOf(dennis)
-      assert.isTrue(aliceStakeBefore.gt(toBN('0')))
-      assert.isTrue(dennisR.gt(toBN('0')))
-
-      // To compensate borrowing fees
-      await rToken.transfer(alice, dennisR.div(toBN(2)), { from: dennis })
+      const alice_RBalance_Before = await rToken.balanceOf(alice)
+      assert.isTrue(alice_RBalance_Before.gt(toBN('0')))
 
       // Alice attempts to close position
-      await positionManager.closePosition({ from: alice })
+      await positionManager.managePosition(aliceCollBefore, false, await getActualDebtFromComposite(aliceDebtBefore), false, alice, alice, 0, { from: alice })
 
-      const stakeAfter = ((await positionManager.positions(alice))[2]).toString()
-      assert.equal(stakeAfter, '0')
-      // check withdrawal was successful
+      assert.equal(await getPositionEntireColl(alice), '0')
+      assert.equal(await getPositionEntireDebt(alice), '0')
+      assert.equal(await getPositionStake(alice), '0')
+      assert.isTrue(toBN(await getPositionStake(dennis)).eq(await positionManager.totalStakes()))
+      assert.isTrue(toBN(await wstETHTokenMock.balanceOf(positionManager.address)).eq(await getPositionEntireColl(dennis)))
+      assert.isTrue(toBN(await wstETHTokenMock.balanceOf(alice)).eq(alice_wstETHBalance_Before))
+      th.assertIsApproximatelyEqual(await rToken.balanceOf(alice), alice_RBalance_Before.sub(aliceDebtBefore.sub(R_GAS_COMPENSATION)))
     })
 
     it("closePosition(): zero's the positions reward snapshots", async () => {
@@ -1465,21 +1422,16 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18))
 
       // Get Alice's pending reward snapshots
-      const L_ETH_A_Snapshot = (await positionManager.rewardSnapshots(alice))[0]
-      const L_RDebt_A_Snapshot = (await positionManager.rewardSnapshots(alice))[1]
-      assert.isTrue(L_ETH_A_Snapshot.gt(toBN('0')))
-      assert.isTrue(L_RDebt_A_Snapshot.gt(toBN('0')))
+      assert.isTrue((await positionManager.rewardSnapshots(alice))[0].gt(toBN('0')))
+      assert.isTrue((await positionManager.rewardSnapshots(alice))[1].gt(toBN('0')))
 
       // Liquidate Carol
       await positionManager.liquidate(carol)
       assert.isFalse((await positionManager.sortedPositionsNodes(carol))[0])
 
       // Get Alice's pending reward snapshots after Carol's liquidation. Check above 0
-      const L_ETH_Snapshot_A_AfterLiquidation = (await positionManager.rewardSnapshots(alice))[0]
-      const L_RDebt_Snapshot_A_AfterLiquidation = (await positionManager.rewardSnapshots(alice))[1]
-
-      assert.isTrue(L_ETH_Snapshot_A_AfterLiquidation.gt(toBN('0')))
-      assert.isTrue(L_RDebt_Snapshot_A_AfterLiquidation.gt(toBN('0')))
+      assert.isTrue((await positionManager.rewardSnapshots(alice))[0].gt(toBN('0')))
+      assert.isTrue((await positionManager.rewardSnapshots(alice))[1].gt(toBN('0')))
 
       // to compensate borrowing fees
       await rToken.transfer(alice, await rToken.balanceOf(dennis), { from: dennis })
@@ -1487,181 +1439,20 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(200, 18))
 
       // Alice closes position
-      await positionManager.closePosition({ from: alice })
+      await positionManager.managePosition(
+        await getPositionEntireColl(alice),
+        false,
+        await getActualDebtFromComposite(await getPositionEntireDebt(alice)),
+        false,
+        alice,
+        alice,
+        0,
+        { from: alice }
+      )
 
       // Check Alice's pending reward snapshots are zero
-      const L_ETH_Snapshot_A_afterAliceCloses = (await positionManager.rewardSnapshots(alice))[0]
-      const L_RDebt_Snapshot_A_afterAliceCloses = (await positionManager.rewardSnapshots(alice))[1]
-
-      assert.equal(L_ETH_Snapshot_A_afterAliceCloses, '0')
-      assert.equal(L_RDebt_Snapshot_A_afterAliceCloses, '0')
-    })
-
-    it("closePosition(): sets position's status to closed and removes it from sorted positions list", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      assert.isTrue((await positionManager.sortedPositionsNodes(alice))[0])
-
-      // to compensate borrowing fees
-      await rToken.transfer(alice, await rToken.balanceOf(dennis), { from: dennis })
-
-      // Close the position
-      await positionManager.closePosition({ from: alice })
-
-      assert.equal((await positionManager.positions(alice))[0], 0)
-      assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
-    })
-
-    it("closePosition(): reduces position manager's raw ether raw ether by correct amount", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-      const dennisColl = await getPositionEntireColl(dennis)
-      const aliceColl = await getPositionEntireColl(alice)
-      assert.isTrue(dennisColl.gt('0'))
-      assert.isTrue(aliceColl.gt('0'))
-
-      // to compensate borrowing fees
-      await rToken.transfer(alice, await rToken.balanceOf(dennis), { from: dennis })
-
-      // Close the position
-      await positionManager.closePosition({ from: alice })
-
-      // Check after
-      const positionManager_RawEther_After = toBN(await wstETHTokenMock.balanceOf(positionManager.address))
-      assert.isTrue(positionManager_RawEther_After.eq(dennisColl))
-    })
-
-    it("closePosition(): updates the the total stakes", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-
-      // Get individual stakes
-      const aliceStakeBefore = await getPositionStake(alice)
-      const bobStakeBefore = await getPositionStake(bob)
-      const dennisStakeBefore = await getPositionStake(dennis)
-      assert.isTrue(aliceStakeBefore.gt('0'))
-      assert.isTrue(bobStakeBefore.gt('0'))
-      assert.isTrue(dennisStakeBefore.gt('0'))
-
-      const totalStakesBefore = await positionManager.totalStakes()
-
-      assert.isTrue(totalStakesBefore.eq(aliceStakeBefore.add(bobStakeBefore).add(dennisStakeBefore)))
-
-      // to compensate borrowing fees
-      await rToken.transfer(alice, await rToken.balanceOf(dennis), { from: dennis })
-
-      // Alice closes position
-      await positionManager.closePosition({ from: alice })
-
-      // Check stake and total stakes get updated
-      const aliceStakeAfter = await getPositionStake(alice)
-      const totalStakesAfter = await positionManager.totalStakes()
-
-      assert.equal(aliceStakeAfter, 0)
-      assert.isTrue(totalStakesAfter.eq(totalStakesBefore.sub(aliceStakeBefore)))
-    })
-
-    it("closePosition(): sends the correct amount of ETH to the user", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-      const aliceColl = await getPositionEntireColl(alice)
-      assert.isTrue(aliceColl.gt(toBN('0')))
-
-      const alice_ETHBalance_Before = web3.utils.toBN(await wstETHTokenMock.balanceOf(alice))
-
-      // to compensate borrowing fees
-      await rToken.transfer(alice, await rToken.balanceOf(dennis), { from: dennis })
-
-      await positionManager.closePosition({ from: alice, gasPrice: 0 })
-
-      const alice_ETHBalance_After = web3.utils.toBN(await wstETHTokenMock.balanceOf(alice))
-      const balanceDiff = alice_ETHBalance_After.sub(alice_ETHBalance_Before)
-
-      assert.isTrue(balanceDiff.eq(aliceColl))
-    })
-
-    it("closePosition(): subtracts the debt of the closed Position from the Borrower's RToken balance", async () => {
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-
-      const aliceDebt = await getPositionEntireDebt(alice)
-      assert.isTrue(aliceDebt.gt(toBN('0')))
-
-      // to compensate borrowing fees
-      await rToken.transfer(alice, await rToken.balanceOf(dennis), { from: dennis })
-
-      const alice_RBalance_Before = await rToken.balanceOf(alice)
-      assert.isTrue(alice_RBalance_Before.gt(toBN('0')))
-
-      // close position
-      await positionManager.closePosition({ from: alice })
-
-      // check alice R balance after
-      const alice_RBalance_After = await rToken.balanceOf(alice)
-      th.assertIsApproximatelyEqual(alice_RBalance_After, alice_RBalance_Before.sub(aliceDebt.sub(R_GAS_COMPENSATION)))
-    })
-
-    it("closePosition(): applies pending rewards", async () => {
-      // --- SETUP ---
-      await openPosition({ extraRAmount: toBN(dec(1000000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      const whaleDebt = await getPositionEntireDebt(whale)
-      const whaleColl = await getPositionEntireColl(whale)
-
-      await openPosition({ extraRAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-
-      const carolDebt = await getPositionEntireDebt(carol)
-      const carolColl = await getPositionEntireColl(carol)
-
-      // Whale transfers to A and B to cover their fees
-      await rToken.transfer(alice, dec(10000, 18), { from: whale })
-      await rToken.transfer(bob, dec(10000, 18), { from: whale })
-
-      // --- TEST ---
-
-      // price drops to 1ETH:100R, reducing Carol's ICR below MCR
-      await priceFeed.setPrice(dec(100, 18));
-      const price = await priceFeed.getPrice()
-
-      // liquidate Carol's Position, Alice and Bob earn rewards.
-      const liquidationTx = await positionManager.liquidate(carol, { from: owner });
-      const [liquidatedDebt_C, liquidatedColl_C, gasComp_C] = th.getEmittedLiquidationValues(liquidationTx)
-
-      // Dennis opens a new Position
-      await openPosition({ extraRAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
-
-      // check Alice and Bob's reward snapshots are zero before they alter their Positions
-      const alice_rewardSnapshot_Before = await positionManager.rewardSnapshots(alice)
-      const alice_ETHrewardSnapshot_Before = alice_rewardSnapshot_Before[0]
-      const alice_RDebtRewardSnapshot_Before = alice_rewardSnapshot_Before[1]
-
-      const bob_rewardSnapshot_Before = await positionManager.rewardSnapshots(bob)
-      const bob_ETHrewardSnapshot_Before = bob_rewardSnapshot_Before[0]
-      const bob_RDebtRewardSnapshot_Before = bob_rewardSnapshot_Before[1]
-
-      assert.equal(alice_ETHrewardSnapshot_Before, 0)
-      assert.equal(alice_RDebtRewardSnapshot_Before, 0)
-      assert.equal(bob_ETHrewardSnapshot_Before, 0)
-      assert.equal(bob_RDebtRewardSnapshot_Before, 0)
-
-      const pendingCollReward_A = await positionManager.getPendingCollateralTokenReward(alice)
-      const pendingDebtReward_A = await positionManager.getPendingRDebtReward(alice)
-      assert.isTrue(pendingCollReward_A.gt('0'))
-      assert.isTrue(pendingDebtReward_A.gt('0'))
-
-      // Close Alice's position
-      await positionManager.closePosition({ from: alice })
-
-      // whale adjusts position
-      await positionManager.managePosition(0, false, dec(1, 18), true, whale, whale, th._100pct, { from: whale })
-
-      // Close Bob's position
-      await positionManager.closePosition({ from: bob })
+      assert.equal((await positionManager.rewardSnapshots(alice))[0], '0')
+      assert.equal((await positionManager.rewardSnapshots(alice))[1], '0')
     })
 
     it("closePosition(): succeeds when borrower's R balance is equals to his entire debt and borrowing rate = 0%", async () => {
@@ -1678,7 +1469,16 @@ contract('BorrowerOperations', async accounts => {
 
       assert.isTrue(B_positionDebt.sub(B_RBal).eq(R_GAS_COMPENSATION))
 
-      const closePositionB = await positionManager.closePosition({ from: B })
+      const closePositionB = await positionManager.managePosition(
+        await getPositionEntireColl(B),
+        false,
+        await getActualDebtFromComposite(await getPositionEntireDebt(B)),
+        false,
+        alice,
+        alice,
+        0,
+        { from: B }
+      )
       assert.isTrue(closePositionB.receipt.status)
     })
 
@@ -1698,10 +1498,19 @@ contract('BorrowerOperations', async accounts => {
 
       assert.isTrue(B_RBal.lt(B_positionDebt))
 
-      const closePositionPromise_B = positionManager.closePosition({ from: B })
+      const closePositionPromise_B = positionManager.managePosition(
+        await getPositionEntireColl(B),
+        false,
+        await getActualDebtFromComposite(await getPositionEntireDebt(B)),
+        false,
+        alice,
+        alice,
+        0,
+        { from: B }
+      )
 
       // Check closing position reverts
-      await assertRevert(closePositionPromise_B, "BorrowerOps: Caller doesn't have enough R to make repayment")
+      await assertRevert(closePositionPromise_B, "ERC20: burn amount exceeds balance")
     })
 
     // --- openPosition() ---
@@ -2019,7 +1828,16 @@ contract('BorrowerOperations', async accounts => {
       // to compensate borrowing fees
       await rToken.transfer(alice, dec(10000, 18), { from: whale })
 
-      await positionManager.closePosition({ from: alice })
+      await positionManager.managePosition(
+        await getPositionEntireColl(alice),
+        false,
+        await getActualDebtFromComposite(await getPositionEntireDebt(alice)),
+        false,
+        alice,
+        alice,
+        0,
+        { from: alice }
+      )
       assert.isFalse((await positionManager.sortedPositionsNodes(alice))[0])
 
       await openPosition({ extraRAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
