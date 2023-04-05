@@ -9,9 +9,6 @@ import "./IRToken.sol";
 /// @dev Max fee percentage must be between borrowing spread and 100%.
 error PositionManagerInvalidMaxFeePercentage();
 
-/// @dev Position is active.
-error PositionMaangerPositionActive();
-
 /// @dev Max fee percentage must be between 0.5% and 100%.
 error PositionManagerMaxFeePercentageOutOfRange();
 
@@ -42,17 +39,11 @@ error FeeEatsUpAllReturnedCollateral();
 /// @dev Borrowing spread exceeds maximum.
 error BorrowingSpreadExceedsMaximum();
 
-/// @dev Debt increase requires non-zero debt change.
-error DebtIncreaseZeroDebtChange();
-
 /// @dev Trying to withdraw more collateral than what user has available.
 error WithdrawingMoreThanAvailableCollateral();
 
 /// @dev Cannot withdraw and add collateral at the same time.
 error NotSingularCollateralChange();
-
-/// @dev Collateral increase requires non-zero collateral change.
-error CollateralIncreaseZeroCollateralChange();
 
 /// @dev There must be either a collateral change or a debt change.
 error NoCollateralOrDebtChange();
@@ -175,17 +166,15 @@ interface IPositionManager is IFeeCollector {
     function getBorrowingFee(uint rDebt) external view returns (uint);
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
 
-    function openPosition(uint _maxFee, uint _rAmount, address _upperHint, address _lowerHint, uint _amount) external;
-
-    function addColl(address _upperHint, address _lowerHint, uint _amount) external;
-
-    function withdrawColl(uint _amount, address _upperHint, address _lowerHint) external;
-
-    function withdrawR(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external;
-
-    function repayR(uint _amount, address _upperHint, address _lowerHint) external;
-
     function closePosition() external;
-
-    function adjustPosition(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
+    
+    function managePosition(
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _rChange,
+        bool _isDebtIncrease,
+        address _upperHint,
+        address _lowerHint,
+        uint256 _maxFeePercentage
+    ) external;
 }

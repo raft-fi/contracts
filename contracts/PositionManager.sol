@@ -12,7 +12,6 @@ import "./RToken.sol";
 
 contract PositionManager is FeeCollector, IPositionManager {
     using SortedPositions for SortedPositions.Data;
-    string constant public NAME = "PositionManager";
 
     // --- Connected contract declarations ---
 
@@ -125,13 +124,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
-    modifier onlyNonActivePosition() {
-        if (positions[msg.sender].debt != 0) {
-            revert PositionMaangerPositionActive();
-        }
-        _;
-    }
-
     // --- Constructor ---
 
     constructor(IPriceFeed _priceFeed, IERC20 _collateralToken, uint256 _positionsSize, uint256 _liquidationProtocolFee) FeeCollector(msg.sender) {
@@ -153,74 +145,19 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit LiquidationProtocolFeeChanged(_liquidationProtocolFee);
     }
 
-    // --- Borrower Position Operations ---
-
-    function openPosition(
-        uint256 _maxFeePercentage,
-        uint256 _rAmount,
-        address _upperHint,
-        address _lowerHint,
-        uint256 _collAmount
-    )
-        external
-        override
-        onlyNonActivePosition
-    {
-        _adjustPosition(_collAmount, true, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage, true);
-        emit PositionCreated(msg.sender);
-    }
-
-    // Send collateralToken to a position
-    function addColl(
-        address _upperHint, address _lowerHint, uint256 _collDeposit
-    ) external override onlyActivePosition(msg.sender) {
-        _adjustPosition(_collDeposit, true, 0, false, _upperHint, _lowerHint, 0, true);
-    }
-
-    // Withdraw collateralToken from a position
-    function withdrawColl(
-        uint256 _collWithdrawal, address _upperHint, address _lowerHint
-    ) external override onlyActivePosition(msg.sender) {
-        _adjustPosition(_collWithdrawal, false, 0, false, _upperHint, _lowerHint, 0, true);
-    }
-
-    // Withdraw R tokens from a position: mint new R tokens to the owner, and increase the position's debt accordingly
-    function withdrawR(
-        uint256 _maxFeePercentage, uint256 _rAmount, address _upperHint, address _lowerHint
-    ) external override onlyActivePosition(msg.sender) {
-        _adjustPosition(0, false, _rAmount, true, _upperHint, _lowerHint, _maxFeePercentage, true);
-    }
-
-    // Repay R tokens to a Position: Burn the repaid R tokens, and reduce the position's debt accordingly
-    function repayR(
-        uint256 _rAmount, address _upperHint, address _lowerHint
-    ) external override onlyActivePosition(msg.sender) {
-        _adjustPosition(0, false, _rAmount, false, _upperHint, _lowerHint, 0, true);
-    }
-
-    function adjustPosition(
-        uint256 _maxFeePercentage,
-        uint256 _collWithdrawal,
+    function managePosition(
+        uint256 _collChange,
+        bool _isCollIncrease,
         uint256 _rChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
-        uint256 _collDeposit
-    ) external override onlyActivePosition(msg.sender) {
-        if (_collWithdrawal != 0 && _collDeposit != 0) {
-            revert NotSingularCollateralChange();
-        }
-        _adjustPosition(_collDeposit + _collWithdrawal, _collDeposit != 0, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, true);
+        uint256 _maxFeePercentage
+    ) external override {
+        _managePosition(_collChange, _isCollIncrease, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, true);
     }
-
-    /*
-    * _adjustPosition(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
-    *
-    * It therefore expects either a positive _collDeposit, or a positive _collWithdrawal argument.
-    *
-    * If both are positive, it will revert.
-    */
-    function _adjustPosition(
+    
+    function _managePosition(
         uint256 _collChange,
         bool _isCollIncrease,
         uint256 _rChange,
@@ -233,23 +170,14 @@ contract PositionManager is FeeCollector, IPositionManager {
         internal
         validMaxFeePercentageWhen(_maxFeePercentage, _isDebtIncrease)
     {
-        if (_isDebtIncrease && _rChange == 0) {
-            revert DebtIncreaseZeroDebtChange();
-        }
-        if (_isCollIncrease && _collChange == 0) {
-            revert CollateralIncreaseZeroCollateralChange();
-        }
         if (_collChange == 0 && _rChange == 0) {
             revert NoCollateralOrDebtChange();
-        }
-        if (!_isCollIncrease && _collChange > positions[msg.sender].coll) {
-            revert WithdrawingMoreThanAvailableCollateral();
         }
 
         _applyPendingRewards(msg.sender);
 
-        _adjustCollateral(_collChange, _isCollIncrease, _needsCollateralTransfer);
         _adjustDebt(_rChange, _isDebtIncrease, _maxFeePercentage);
+        _adjustCollateral(_collChange, _isCollIncrease, _needsCollateralTransfer);
 
         _requireICRisAboveMCR();
 
@@ -279,8 +207,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             rToken.mint(msg.sender, _rChange);
         }
         else {
-            _requireAtLeastMinNetDebt(MathUtils.getNetDebt(positions[msg.sender].debt) - _rChange);
             _requireValidRRepayment(positions[msg.sender].debt, _rChange);
+            _requireAtLeastMinNetDebt(MathUtils.getNetDebt(positions[msg.sender].debt) - _rChange);
             positions[msg.sender].debt -= _rChange;
             rToken.burn(msg.sender, _rChange);
         }
@@ -290,6 +218,13 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (_collChange == 0) {
             return;
         }
+        if (positions[msg.sender].debt == 0) {
+            revert PositionManagerPositionNotActive();
+        }
+        if (!_isCollIncrease && _collChange > positions[msg.sender].coll) {
+            revert WithdrawingMoreThanAvailableCollateral();
+        }
+
         if (_isCollIncrease) {
             positions[msg.sender].coll += _collChange;
             _activePoolCollateralBalance += _collChange;
@@ -1012,6 +947,9 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function _requireValidRRepayment(uint256 _currentDebt, uint256 _debtRepayment) internal pure {
+        if (_currentDebt == 0) {
+            revert PositionManagerPositionNotActive();
+        }
         if (_debtRepayment > _currentDebt - MathUtils.R_GAS_COMPENSATION) {
             revert RepayRAmountExceedsDebt(_debtRepayment);
         }

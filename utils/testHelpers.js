@@ -495,7 +495,7 @@ class TestHelper {
     }
 
     await contracts.wstETHTokenMock.approve(contracts.positionManager.address, amount, extraParams)
-    const tx = await contracts.positionManager.openPosition(maxFeePercentage, rAmount, upperHint, lowerHint, amount, extraParams)
+    const tx = await contracts.positionManager.managePosition(amount, true, rAmount, true, upperHint, lowerHint, maxFeePercentage, extraParams)
 
     return {
       rAmount,
@@ -534,78 +534,12 @@ class TestHelper {
       increasedTotalDebt = await this.getAmountWithBorrowingFee(contracts, rAmount)
     }
 
-    await contracts.positionManager.withdrawR(maxFeePercentage, rAmount, upperHint, lowerHint, extraParams)
+    await contracts.positionManager.managePosition(0, false, rAmount, true, upperHint, lowerHint, maxFeePercentage, extraParams)
 
     return {
       rAmount,
       increasedTotalDebt
     }
-  }
-
-  static async adjustPosition_allAccounts(accounts, contracts, ETHAmount, rAmount) {
-    const gasCostList = []
-
-    for (const account of accounts) {
-      let tx;
-
-      let ETHChangeBN = this.toBN(ETHAmount)
-      let RChangeBN = this.toBN(rAmount)
-
-      const { newColl, newDebt } = await this.getCollAndDebtFromAdjustment(contracts, account, ETHChangeBN, RChangeBN)
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
-
-      const zero = this.toBN('0')
-
-      let isDebtIncrease = RChangeBN.gt(zero)
-      RChangeBN = RChangeBN.abs()
-
-      // Add ETH to position
-      if (ETHChangeBN.gt(zero)) {
-        tx = await contracts.positionManager.adjustPosition(this._100pct, 0, RChangeBN, isDebtIncrease, upperHint, lowerHint, { from: account, value: ETHChangeBN })
-      // Withdraw ETH from position
-      } else if (ETHChangeBN.lt(zero)) {
-        ETHChangeBN = ETHChangeBN.neg()
-        tx = await contracts.positionManager.adjustPosition(this._100pct, ETHChangeBN, RChangeBN, isDebtIncrease, upperHint, lowerHint, { from: account })
-      }
-
-      const gas = this.gasUsed(tx)
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
-  }
-
-  static async adjustPosition_allAccounts_randomAmount(accounts, contracts, ETHMin, ETHMax, RMin, RMax) {
-    const gasCostList = []
-
-    for (const account of accounts) {
-      let tx;
-
-      let ETHChangeBN = this.toBN(this.randAmountInWei(ETHMin, ETHMax))
-      let RChangeBN = this.toBN(this.randAmountInWei(RMin, RMax))
-
-      const { newColl, newDebt } = await this.getCollAndDebtFromAdjustment(contracts, account, ETHChangeBN, RChangeBN)
-      const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
-
-      const zero = this.toBN('0')
-
-      let isDebtIncrease = RChangeBN.gt(zero)
-      RChangeBN = RChangeBN.abs()
-
-      // Add ETH to position
-      if (ETHChangeBN.gt(zero)) {
-        tx = await contracts.positionManager.adjustPosition(this._100pct, 0, RChangeBN, isDebtIncrease, upperHint, lowerHint, { from: account, value: ETHChangeBN })
-      // Withdraw ETH from position
-      } else if (ETHChangeBN.lt(zero)) {
-        ETHChangeBN = ETHChangeBN.neg()
-        tx = await contracts.positionManager.adjustPosition(this._100pct, ETHChangeBN, RChangeBN, isDebtIncrease, lowerHint,  upperHint,{ from: account })
-      }
-
-      const gas = this.gasUsed(tx)
-      // console.log(`ETH change: ${ETHChangeBN},  RChange: ${RChangeBN}, gas: ${gas} `)
-
-      gasCostList.push(gas)
-    }
-    return this.getGasMetrics(gasCostList)
   }
 
   static async addColl_allAccounts(accounts, contracts, amount) {
@@ -645,7 +579,7 @@ class TestHelper {
       // console.log(`newDebt: ${newDebt} `)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawColl(amount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(amount, false, 0, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -661,7 +595,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawColl(contracts, account, randCollAmount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawColl(randCollAmount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(randCollAmount, false, 0, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
       // console.log("gasCostlist length is " + gasCostList.length)
@@ -676,7 +610,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawR(contracts, account, amount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawR(this._100pct, amount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, amount, true, upperHint, lowerHint, this._100pct, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -692,7 +626,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawR(contracts, account, randRAmount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.withdrawR(this._100pct, randRAmount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, randRAmount, true, upperHint, lowerHint, this._100pct, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -706,7 +640,7 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromRepayR(contracts, account, amount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.repayR(amount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, amount, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
@@ -722,25 +656,11 @@ class TestHelper {
       const { newColl, newDebt } = await this.getCollAndDebtFromRepayR(contracts, account, randRAmount)
       const {upperHint, lowerHint} = await this.getBorrowerOpsListHint(contracts, newColl, newDebt)
 
-      const tx = await contracts.positionManager.repayR(randRAmount, upperHint, lowerHint, { from: account })
+      const tx = await contracts.positionManager.managePosition(0, false, randRAmount, false, upperHint, lowerHint, 0, { from: account })
       const gas = this.gasUsed(tx)
       gasCostList.push(gas)
     }
     return this.getGasMetrics(gasCostList)
-  }
-
-  // --- Composite functions ---
-
-  static async makePositionsIncreasingICR(accounts, contracts) {
-    let amountFinney = 2000
-
-    for (const account of accounts) {
-      const coll = web3.utils.toWei(amountFinney.toString(), 'finney')
-
-      await contracts.positionManager.openPosition(this._100pct, '200000000000000000000', account, account, { from: account, value: coll })
-
-      amountFinney += 10
-    }
   }
 
   static getLCAddressFromDeploymentTx(deployedLCTx) {

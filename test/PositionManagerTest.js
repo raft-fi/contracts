@@ -424,8 +424,8 @@ contract('PositionManager', async accounts => {
 
     // // All remaining positions D and E repay a little debt, applying their pending rewards
     assert.isTrue(((await positionManager.sortedPositions())[3]).eq(toBN('3')))
-    await positionManager.repayR(dec(1, 18), D, D, {from: D})
-    await positionManager.repayR(dec(1, 18), E, E, {from: E})
+    await positionManager.managePosition(0, false, dec(1, 18), false, D, D, 0, {from: D})
+    await positionManager.managePosition(0, false, dec(1, 18), false, E, E, 0, {from: E})
 
     // Check C is the only position that has pending rewards
     assert.isTrue(await positionManager.hasPendingRewards(C))
@@ -1798,7 +1798,7 @@ contract('PositionManager', async accounts => {
 
       await openPosition({ ICR: toBN(dec(150, 16)), extraParams: { from: bob } })
       wstETHTokenMock.approve(positionManager.address, rAmount.mul(mv._1e18BN).div(price), { from: alice})
-      await positionManager.adjustPosition(th._100pct, 0, rAmount, true, alice, alice, rAmount.mul(mv._1e18BN).div(price), { from: alice })
+      await positionManager.managePosition(rAmount.mul(mv._1e18BN).div(price), true, rAmount, true, alice, alice, th._100pct, { from: alice })
     }
 
     const {
