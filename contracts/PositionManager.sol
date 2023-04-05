@@ -195,13 +195,14 @@ contract PositionManager is FeeCollector, IPositionManager {
             return;
         }
 
-        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough R
         if (_isDebtIncrease) {
             uint256 debtChange = _rChange + _triggerBorrowingFee(_rChange, _maxFeePercentage);
             if (positions[msg.sender].debt == 0) {
+                // New position is created here, so we need to add gas compensation plus emit event
                 _requireAtLeastMinNetDebt(debtChange);
                 debtChange += MathUtils.R_GAS_COMPENSATION;
                 rToken.mint(address(this), MathUtils.R_GAS_COMPENSATION);
+                emit PositionCreated(msg.sender);
             }
             positions[msg.sender].debt += debtChange;
             rToken.mint(msg.sender, _rChange);
@@ -212,6 +213,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             positions[msg.sender].debt -= _rChange;
             rToken.burn(msg.sender, _rChange);
         }
+
+        emit DebtChanged(msg.sender, _rChange, _isDebtIncrease);
     }
 
     function _adjustCollateral(uint256 _collChange, bool _isCollIncrease, bool _needsCollTransfer) internal {
@@ -239,6 +242,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             }
         }
         _updateStakeAndTotalStakes(msg.sender);
+
+        emit CollateralChanged(msg.sender, _collChange, _isCollIncrease);
     }
 
     function closePosition() external override onlyActivePosition(msg.sender) {
@@ -761,6 +766,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         rewardSnapshots[_borrower].rDebt = 0;
 
         sortedPositions.remove(_borrower);
+        emit PositionClosed(_borrower);
     }
 
     /*

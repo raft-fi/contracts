@@ -49,39 +49,59 @@ error NotSingularCollateralChange();
 error NoCollateralOrDebtChange();
 
 /// @dev An operation that would result in ICR < MCR is not permitted.
+/// @param newICR Resulting ICR that is bellow MCR.
 error NewICRLowerThanMCR(uint256 newICR);
 
 /// @dev Position's net debt must be greater than minimum.
+/// @param netDebt Net debt amount that is below minimum.
 error NetDebtBelowMinimum(uint256 netDebt);
 
 /// @dev Amount repaid must not be larger than the Position's debt.
+/// @param debt Debt amount that is larget than position's actual debt.
 error RepayRAmountExceedsDebt(uint256 debt);
 
 /// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
 error LiquidationProtocolFeeOutOfBound();
 
-// Common interface for the Position Manager.
+/// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
-    struct LiquidationTotals {
-        uint totalCollInSequence;
-        uint totalDebtInSequence;
-        uint totalCollGasCompensation;
-        uint totalRGasCompensation;
-        uint totalDebtToOffset;
-        uint totalCollToSendToProtocol;
-        uint totalCollToSendToLiquidator;
-        uint totalDebtToRedistribute;
-        uint totalCollToRedistribute;
-    }
-
-    // --- Events ---
-
+    /// @dev New PositionManager contract is deployed.
+    /// @param priceFeed Addres of the contract that provides price for collateral token.
+    /// @param collateralToken Address of the token used as collateral.
+    /// @param rToken Address of the rToken used by position manager.
+    /// @param feeRecipient Fee recipient address.
     event PositionManagerDeployed(
-        IPriceFeed _priceFeed,
-        IERC20 _collateralToken,
-        IRToken _rToken,
-        address _feeRecipient
+        IPriceFeed priceFeed,
+        IERC20 collateralToken,
+        IRToken rToken,
+        address feeRecipient
     );
+
+
+    /// @dev New position is created in Raft.
+    /// @param position Address of the user opening new position.
+    event PositionCreated(address indexed position);
+
+    /// @dev Position is closed by repayment, liquidation, or redemption.
+    /// @param position Address of user whose position is closed.
+    event PositionClosed(address indexed position);
+
+    /// @dev Collateral amount for position is changed.
+    /// @param position Address of user that opened position.
+    /// @param collateralAmount Amount of collateral added or removed.
+    /// @param isCollateralIncrease Is collateral added to position or removed from it.
+    event CollateralChanged(address indexed position, uint256 collateralAmount, bool isCollateralIncrease);
+
+    /// @dev Debt amount for position is changed.
+    /// @param position Address of user that opened position.
+    /// @param debtAmount Amount of debt added or removed.
+    /// @param isDebtIncrease Is debt added to position or removed from it.
+    event DebtChanged(address indexed position, uint256 debtAmount, bool isDebtIncrease);
+
+    /// @dev Borrowing fee is paid. Emitted only if actual fee was paid, doesn't happen with no fees paid.
+    /// @param position Address of position owner that triggered fee payment.
+    /// @param feeAmount Amount of tokens paid as borrowing fee.
+    event RBorrowingFeePaid(address indexed position, uint feeAmount);
 
     event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
 
@@ -95,8 +115,18 @@ interface IPositionManager is IFeeCollector {
     event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
     event LTermsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
     event PositionSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
-    event PositionCreated(address indexed _borrower);
-    event RBorrowingFeePaid(address indexed _borrower, uint _rFee);
+
+    struct LiquidationTotals {
+        uint totalCollInSequence;
+        uint totalDebtInSequence;
+        uint totalCollGasCompensation;
+        uint totalRGasCompensation;
+        uint totalDebtToOffset;
+        uint totalCollToSendToProtocol;
+        uint totalCollToSendToLiquidator;
+        uint totalDebtToRedistribute;
+        uint totalCollToRedistribute;
+    }
 
     // --- Functions ---
 
