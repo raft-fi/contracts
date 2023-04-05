@@ -195,8 +195,6 @@ interface IPositionManager is IFeeCollector {
 
     function getBorrowingFee(uint rDebt) external view returns (uint);
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
-
-    function closePosition() external;
     
     function managePosition(
         uint256 _collChange,
