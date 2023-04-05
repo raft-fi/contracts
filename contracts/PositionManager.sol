@@ -89,25 +89,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     uint256 public lastCollateralTokenError_Redistribution;
     uint256 public lastRDebtError_Redistribution;
 
-    /*
-    * --- Variable container structs for liquidations ---
-    *
-    * These structs are used to hold, return and assign variables inside the liquidation functions,
-    * in order to avoid the error: "CompilerError: Stack too deep".
-    **/
-
-    struct LiquidationValues {
-        uint256 entirePositionDebt;
-        uint256 entirePositionColl;
-        uint256 collGasCompensation;
-        uint256 rGasCompensation;
-        uint256 debtToOffset;
-        uint256 collToSendToProtocol;
-        uint256 collToSendToLiquidator;
-        uint256 debtToRedistribute;
-        uint256 collToRedistribute;
-    }
-
     // --- Modifiers ---
 
     modifier validMaxFeePercentageWhen(uint256 _maxFeePercentage, bool condition) {
@@ -202,7 +183,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (_isDebtIncrease) {
             uint256 debtChange = _rChange + _triggerBorrowingFee(_rChange, _maxFeePercentage);
             if (positions[msg.sender].debt == 0) {
-                // New position is created here, so we need to add gas compensation plus emit event
+                // New position is created here, so we need to:
+                //  - check min net debt
+                //  - add gas compensation 
+                //  - emit position created event
                 _requireAtLeastMinNetDebt(debtChange);
                 debtChange += MathUtils.R_GAS_COMPENSATION;
                 rToken.mint(address(this), MathUtils.R_GAS_COMPENSATION);
@@ -274,42 +258,48 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Inner single liquidation functions ---
 
     // Liquidate one position
-    function _liquidate(address _borrower, uint256 _ICR, uint256 _price)
+    function _liquidate(LiquidationTotals memory oldLiquidationTotals, address _borrower, uint256 _ICR, uint256 _price)
         internal
-        returns (LiquidationValues memory singleLiquidation)
+        returns (LiquidationTotals memory newLiquidationTotals)
     {
         uint256 pendingCollReward;
-        (singleLiquidation, pendingCollReward) = _calculateLiquidationValues(_borrower, _ICR, _price);
+        (newLiquidationTotals, pendingCollReward) = increaseLiquidationTotals(oldLiquidationTotals, _borrower, _ICR, _price);
 
         _movePendingPositionRewardsToActivePool(pendingCollReward);
 
         _closePosition(_borrower);
-        emit PositionLiquidated(_borrower, singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl);
+        emit PositionLiquidated(_borrower);
     }
 
-    function _calculateLiquidationValues(address _borrower, uint256 _ICR, uint256 _price) internal view returns (LiquidationValues memory singleLiquidation, uint256 pendingCollReward) {
-        (singleLiquidation.entirePositionDebt, singleLiquidation.entirePositionColl,,pendingCollReward)
-            = getEntireDebtAndColl(_borrower);
+    function increaseLiquidationTotals(
+        LiquidationTotals memory oldLiquidationTotals,
+        address borrower,
+        uint256 icr,
+        uint256 price
+    ) 
+        internal view returns (LiquidationTotals memory, uint256)
+    {
+        (uint256 entirePositionDebt, uint256 entirePositionColl,, uint256 pendingCollReward)
+            = getEntireDebtAndColl(borrower);
 
-        singleLiquidation.rGasCompensation = MathUtils.R_GAS_COMPENSATION;
-        if (_ICR <= MathUtils._100pct) { // redistribution
-            singleLiquidation.collGasCompensation = MathUtils.getCollGasCompensation(singleLiquidation.entirePositionColl);
-            singleLiquidation.debtToOffset = 0;
-            singleLiquidation.collToSendToProtocol = 0;
-            singleLiquidation.collToSendToLiquidator = 0;
-            singleLiquidation.debtToRedistribute = singleLiquidation.entirePositionDebt;
-            singleLiquidation.collToRedistribute = singleLiquidation.entirePositionColl - singleLiquidation.collGasCompensation;
-        }
-        else { // offset
-            singleLiquidation.collGasCompensation = 0;
-            singleLiquidation.debtToOffset = singleLiquidation.entirePositionDebt;
-            singleLiquidation.collToSendToProtocol = _getCollLiquidationProtocolFee(singleLiquidation.entirePositionColl, singleLiquidation.entirePositionDebt, _price, liquidationProtocolFee);
-            singleLiquidation.collToSendToLiquidator = singleLiquidation.entirePositionColl - singleLiquidation.collToSendToProtocol;
-            singleLiquidation.debtToRedistribute = 0;
-            singleLiquidation.collToRedistribute = 0;
+        oldLiquidationTotals.rGasCompensation += MathUtils.R_GAS_COMPENSATION;
+        if (icr <= MathUtils._100pct) {
+            // redistribution
+            uint256 collGasCompensation = MathUtils.getCollGasCompensation(entirePositionColl);
+            oldLiquidationTotals.collGasCompensation += collGasCompensation;
+            oldLiquidationTotals.debtToRedistribute += entirePositionDebt;
+            oldLiquidationTotals.collToRedistribute += entirePositionColl - collGasCompensation;
+        } else {
+            // offset
+            uint256 collToSendToProtocol = _getCollLiquidationProtocolFee(
+                entirePositionColl, entirePositionDebt, price, liquidationProtocolFee
+            );
+            oldLiquidationTotals.debtToOffset += entirePositionDebt;
+            oldLiquidationTotals.collToSendToProtocol += collToSendToProtocol;
+            oldLiquidationTotals.collToSendToLiquidator += entirePositionColl - collToSendToProtocol;
         }
 
-        return (singleLiquidation, pendingCollReward);
+        return (oldLiquidationTotals, pendingCollReward);
     }
 
     function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price)
@@ -321,8 +311,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
             if (ICR < MathUtils.MCR) {
                 // Add liquidation values to their respective running totals
-                (LiquidationValues memory singleLiquidation,) = _calculateLiquidationValues(user, ICR, _price);
-                totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
+                (totals,) = increaseLiquidationTotals(totals, user, ICR, _price);
             }
         }
     }
@@ -338,26 +327,29 @@ contract PositionManager is FeeCollector, IPositionManager {
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
         LiquidationTotals memory totals = _batchLiquidate(_positionArray);
 
-        if (totals.totalCollInSequence == 0) {
+        if (totals.collGasCompensation + totals.collToRedistribute + totals.collToSendToLiquidator == 0) {
             revert NothingToLiquidate();
         }
 
-        _offset(msg.sender, totals.totalDebtToOffset, totals.totalCollToSendToProtocol, totals.totalCollToSendToLiquidator);
-        _redistributeDebtAndColl(totals.totalDebtToRedistribute, totals.totalCollToRedistribute);
+        _offset(msg.sender, totals.debtToOffset, totals.collToSendToProtocol, totals.collToSendToLiquidator);
+        _redistributeDebtAndColl(totals.debtToRedistribute, totals.collToRedistribute);
 
         // Update system snapshots
-        _updateSystemSnapshots_excludeCollRemainder(totals.totalCollGasCompensation);
+        _updateSystemSnapshots_excludeCollRemainder(totals.collGasCompensation);
 
         emit Liquidation(
-            totals.totalDebtInSequence,
-            totals.totalCollInSequence - totals.totalCollGasCompensation,
-            totals.totalCollToSendToProtocol,
-            totals.totalCollGasCompensation,
-            totals.totalRGasCompensation
+            msg.sender,
+            totals.collGasCompensation,
+            totals.rGasCompensation,
+            totals.debtToOffset,
+            totals.collToSendToProtocol,
+            totals.collToSendToLiquidator,
+            totals.debtToRedistribute,
+            totals.collToRedistribute
         );
 
         // Send gas compensation to caller
-        _sendGasCompensation(msg.sender, totals.totalRGasCompensation, totals.totalCollGasCompensation);
+        _sendGasCompensation(msg.sender, totals.rGasCompensation, totals.collGasCompensation);
     }
 
     function _offset(address liquidator, uint256 debtToBurn, uint256 collToSendToProtocol, uint256 collToSendToLiquidator) internal {
@@ -369,8 +361,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         collateralToken.transfer(feeRecipient, collToSendToProtocol);
     }
 
-    function _batchLiquidate(address[] memory _positionArray) internal returns (LiquidationTotals memory totals)
-    {
+    function _batchLiquidate(address[] memory _positionArray) internal returns (LiquidationTotals memory totals) {
         uint256 price = priceFeed.fetchPrice();
         uint256 _positionArrayLength = _positionArray.length;
         for (uint256 i = 0; i < _positionArrayLength; ++i) {
@@ -379,30 +370,12 @@ contract PositionManager is FeeCollector, IPositionManager {
 
             if (ICR < MathUtils.MCR) {
                 // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(totals, _liquidate(user, ICR, price));
+                totals = _liquidate(totals, user, ICR, price);
             }
         }
     }
 
     // --- Liquidation helper functions ---
-
-    function _addLiquidationValuesToTotals(LiquidationTotals memory oldTotals, LiquidationValues memory singleLiquidation)
-    internal pure returns(LiquidationTotals memory newTotals) {
-
-        // Tally all the values with their respective running totals
-        newTotals.totalCollGasCompensation = oldTotals.totalCollGasCompensation + singleLiquidation.collGasCompensation;
-        newTotals.totalRGasCompensation = oldTotals.totalRGasCompensation + singleLiquidation.rGasCompensation;
-        newTotals.totalDebtInSequence = oldTotals.totalDebtInSequence + singleLiquidation.entirePositionDebt;
-        newTotals.totalCollInSequence = oldTotals.totalCollInSequence + singleLiquidation.entirePositionColl;
-        newTotals.totalDebtToOffset = oldTotals.totalDebtToOffset + singleLiquidation.debtToOffset;
-        newTotals.totalCollToSendToProtocol = oldTotals.totalCollToSendToProtocol + singleLiquidation.collToSendToProtocol;
-        newTotals.totalCollToSendToLiquidator = oldTotals.totalCollToSendToLiquidator + singleLiquidation.collToSendToLiquidator;
-        newTotals.totalDebtToRedistribute = oldTotals.totalDebtToRedistribute + singleLiquidation.debtToRedistribute;
-        newTotals.totalCollToRedistribute = oldTotals.totalCollToRedistribute + singleLiquidation.collToRedistribute;
-
-        return newTotals;
-    }
-
     function _sendGasCompensation(address _liquidator, uint256 _R, uint256 _collateral) internal {
         if (_R > 0) {
             rToken.transfer(_liquidator, _R);

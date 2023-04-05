@@ -302,20 +302,6 @@ class TestHelper {
     throw ("The transaction logs do not contain a redemption event")
   }
 
-  static getEmittedLiquidationValues(liquidationTx) {
-    for (let i = 0; i < liquidationTx.logs.length; i++) {
-      if (liquidationTx.logs[i].event === "Liquidation") {
-        const liquidatedDebt = liquidationTx.logs[i].args[0]
-        const liquidatedColl = liquidationTx.logs[i].args[1]
-        const collGasComp = liquidationTx.logs[i].args[2]
-        const rGasComp = liquidationTx.logs[i].args[3]
-
-        return [liquidatedDebt, liquidatedColl, collGasComp, rGasComp]
-      }
-    }
-    throw ("The transaction logs do not contain a liquidation event")
-  }
-
   static getEmittedLiquidatedDebt(liquidationTx) {
     return this.getLiquidationEventArg(liquidationTx, 0)  // LiquidatedDebt is position 0 in the Liquidation event
   }

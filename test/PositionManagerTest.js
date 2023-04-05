@@ -765,11 +765,9 @@ contract('PositionManager', async accounts => {
     const liquidationArray = [alice, carol, bob, dennis, erin]
     const totals = await positionManager.simulateBatchLiquidatePositions(liquidationArray, price);
 
-    assert.equal(totals.totalCollInSequence, A_coll.add(B_coll).toString());
-    assert.equal(totals.totalDebtInSequence, A_debt.add(B_debt).toString());
-    assert.equal(totals.totalDebtToOffset, A_debt.add(B_debt).toString());
-    assert.equal(totals.totalDebtToRedistribute, '0');
-    assert.equal(totals.totalCollToRedistribute, '0');
+    assert.equal(totals.debtToOffset, A_debt.add(B_debt).toString());
+    assert.equal(totals.debtToRedistribute, '0');
+    assert.equal(totals.collToRedistribute, '0');
   })
 
   // --- redemptions ---
