@@ -105,7 +105,7 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Liquidation was executed.
     /// @param liquidator Liquidator that executed liquidation sequence.
-    /// @param collGasCompensation Amount of collateral tokens setn to liquidator as gas compensation.
+    /// @param collGasCompensation Amount of collateral tokens sent to liquidator as gas compensation.
     /// @param rGasCompensation Amount of R sent to liquidator as gas compensation.
     /// @param debtToOffset Total debt offset for the liquidation sequence.
     /// @param collToSendToProtocol Total collateral sent to protocol.
