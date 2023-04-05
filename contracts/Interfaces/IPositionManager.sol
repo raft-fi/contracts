@@ -9,9 +9,6 @@ import "./IRToken.sol";
 /// @dev Max fee percentage must be between borrowing spread and 100%.
 error PositionManagerInvalidMaxFeePercentage();
 
-/// @dev Position is active.
-error PositionMaangerPositionActive();
-
 /// @dev Max fee percentage must be between 0.5% and 100%.
 error PositionManagerMaxFeePercentageOutOfRange();
 

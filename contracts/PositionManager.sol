@@ -124,13 +124,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
-    modifier onlyNonActivePosition() {
-        if (positions[msg.sender].debt != 0) {
-            revert PositionMaangerPositionActive();
-        }
-        _;
-    }
-
     // --- Constructor ---
 
     constructor(IPriceFeed _priceFeed, IERC20 _collateralToken, uint256 _positionsSize, uint256 _liquidationProtocolFee) FeeCollector(msg.sender) {
