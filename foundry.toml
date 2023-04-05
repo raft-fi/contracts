@@ -5,5 +5,9 @@ libs = ['node_modules', 'lib']
 test = 'test/foundry'
 cache_path = 'forge-cache'
 solc_version = "0.8.19"
+via-ir = true
+
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC_URL}"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

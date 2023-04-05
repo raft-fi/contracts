@@ -3,6 +3,7 @@ name: Test contracts
 env:
   CI: true
   FORCE_COLOR: true
+  MAINNET_RPC_URL: ${{ vars.MAINNET_RPC_URL }}
 
 on: [pull_request]
 
