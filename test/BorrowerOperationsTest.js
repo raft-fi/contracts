@@ -1791,8 +1791,7 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18));
 
       // close Carol's Position, liquidating her 1 ether and 180R.
-      const liquidationTx = await positionManager.liquidate(carol, { from: owner });
-      const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
+      await positionManager.liquidate(carol, { from: owner });
 
       /* with total stakes = 10 ether, after liquidation, L_CollateralBalance should equal 1/10 ether per-ether-staked,
        and L_R should equal 18 R per-ether-staked. */

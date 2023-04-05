@@ -103,11 +103,33 @@ interface IPositionManager is IFeeCollector {
     /// @param feeAmount Amount of tokens paid as borrowing fee.
     event RBorrowingFeePaid(address indexed position, uint feeAmount);
 
-    event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
+    /// @dev Liquidation was executed.
+    /// @param liquidator Liquidator that executed liquidation sequence.
+    /// @param collGasCompensation Amount of collateral tokens sent to liquidator as gas compensation.
+    /// @param rGasCompensation Amount of R sent to liquidator as gas compensation.
+    /// @param debtToOffset Total debt offset for the liquidation sequence.
+    /// @param collToSendToProtocol Total collateral sent to protocol.
+    /// @param collToSendToLiquidator Total collateral sent to liquidator.
+    /// @param debtToRedistribute Total debt to redestribute to currently open positions.
+    /// @param collToRedistribute Total collateral amount to redestribute to currently open positions.
+    event Liquidation(
+        address indexed liquidator,
+        uint256 collGasCompensation,
+        uint256 rGasCompensation,
+        uint256 debtToOffset,
+        uint256 collToSendToProtocol,
+        uint256 collToSendToLiquidator,
+        uint256 debtToRedistribute,
+        uint256 collToRedistribute
+    );
 
-    event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _liquidationProtocolFee, uint _collGasCompensation, uint _RGasCompensation);
+    /// @dev Position is liquidated.
+    /// @param position Address of user that was the owner of the liquidated position.
+    event PositionLiquidated(address indexed position);
+
+    event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
     event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
-    event PositionLiquidated(address indexed _borrower, uint _debt, uint _coll);
+
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
     event BaseRateUpdated(uint _baseRate);
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
@@ -117,15 +139,13 @@ interface IPositionManager is IFeeCollector {
     event PositionSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
 
     struct LiquidationTotals {
-        uint totalCollInSequence;
-        uint totalDebtInSequence;
-        uint totalCollGasCompensation;
-        uint totalRGasCompensation;
-        uint totalDebtToOffset;
-        uint totalCollToSendToProtocol;
-        uint totalCollToSendToLiquidator;
-        uint totalDebtToRedistribute;
-        uint totalCollToRedistribute;
+        uint256 collGasCompensation;
+        uint256 rGasCompensation;
+        uint256 debtToOffset;
+        uint256 collToSendToProtocol;
+        uint256 collToSendToLiquidator;
+        uint256 debtToRedistribute;
+        uint256 collToRedistribute;
     }
 
     // --- Functions ---
