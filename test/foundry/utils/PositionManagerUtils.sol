@@ -8,6 +8,8 @@ import "../../../contracts/StEthPositionManager.sol";
 import "../../TestContracts/PriceFeedTestnet.sol";
 
 library PositionManagerUtils {
+    enum ETHType {ETH, STETH, WSTETH}
+
     struct OpenPositionResult {
         uint256 rAmount;
         uint256 netDebt;
@@ -26,7 +28,7 @@ library PositionManagerUtils {
         address lowerHint,
         uint256 icr,
         uint256 amount,
-        bool isStEth
+        ETHType ethType
     )
         internal
         returns (OpenPositionResult memory result)
@@ -46,7 +48,12 @@ library PositionManagerUtils {
             amount = result.icr * result.totalDebt / price;
         }
 
-        if (isStEth) {
+        if (ethType == ETHType.ETH) {
+            IStEth stEth = IPositionManagerStEth(address(positionManager)).stEth();
+            uint256 wstEthAmount = stEth.getSharesByPooledEth(amount);
+            IPositionManagerStEth(address(positionManager)).managePositionEth{value: amount}(result.rAmount, true, upperHint, lowerHint, maxFeePercentage);
+            result.collateral = wstEthAmount;
+        } else if (ethType == ETHType.STETH) {
             IStEth stEth = IPositionManagerStEth(address(positionManager)).stEth();
             uint256 wstEthAmount = stEth.getSharesByPooledEth(amount);
             stEth.approve(address(positionManager), amount);
@@ -71,7 +78,7 @@ library PositionManagerUtils {
         returns (OpenPositionResult memory result)
     {
         result = openPosition(
-            positionManager, priceFeed, collateralToken, MathUtils._100pct, 0, address(0), address(0), icr, 0, false
+            positionManager, priceFeed, collateralToken, MathUtils._100pct, 0, address(0), address(0), icr, 0, ETHType.WSTETH
         );
     }
 
@@ -79,13 +86,14 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
-        uint256 icr
+        uint256 icr,
+        ETHType ethType
     )
         internal
         returns (OpenPositionResult memory result)
     {
         result = openPosition(
-            positionManager, priceFeed, collateralToken, MathUtils._100pct, 0, address(0), address(0), icr, 0, true
+            positionManager, priceFeed, collateralToken, MathUtils._100pct, 0, address(0), address(0), icr, 0, ethType
         );
     }
 
@@ -109,7 +117,7 @@ library PositionManagerUtils {
             address(0),
             icr,
             0,
-            false
+            ETHType.WSTETH
         );
     }
 
@@ -134,7 +142,7 @@ library PositionManagerUtils {
             address(0),
             icr,
             amount,
-            false
+            ETHType.WSTETH
         );
     }
 

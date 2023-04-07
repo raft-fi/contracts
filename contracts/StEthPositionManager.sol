@@ -22,6 +22,37 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
         stEth = IStEth(address(IWstEth(address(_collateralToken)).stETH()));
     }
 
+    function managePositionEth(
+        uint256 _rChange,
+        bool _isDebtIncrease,
+        address _upperHint,
+        address _lowerHint,
+        uint256 _maxFeePercentage
+    )
+        external
+        payable
+        override
+    {
+        uint256 wstEthBalanceBefore = IWstEth(address(collateralToken)).balanceOf(address(this));
+        (bool sent, ) = address(collateralToken).call{value: msg.value}("");
+        if (!sent) {
+            revert SendEtherFailed();
+        }
+        uint256 wstEthBalanceAfter = IWstEth(address(collateralToken)).balanceOf(address(this));
+        uint256 wstEthAmount = wstEthBalanceAfter - wstEthBalanceBefore;
+
+        _managePosition(
+            wstEthAmount,
+            true,
+            _rChange,
+            _isDebtIncrease,
+            _upperHint,
+            _lowerHint,
+            _maxFeePercentage,
+            false
+        );
+    }
+
     function managePositionStEth(
         uint256 _collChange,
         bool _isCollIncrease,
