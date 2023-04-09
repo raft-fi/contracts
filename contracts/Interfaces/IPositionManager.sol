@@ -165,6 +165,9 @@ interface IPositionManager is IFeeCollector {
     function sortedPositionsNodes(address _id) external view returns(bool exists, address nextId, address prevId);
 
     function totalStakes() external view returns (uint256);
+    function totalStakesSnapshot() external view returns (uint256);
+
+    function totalCollateralSnapshot() external view returns (uint256);
 
     function rewardSnapshots(address _borrower) external view returns (uint256 collateralBalance, uint256 debtBalance);
 

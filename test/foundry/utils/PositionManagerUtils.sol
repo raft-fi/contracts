@@ -18,6 +18,11 @@ library PositionManagerUtils {
         uint256 collateral;
     }
 
+    struct WithdrawRResult {
+        uint256 rAmount;
+        uint256 increasedTotalDebt;
+    }
+
     function openPosition(
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
@@ -146,6 +151,43 @@ library PositionManagerUtils {
         );
     }
 
+    function withdrawR(
+        IPositionManager positionManager,
+        PriceFeedTestnet priceFeed,
+        address borrower,
+        uint256 maxFeePercentage,
+        uint256 rAmount,
+        uint256 icr,
+        address upperHint,
+        address lowerHint
+    ) internal returns (WithdrawRResult memory result) {
+        require(
+            !(rAmount > 0 && icr > 0) && (rAmount > 0 || icr > 0), "Specify either R amount or target ICR, but not both"
+        );
+
+        result.rAmount = rAmount;
+
+        if (icr > 0) {
+            (uint256 debt, uint256 collateral,,) = positionManager.getEntireDebtAndColl(borrower);
+            uint256 price = priceFeed.getPrice();
+            uint256 targetDebt = collateral * price / icr;
+            require(targetDebt > debt, "ICR is already greater than or equal to target");
+            result.increasedTotalDebt = targetDebt - debt;
+            result.rAmount = getNetBorrowingAmount(positionManager, result.increasedTotalDebt);
+        } else {
+            result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, result.rAmount);
+        }
+
+        positionManager.managePosition(0, false, result.rAmount, true, upperHint, lowerHint, maxFeePercentage);
+    }
+
+    function withdrawR(IPositionManager positionManager, PriceFeedTestnet priceFeed, address borrower, uint256 icr)
+        internal
+        returns (WithdrawRResult memory result)
+    {
+        result = withdrawR(positionManager, priceFeed, borrower, MathUtils._100pct, 0, icr, address(0), address(0));
+    }
+
     function getNetBorrowingAmount(
         IPositionManager _positionManager,
         uint256 _debtWithFee
@@ -174,5 +216,21 @@ library PositionManagerUtils {
     {
         uint256 fee = _positionManager.getBorrowingFee(rAmount);
         return MathUtils.getCompositeDebt(rAmount) + fee;
+    }
+
+    function getAmountWithBorrowingFee(IPositionManager _positionManager, uint256 _rAmount)
+        internal
+        view
+        returns (uint256)
+    {
+        return _rAmount + _positionManager.getBorrowingFee(_rAmount);
+    }
+
+    function applyLiquidationFee(IPositionManager _positionManager, uint256 _amount)
+        internal
+        view
+        returns (uint256)
+    {
+        return _amount - MathUtils.getCollGasCompensation(_amount);
     }
 }
