@@ -1,34 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../Oracles/Interfaces/IPriceOracle.sol";
-
-/// @dev Invalid primary oracle.
-error InvalidPrimaryOracle();
-
-/// @dev Invalid secondary oracle.
-error InvalidSecondaryOracle();
-
-/// @dev Primary oracle is broken or frozen or bad result.
-error PrimaryOracleBrokenOrFrozenOrBadResult();
+import { IPriceOracle } from "../Oracles/Interfaces/IPriceOracle.sol";
 
 interface IPriceFeed {
+    // --- Errors ---
+
+    /// @dev Invalid primary oracle.
+    error InvalidPrimaryOracle();
+
+    /// @dev Invalid secondary oracle.
+    error InvalidSecondaryOracle();
+
+    /// @dev Primary oracle is broken or frozen or bad result.
+    error PrimaryOracleBrokenOrFrozenOrBadResult();
+
     // --- Events ---
+
+    /// @dev Emitted when last good price is updated.
     event LastGoodPriceUpdated(uint256 _lastGoodPrice);
 
     // --- Functions ---
 
     /// @dev Return primary oracle address.
-    function primaryOracle() external returns(IPriceOracle);
+    function primaryOracle() external returns (IPriceOracle);
 
     /// @dev Return secondary oracle address
-    function secondaryOracle() external returns(IPriceOracle);
+    function secondaryOracle() external returns (IPriceOracle);
 
     /// @dev The last good price seen from an oracle by Raft.
-    function lastGoodPrice() external returns(uint256);
+    function lastGoodPrice() external returns (uint256);
 
     /// @dev The maximum relative price difference between two oracle responses.
-    function MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES() external returns(uint256);
+    function MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES() external returns (uint256);
 
     /// @dev Set primary oracle address.
     /// @param _primaryOracle Primary oracle address.

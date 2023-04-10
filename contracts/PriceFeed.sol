@@ -2,10 +2,11 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./Dependencies/MathUtils.sol";
-import "./Interfaces/IPriceFeed.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { MathUtils } from "./Dependencies/MathUtils.sol";
+import { IPriceFeed } from "./Interfaces/IPriceFeed.sol";
+import { IPriceOracle, PriceOracleResponse } from "./Oracles/Interfaces/IPriceOracle.sol";
 
 contract PriceFeed is IPriceFeed, Ownable2Step {
     IPriceOracle public override primaryOracle;
@@ -13,7 +14,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
     uint256 public override lastGoodPrice;
 
-    uint256 constant public override MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 5e16; // 5%
+    uint256 public constant override MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 5e16; // 5%
 
     constructor(IPriceOracle _primaryOracle, IPriceOracle _secondaryOracle) {
         _setPrimaryOracle(_primaryOracle);
@@ -25,7 +26,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     function setPrimaryOracle(IPriceOracle _primaryOracle) external override onlyOwner {
         _setPrimaryOracle(_primaryOracle);
     }
-    
+
     function setSecondaryOracle(IPriceOracle _secondaryOracle) external override onlyOwner {
         _setSecondaryOracle(_secondaryOracle);
     }
@@ -43,7 +44,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             return _storePrice(secondaryOracleResponse.price);
         }
 
-        // If primary oracle price has changed by > 50% between two consecutive rounds, compare it to secondary oracle's price
+        // If primary oracle price has changed by > 50% between two consecutive rounds, compare it to secondary oracle's
+        // price
         if (primaryOracleResponse.priceChangeAboveMax) {
             PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
             // If primary oracle is broken or frozen, both oracles are untrusted, and return last good price
@@ -52,14 +54,16 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             }
 
             /*
-            * If the secondary oracle is live and both oracles have a similar price, conclude that the primary oracle's large price deviation between
-            * two consecutive rounds were likely a legitimate market price movement, so continue using primary oracle
+            * If the secondary oracle is live and both oracles have a similar price, conclude that the primary oracle's
+            * large price deviation between two consecutive rounds were likely a legitimate market price movement, so
+            * continue using primary oracle
             */
             if (_bothOraclesSimilarPrice(primaryOracleResponse.price, secondaryOracleResponse.price)) {
                 return _storePrice(primaryOracleResponse.price);
             }
 
-            // If secondary oracle is live but the oracles differ too much in price, conclude that primary oracle initial price deviation was
+            // If secondary oracle is live but the oracles differ too much in price, conclude that primary oracle
+            // initial price deviation was
             // an oracle failure and use secondary oracle price
             return _storePrice(secondaryOracleResponse.price);
         }
@@ -68,9 +72,18 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         return _storePrice(primaryOracleResponse.price);
     }
 
-    // --- Helper functions ---    
-    function _bothOraclesSimilarPrice(uint256 primaryOraclePrice, uint256 secondaryOraclePrice) internal pure returns (bool) {
-        // Get the relative price difference between the oracles. Use the lower price as the denominator, i.e. the reference for the calculation.
+    // --- Helper functions ---
+    
+    function _bothOraclesSimilarPrice(
+        uint256 primaryOraclePrice,
+        uint256 secondaryOraclePrice
+    )
+        internal
+        pure
+        returns (bool)
+    {
+        // Get the relative price difference between the oracles. Use the lower price as the denominator, i.e. the
+        // reference for the calculation.
         uint256 minPrice = Math.min(primaryOraclePrice, secondaryOraclePrice);
         uint256 maxPrice = Math.max(primaryOraclePrice, secondaryOraclePrice);
         uint256 percentPriceDifference = (maxPrice - minPrice) * MathUtils.DECIMAL_PRECISION / minPrice;
@@ -103,11 +116,11 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         if (address(_secondaryOracle) == address(0)) {
             revert InvalidSecondaryOracle();
         }
-        
+
         secondaryOracle = _secondaryOracle;
     }
 
-    function _storePrice(uint256 _currentPrice) internal returns(uint256) {
+    function _storePrice(uint256 _currentPrice) internal returns (uint256) {
         lastGoodPrice = _currentPrice;
         emit LastGoodPriceUpdated(_currentPrice);
         return _currentPrice;
