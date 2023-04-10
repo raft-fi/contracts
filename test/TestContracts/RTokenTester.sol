@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 
 import "../../contracts/RToken.sol";
+import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.sol";
 
 contract RTokenTester is RToken {
 
@@ -11,7 +12,7 @@ contract RTokenTester is RToken {
     constructor(
         IPositionManager _positionManager,
         address _feeRecipient
-    ) RToken(_positionManager, _feeRecipient) {}
+    ) RToken(address(_positionManager), _feeRecipient) {}
 
     function unprotectedMint(address _account, uint256 _amount) external {
         // No check on caller here

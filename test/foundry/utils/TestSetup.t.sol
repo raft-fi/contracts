@@ -26,7 +26,6 @@ contract TestSetup is Test {
 
     // Mocked contract addresses
     IPriceFeed public constant PRICE_FEED = IPriceFeed(address(12345));
-    IERC20 public constant COLLATERAL_TOKEN = IERC20(address(23456));
     IPositionManager public constant POSITION_MANAGER = IPositionManager(address(34567));
 
     // Collateral token mock

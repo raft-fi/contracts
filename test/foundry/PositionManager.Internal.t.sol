@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import "../TestContracts/PositionManagerTester.sol";
+import { PositionManagerTester } from "../TestContracts/PositionManagerTester.sol";
 import "./utils/TestSetup.t.sol";
 
 contract PositionManagerInternalTest is TestSetup {
@@ -19,7 +19,7 @@ contract PositionManagerInternalTest is TestSetup {
         super.setUp();
 
         positionManager =
-        new PositionManagerTester(PRICE_FEED, COLLATERAL_TOKEN, POSITIONS_SIZE, LIQUIDATION_PROTOCOL_FEE, new address[](0));
+        new PositionManagerTester(PRICE_FEED, collateralToken, POSITIONS_SIZE, LIQUIDATION_PROTOCOL_FEE, new address[](0));
 
         decayBaseRateSeconds = [
             0,

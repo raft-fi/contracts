@@ -4,9 +4,9 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
+import "./PositionManagerDependent.sol";
 import "./Interfaces/IRToken.sol";
 import "./FeeCollector.sol";
-import "./PositionManagerDependent.sol";
 
 contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCollector, IRToken {
     uint256 public constant override PERCENTAGE_BASE = 10_000;
@@ -17,7 +17,7 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
     /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownership to @param feeRecipient.
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
     /// @param feeRecipient Address of flash mint fee recipient.
-    constructor(IPositionManager positionManager, address feeRecipient)
+    constructor(address positionManager, address feeRecipient)
         ERC20Permit("R Stablecoin")
         ERC20("R Stablecoin", "R")
         PositionManagerDependent(positionManager)

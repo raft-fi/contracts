@@ -24,6 +24,8 @@
     "ethereumjs-util": "^7.0.9",
     "ethers": "^5.4.3",
     "solc": "^0.8.19",
+    "@tempus-labs/contracts": "^1.1.0",
+    "@tempus-labs/utils": "^1.1.2",
     "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {

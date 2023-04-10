@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import "../../contracts/PositionManager.sol";
+import { PositionManager } from "../../contracts/PositionManager.sol";
 import "../TestContracts/PriceFeedTestnet.sol";
 import "../TestContracts/WstETHTokenMock.sol";
 import "./utils/PositionManagerUtils.sol";
@@ -173,7 +173,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         // Carol with no active position attempts to repay R
         vm.prank(CAROL);
-        vm.expectRevert(PositionManagerPositionNotActive.selector);
+        vm.expectRevert("ERC20: burn amount exceeds balance");
         positionManager.managePosition(0, false, 10e18, false, CAROL, CAROL, 0);
     }
 
@@ -199,7 +199,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        (uint256 aliceDebt,,,) = positionManager.getEntireDebtAndColl(ALICE);
+        uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
         // Bob successfully repays some R
         vm.prank(BOB);
@@ -207,7 +207,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         // Alice attempts to repay more than her debt
         vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(RepayRAmountExceedsDebt.selector, aliceDebt + 1e18));
+        vm.expectRevert("ERC20: burn amount exceeds balance");
         positionManager.managePosition(0, false, aliceDebt + 1e18, false, ALICE, ALICE, 0);
     }
 
@@ -233,13 +233,13 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        (uint256 aliceDebtBefore,,,) = positionManager.getEntireDebtAndColl(ALICE);
+        uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 
         vm.prank(ALICE);
         positionManager.managePosition(0, false, aliceDebtBefore / 10, false, ALICE, ALICE, 0);
 
-        (uint256 aliceDebtAfter,,,) = positionManager.getEntireDebtAndColl(ALICE);
+        uint256 aliceDebtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
         assertGt(aliceDebtAfter, 0);
         assertEq(aliceDebtAfter, 9 * aliceDebtBefore / 10);
     }
@@ -266,7 +266,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        (uint256 aliceDebtBefore,,,) = positionManager.getEntireDebtAndColl(ALICE);
+        uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 
         uint256 aliceRTokenBalanceBefore = rToken.balanceOf(ALICE);

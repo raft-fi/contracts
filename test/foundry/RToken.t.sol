@@ -11,7 +11,7 @@ contract RTokenTest is TestSetup {
     function setUp() public override {
         super.setUp();
 
-        token = new RToken(POSITION_MANAGER, FEE_RECIPIENT);
+        token = new RToken(address(POSITION_MANAGER), FEE_RECIPIENT);
     }
 
     function testMaxFlashMint(uint256 simulatedTotalSupply) public {
