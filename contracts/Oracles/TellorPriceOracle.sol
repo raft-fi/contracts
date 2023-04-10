@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./Interfaces/ITellorPriceOracle.sol";
-import "./BasePriceOracle.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { ITellorPriceOracle, ITellor, PriceOracleResponse, TellorResponse } from "./Interfaces/ITellorPriceOracle.sol";
+import { BasePriceOracle } from "./BasePriceOracle.sol";
 
 contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
-
     ITellor public immutable override tellor;
-    
-    uint256 constant private TELLOR_DIGITS = 6;
-    
-    uint256 constant private ETHUSD_TELLOR_REQ_ID = 1;
+
+    uint256 private constant TELLOR_DIGITS = 6;
+
+    uint256 private constant ETHUSD_TELLOR_REQ_ID = 1;
 
     constructor(ITellor _tellor) {
         if (address(_tellor) == address(0)) {
@@ -20,17 +19,13 @@ contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
         tellor = ITellor(_tellor);
     }
 
-    function getPriceOracleResponse() external override view returns(PriceOracleResponse memory) {
+    function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
         TellorResponse memory _tellorResponse = _getCurrentTellorResponse();
 
         if (_tellorIsBroken(_tellorResponse) || _oracleIsFrozen(_tellorResponse.timestamp)) {
-            return(PriceOracleResponse(true, false, 0));
+            return (PriceOracleResponse(true, false, 0));
         }
-        return (PriceOracleResponse(
-            false,
-            false,
-           _scalePriceByDigits(_tellorResponse.value, TELLOR_DIGITS)
-        ));
+        return (PriceOracleResponse(false, false, _scalePriceByDigits(_tellorResponse.value, TELLOR_DIGITS)));
     }
 
     function _getCurrentTellorResponse() internal view returns (TellorResponse memory tellorResponse) {
@@ -63,6 +58,7 @@ contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
     }
 
     function _tellorIsBroken(TellorResponse memory _response) internal view returns (bool) {
-        return !_response.success || _response.timestamp == 0 || _response.timestamp > block.timestamp || _response.value == 0;
+        return !_response.success || _response.timestamp == 0 || _response.timestamp > block.timestamp
+            || _response.value == 0;
     }
 }

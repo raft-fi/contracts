@@ -4,8 +4,6 @@ pragma solidity ^0.8.19;
 import "../../Dependencies/ITellor.sol";
 import "./IPriceOracle.sol";
 
-error InvalidTellorAddress();
-
 struct TellorResponse {
     bool isRetrieved;
     uint256 value;
@@ -14,6 +12,13 @@ struct TellorResponse {
 }
 
 interface ITellorPriceOracle is IPriceOracle {
+    // --- Errors ---
+
+    /// @dev Emitted when the Tellor address is invalid.
+    error InvalidTellorAddress();
+
+    // --- Functions ---
+
     /// @dev Wrapper contract that calls the Tellor system.
-    function tellor() external returns(ITellor);
+    function tellor() external returns (ITellor);
 }

@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./Interfaces/IPriceOracle.sol";
+import { IPriceOracle } from "./Interfaces/IPriceOracle.sol";
 
 abstract contract BasePriceOracle is IPriceOracle {
-    
-    uint256 constant public override TIMEOUT = 4 hours;
+    uint256 public constant override TIMEOUT = 4 hours;
 
-    uint256 constant public override TARGET_DIGITS = 18;
+    uint256 public constant override TARGET_DIGITS = 18;
 
     function _oracleIsFrozen(uint256 responseTimestamp) internal view returns (bool) {
         return (block.timestamp - responseTimestamp) > TIMEOUT;
