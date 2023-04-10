@@ -427,19 +427,53 @@ contract PriceFeedTest is Test {
         assertEq(price, 100 * 10 ** 18);
     }
 
-    // Primary oracle price drop of >50% and secondary oracle live but not within 5% of primary: return secondary oracle
-    // price
+    // Primary oracle price drop of >50% and secondary oracle live but not within 5% of primary
     function testFetchPricePrimaryOraclePriceDropMoreThan50PercentSecondaryOraclePriceNotWithin5Percent() public {
+        // Oracle prices are greater than lastGoodPrice and primary oracle price is less than secondary oracle price
         priceFeed.setLastGoodPrice(2 * 10 ** 18);
-
         mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
         mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 50% from previous
-        mockTellor.setPrice(105_000_001); // Secondary oracle price drops to 105.000001: price difference with new
-            // primary oracle price is now > 5%
-
+        mockTellor.setPrice(105_000_001); // secondary oracle price drops to 105.000001
         priceFeed.fetchPrice();
         uint256 price = priceFeed.lastGoodPrice();
+        assertEq(price, 100 * 10 ** 18); // return primary oracle price
+
+        // Oracle prices are greater than lastGoodPrice and secondary oracle price is less than primary oracle price
+        priceFeed.setLastGoodPrice(2 * 10 ** 18);
+        mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
+        mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 50% from previous
+        mockTellor.setPrice(94_999_999); // Secondary oracle price drops to 94.999999
+        priceFeed.fetchPrice();
+        price = priceFeed.lastGoodPrice();
+        assertEq(price, 94_999_999 * 10 ** 12); // return secondary oracle price
+
+        // Oracle prices are lower than lastGoodPrice and primary oracle price is greater than secondary oracle price
+        priceFeed.setLastGoodPrice(250 * 10 ** 18);
+        mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
+        mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 50% from previous
+        mockTellor.setPrice(94_999_999); // Secondary oracle price drops to 94.999999
+        priceFeed.fetchPrice();
+        price = priceFeed.lastGoodPrice();
+        assertEq(price, 100 * 10 ** 18); // return primary oracle price
+
+        // Oracle prices are lower than lastGoodPrice and secondary oracle price is greater than primary oracle price
+        priceFeed.setLastGoodPrice(250 * 10 ** 18);
+        mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
+        mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 50% from previous
+        mockTellor.setPrice(105_000_001); // Secondary oracle price drops to 105.000001
+        priceFeed.fetchPrice();
+        price = priceFeed.lastGoodPrice();
         assertEq(price, 105_000_001 * 10 ** 12); // return secondary oracle price
+
+        // Primary oracle price is greater than lastGoodPrice and secondary oracle price is less than lastGoodPrice
+        // Return lastGoodPrice
+        priceFeed.setLastGoodPrice(2 * 10 ** 18);
+        mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
+        mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 50% from previous
+        mockTellor.setPrice(10 ** 6); // Secondary oracle price drops to 1
+        priceFeed.fetchPrice();
+        price = priceFeed.lastGoodPrice();
+        assertEq(price, 2 * 10 ** 18); // return lastGoodPrice
     }
 
     // Primary oracle price drop of >50% and secondary oracle frozen: return last good price

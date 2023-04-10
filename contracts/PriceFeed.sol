@@ -62,10 +62,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
                 return _storePrice(primaryOracleResponse.price);
             }
 
-            // If secondary oracle is live but the oracles differ too much in price, conclude that primary oracle
-            // initial price deviation was
-            // an oracle failure and use secondary oracle price
-            return _storePrice(secondaryOracleResponse.price);
+            // If both oracle are live and have different prices, return the price that is a lower changed between the two oracle's prices
+            return _storePrice(_getPriceWithLowerChange(primaryOracleResponse.price, secondaryOracleResponse.price));
         }
 
         // If primary oracle is working, return primary oracle current price
@@ -75,8 +73,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     // --- Helper functions ---
     
     function _bothOraclesSimilarPrice(
-        uint256 primaryOraclePrice,
-        uint256 secondaryOraclePrice
+        uint256 _primaryOraclePrice,
+        uint256 _secondaryOraclePrice
     )
         internal
         pure
@@ -84,8 +82,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     {
         // Get the relative price difference between the oracles. Use the lower price as the denominator, i.e. the
         // reference for the calculation.
-        uint256 minPrice = Math.min(primaryOraclePrice, secondaryOraclePrice);
-        uint256 maxPrice = Math.max(primaryOraclePrice, secondaryOraclePrice);
+        uint256 minPrice = Math.min(_primaryOraclePrice, _secondaryOraclePrice);
+        uint256 maxPrice = Math.max(_primaryOraclePrice, _secondaryOraclePrice);
         uint256 percentPriceDifference = (maxPrice - minPrice) * MathUtils.DECIMAL_PRECISION / minPrice;
 
         /*
@@ -93,6 +91,27 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         * the honest market price, as it is unlikely that both have been broken/hacked and are still in-sync.
         */
         return percentPriceDifference <= MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES;
+    }
+
+    // @dev Returns one of oracles' prices that deviates least from the last good price. 
+    //      If both oracles' prices are above the last good price, return the lower one.
+    //      If both oracles' prices are below the last good price, return the higher one.
+    //      Otherwise, return the last good price.
+    function _getPriceWithLowerChange(
+        uint256 _primaryOraclePrice,
+        uint256 _secondaryOraclePrice
+    ) 
+        internal
+        view
+        returns (uint256)
+    {
+        if (_primaryOraclePrice > lastGoodPrice && _secondaryOraclePrice > lastGoodPrice) {
+            return Math.min(_primaryOraclePrice, _secondaryOraclePrice);
+        }
+        if (_primaryOraclePrice < lastGoodPrice && _secondaryOraclePrice < lastGoodPrice) {
+            return Math.max(_primaryOraclePrice, _secondaryOraclePrice);
+        }
+        return lastGoodPrice;
     }
 
     function _setPrimaryOracle(IPriceOracle _primaryOracle) internal {
