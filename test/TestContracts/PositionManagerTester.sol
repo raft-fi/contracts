@@ -12,9 +12,10 @@ contract PositionManagerTester is PositionManager {
         IPriceFeed _priceFeed,
         IERC20 _collateralToken,
         uint256 _positionsSize,
-        uint256 _liquidationProtocolFee
+        uint256 _liquidationProtocolFee,
+        address[] memory delegates
     )
-        PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee)
+        PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee, delegates)
     {
     }
 

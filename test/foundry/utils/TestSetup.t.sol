@@ -32,7 +32,7 @@ contract TestSetup is Test {
     // Collateral token mock
     WstETHTokenMock public collateralToken;
 
-    function setUp() virtual public {
+    function setUp() public virtual {
         collateralToken = new WstETHTokenMock();
     }
 }

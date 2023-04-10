@@ -2,25 +2,25 @@
 pragma solidity 0.8.19;
 
 /// @dev Fee exceeded provided maximum fee percentage
-error FeeExceedsMaxFee(uint fee, uint amount, uint maxFeePercentage);
+error FeeExceedsMaxFee(uint256 fee, uint256 amount, uint256 maxFeePercentage);
 
 library MathUtils {
-    uint constant public DECIMAL_PRECISION = 1e18;
+    uint256 public constant DECIMAL_PRECISION = 1e18;
 
-    uint constant public MINUTES_IN_1000_YEARS = 1000 * 356 days / 1 minutes;
+    uint256 public constant MINUTES_IN_1000_YEARS = 1000 * 356 days / 1 minutes;
 
-    uint constant public _100pct = 1000000000000000000; // 1e18 == 100%
+    uint256 public constant _100pct = 1000000000000000000; // 1e18 == 100%
 
     // Minimum collateral ratio for individual positions
-    uint constant public MCR = 110 * _100pct / 100; // 110%
+    uint256 public constant MCR = 110 * _100pct / 100; // 110%
 
     // Amount of R to be locked in gas pool on opening positions
-    uint constant public R_GAS_COMPENSATION = 200e18;
+    uint256 public constant R_GAS_COMPENSATION = 200e18;
 
     // Minimum amount of net R debt a position must have
-    uint constant public MIN_NET_DEBT = 1800e18;
+    uint256 public constant MIN_NET_DEBT = 1800e18;
 
-    uint constant public PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
+    uint256 public constant PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
     /* Precision for Nominal ICR (independent of price). Rationale for the value:
      *
@@ -31,7 +31,7 @@ library MathUtils {
      * and will only truncate to 0 if the denominator is at least 1e20 times greater than the numerator.
      *
      */
-    uint internal constant NICR_PRECISION = 1e20;
+    uint256 internal constant NICR_PRECISION = 1e20;
 
     /*
     * Multiply two decimal numbers and use normal rounding rules:
@@ -40,7 +40,7 @@ library MathUtils {
     *
     * Used only inside the exponentiation, decPow().
     */
-    function decMul(uint x, uint y) internal pure returns (uint decProd) {
+    function decMul(uint256 x, uint256 y) internal pure returns (uint256 decProd) {
         decProd = (x * y + DECIMAL_PRECISION / 2) / DECIMAL_PRECISION;
     }
 
@@ -61,14 +61,14 @@ library MathUtils {
     * In function 1), the decayed base rate will be 0 for 1000 years or > 1000 years
     * In function 2), the difference in tokens issued at 1000 years and any time > 1000 years, will be negligible
     */
-    function decPow(uint _base, uint _minutes) internal pure returns (uint) {
-        if (_minutes > MINUTES_IN_1000_YEARS) {_minutes = MINUTES_IN_1000_YEARS;}  // cap to avoid overflow
+    function decPow(uint256 _base, uint256 _minutes) internal pure returns (uint256) {
+        if (_minutes > MINUTES_IN_1000_YEARS) _minutes = MINUTES_IN_1000_YEARS; // cap to avoid overflow
 
-        if (_minutes == 0) {return DECIMAL_PRECISION;}
+        if (_minutes == 0) return DECIMAL_PRECISION;
 
-        uint y = DECIMAL_PRECISION;
-        uint x = _base;
-        uint n = _minutes;
+        uint256 y = DECIMAL_PRECISION;
+        uint256 x = _base;
+        uint256 n = _minutes;
 
         // Exponentiation-by-squaring
         while (n > 1) {
@@ -82,28 +82,28 @@ library MathUtils {
         return decMul(x, y);
     }
 
-    function computeNominalCR(uint _coll, uint _debt) internal pure returns (uint) {
+    function computeNominalCR(uint256 _coll, uint256 _debt) internal pure returns (uint256) {
         if (_debt > 0) {
             return _coll * NICR_PRECISION / _debt;
         }
 
         // Return the maximal value for uint256 if the Position has a debt of 0. Represents "infinite" CR.
-        return type(uint).max;
+        return type(uint256).max;
     }
 
-    function computeCR(uint _coll, uint _debt, uint _price) internal pure returns (uint) {
+    function computeCR(uint256 _coll, uint256 _debt, uint256 _price) internal pure returns (uint256) {
         if (_debt > 0) {
             return _coll * _price / _debt;
         }
 
         // Return the maximal value for uint256 if the Position has a debt of 0. Represents "infinite" CR.
-        return type(uint).max;
+        return type(uint256).max;
     }
 
     // --- Gas compensation functions ---
 
     // Returns the composite debt (drawn debt + gas compensation) of a position, for the purpose of ICR calculation
-    function getCompositeDebt(uint _debt) internal pure returns (uint) {
+    function getCompositeDebt(uint256 _debt) internal pure returns (uint256) {
         return _debt + R_GAS_COMPENSATION;
     }
 
@@ -114,12 +114,12 @@ library MathUtils {
     }
 
     // Return the amount of collateralToken to be drawn from a position's collateral and sent as gas compensation.
-    function getCollGasCompensation(uint _entireColl) internal pure returns (uint) {
+    function getCollGasCompensation(uint256 _entireColl) internal pure returns (uint256) {
         return _entireColl / PERCENT_DIVISOR;
     }
 
-    function checkIfValidFee(uint _fee, uint _amount, uint _maxFeePercentage) internal pure {
-        uint feePercentage = _fee * DECIMAL_PRECISION / _amount;
+    function checkIfValidFee(uint256 _fee, uint256 _amount, uint256 _maxFeePercentage) internal pure {
+        uint256 feePercentage = _fee * DECIMAL_PRECISION / _amount;
 
         if (feePercentage > _maxFeePercentage) {
             revert FeeExceedsMaxFee(_fee, _amount, _maxFeePercentage);

@@ -5,8 +5,8 @@ import { IStEth } from "../../contracts/Dependencies/IStEth.sol";
 import { MathUtils } from "../../contracts/Dependencies/MathUtils.sol";
 import { IPositionManagerStEth, StEthPositionManager } from "../../contracts/StEthPositionManager.sol";
 import "./utils/TestSetup.t.sol";
-import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
-import { PriceFeedTestnet } from "../TestContracts/PriceFeedTestnet.sol";
+import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
+import {PriceFeedTestnet} from "../TestContracts/PriceFeedTestnet.sol";
 
 contract StEthPositionManagerTest is TestSetup {
     address public constant WSTETH_ADDRESS = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -23,7 +23,7 @@ contract StEthPositionManagerTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager =
-            new StEthPositionManager(priceFeed, IERC20(WSTETH_ADDRESS), POSITIONS_SIZE, LIQUIDATION_PROTOCOL_FEE);
+            new StEthPositionManager(priceFeed, IERC20(WSTETH_ADDRESS), POSITIONS_SIZE, LIQUIDATION_PROTOCOL_FEE, new address[](0));
         stEth = positionManager.stEth();
     }
 
@@ -197,7 +197,7 @@ contract StEthPositionManagerTest is TestSetup {
 
     function _depositETH(address _account, uint256 _amount) private {
         vm.startPrank(_account);
-        IStEth(address(stEth)).submit{ value: _amount }(ALICE);
+        IStEth(address(stEth)).submit{value: _amount}(ALICE);
         vm.stopPrank();
     }
 }

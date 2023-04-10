@@ -24,7 +24,8 @@ contract PositionManagerLiquidationTest is TestSetup {
             priceFeed,
             collateralToken,
             POSITIONS_SIZE,
-            LIQUIDATION_PROTOCOL_FEE
+            LIQUIDATION_PROTOCOL_FEE,
+            new address[](0)
         );
         rToken = positionManager.rToken();
 

@@ -24,7 +24,8 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             priceFeed,
             collateralToken,
             POSITIONS_SIZE,
-            LIQUIDATION_PROTOCOL_FEE
+            LIQUIDATION_PROTOCOL_FEE,
+            new address[](0)
         );
 
         collateralToken.mint(ALICE, 10e36);

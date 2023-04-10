@@ -24,7 +24,8 @@ contract PositionManagerAddCollateralTest is TestSetup {
             priceFeed,
             collateralToken,
             POSITIONS_SIZE,
-            LIQUIDATION_PROTOCOL_FEE
+            LIQUIDATION_PROTOCOL_FEE,
+            new address[](0)
         );
 
         collateralToken.mint(ALICE, 10e36);
@@ -104,8 +105,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, uint256 positionCollateralBefore,) =
-            positionManager.positions(ALICE);
+        (, uint256 positionCollateralBefore,) = positionManager.positions(ALICE);
 
         uint256 collateralTopUpAmount = 1 ether;
 
@@ -115,8 +115,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
-        (, uint256 positionCollateralAfter,) =
-            positionManager.positions(ALICE);
+        (, uint256 positionCollateralAfter,) = positionManager.positions(ALICE);
 
         assertEq(positionCollateralAfter, positionCollateralBefore + collateralTopUpAmount);
     }
