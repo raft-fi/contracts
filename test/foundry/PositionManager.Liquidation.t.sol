@@ -117,7 +117,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         uint256 price = priceFeed.getPrice();
 
         uint256 aliceICR = positionManager.getCurrentICR(ALICE, price);
-        assertEq(aliceICR, 105 * MathUtils._100pct / 100);
+        assertEq(aliceICR, 105 * MathUtils._100_PERCENT / 100);
 
         // Liquidate the position
         positionManager.liquidate(ALICE);
@@ -293,7 +293,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertGe(aliceICRAfter, MathUtils.MCR); // TODO OVDE PADA @MIJOVIC
         assertLe(bobICRAfter, MathUtils.MCR);
         assertLe(carolICRAfter, MathUtils.MCR);
-        
+
         /*
 
         // Though Bob's true ICR (including pending rewards) is below the MCR,

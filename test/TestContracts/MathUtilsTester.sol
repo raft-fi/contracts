@@ -28,8 +28,4 @@ contract MathUtilsTester {
     function callDecPow(uint _base, uint _n) external pure returns (uint) {
         return MathUtils.decPow(_base, _n);
     }
-
-    function getCompositeDebt(uint _debt) external pure returns (uint) {
-        return MathUtils.getCompositeDebt(_debt);
-    }
 }

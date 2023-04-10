@@ -345,12 +345,4 @@ contract MathUtilsTest is Test {
 
         assertEq(MathUtils.computeCR(coll, debt, price), type(uint256).max);
     }
-
-    // --- getCompositeDebt() ---
-
-    // Returns composite debt
-    function testGetCompositeDebt(uint256 debt) public {
-        debt = bound(debt, 0, 10e50);
-        assertEq(MathUtils.getCompositeDebt(debt), debt + MathUtils.R_GAS_COMPENSATION);
-    }
 }

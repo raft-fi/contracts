@@ -33,7 +33,7 @@ contract PositionManagerTester is PositionManager {
 
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
         baseRate = _calcDecayedBaseRate();
-        assert(baseRate >= 0 && baseRate <= MathUtils.DECIMAL_PRECISION);
+        assert(baseRate >= 0 && baseRate <= MathUtils._100_PERCENT);
 
         _updateLastFeeOpTime();
         return baseRate;
