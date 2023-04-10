@@ -55,24 +55,23 @@ error PositionsNICRZero();
 *   The list relies on the property that ordering by ICR is maintained as the collateralToken:USD price varies.
 */
 library SortedPositions {
-
     event NodeAdded(address _id, uint256 _NICR);
     event NodeRemoved(address _id);
 
     // Information for a node in the list
     struct Node {
         bool exists;
-        address nextId;                  // Id of next node (smaller NICR) in the list
-        address prevId;                  // Id of previous node (larger NICR) in the list
+        address nextId; // Id of next node (smaller NICR) in the list
+        address prevId; // Id of previous node (larger NICR) in the list
     }
 
     // Information for the list
     struct Data {
-        address first;                       // First element of the list. Also the node in the list with the largest NICR
-        address last;                        // Last element of the list. Also the node in the list with the smallest NICR
-        uint256 maxSize;                     // Maximum size of the list
-        uint256 size;                        // Current size of the list
-        mapping (address => Node) nodes;     // Track the corresponding ids for each node in the list
+        address first; // First element of the list. Also the node in the list with the largest NICR
+        address last; // Last element of the list. Also the node in the list with the smallest NICR
+        uint256 maxSize; // Maximum size of the list
+        uint256 size; // Current size of the list
+        mapping(address => Node) nodes; // Track the corresponding ids for each node in the list
     }
 
     /*
@@ -82,7 +81,14 @@ library SortedPositions {
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
-    function insert(Data storage data, IPositionManager _positionManager, address _id, uint256 _NICR, address _prevId, address _nextId) private {
+    function insert(
+        Data storage data,
+        IPositionManager _positionManager,
+        address _id,
+        uint256 _NICR,
+        address _prevId,
+        address _nextId
+    ) private {
         if (data.size == data.maxSize) {
             revert PositionsListFull();
         }
@@ -105,7 +111,7 @@ library SortedPositions {
             (prevId, nextId) = findInsertPosition(data, _positionManager, _NICR, prevId, nextId);
         }
 
-         data.nodes[_id].exists = true;
+        data.nodes[_id].exists = true;
 
         if (prevId == address(0) && nextId == address(0)) {
             // Insert as first and last
@@ -182,7 +188,14 @@ library SortedPositions {
      * @param _prevId Id of previous node for the new insert position
      * @param _nextId Id of next node for the new insert position
      */
-    function update(Data storage data, IPositionManager _positionManager, address _id, uint256 _newNICR, address _prevId, address _nextId) internal {
+    function update(
+        Data storage data,
+        IPositionManager _positionManager,
+        address _id,
+        uint256 _newNICR,
+        address _prevId,
+        address _nextId
+    ) internal {
         if (_newNICR == 0) {
             revert PositionsNICRZero();
         }
@@ -200,7 +213,13 @@ library SortedPositions {
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
-    function validInsertPosition(Data storage data, IPositionManager _positionManager, uint256 _NICR, address _prevId, address _nextId) private view returns (bool) {
+    function validInsertPosition(
+        Data storage data,
+        IPositionManager _positionManager,
+        uint256 _NICR,
+        address _prevId,
+        address _nextId
+    ) private view returns (bool) {
         if (_prevId == address(0) && _nextId == address(0)) {
             // `(null, null)` is a valid insert position if the list is empty
             return data.size == 0;
@@ -212,9 +231,8 @@ library SortedPositions {
             return data.last == _prevId && _NICR <= _positionManager.getNominalICR(_prevId);
         } else {
             // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
-            return data.nodes[_prevId].nextId == _nextId &&
-                   _positionManager.getNominalICR(_prevId) >= _NICR &&
-                   _NICR >= _positionManager.getNominalICR(_nextId);
+            return data.nodes[_prevId].nextId == _nextId && _positionManager.getNominalICR(_prevId) >= _NICR
+                && _NICR >= _positionManager.getNominalICR(_nextId);
         }
     }
 
@@ -224,7 +242,11 @@ library SortedPositions {
      * @param _NICR Node's NICR
      * @param _startId Id of node to start descending the list from
      */
-    function _descendList(Data storage data, IPositionManager _positionManager, uint256 _NICR, address _startId) private view returns (address, address) {
+    function _descendList(Data storage data, IPositionManager _positionManager, uint256 _NICR, address _startId)
+        private
+        view
+        returns (address, address)
+    {
         // If `_startId` is the first, check if the insert position is before the first
         if (data.first == _startId && _NICR >= _positionManager.getNominalICR(_startId)) {
             return (address(0), _startId);
@@ -248,7 +270,11 @@ library SortedPositions {
      * @param _NICR Node's NICR
      * @param _startId Id of node to start ascending the list from
      */
-    function _ascendList(Data storage data, IPositionManager _positionManager, uint256 _NICR, address _startId) private view returns (address, address) {
+    function _ascendList(Data storage data, IPositionManager _positionManager, uint256 _NICR, address _startId)
+        private
+        view
+        returns (address, address)
+    {
         // If `_startId` is the last, check if the insert position is after the last
         if (data.last == _startId && _NICR <= _positionManager.getNominalICR(_startId)) {
             return (_startId, address(0));
@@ -272,7 +298,13 @@ library SortedPositions {
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
-    function findInsertPosition(Data storage data, IPositionManager _positionManager, uint256 _NICR, address _prevId, address _nextId) private view returns (address, address) {
+    function findInsertPosition(
+        Data storage data,
+        IPositionManager _positionManager,
+        uint256 _NICR,
+        address _prevId,
+        address _nextId
+    ) private view returns (address, address) {
         address prevId = _prevId;
         address nextId = _nextId;
 

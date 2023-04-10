@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import "../../../contracts/Dependencies/MathUtils.sol";
-import { IStEth } from "../../../contracts/Dependencies/IStEth.sol";
-import { IPositionManager } from "../../../contracts/Interfaces/IPositionManager.sol";
+import {IStEth} from "../../../contracts/Dependencies/IStEth.sol";
+import {IPositionManager} from "../../../contracts/Interfaces/IPositionManager.sol";
 import "../../../contracts/StEthPositionManager.sol";
 import "../../TestContracts/PriceFeedTestnet.sol";
 
@@ -78,10 +78,7 @@ library PositionManagerUtils {
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
         uint256 icr
-    )
-        internal
-        returns (OpenPositionResult memory result)
-    {
+    ) internal returns (OpenPositionResult memory result) {
         result = openPosition(
             positionManager, priceFeed, collateralToken, MathUtils._100pct, 0, address(0), address(0), icr, 0, ETHType.WSTETH
         );
@@ -108,10 +105,7 @@ library PositionManagerUtils {
         IERC20 collateralToken,
         uint256 extraRAmount,
         uint256 icr
-    )
-        internal
-        returns (OpenPositionResult memory result)
-    {
+    ) internal returns (OpenPositionResult memory result) {
         result = openPosition(
             positionManager,
             priceFeed,
@@ -133,10 +127,7 @@ library PositionManagerUtils {
         uint256 extraRAmount,
         uint256 icr,
         uint256 amount
-    )
-        internal
-        returns (OpenPositionResult memory result)
-    {
+    ) internal returns (OpenPositionResult memory result) {
         result = openPosition(
             positionManager,
             priceFeed,
@@ -206,10 +197,7 @@ library PositionManagerUtils {
         return result + 1;
     }
 
-    function getOpenPositionTotalDebt(
-        IPositionManager _positionManager,
-        uint256 rAmount
-    )
+    function getOpenPositionTotalDebt(IPositionManager _positionManager, uint256 rAmount)
         internal
         view
         returns (uint256)

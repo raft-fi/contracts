@@ -9,10 +9,7 @@ interface ITellor {
      * @param _requestId the requestId to look up
      * @return uint count of the number of values received for the requestId
      */
-    function getNewValueCountbyRequestId(uint256 _requestId)
-        external
-        view
-        returns (uint256);
+    function getNewValueCountbyRequestId(uint256 _requestId) external view returns (uint256);
 
     /**
      * @dev Gets the timestamp for the value based on their index
@@ -20,10 +17,7 @@ interface ITellor {
      * @param _index is the value index to look up
      * @return uint timestamp
      */
-    function getTimestampbyRequestIDandIndex(uint256 _requestID, uint256 _index)
-        external
-        view
-        returns (uint256);
+    function getTimestampbyRequestIDandIndex(uint256 _requestID, uint256 _index) external view returns (uint256);
 
     /**
      * @dev Retreive value from oracle based on timestamp
@@ -31,8 +25,5 @@ interface ITellor {
      * @param _timestamp to retreive data/value from
      * @return value for timestamp submitted
      */
-    function retrieveData(uint256 _requestId, uint256 _timestamp)
-        external
-        view
-        returns (uint256);
+    function retrieveData(uint256 _requestId, uint256 _timestamp) external view returns (uint256);
 }

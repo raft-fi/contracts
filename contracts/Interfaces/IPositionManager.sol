@@ -63,6 +63,12 @@ error RepayRAmountExceedsDebt(uint256 debt);
 /// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
 error LiquidationProtocolFeeOutOfBound();
 
+/// @dev The provided delegate address is invalid.
+error InvalidDelegateAddress();
+
+/// @dev A non-whitelisted delegate cannot adjust positions.
+error DelegateNotWhitelisted();
+
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
     /// @dev New PositionManager contract is deployed.
@@ -70,13 +76,7 @@ interface IPositionManager is IFeeCollector {
     /// @param collateralToken Address of the token used as collateral.
     /// @param rToken Address of the rToken used by position manager.
     /// @param feeRecipient Fee recipient address.
-    event PositionManagerDeployed(
-        IPriceFeed priceFeed,
-        IERC20 collateralToken,
-        IRToken rToken,
-        address feeRecipient
-    );
-
+    event PositionManagerDeployed(IPriceFeed priceFeed, IERC20 collateralToken, IRToken rToken, address feeRecipient);
 
     /// @dev New position is created in Raft.
     /// @param position Address of the user opening new position.
@@ -101,7 +101,7 @@ interface IPositionManager is IFeeCollector {
     /// @dev Borrowing fee is paid. Emitted only if actual fee was paid, doesn't happen with no fees paid.
     /// @param position Address of position owner that triggered fee payment.
     /// @param feeAmount Amount of tokens paid as borrowing fee.
-    event RBorrowingFeePaid(address indexed position, uint feeAmount);
+    event RBorrowingFeePaid(address indexed position, uint256 feeAmount);
 
     /// @dev Liquidation was executed.
     /// @param liquidator Liquidator that executed liquidation sequence.
@@ -131,12 +131,12 @@ interface IPositionManager is IFeeCollector {
     event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
 
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
-    event BaseRateUpdated(uint _baseRate);
-    event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
+    event BaseRateUpdated(uint256 _baseRate);
+    event LastFeeOpTimeUpdated(uint256 _lastFeeOpTime);
     event StakesUpdated(address _borrower, uint256 _newStake, uint256 _newTotalStakes);
-    event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
-    event LTermsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
-    event PositionSnapshotsUpdated(uint _L_CollateralBalance, uint _L_RDebt);
+    event SystemSnapshotsUpdated(uint256 _totalStakesSnapshot, uint256 _totalCollateralSnapshot);
+    event LTermsUpdated(uint256 _L_CollateralBalance, uint256 _L_RDebt);
+    event PositionSnapshotsUpdated(uint256 _L_CollateralBalance, uint256 _L_RDebt);
 
     struct LiquidationTotals {
         uint256 collGasCompensation;
@@ -157,22 +157,27 @@ interface IPositionManager is IFeeCollector {
     function collateralToken() external view returns (IERC20);
     function rToken() external view returns (IRToken);
     function priceFeed() external view returns (IPriceFeed);
+    function globalDelegateWhitelist(address delegate) external view returns (bool isWhitelisted);
+    function individualDelegateWhitelist(address borrower, address delegate) external view returns (bool isWhitelisted);
 
-    function positions(address _borrower) external view returns (uint debt, uint coll, uint stake);
+    function positions(address _borrower) external view returns (uint256 debt, uint256 coll, uint256 stake);
 
     function sortedPositions() external view returns (address first, address last, uint256 maxSize, uint256 size);
 
-    function sortedPositionsNodes(address _id) external view returns(bool exists, address nextId, address prevId);
+    function sortedPositionsNodes(address _id) external view returns (bool exists, address nextId, address prevId);
 
     function totalStakes() external view returns (uint256);
     function totalStakesSnapshot() external view returns (uint256);
 
     function totalCollateralSnapshot() external view returns (uint256);
 
-    function rewardSnapshots(address _borrower) external view returns (uint256 collateralBalance, uint256 debtBalance);
+    function rewardSnapshots(address _borrower)
+        external
+        view
+        returns (uint256 collateralBalance, uint256 debtBalance);
 
-    function getNominalICR(address _borrower) external view returns (uint);
-    function getCurrentICR(address _borrower, uint _price) external view returns (uint);
+    function getNominalICR(address _borrower) external view returns (uint256);
+    function getCurrentICR(address _borrower, uint256 _price) external view returns (uint256);
 
     function liquidate(address _borrower) external;
     function batchLiquidatePositions(address[] calldata _positionArray) external;
@@ -181,44 +186,56 @@ interface IPositionManager is IFeeCollector {
     function L_RDebt() external view returns (uint256);
 
     function redeemCollateral(
-        uint _rAmount,
+        uint256 _rAmount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
-        uint _partialRedemptionHintNICR,
-        uint _maxIterations,
-        uint _maxFee
+        uint256 _partialRedemptionHintNICR,
+        uint256 _maxIterations,
+        uint256 _maxFee
     ) external;
 
-    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price) external view returns (LiquidationTotals memory totals);
+    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price)
+        external
+        view
+        returns (LiquidationTotals memory totals);
 
-    function getPendingCollateralTokenReward(address _borrower) external view returns (uint);
+    function getPendingCollateralTokenReward(address _borrower) external view returns (uint256);
 
-    function getPendingRDebtReward(address _borrower) external view returns (uint);
+    function getPendingRDebtReward(address _borrower) external view returns (uint256);
 
     function hasPendingRewards(address _borrower) external view returns (bool);
 
-    function getEntireDebtAndColl(address _borrower) external view returns (
-        uint debt,
-        uint coll,
-        uint pendingRDebtReward,
-        uint pendingCollateralTokenReward
-    );
+    function getEntireDebtAndColl(address _borrower)
+        external
+        view
+        returns (uint256 debt, uint256 coll, uint256 pendingRDebtReward, uint256 pendingCollateralTokenReward);
 
-    function getRedemptionRate() external view returns (uint);
-    function getRedemptionRateWithDecay() external view returns (uint);
+    function getRedemptionRate() external view returns (uint256);
+    function getRedemptionRateWithDecay() external view returns (uint256);
 
-    function getRedemptionFeeWithDecay(uint _collateralTokenDrawn) external view returns (uint);
+    function getRedemptionFeeWithDecay(uint256 _collateralTokenDrawn) external view returns (uint256);
 
     function borrowingSpread() external view returns (uint256);
     function setBorrowingSpread(uint256 _borrowingSpread) external;
 
-    function getBorrowingRate() external view returns (uint);
-    function getBorrowingRateWithDecay() external view returns (uint);
+    function getBorrowingRate() external view returns (uint256);
+    function getBorrowingRateWithDecay() external view returns (uint256);
 
     function getBorrowingFee(uint rDebt) external view returns (uint);
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
     
+    function managePosition(
+        address _borrower,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _rChange,
+        bool _isDebtIncrease,
+        address _upperHint,
+        address _lowerHint,
+        uint256 _maxFeePercentage
+    ) external;
+
     function managePosition(
         uint256 _collChange,
         bool _isCollIncrease,
@@ -228,4 +245,6 @@ interface IPositionManager is IFeeCollector {
         address _lowerHint,
         uint256 _maxFeePercentage
     ) external;
+
+    function whitelistDelegate(address delegate) external;
 }

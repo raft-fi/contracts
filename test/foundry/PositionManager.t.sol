@@ -21,11 +21,95 @@ contract PositionManagerTest is TestSetup {
             priceFeed,
             collateralToken,
             POSITIONS_SIZE,
-            LIQUIDATION_PROTOCOL_FEE
+            LIQUIDATION_PROTOCOL_FEE,
+            new address[](0)
         );
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
+    }
+
+    // --- Delegates ---
+
+    function testGlobalDelegates() public {
+        address[] memory globalDelegates = new address[](1);
+        globalDelegates[0] = address(BOB);
+        collateralToken.mint(ALICE, 10 ether);
+        PositionManager positionManager2 = new PositionManager(
+            priceFeed,
+            collateralToken,
+            POSITIONS_SIZE,
+            LIQUIDATION_PROTOCOL_FEE,
+            globalDelegates
+        );
+
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager2,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 collateralTopUpAmount = 1 ether;
+
+        vm.prank(ALICE);
+        collateralToken.approve(address(positionManager2), collateralTopUpAmount);
+        vm.prank(BOB);
+        positionManager2.managePosition(ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+    }
+
+    function testIndividualDelegates() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        vm.prank(ALICE);
+        positionManager.whitelistDelegate(BOB);
+
+        uint256 collateralTopUpAmount = 1 ether;
+        vm.prank(ALICE);
+        collateralToken.approve(address(positionManager), collateralTopUpAmount);
+        vm.prank(BOB);
+        positionManager.managePosition(ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+    }
+
+    function testNonDelegateCannotManagePosition() public {
+        uint256 collateralTopUpAmount = 1 ether;
+        vm.prank(ALICE);
+        collateralToken.approve(address(positionManager), collateralTopUpAmount);
+
+        vm.prank(BOB);
+        vm.expectRevert(DelegateNotWhitelisted.selector);
+        positionManager.managePosition(ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+    }
+
+    function testIndividualDelegateCannotManageOtherPositions() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        vm.prank(CAROL);
+        positionManager.whitelistDelegate(BOB);
+
+        uint256 collateralTopUpAmount = 1 ether;
+        vm.prank(ALICE);
+        collateralToken.approve(address(positionManager), collateralTopUpAmount);
+
+        vm.prank(BOB);
+        vm.expectRevert(DelegateNotWhitelisted.selector);
+        positionManager.managePosition(ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
     }
 
     // --- Borrowing Spread ---
