@@ -14,11 +14,19 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
     uint256 public override lastGoodPrice;
 
-    uint256 public constant override MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 5e16; // 5%
+    uint256 public override priceDifferenceBetweenOracles;
 
-    constructor(IPriceOracle _primaryOracle, IPriceOracle _secondaryOracle) {
+    uint256 private constant MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e15; // 0.1%
+    uint256 private constant MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e17; // 10%
+
+    constructor(
+        IPriceOracle _primaryOracle, 
+        IPriceOracle _secondaryOracle, 
+        uint256 _priceDifferenceBetweenOracles
+    ) {
         _setPrimaryOracle(_primaryOracle);
         _setSecondaryOracle(_secondaryOracle);
+        _setPriceDifferenceBetweenOracle(_priceDifferenceBetweenOracles);
     }
 
     // --- Functions ---
@@ -29,6 +37,10 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
     function setSecondaryOracle(IPriceOracle _secondaryOracle) external override onlyOwner {
         _setSecondaryOracle(_secondaryOracle);
+    }
+
+    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external override onlyOwner {
+        _setPriceDifferenceBetweenOracle(_priceDifferenceBetweenOracles);
     }
 
     function fetchPrice() external override returns (uint256 price) {
@@ -77,7 +89,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         uint256 _secondaryOraclePrice
     )
         internal
-        pure
+        view
         returns (bool)
     {
         // Get the relative price difference between the oracles. Use the lower price as the denominator, i.e. the
@@ -90,7 +102,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         * Return true if the relative price difference is <= 3%: if so, we assume both oracles are probably reporting
         * the honest market price, as it is unlikely that both have been broken/hacked and are still in-sync.
         */
-        return percentPriceDifference <= MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES;
+        return percentPriceDifference <= priceDifferenceBetweenOracles;
     }
 
     // @dev Returns one of oracles' prices that deviates least from the last good price. 
@@ -137,6 +149,18 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         }
 
         secondaryOracle = _secondaryOracle;
+    }
+
+    function _setPriceDifferenceBetweenOracle(uint256 _priceDifferenceBetweenOracles) internal {
+        if (_priceDifferenceBetweenOracles < MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES 
+            || _priceDifferenceBetweenOracles > MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES
+        ) {
+            revert InvalidPriceDifferenceBetweenOracles();
+        }
+
+        priceDifferenceBetweenOracles = _priceDifferenceBetweenOracles;
+
+        emit PriceDifferenceBetweenOraclesUpdated(_priceDifferenceBetweenOracles);
     }
 
     function _storePrice(uint256 _currentPrice) internal returns (uint256) {

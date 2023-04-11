@@ -15,9 +15,9 @@ contract PriceFeedTestnet is IPriceFeed {
     IPriceOracle public override primaryOracle;
     IPriceOracle public override secondaryOracle;
 
-    uint public override lastGoodPrice;
+    uint256 public override lastGoodPrice;
 
-    uint constant public override MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 5e16; // 5%
+    uint256 public override priceDifferenceBetweenOracles;
 
     // --- Functions ---
 
@@ -45,5 +45,9 @@ contract PriceFeedTestnet is IPriceFeed {
 
     function setSecondaryOracle(IPriceOracle _secondaryOracle) external {
         
+    }
+
+    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external {
+
     }
 }
