@@ -6,7 +6,7 @@ import "../../contracts/PriceFeed.sol";
 
 contract PriceFeedTester is PriceFeed {
 
-    constructor(IPriceOracle _primaryOracle, IPriceOracle _secondaryOracle) PriceFeed(_primaryOracle, _secondaryOracle) {
+    constructor(IPriceOracle _primaryOracle, IPriceOracle _secondaryOracle) PriceFeed(_primaryOracle, _secondaryOracle, 5e16) {
     }
     
     function setLastGoodPrice(uint _lastGoodPrice) external {

@@ -35,15 +35,21 @@ contract PriceFeedTest is Test {
 
     function testCannotCreateContract() public {
         vm.expectRevert(IPriceFeed.InvalidPrimaryOracle.selector);
-        new PriceFeed(IPriceOracle(address(0)), IPriceOracle(address(0)));
+        new PriceFeed(IPriceOracle(address(0)), IPriceOracle(address(0)), 5e16);
 
         MockChainlink newMockChainlink = new MockChainlink();
         ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(newMockChainlink);
         vm.expectRevert(IPriceFeed.PrimaryOracleBrokenOrFrozenOrBadResult.selector);
-        new PriceFeed(newChainlinkPriceOracle, IPriceOracle(address(0)));
+        new PriceFeed(newChainlinkPriceOracle, IPriceOracle(address(0)), 5e16);
 
         vm.expectRevert(IPriceFeed.InvalidSecondaryOracle.selector);
-        new PriceFeed(chainlinkPriceOracle, IPriceOracle(address(0)));
+        new PriceFeed(chainlinkPriceOracle, IPriceOracle(address(0)), 5e16);
+
+        vm.expectRevert(IPriceFeed.InvalidPriceDifferenceBetweenOracles.selector);
+        new PriceFeed(chainlinkPriceOracle, tellorPriceOracle, 1e15 - 1);
+
+        vm.expectRevert(IPriceFeed.InvalidPriceDifferenceBetweenOracles.selector);
+        new PriceFeed(chainlinkPriceOracle, tellorPriceOracle, 1e17 + 1);
     }
 
     function testSetPrimaryOracle() public {
@@ -84,6 +90,29 @@ contract PriceFeedTest is Test {
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
         priceFeed.setSecondaryOracle(newTellorPriceOracle);
+    }
+
+    function testSetPriceDifferenceBetweenOracles() public {
+        priceFeed.setPriceDifferenceBetweenOracles(1e15);
+        assertEq(priceFeed.priceDifferenceBetweenOracles(), 1e15);
+
+        priceFeed.setPriceDifferenceBetweenOracles(1e16);
+        assertEq(priceFeed.priceDifferenceBetweenOracles(), 1e16);
+
+        priceFeed.setPriceDifferenceBetweenOracles(1e17);
+        assertEq(priceFeed.priceDifferenceBetweenOracles(), 1e17);
+    }
+
+    function testCannotSetPriceDifferenceBetweenOracle() public {
+        vm.expectRevert(IPriceFeed.InvalidPriceDifferenceBetweenOracles.selector);
+        priceFeed.setPriceDifferenceBetweenOracles(1e15 - 1);
+
+        vm.expectRevert(IPriceFeed.InvalidPriceDifferenceBetweenOracles.selector);
+        priceFeed.setPriceDifferenceBetweenOracles(1e17 + 1);
+
+        vm.prank(randomAddress);
+        vm.expectRevert("Ownable: caller is not the owner");
+        priceFeed.setPriceDifferenceBetweenOracles(1e16);
     }
 
     // Primary oracle working: fetchPrice should return the correct price, taking into account the number of decimal
