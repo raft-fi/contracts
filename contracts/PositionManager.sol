@@ -285,7 +285,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             positions[_borrower].coll += _collChange;
             _activePoolCollateralBalance += _collChange;
             if (_needsCollTransfer) {
-                collateralToken.transferFrom(_borrower, address(this), _collChange);
+                collateralToken.transferFrom(msg.sender, address(this), _collChange);
             }
         } else {
             positions[_borrower].coll -= _collChange;
