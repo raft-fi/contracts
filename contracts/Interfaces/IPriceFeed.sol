@@ -27,6 +27,14 @@ interface IPriceFeed {
     /// @param _priceDifferenceBetweenOracles New price difference between oracles.
     event PriceDifferenceBetweenOraclesUpdated(uint256 _priceDifferenceBetweenOracles);
 
+    /// @dev Emitted when primary oracle is updated.
+    /// @param _primaryOracle New primary oracle.
+    event PrimaryOracleUpdated(IPriceOracle _primaryOracle);
+
+    /// @dev Emitted when secondary oracle is updated.
+    /// @param _secondaryOracle New secondary oracle.
+    event SecondaryOracleUpdated(IPriceOracle _secondaryOracle);
+
     // --- Functions ---
 
     /// @dev Return primary oracle address.

@@ -141,6 +141,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
         // Get an initial price from primary oracle to serve as first reference for lastGoodPrice
         _storePrice(primaryOracleResponse.price);
+
+        emit PrimaryOracleUpdated(_primaryOracle);
     }
 
     function _setSecondaryOracle(IPriceOracle _secondaryOracle) internal {
@@ -149,6 +151,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         }
 
         secondaryOracle = _secondaryOracle;
+
+        emit SecondaryOracleUpdated(_secondaryOracle);
     }
 
     function _setPriceDifferenceBetweenOracle(uint256 _priceDifferenceBetweenOracles) internal {
