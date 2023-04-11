@@ -14,7 +14,7 @@ import { BasePriceOracle } from "./BasePriceOracle.sol";
 contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
     AggregatorV3Interface public immutable override priceAggregator;
 
-    uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 5e17; // 50%
+    uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
 
     constructor(AggregatorV3Interface _priceAggregatorAddress) {
         if (address(_priceAggregatorAddress) == address(0)) {

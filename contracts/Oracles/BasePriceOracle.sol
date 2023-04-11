@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { IPriceOracle } from "./Interfaces/IPriceOracle.sol";
 
 abstract contract BasePriceOracle is IPriceOracle {
-    uint256 public constant override TIMEOUT = 4 hours;
+    uint256 public constant override TIMEOUT = 3 hours;
 
     uint256 public constant override TARGET_DIGITS = 18;
 
