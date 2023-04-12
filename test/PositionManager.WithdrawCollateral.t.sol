@@ -313,8 +313,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             priceFeed: priceFeed,
             collateralToken: collateralToken,
             extraRAmount: 0,
-            icr: 2e18,
-            amount: 2 ether
+            icr: 2e18
         });
         vm.stopPrank();
 
