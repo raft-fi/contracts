@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
-import "./PositionManagerDependent.sol";
-import "./Interfaces/IRToken.sol";
-import "./FeeCollector.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import {ERC20FlashMint, IERC3156FlashLender} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
+import {PositionManagerDependent} from "./PositionManagerDependent.sol";
+import {IRToken, FlashFeePercentageTooBig} from "./Interfaces/IRToken.sol";
+import {FeeCollector} from "./FeeCollector.sol";
 
 contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCollector, IRToken {
     uint256 public constant override PERCENTAGE_BASE = 10_000;

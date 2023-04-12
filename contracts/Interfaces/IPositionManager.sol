@@ -2,10 +2,11 @@
 
 pragma solidity 0.8.19;
 
-import "./IRToken.sol";
-import "./IERC20Indexable.sol";
-import "./IFeeCollector.sol";
-import "./IPriceFeed.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IRToken} from "./IRToken.sol";
+import {IERC20Indexable} from "./IERC20Indexable.sol";
+import {IFeeCollector} from "./IFeeCollector.sol";
+import {IPriceFeed} from "./IPriceFeed.sol";
 
 /// @dev Max fee percentage must be between borrowing spread and 100%.
 error PositionManagerInvalidMaxFeePercentage();
@@ -67,7 +68,7 @@ error InvalidDelegateAddress();
 error DelegateNotWhitelisted();
 
 /// @dev Fee exceeded provided maximum fee percentage
-error FeeExceedsMaxFee(uint fee, uint amount, uint maxFeePercentage);
+error FeeExceedsMaxFee(uint256 fee, uint256 amount, uint256 maxFeePercentage);
 
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
@@ -86,7 +87,6 @@ interface IPositionManager is IFeeCollector {
         IERC20Indexable raftDebtToken,
         address feeRecipient
     );
-
 
     /// @dev New position is created in Raft.
     /// @param position Address of the user opening new position.
@@ -138,11 +138,13 @@ interface IPositionManager is IFeeCollector {
     event PositionLiquidated(address indexed position);
 
     event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
-    event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
+    event Redemption(
+        uint256 _attemptedRAmount, uint256 _actualRAmount, uint256 _collateralTokenSent, uint256 _collateralTokenFee
+    );
 
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
-    event BaseRateUpdated(uint _baseRate);
-    event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
+    event BaseRateUpdated(uint256 _baseRate);
+    event LastFeeOpTimeUpdated(uint256 _lastFeeOpTime);
 
     struct LiquidationTotals {
         uint256 collGasCompensation;
@@ -164,17 +166,20 @@ interface IPositionManager is IFeeCollector {
     function rToken() external view returns (IRToken);
     function priceFeed() external view returns (IPriceFeed);
     function globalDelegateWhitelist(address delegate) external view returns (bool isWhitelisted);
-    function individualDelegateWhitelist(address borrower, address delegate) external view returns (bool isWhitelisted);
+    function individualDelegateWhitelist(address borrower, address delegate)
+        external
+        view
+        returns (bool isWhitelisted);
 
     function raftDebtToken() external view returns (IERC20Indexable);
     function raftCollateralToken() external view returns (IERC20Indexable);
 
     function sortedPositions() external view returns (address first, address last, uint256 maxSize, uint256 size);
 
-    function sortedPositionsNodes(address _id) external view returns(bool exists, address nextId, address prevId);
+    function sortedPositionsNodes(address _id) external view returns (bool exists, address nextId, address prevId);
 
-    function getNominalICR(address _borrower) external view returns (uint);
-    function getCurrentICR(address _borrower, uint _price) external view returns (uint);
+    function getNominalICR(address _borrower) external view returns (uint256);
+    function getCurrentICR(address _borrower, uint256 _price) external view returns (uint256);
 
     function liquidate(address _borrower) external;
     function batchLiquidatePositions(address[] calldata _positionArray) external;
@@ -189,7 +194,10 @@ interface IPositionManager is IFeeCollector {
         uint256 _maxFee
     ) external;
 
-    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price) external view returns (LiquidationTotals memory totals);
+    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price)
+        external
+        view
+        returns (LiquidationTotals memory totals);
 
     function getRedemptionRate() external view returns (uint256);
     function getRedemptionRateWithDecay() external view returns (uint256);
@@ -202,8 +210,8 @@ interface IPositionManager is IFeeCollector {
     function getBorrowingRate() external view returns (uint256);
     function getBorrowingRateWithDecay() external view returns (uint256);
 
-    function getBorrowingFee(uint rDebt) external view returns (uint);
-    function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
+    function getBorrowingFee(uint256 rDebt) external view returns (uint256);
+    function getBorrowingFeeWithDecay(uint256 _rDebt) external view returns (uint256);
 
     function managePosition(
         address _borrower,

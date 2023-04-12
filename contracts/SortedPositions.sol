@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.19;
 
-import "./Interfaces/IPositionManager.sol";
-import "./PositionManagerDependent.sol";
+import {IPositionManager} from "./Interfaces/IPositionManager.sol";
+import {PositionManagerDependent} from "./PositionManagerDependent.sol";
 
 /// @dev Positions list size cannot be zero.
 error PositionsSizeZero();
@@ -35,7 +35,8 @@ error PositionsNICRZero();
 * NICRs are computed dynamically at runtime, and not stored on the Node. This is because NICRs of active Positions
 * change dynamically as liquidation events occur.
 *
-* The list relies on the fact that liquidation events preserve ordering: a liquidation decreases the NICRs of all active Positions,
+* The list relies on the fact that liquidation events preserve ordering: a liquidation decreases the NICRs of all active
+Positions,
 * but maintains their order. A node inserted based on current NICR will maintain the correct position,
 * relative to it's peers, as rewards accumulate, as long as it's raw collateral and debt have not changed.
 * Thus, Nodes remain sorted by current NICR.
@@ -51,9 +52,9 @@ error PositionsNICRZero();
 *
 * - Keys have been removed from nodes
 *
-* - Ordering checks for insertion are performed by comparing an NICR argument to the current NICR, calculated at runtime.
-*   The list relies on the property that ordering by ICR is maintained as the collateralToken:USD price varies.
-*/
+* - Ordering checks for insertion are performed by comparing an NICR argument to the current NICR, calculated at
+runtime.
+*   The list relies on the property that ordering by ICR is maintained as the collateralToken:USD price varies.*/
 library SortedPositions {
     event NodeAdded(address _id, uint256 _NICR);
     event NodeRemoved(address _id);
@@ -81,6 +82,7 @@ library SortedPositions {
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
+    // solhint-disable-next-line code-complexity
     function insert(
         Data storage data,
         IPositionManager _positionManager,
@@ -230,7 +232,8 @@ library SortedPositions {
             // `(_prevId, null)` is a valid insert position if `_prevId` is the last of the list
             return data.last == _prevId && _NICR <= _positionManager.getNominalICR(_prevId);
         } else {
-            // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
+            // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the
+            // two nodes' NICRs
             return data.nodes[_prevId].nextId == _nextId && _positionManager.getNominalICR(_prevId) >= _NICR
                 && _NICR >= _positionManager.getNominalICR(_nextId);
         }

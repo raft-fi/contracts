@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import "../contracts/RToken.sol";
-import "./utils/TestSetup.t.sol";
+import {CallerIsNotPositionManager} from "../contracts/Interfaces/IPositionManagerDependent.sol";
+import {RToken, IRToken, FlashFeePercentageTooBig} from "../contracts/RToken.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract RTokenTest is TestSetup {
     IRToken public token;

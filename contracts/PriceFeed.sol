@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.19;
 
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { Fixed256x18 } from "@tempus-labs/contracts/math/Fixed256x18.sol";
-import { MathUtils } from "./Dependencies/MathUtils.sol";
-import { IPriceFeed } from "./Interfaces/IPriceFeed.sol";
-import { IPriceOracle, PriceOracleResponse } from "./Oracles/Interfaces/IPriceOracle.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {MathUtils} from "./Dependencies/MathUtils.sol";
+import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
+import {IPriceOracle, PriceOracleResponse} from "./Oracles/Interfaces/IPriceOracle.sol";
 
 contract PriceFeed is IPriceFeed, Ownable2Step {
     using Fixed256x18 for uint256;
@@ -22,11 +22,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     uint256 private constant MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e15; // 0.1%
     uint256 private constant MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e17; // 10%
 
-    constructor(
-        IPriceOracle _primaryOracle,
-        IPriceOracle _secondaryOracle,
-        uint256 _priceDifferenceBetweenOracles
-    ) {
+    constructor(IPriceOracle _primaryOracle, IPriceOracle _secondaryOracle, uint256 _priceDifferenceBetweenOracles) {
         _setPrimaryOracle(_primaryOracle);
         _setSecondaryOracle(_secondaryOracle);
         _setPriceDifferenceBetweenOracle(_priceDifferenceBetweenOracles);
@@ -77,7 +73,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
                 return _storePrice(primaryOracleResponse.price);
             }
 
-            // If both oracle are live and have different prices, return the price that is a lower changed between the two oracle's prices
+            // If both oracle are live and have different prices, return the price that is a lower changed between the
+            // two oracle's prices
             return _storePrice(_getPriceWithLowerChange(primaryOracleResponse.price, secondaryOracleResponse.price));
         }
 
@@ -87,10 +84,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
     // --- Helper functions ---
 
-    function _bothOraclesSimilarPrice(
-        uint256 _primaryOraclePrice,
-        uint256 _secondaryOraclePrice
-    )
+    function _bothOraclesSimilarPrice(uint256 _primaryOraclePrice, uint256 _secondaryOraclePrice)
         internal
         view
         returns (bool)
@@ -112,10 +106,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     //      If both oracles' prices are above the last good price, return the lower one.
     //      If both oracles' prices are below the last good price, return the higher one.
     //      Otherwise, return the last good price.
-    function _getPriceWithLowerChange(
-        uint256 _primaryOraclePrice,
-        uint256 _secondaryOraclePrice
-    )
+    function _getPriceWithLowerChange(uint256 _primaryOraclePrice, uint256 _secondaryOraclePrice)
         internal
         view
         returns (uint256)
@@ -159,8 +150,9 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     }
 
     function _setPriceDifferenceBetweenOracle(uint256 _priceDifferenceBetweenOracles) internal {
-        if (_priceDifferenceBetweenOracles < MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES
-            || _priceDifferenceBetweenOracles > MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES
+        if (
+            _priceDifferenceBetweenOracles < MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES
+                || _priceDifferenceBetweenOracles > MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES
         ) {
             revert InvalidPriceDifferenceBetweenOracles();
         }

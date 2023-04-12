@@ -1,0 +1,29 @@
+{
+  "name": "@raft-fi/contracts",
+  "description": "Foundry-based template for developing Solidity smart contracts",
+  "version": "1.0.0",
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.1",
+    "prettier": "^2.8.4",
+    "solhint": "^3.4.0"
+  },
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf cache out",
+    "lint": "yarn lint:sol && yarn prettier:check",
+    "lint:sol": "forge fmt --check && yarn solhint \"{script,contracts,test}/**/*.sol\"",
+    "lint:sol:write": "forge fmt && yarn solhint --fix \"{script,contracts,test}/**/*.sol\"",
+    "prettier:check": "prettier --check \"**/*.{json,md,yml}\"",
+    "prettier:write": "prettier --write \"**/*.{json,md,yml}\"",
+    "postinstall": "husky install && chmod +x .husky/*"
+  },
+  "lint-staged": {
+    "*.sol": [
+      "yarn lint:sol:write"
+    ],
+    "*.{json,md,yml}": [
+      "yarn prettier:write"
+    ]
+  }
+}

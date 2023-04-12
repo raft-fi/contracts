@@ -2,20 +2,20 @@
 
 pragma solidity 0.8.19;
 
-import "../../contracts/Interfaces/IRToken.sol";
+import {IRToken} from "../../contracts/Interfaces/IRToken.sol";
 
 contract RTokenCaller {
-    IRToken R;
+    IRToken public rToken;
 
-    function setR(IRToken _R) external {
-        R = _R;
+    function setR(IRToken _rToken) external {
+        rToken = _rToken;
     }
 
-    function rMint(address _account, uint _amount) external {
-        R.mint(_account, _amount);
+    function rMint(address _account, uint256 _amount) external {
+        rToken.mint(_account, _amount);
     }
 
-    function rBurn(address _account, uint _amount) external {
-        R.burn(_account, _amount);
+    function rBurn(address _account, uint256 _amount) external {
+        rToken.burn(_account, _amount);
     }
 }

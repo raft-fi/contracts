@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import { Fixed256x18 } from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
 
 library MathUtils {
     uint256 public constant MINUTES_IN_1000_YEARS = 1000 * 356 days / 1 minutes;
@@ -99,7 +99,7 @@ library MathUtils {
 
     // --- Gas compensation functions ---
 
-    function getNetDebt(uint _debt) internal pure returns (uint) {
+    function getNetDebt(uint256 _debt) internal pure returns (uint256) {
         unchecked {
             return _debt > R_GAS_COMPENSATION ? _debt - R_GAS_COMPENSATION : 0;
         }

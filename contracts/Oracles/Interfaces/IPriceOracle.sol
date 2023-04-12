@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 struct PriceOracleResponse {
     bool isBrokenOrFrozen;
@@ -8,7 +8,8 @@ struct PriceOracleResponse {
 }
 
 interface IPriceOracle {
-    /// @dev Maximum time period allowed since oracle latest round data timestamp, beyond which oracle is considered frozen.
+    /// @dev Maximum time period allowed since oracle latest round data timestamp, beyond which oracle is considered
+    /// frozen.
     function TIMEOUT() external view returns (uint256);
 
     /// @dev Used to convert a price answer to an 18-digit precision uint.

@@ -1,5 +1,4 @@
-eth-mutants
-===========
+# eth-mutants
 
 eth-mutants is a mutation testing tool for Solidity contracts.
 
@@ -14,7 +13,7 @@ npm install eth-mutants
 ```
 The `preflight` command will show the number of possible mutations found
 and print some compact diffs for each mutation. Use this to understand
-how long it may take to visit all mutations and please report any invalid 
+how long it may take to visit all mutations and please report any invalid
 ones.
 ```
 
@@ -29,9 +28,9 @@ This tools makes some important assumptions about your workspace, which should
 hold true for most Truffle-based projects, but I plan on adding options to
 override them soon:
 
- * Your contract files are in the `contracts/` directory
- * You run your tests with `npm test` which returns a non-zero error code in
-   case of failure.
+- Your contract files are in the `contracts/` directory
+- You run your tests with `npm test` which returns a non-zero error code in
+  case of failure.
 
 ## Mutators
 

@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import { PositionManager } from "../contracts/PositionManager.sol";
-import "./TestContracts/PriceFeedTestnet.sol";
-import "./TestContracts/WstETHTokenMock.sol";
-import "./utils/PositionManagerUtils.sol";
-import "./utils/TestSetup.t.sol";
+import {
+    IPositionManager,
+    PositionManagerPositionNotActive,
+    NothingToLiquidate
+} from "../contracts/Interfaces/IPositionManager.sol";
+import {IRToken} from "../contracts/Interfaces/IRToken.sol";
+import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
+import {PositionManager} from "../contracts/PositionManager.sol";
+import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
+import {WstETHTokenMock} from "./TestContracts/WstETHTokenMock.sol";
+import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
@@ -227,7 +233,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         rToken.mint(address(this), 1_000_000e18);
 
         vm.startPrank(ALICE);
-        PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPosition({
+        PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
@@ -237,7 +243,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(BOB);
-        PositionManagerUtils.OpenPositionResult memory bobPosition = PositionManagerUtils.openPosition({
+        PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
@@ -247,7 +253,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(CAROL);
-        PositionManagerUtils.OpenPositionResult memory carolPosition = PositionManagerUtils.openPosition({
+        PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,

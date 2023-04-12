@@ -1,44 +1,43 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "../../contracts/Dependencies/ITellor.sol";
+import {ITellor} from "../../contracts/Dependencies/ITellor.sol";
 
 contract MockTellor is ITellor {
-
     // --- Mock price data ---
 
-    bool didRetrieve = true; // default to a positive retrieval
-    uint private price;
-    uint private updateTime;
+    bool private didRetrieve = true; // default to a positive retrieval
+    uint256 private price;
+    uint256 private updateTime;
 
     bool private revertRequest;
 
     // --- Setters for mock price data ---
 
-    function setPrice(uint _price) external {
+    function setPrice(uint256 _price) external {
         price = _price;
     }
 
-      function setDidRetrieve(bool _didRetrieve) external {
+    function setDidRetrieve(bool _didRetrieve) external {
         didRetrieve = _didRetrieve;
     }
 
-    function setUpdateTime(uint _updateTime) external {
+    function setUpdateTime(uint256 _updateTime) external {
         updateTime = _updateTime;
     }
 
-      function setRevertRequest() external {
+    function setRevertRequest() external {
         revertRequest = !revertRequest;
     }
 
     // --- Mock data reporting functions ---
 
-    function getTimestampbyRequestIDandIndex(uint, uint) external view returns (uint) {
+    function getTimestampbyRequestIDandIndex(uint256, uint256) external view returns (uint256) {
         return updateTime;
     }
 
-    function getNewValueCountbyRequestId(uint) external view returns (uint) {
-        if (revertRequest) {require (1 == 0, "Tellor request reverted");}
+    function getNewValueCountbyRequestId(uint256) external view returns (uint256) {
+        if (revertRequest) require(1 == 0, "Tellor request reverted");
         return 1;
     }
 
