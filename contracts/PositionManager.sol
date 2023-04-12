@@ -234,24 +234,12 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (_isDebtIncrease) {
             uint256 debtChange = _rChange + _triggerBorrowingFee(_borrower, _rChange, _maxFeePercentage);
-            if (_newPosition) {
-                // New position is created here, so we need to add gas compensation
-                debtChange += MathUtils.R_GAS_COMPENSATION;
-                rToken.mint(address(this), MathUtils.R_GAS_COMPENSATION);
-            }
             raftDebtToken.mint(_borrower, debtChange);
             totalDebt += debtChange;
             rToken.mint(_borrower, _rChange);
         } else {
-            uint256 positionsDebt = raftDebtToken.balanceOf(_borrower);
-            uint256 netDebt = MathUtils.getNetDebt(positionsDebt);
-            uint256 debtToBurn = _rChange;
-            if (netDebt == _rChange) {
-                debtToBurn += MathUtils.R_GAS_COMPENSATION;
-                rToken.burn(address(this), MathUtils.R_GAS_COMPENSATION);
-            }
-            totalDebt -= debtToBurn;
-            raftDebtToken.burn(_borrower, debtToBurn);
+            totalDebt -= _rChange;
+            raftDebtToken.burn(_borrower, _rChange);
             rToken.burn(_borrower, _rChange);
         }
 
@@ -320,21 +308,19 @@ contract PositionManager is FeeCollector, IPositionManager {
     ) internal view returns (LiquidationTotals memory) {
         uint256 entirePositionDebt = raftDebtToken.balanceOf(borrower);
         uint256 entirePositionColl = raftCollateralToken.balanceOf(borrower);
+        bool isRedistribution = icr <= MathUtils._100_PERCENT;
 
-        oldLiquidationTotals.rGasCompensation += MathUtils.R_GAS_COMPENSATION;
-        if (icr <= MathUtils._100_PERCENT) {
-            // redistribution
-            uint256 collGasCompensation = MathUtils.getCollGasCompensation(entirePositionColl);
-            oldLiquidationTotals.collGasCompensation += collGasCompensation;
+        (uint256 collToSendToProtocol, uint256 collToSendToLiquidator) =
+            splitLiquidationCollateral(entirePositionColl, entirePositionDebt, price, isRedistribution);
+        oldLiquidationTotals.collToSendToProtocol += collToSendToProtocol;
+        oldLiquidationTotals.collToSendToLiquidator += collToSendToLiquidator;
+
+        if (isRedistribution) {
+            assert(collToSendToProtocol == 0);
             oldLiquidationTotals.debtToRedistribute += entirePositionDebt;
-            oldLiquidationTotals.collToRedistribute += entirePositionColl - collGasCompensation;
+            oldLiquidationTotals.collToRedistribute += entirePositionColl - collToSendToLiquidator;
         } else {
-            // offset
-            uint256 collToSendToProtocol =
-                _getCollLiquidationProtocolFee(entirePositionColl, entirePositionDebt, price, liquidationProtocolFee);
             oldLiquidationTotals.debtToOffset += entirePositionDebt;
-            oldLiquidationTotals.collToSendToProtocol += collToSendToProtocol;
-            oldLiquidationTotals.collToSendToLiquidator += entirePositionColl - collToSendToProtocol;
         }
 
         return (oldLiquidationTotals);
@@ -369,40 +355,28 @@ contract PositionManager is FeeCollector, IPositionManager {
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
         LiquidationTotals memory totals = _batchLiquidate(_positionArray);
 
-        if (totals.collGasCompensation + totals.collToRedistribute + totals.collToSendToLiquidator == 0) {
+        if (totals.collToRedistribute + totals.collToSendToLiquidator == 0) {
             revert NothingToLiquidate();
         }
 
-        // First send gas compenstion to user, this will require less capital from liquidator beforehand
-        _sendGasCompensation(msg.sender, totals.rGasCompensation, totals.collGasCompensation);
+        collateralToken.transfer(msg.sender, totals.collToSendToLiquidator);
+        collateralToken.transfer(feeRecipient, totals.collToSendToProtocol);
 
-        _offset(msg.sender, totals.debtToOffset, totals.collToSendToProtocol, totals.collToSendToLiquidator);
+        if (totals.debtToOffset != 0) {
+            rToken.burn(msg.sender, totals.debtToOffset);
+            totalDebt -= totals.debtToOffset;
+        }
+
         updateDebtAndCollIndex();
 
         emit Liquidation(
             msg.sender,
-            totals.collGasCompensation,
-            totals.rGasCompensation,
             totals.debtToOffset,
             totals.collToSendToProtocol,
             totals.collToSendToLiquidator,
             totals.debtToRedistribute,
             totals.collToRedistribute
         );
-    }
-
-    function _offset(
-        address liquidator,
-        uint256 debtToBurn,
-        uint256 collToSendToProtocol,
-        uint256 collToSendToLiquidator
-    ) internal {
-        if (debtToBurn == 0) return;
-
-        rToken.burn(liquidator, debtToBurn);
-        totalDebt -= debtToBurn;
-        collateralToken.transfer(liquidator, collToSendToLiquidator);
-        collateralToken.transfer(feeRecipient, collToSendToProtocol);
     }
 
     function _batchLiquidate(address[] memory _positionArray) internal returns (LiquidationTotals memory totals) {
@@ -419,17 +393,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
     }
 
-    // --- Liquidation helper functions ---
-    function _sendGasCompensation(address _liquidator, uint256 _R, uint256 _collateral) internal {
-        if (_R > 0) {
-            rToken.transfer(_liquidator, _R);
-        }
-
-        if (_collateral > 0) {
-            collateralToken.transfer(_liquidator, _collateral);
-        }
-    }
-
     // --- Redemption functions ---
 
     // Redeem as much collateral as possible from _borrower's Position in exchange for R up to _maxRamount
@@ -442,9 +405,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 _partialRedemptionHintNICR
     ) internal returns (uint256 rLot) {
         uint256 positionDebt = raftDebtToken.balanceOf(_borrower);
-        // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position minus the
-        // liquidation reserve
-        rLot = Math.min(_maxRamount, positionDebt - MathUtils.R_GAS_COMPENSATION);
+        // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position
+        rLot = Math.min(_maxRamount, positionDebt);
         uint256 collateralToRedeem = rLot.divDown(_price);
 
         // Decrease the debt and collateral of the current Position according to the R lot and corresponding
@@ -452,14 +414,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 newDebt = positionDebt - rLot;
         uint256 newColl = raftCollateralToken.balanceOf(_borrower) - collateralToRedeem;
 
-        if (newDebt == MathUtils.R_GAS_COMPENSATION) {
+        if (newDebt == 0) {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
             _removePositionFromSortedPositions(_borrower);
             raftDebtToken.burn(_borrower, type(uint256).max);
             raftCollateralToken.burn(_borrower, type(uint256).max);
-
-            rToken.burn(address(this), MathUtils.R_GAS_COMPENSATION);
-            totalDebt -= MathUtils.R_GAS_COMPENSATION;
             collateralToken.transfer(_borrower, newColl);
         } else {
             uint256 newNICR = MathUtils.computeNominalCR(newColl, newDebt);
@@ -470,7 +429,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             *
             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
             */
-            if (newNICR != _partialRedemptionHintNICR || MathUtils.getNetDebt(newDebt) < MathUtils.MIN_NET_DEBT) {
+            if (newNICR != _partialRedemptionHintNICR || newDebt < MathUtils.MIN_NET_DEBT) {
                 rLot = 0;
             } else {
                 sortedPositions.update(
@@ -769,18 +728,20 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     /// ---- Liquidation fee functions ---
 
-    function _getCollLiquidationProtocolFee(uint256 _entireColl, uint256 _entireDebt, uint256 _price, uint256 _fee)
+    function splitLiquidationCollateral(uint256 collateral, uint256 debt, uint256 price, bool isRedistribution)
         internal
-        pure
-        returns (uint256)
+        view
+        returns (uint256 collToSendToProtocol, uint256 collToSentToLiquidator)
     {
-        assert(_fee <= MathUtils._100_PERCENT);
-
-        // the value of the position's debt, denominated in collateral token
-        uint256 debtValue = _entireDebt.divDown(_price);
-        uint256 excessCollateral = _entireColl - debtValue;
-
-        return excessCollateral.mulDown(_fee);
+        if (isRedistribution) {
+            collToSendToProtocol = 0;
+            collToSentToLiquidator = collateral / 200;
+        } else {
+            uint256 debtValue = debt.divDown(price);
+            uint256 excessCollateral = collateral - debtValue;
+            collToSendToProtocol = excessCollateral.mulDown(liquidationProtocolFee);
+            collToSentToLiquidator = collateral - collToSendToProtocol;
+        }
     }
 
     // --- Helper functions ---
@@ -803,7 +764,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- 'Require' wrapper functions ---
 
     function checkValidPosition(address position) internal {
-        uint256 netDebt = MathUtils.getNetDebt(raftDebtToken.balanceOf(position));
+        uint256 netDebt = raftDebtToken.balanceOf(position);
         if (netDebt < MathUtils.MIN_NET_DEBT) {
             revert NetDebtBelowMinimum(netDebt);
         }

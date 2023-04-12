@@ -115,8 +115,6 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Liquidation was executed.
     /// @param liquidator Liquidator that executed liquidation sequence.
-    /// @param collGasCompensation Amount of collateral tokens sent to liquidator as gas compensation.
-    /// @param rGasCompensation Amount of R sent to liquidator as gas compensation.
     /// @param debtToOffset Total debt offset for the liquidation sequence.
     /// @param collToSendToProtocol Total collateral sent to protocol.
     /// @param collToSendToLiquidator Total collateral sent to liquidator.
@@ -124,8 +122,6 @@ interface IPositionManager is IFeeCollector {
     /// @param collToRedistribute Total collateral amount to redestribute to currently open positions.
     event Liquidation(
         address indexed liquidator,
-        uint256 collGasCompensation,
-        uint256 rGasCompensation,
         uint256 debtToOffset,
         uint256 collToSendToProtocol,
         uint256 collToSendToLiquidator,
@@ -147,8 +143,6 @@ interface IPositionManager is IFeeCollector {
     event LastFeeOpTimeUpdated(uint256 _lastFeeOpTime);
 
     struct LiquidationTotals {
-        uint256 collGasCompensation;
-        uint256 rGasCompensation;
         uint256 debtToOffset;
         uint256 collToSendToProtocol;
         uint256 collToSendToLiquidator;

@@ -12,13 +12,8 @@ library MathUtils {
     // Minimum collateral ratio for individual positions
     uint256 public constant MCR = 110 * _100_PERCENT / 100; // 110%
 
-    // Amount of R to be locked in gas pool on opening positions
-    uint256 public constant R_GAS_COMPENSATION = 200e18;
-
     // Minimum amount of net R debt a position must have
     uint256 public constant MIN_NET_DEBT = 1800e18;
-
-    uint256 public constant PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
     /* Precision for Nominal ICR (independent of price). Rationale for the value:
      *
@@ -95,18 +90,5 @@ library MathUtils {
 
         // Return the maximal value for uint256 if the Position has a debt of 0. Represents "infinite" CR.
         return type(uint256).max;
-    }
-
-    // --- Gas compensation functions ---
-
-    function getNetDebt(uint256 _debt) internal pure returns (uint256) {
-        unchecked {
-            return _debt > R_GAS_COMPENSATION ? _debt - R_GAS_COMPENSATION : 0;
-        }
-    }
-
-    // Return the amount of collateralToken to be drawn from a position's collateral and sent as gas compensation.
-    function getCollGasCompensation(uint256 _entireColl) internal pure returns (uint256) {
-        return _entireColl / PERCENT_DIVISOR;
     }
 }

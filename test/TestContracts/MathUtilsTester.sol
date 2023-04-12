@@ -11,10 +11,6 @@ contract MathUtilsTester {
         return MathUtils.MIN_NET_DEBT;
     }
 
-    function R_GAS_COMPENSATION() external pure returns (uint256) {
-        return MathUtils.R_GAS_COMPENSATION;
-    }
-
     function MCR() external pure returns (uint256) {
         return MathUtils.MCR;
     }
