@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
-import { IStEth } from "../contracts/Dependencies/IStEth.sol";
-import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
-import { IPositionManagerStEth, StEthPositionManager } from "../contracts/StEthPositionManager.sol";
-import "./utils/TestSetup.t.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IStEth} from "../contracts/Dependencies/IStEth.sol";
+import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
+import {IPositionManagerStEth, StEthPositionManager} from "../contracts/StEthPositionManager.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
 
@@ -22,8 +23,13 @@ contract StEthPositionManagerTest is TestSetup {
         vm.createSelectFork("mainnet", 16_974_953);
 
         priceFeed = new PriceFeedTestnet();
-        positionManager =
-            new StEthPositionManager(priceFeed, IERC20(WSTETH_ADDRESS), POSITIONS_SIZE, LIQUIDATION_PROTOCOL_FEE, new address[](0));
+        positionManager = new StEthPositionManager(
+            priceFeed,
+            IERC20(WSTETH_ADDRESS),
+            POSITIONS_SIZE,
+            LIQUIDATION_PROTOCOL_FEE,
+            new address[](0)
+        );
         stEth = positionManager.stEth();
     }
 

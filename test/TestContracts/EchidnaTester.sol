@@ -1,6 +1,5 @@
-// // SPDX-License-Identifier: MIT
-
-// pragma solidity 0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.19;
 
 // import "../PositionManager.sol";
 // import "../BorrowerOperations.sol";
@@ -13,13 +12,15 @@
 
 // // Run with:
 // // rm -f fuzzTests/corpus/* # (optional)
-// // ~/.local/bin/echidna-test contracts/TestContracts/EchidnaTester.sol --contract EchidnaTester --config fuzzTests/echidna_config.yaml
+// // ~/.local/bin/echidna-test contracts/TestContracts/EchidnaTester.sol --contract EchidnaTester --config
+// fuzzTests/echidna_config.yaml
 
 // contract EchidnaTester {
 //     uint constant private NUMBER_OF_ACTORS = 100;
 //     uint constant private INITIAL_BALANCE = 1e24;
 //     uint private MCR;
-//     uint constant private CCR = 1500000000000000000; // 150% TODO: delete when doing https://github.com/tempusfinance/raft/issues/17
+//     uint constant private CCR = 1500000000000000000; // 150% TODO: delete when doing
+// https://github.com/tempusfinance/raft/issues/17
 //     uint private R_GAS_COMPENSATION;
 
 //     PositionManager public positionManager;
@@ -116,7 +117,8 @@
 //         uint _partialRedemptionHintNICR
 //     ) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].redeemCollateralPrx(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint, _lowerPartialRedemptionHint, _partialRedemptionHintNICR, 0, 0);
+//         echidnaProxies[actor].redeemCollateralPrx(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint,
+// _lowerPartialRedemptionHint, _partialRedemptionHintNICR, 0, 0);
 //     }
 
 //     // Borrower Operations
@@ -162,7 +164,8 @@
 //         //assert(numberOfPositions == 0);
 //     }
 
-//     function openPositionRawExt(uint _i, uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) public {
+//     function openPositionRawExt(uint _i, uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint
+// _maxFee) public {
 //         uint actor = _i % NUMBER_OF_ACTORS;
 //         echidnaProxies[actor].openPositionPrx(_ETH, _rAmount, _upperHint, _lowerHint, _maxFee);
 //     }
@@ -202,7 +205,8 @@
 //         echidnaProxies[actor].closePositionPrx();
 //     }
 
-//     function adjustPositionExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease) external {
+//     function adjustPositionExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease)
+// external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
 //         EchidnaProxy echidnaProxy = echidnaProxies[actor];
 //         uint actorBalance = address(echidnaProxy).balance;
@@ -217,9 +221,11 @@
 //         echidnaProxy.adjustPositionPrx(ETH, _collWithdrawal, debtChange, _isDebtIncrease, address(0), address(0), 0);
 //     }
 
-//     function adjustPositionRawExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
+//     function adjustPositionRawExt(uint _i, uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease,
+// address _upperHint, address _lowerHint, uint _maxFee) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].adjustPositionPrx(_ETH, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFee);
+//         echidnaProxies[actor].adjustPositionPrx(_ETH, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint,
+// _lowerHint, _maxFee);
 //     }
 
 //     // Pool Manager
@@ -314,7 +320,8 @@
 //         address currentPosition = sortedPositions.getFirst();
 //         while (currentPosition != address(0)) {
 //             // Status
-//             if (PositionManager.Status(positionManager.getPositionStatus(currentPosition)) != PositionManager.Status.active) {
+//             if (PositionManager.Status(positionManager.getPositionStatus(currentPosition)) !=
+// PositionManager.Status.active) {
 //                 return false;
 //             }
 //             // Uncomment to check that the condition is meaningful

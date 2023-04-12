@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
-import "../../Dependencies/AggregatorV3Interface.sol";
-import "./IPriceOracle.sol";
+import {AggregatorV3Interface} from "../../Dependencies/AggregatorV3Interface.sol";
+import {IPriceOracle} from "./IPriceOracle.sol";
 
 struct ChainlinkResponse {
     uint80 roundId;

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import { PositionManagerTester } from "./TestContracts/PositionManagerTester.sol";
-import "./utils/TestSetup.t.sol";
+import {PositionManagerTester} from "./TestContracts/PositionManagerTester.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerInternalTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
@@ -13,13 +12,18 @@ contract PositionManagerInternalTest is TestSetup {
 
     uint40[] public decayBaseRateSeconds;
     uint256[] public decayBaseRates;
-    mapping(uint256 => uint256[]) public decayBaseRatesExpected;
+    mapping(uint256 decayBaseRate => uint256[] expected) public decayBaseRatesExpected;
 
     function setUp() public override {
         super.setUp();
 
-        positionManager =
-        new PositionManagerTester(PRICE_FEED, collateralToken, POSITIONS_SIZE, LIQUIDATION_PROTOCOL_FEE, new address[](0));
+        positionManager = new PositionManagerTester(
+            PRICE_FEED,
+            collateralToken,
+            POSITIONS_SIZE,
+            LIQUIDATION_PROTOCOL_FEE,
+            new address[](0)
+        );
 
         decayBaseRateSeconds = [
             0,

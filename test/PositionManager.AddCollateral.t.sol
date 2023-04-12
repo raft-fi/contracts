@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import "../contracts/PositionManager.sol";
-import "./TestContracts/PriceFeedTestnet.sol";
-import "./TestContracts/WstETHTokenMock.sol";
-import "./utils/PositionManagerUtils.sol";
-import "./utils/TestSetup.t.sol";
+import {
+    IPositionManager,
+    PositionManagerOnlyOnePositionInSystem,
+    NewICRLowerThanMCR
+} from "../contracts/Interfaces/IPositionManager.sol";
+import {PositionManager} from "../contracts/PositionManager.sol";
+import {PositionsListDoesNotContainNode} from "../contracts/SortedPositions.sol";
+import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
+import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
+import {WstETHTokenMock} from "./TestContracts/WstETHTokenMock.sol";
+import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerAddCollateralTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;

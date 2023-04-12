@@ -1,6 +1,5 @@
-// // SPDX-License-Identifier: MIT
-
-// pragma solidity 0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.19;
 
 // import "../PositionManager.sol";
 // import "../BorrowerOperations.sol";
@@ -48,11 +47,13 @@
 //         uint _maxIterations,
 //         uint _maxFee
 //     ) external {
-//         positionManager.redeemCollateral(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint, _lowerPartialRedemptionHint, _partialRedemptionHintNICR, _maxIterations, _maxFee);
+//         positionManager.redeemCollateral(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint,
+//             _lowerPartialRedemptionHint, _partialRedemptionHintNICR, _maxIterations, _maxFee);
 //     }
 
 //     // Borrower Operations
-//     function openPositionPrx(uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) external {
+//     function openPositionPrx(uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) external
+// {
 //         borrowerOperations.openPosition(_maxFee, _rAmount, _upperHint, _lowerHint, _ETH);
 //     }
 
@@ -76,8 +77,10 @@
 //         borrowerOperations.closePosition();
 //     }
 
-//     function adjustPositionPrx(uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
-//         borrowerOperations.adjustPosition(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _ETH);
+//     function adjustPositionPrx(uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease,
+//         address _upperHint, address _lowerHint, uint _maxFee) external {
+//         borrowerOperations.adjustPosition(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint,
+// _lowerHint, _ETH);
 //     }
 
 //     // Pool Manager

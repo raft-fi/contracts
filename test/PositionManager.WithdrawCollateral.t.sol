@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import { PositionManager } from "../contracts/PositionManager.sol";
-import "./TestContracts/PriceFeedTestnet.sol";
-import "./TestContracts/WstETHTokenMock.sol";
-import "./utils/PositionManagerUtils.sol";
-import "./utils/TestSetup.t.sol";
+import {IPositionManager, NewICRLowerThanMCR} from "../contracts/Interfaces/IPositionManager.sol";
+import {PositionManager} from "../contracts/PositionManager.sol";
+import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
+import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
+import {WstETHTokenMock} from "./TestContracts/WstETHTokenMock.sol";
+import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerWithdrawCollateralTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
@@ -195,7 +196,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             icr: MathUtils.MCR
         });
         vm.stopPrank();
-/*
+        /*
         // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
         vm.prank(BOB);
         vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils.MCR - 1));

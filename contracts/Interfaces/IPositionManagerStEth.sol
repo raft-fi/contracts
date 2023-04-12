@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import {IStEth} from "../Dependencies/IStEth.sol";
 import {IPositionManager} from "./IPositionManager.sol";
@@ -24,9 +24,7 @@ interface IPositionManagerStEth is IPositionManager {
         address _upperHint,
         address _lowerHint,
         uint256 _maxFeePercentage
-    )
-        external
-        payable;
+    ) external payable;
 
     /// @dev Manage position with ether, on behalf of a borrower
     /// @param _borrower The position to manage.
@@ -42,9 +40,7 @@ interface IPositionManagerStEth is IPositionManager {
         address _upperHint,
         address _lowerHint,
         uint256 _maxFeePercentage
-    )
-        external
-        payable;
+    ) external payable;
 
     /// @dev Manage position with stEth
     /// @param _collChange Amount of collateral to add or remove.

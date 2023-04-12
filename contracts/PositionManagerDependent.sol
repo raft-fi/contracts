@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "./Interfaces/IPositionManagerDependent.sol";
-
-/// @dev Caller is not Position Manager.
-error CallerIsNotPositionManager(address caller);
+import {IPositionManagerDependent, CallerIsNotPositionManager} from "./Interfaces/IPositionManagerDependent.sol";
 
 abstract contract PositionManagerDependent is IPositionManagerDependent {
     address public immutable override positionManager;

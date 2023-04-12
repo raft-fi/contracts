@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { ITellorPriceOracle, ITellor, PriceOracleResponse, TellorResponse } from "./Interfaces/ITellorPriceOracle.sol";
-import { BasePriceOracle } from "./BasePriceOracle.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {PriceOracleResponse} from "./Interfaces/IPriceOracle.sol";
+import {ITellorPriceOracle, ITellor, TellorResponse} from "./Interfaces/ITellorPriceOracle.sol";
+import {BasePriceOracle} from "./BasePriceOracle.sol";
 
 contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
     ITellor public immutable override tellor;

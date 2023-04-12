@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import "../contracts/Dependencies/MathUtils.sol";
+import {Test} from "forge-std/Test.sol";
+import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 
 contract MathUtilsTest is Test {
     // --- decPow() ---
@@ -60,7 +60,7 @@ contract MathUtilsTest is Test {
 
     // For exponent = 2, returns the square of the base
     function testDecPowExponentTwo() public {
-        uint80[10] memory bases = [1e18, 1.5e18, 0.5e18, 0.321e18, 4e18, 0.1e18, 0.01e18, 0.99e18, 125.435e18, 99999e18];
+        uint80[10] memory bases = [1e18, 1.5e18, 0.5e18, 0.321e18, 4e18, 1e17, 0.01e18, 0.99e18, 125.435e18, 99999e18];
 
         uint96[10] memory expected =
             [1e18, 2.25e18, 0.25e18, 0.103041e18, 16e18, 0.01e18, 0.0001e18, 0.9801e18, 15733.939225e18, 9999800001e18];

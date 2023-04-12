@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
-import { IPriceOracle } from "./Interfaces/IPriceOracle.sol";
+import {IPriceOracle} from "./Interfaces/IPriceOracle.sol";
 
 abstract contract BasePriceOracle is IPriceOracle {
     uint256 public constant override TIMEOUT = 3 hours;

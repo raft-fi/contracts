@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import {PositionManager } from "../contracts/PositionManager.sol";
-import "./utils/PositionManagerUtils.sol";
-import "./utils/TestSetup.t.sol";
+import {
+    IPositionManager,
+    DelegateNotWhitelisted,
+    BorrowingSpreadExceedsMaximum
+} from "../contracts/Interfaces/IPositionManager.sol";
+import {PositionManager} from "../contracts/PositionManager.sol";
+import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
+import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
+import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
@@ -58,7 +64,7 @@ contract PositionManagerTest is TestSetup {
 
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager2), collateralTopUpAmount);
-        
+
         uint256 borrowerDebtBefore = positionManager2.raftDebtToken().balanceOf(ALICE);
         uint256 borrowerCollBefore = positionManager2.raftCollateralToken().balanceOf(ALICE);
         uint256 borrowerRBalanceBefore = positionManager2.rToken().balanceOf(ALICE);
@@ -84,7 +90,6 @@ contract PositionManagerTest is TestSetup {
         assertEq(borrowerCollAfter - borrowerCollBefore, collateralTopUpAmount);
         assertEq(delegateDebtAfter, 0);
         assertEq(delegateCollAfter, 0);
-        
     }
 
     function testIndividualDelegates() public {

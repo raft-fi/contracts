@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "forge-std/Test.sol";
-import "../../contracts/Interfaces/IPositionManager.sol";
-import "../../contracts/Interfaces/IPriceFeed.sol";
-import "../TestContracts/WstETHTokenMock.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Test} from "forge-std/Test.sol";
+import {IPositionManager} from "../../contracts/Interfaces/IPositionManager.sol";
+import {IPriceFeed} from "../../contracts/Interfaces/IPriceFeed.sol";
+import {WstETHTokenMock} from "../TestContracts/WstETHTokenMock.sol";
 
 contract TestSetup is Test {
     struct CollateralDebt {

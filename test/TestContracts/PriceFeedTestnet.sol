@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.19;
 
-import "../../contracts/Interfaces/IPriceFeed.sol";
+import {IPriceFeed} from "../../contracts/Interfaces/IPriceFeed.sol";
+import {IPriceOracle} from "../../contracts/Oracles/Interfaces/IPriceOracle.sol";
 
 /*
 * PriceFeed placeholder for testnet and development. The price is simply set manually and saved in a state
 * variable. The contract does not connect to a live Chainlink price feed.
 */
 contract PriceFeedTestnet is IPriceFeed {
-
     uint256 private _price = 200 * 1e18;
 
     IPriceOracle public override primaryOracle;
@@ -39,15 +39,9 @@ contract PriceFeedTestnet is IPriceFeed {
         return true;
     }
 
-    function setPrimaryOracle(IPriceOracle _primaryOracle) external {
+    function setPrimaryOracle(IPriceOracle _primaryOracle) external {}
 
-    }
+    function setSecondaryOracle(IPriceOracle _secondaryOracle) external {}
 
-    function setSecondaryOracle(IPriceOracle _secondaryOracle) external {
-        
-    }
-
-    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external {
-
-    }
+    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external {}
 }

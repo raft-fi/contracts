@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import { IPriceOracle } from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
-import { ChainlinkPriceOracle } from "../contracts/Oracles/ChainlinkPriceOracle.sol";
-import { TellorPriceOracle } from "../contracts/Oracles/TellorPriceOracle.sol";
-import { PriceFeed, IPriceFeed } from "../contracts/PriceFeed.sol";
-import { MockChainlink } from "./TestContracts/MockChainlink.sol";
-import { MockTellor } from "./TestContracts/MockTellor.sol";
-import { PriceFeedTester } from "./TestContracts/PriceFeedTester.sol";
+import {Test} from "forge-std/Test.sol";
+import {IPriceOracle} from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
+import {ChainlinkPriceOracle} from "../contracts/Oracles/ChainlinkPriceOracle.sol";
+import {TellorPriceOracle} from "../contracts/Oracles/TellorPriceOracle.sol";
+import {PriceFeed, IPriceFeed} from "../contracts/PriceFeed.sol";
+import {MockChainlink} from "./TestContracts/MockChainlink.sol";
+import {MockTellor} from "./TestContracts/MockTellor.sol";
+import {PriceFeedTester} from "./TestContracts/PriceFeedTester.sol";
 
 contract PriceFeedTest is Test {
     MockChainlink public mockChainlink;

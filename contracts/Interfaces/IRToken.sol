@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
-import { IFeeCollector } from "./IFeeCollector.sol";
-import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC3156FlashLender} from "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
+import {IFeeCollector} from "./IFeeCollector.sol";
+import {IPositionManagerDependent} from "./IPositionManagerDependent.sol";
 
 /// @dev Proposed flash mint fee percentage is too big.
 /// @param feePercentage Proposed flash mint fee percentage.

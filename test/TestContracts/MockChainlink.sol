@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../../contracts/Dependencies/AggregatorV3Interface.sol";
+import {AggregatorV3Interface} from "../../contracts/Dependencies/AggregatorV3Interface.sol";
 
 contract MockChainlink is AggregatorV3Interface {
     // storage variables to hold the mock data
@@ -15,9 +15,9 @@ contract MockChainlink is AggregatorV3Interface {
     uint80 private latestRoundId;
     uint80 private prevRoundId;
 
-    bool latestRevert;
-    bool prevRevert;
-    bool decimalsRevert;
+    bool private latestRevert;
+    bool private prevRevert;
+    bool private decimalsRevert;
 
     // --- Functions ---
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IStEth} from "./Dependencies/IStEth.sol";
@@ -11,9 +11,13 @@ import {PositionManager} from "./PositionManager.sol";
 contract StEthPositionManager is IPositionManagerStEth, PositionManager {
     IStEth public immutable override stEth;
 
-    constructor(IPriceFeed _priceFeed, IERC20 _collateralToken, uint256 _positionsSize, uint256 _liquidationProtocolFee, address[] memory delegates)
-        PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee, delegates)
-    {
+    constructor(
+        IPriceFeed _priceFeed,
+        IERC20 _collateralToken,
+        uint256 _positionsSize,
+        uint256 _liquidationProtocolFee,
+        address[] memory delegates
+    ) PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee, delegates) {
         stEth = IStEth(address(IWstEth(address(_collateralToken)).stETH()));
     }
 
@@ -23,13 +27,9 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
         address _upperHint,
         address _lowerHint,
         uint256 _maxFeePercentage
-    )
-        external
-        payable
-        override
-    {
+    ) external payable override {
         uint256 wstEthBalanceBefore = IWstEth(address(collateralToken)).balanceOf(address(this));
-        (bool sent, ) = address(collateralToken).call{value: msg.value}("");
+        (bool sent,) = address(collateralToken).call{value: msg.value}("");
         if (!sent) {
             revert SendEtherFailed();
         }
@@ -37,15 +37,7 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
         uint256 wstEthAmount = wstEthBalanceAfter - wstEthBalanceBefore;
 
         _managePosition(
-            msg.sender,
-            wstEthAmount,
-            true,
-            _rChange,
-            _isDebtIncrease,
-            _upperHint,
-            _lowerHint,
-            _maxFeePercentage,
-            false
+            msg.sender, wstEthAmount, true, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, false
         );
     }
 
@@ -56,13 +48,9 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
         address _upperHint,
         address _lowerHint,
         uint256 _maxFeePercentage
-    )
-        external
-        payable
-        override
-    {
+    ) external payable override {
         uint256 wstEthBalanceBefore = IWstEth(address(collateralToken)).balanceOf(address(this));
-        (bool sent, ) = address(collateralToken).call{value: msg.value}("");
+        (bool sent,) = address(collateralToken).call{value: msg.value}("");
         if (!sent) {
             revert SendEtherFailed();
         }
@@ -70,15 +58,7 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
         uint256 wstEthAmount = wstEthBalanceAfter - wstEthBalanceBefore;
 
         _managePosition(
-            _borrower,
-            wstEthAmount,
-            true,
-            _rChange,
-            _isDebtIncrease,
-            _upperHint,
-            _lowerHint,
-            _maxFeePercentage,
-            false
+            _borrower, wstEthAmount, true, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, false
         );
     }
 
