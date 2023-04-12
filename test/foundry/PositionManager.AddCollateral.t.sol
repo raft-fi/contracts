@@ -105,8 +105,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, uint256 positionCollateralBefore,) = positionManager.positions(ALICE);
-
+        uint256 positionCollateralBefore = positionManager.raftCollateralToken().balanceOf(ALICE);
         uint256 collateralTopUpAmount = 1 ether;
 
         // Alice adds second collateral
@@ -115,8 +114,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
-        (, uint256 positionCollateralAfter,) = positionManager.positions(ALICE);
-
+        uint256 positionCollateralAfter = positionManager.raftCollateralToken().balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + collateralTopUpAmount);
     }
 
@@ -150,139 +148,6 @@ contract PositionManagerAddCollateralTest is TestSetup {
         assertGt(listSizeAfter, 0);
     }
 
-    // Active position: updates the stake and updates the total stakes
-    function testStakeUpdate() public {
-        vm.startPrank(ALICE);
-        PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            icr: 2e18
-        });
-        vm.stopPrank();
-
-        (,, uint256 aliceStakeBefore) = positionManager.positions(ALICE);
-        uint256 totalStakesBefore = positionManager.totalStakes();
-
-        assertEq(totalStakesBefore, aliceStakeBefore);
-
-        uint256 collateralTopUpAmount = 2 ether;
-
-        vm.startPrank(ALICE);
-        collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
-        vm.stopPrank();
-
-        (,, uint256 aliceStakeAfter) = positionManager.positions(ALICE);
-        uint256 totalStakesAfter = positionManager.totalStakes();
-
-        assertEq(aliceStakeAfter, aliceStakeBefore + collateralTopUpAmount);
-        assertEq(totalStakesAfter, totalStakesBefore + collateralTopUpAmount);
-    }
-
-    // Active position: applies pending rewards and updates user's L_CollateralBalance, L_RDebt snapshots
-    function testPendingRewardsAndSnapshots() public {
-        vm.startPrank(ALICE);
-        PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            extraRAmount: 15000e18,
-            icr: 2e18
-        });
-        vm.stopPrank();
-
-        vm.startPrank(BOB);
-        PositionManagerUtils.OpenPositionResult memory bobPosition = PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            extraRAmount: 10000e18,
-            icr: 2e18
-        });
-        vm.stopPrank();
-
-        vm.startPrank(CAROL);
-        PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            extraRAmount: 5000e18,
-            icr: 2e18
-        });
-        vm.stopPrank();
-
-        // Price drops to 1ETH:100R, reducing Carol's ICR below MCR
-        priceFeed.setPrice(100e18);
-
-        // Liquidate Carol's Position
-        positionManager.liquidate(CAROL);
-
-        priceFeed.setPrice(DEFAULT_PRICE);
-
-        (bool carolPositionExists,,) = positionManager.sortedPositionsNodes(CAROL);
-        assertFalse(carolPositionExists);
-
-        CollateralDebt memory lBalance;
-        lBalance.collateral = positionManager.L_CollateralBalance();
-        lBalance.debt = positionManager.L_RDebt();
-
-        // Check Alice and Bob's reward snapshots are zero before they alter their positions
-        (uint256 aliceCollateralSnapshotBefore, uint256 aliceRDebtSnapshotBefore) =
-            positionManager.rewardSnapshots(ALICE);
-        (uint256 bobCollateralSnapshotBefore, uint256 bobRDebtSnapshotBefore) = positionManager.rewardSnapshots(BOB);
-        assertEq(aliceCollateralSnapshotBefore, 0);
-        assertEq(aliceRDebtSnapshotBefore, 0);
-        assertEq(bobCollateralSnapshotBefore, 0);
-        assertEq(bobRDebtSnapshotBefore, 0);
-
-        CollateralDebt memory alicePendingRewards;
-        alicePendingRewards.collateral = positionManager.getPendingCollateralTokenReward(ALICE);
-        alicePendingRewards.debt = positionManager.getPendingRDebtReward(ALICE);
-        CollateralDebt memory bobPendingRewards;
-        bobPendingRewards.collateral = positionManager.getPendingCollateralTokenReward(BOB);
-        bobPendingRewards.debt = positionManager.getPendingRDebtReward(BOB);
-        assertGt(alicePendingRewards.collateral, 0);
-        assertGt(alicePendingRewards.debt, 0);
-        assertGt(bobPendingRewards.collateral, 0);
-        assertGt(bobPendingRewards.debt, 0);
-
-        // Alice and Bob top up their Positions
-
-        vm.startPrank(ALICE);
-        collateralToken.approve(address(positionManager), 5 ether);
-        positionManager.managePosition(5 ether, true, 0, false, ALICE, ALICE, 0);
-        vm.stopPrank();
-
-        vm.startPrank(BOB);
-        collateralToken.approve(address(positionManager), 1 ether);
-        positionManager.managePosition(1 ether, true, 0, false, BOB, BOB, 0);
-        vm.stopPrank();
-
-        // Check that both alice and Bob have had pending rewards applied in addition to their top-ups
-        CollateralDebt memory aliceNewBalance;
-        (aliceNewBalance.debt, aliceNewBalance.collateral,,) = positionManager.getEntireDebtAndColl(ALICE);
-        CollateralDebt memory bobNewBalance;
-        (bobNewBalance.debt, bobNewBalance.collateral,,) = positionManager.getEntireDebtAndColl(BOB);
-
-        assertEq(aliceNewBalance.collateral, alicePosition.collateral + alicePendingRewards.collateral + 5 ether);
-        assertEq(aliceNewBalance.debt, alicePosition.totalDebt + alicePendingRewards.debt);
-        assertEq(bobNewBalance.collateral, bobPosition.collateral + bobPendingRewards.collateral + 1 ether);
-        assertEq(bobNewBalance.debt, bobPosition.totalDebt + bobPendingRewards.debt);
-
-        // Check that both Alice and Bob's snapshots of the rewards-per-unit-staked metrics should be updated
-        // to the latest values of L_CollateralBalance and L_RDebt
-        CollateralDebt memory aliceSnapshotAfter;
-        (aliceSnapshotAfter.collateral, aliceSnapshotAfter.debt) = positionManager.rewardSnapshots(ALICE);
-        CollateralDebt memory bobSnapshotAfter;
-        (bobSnapshotAfter.collateral, bobSnapshotAfter.debt) = positionManager.rewardSnapshots(BOB);
-
-        assertEq(aliceSnapshotAfter.collateral, lBalance.collateral);
-        assertEq(aliceSnapshotAfter.debt, lBalance.debt);
-        assertEq(bobSnapshotAfter.collateral, lBalance.collateral);
-        assertEq(bobSnapshotAfter.debt, lBalance.debt);
-    }
-
     // Reverts if position is non-existent or closed
     function testInvalidPosition() public {
         vm.startPrank(ALICE);
@@ -306,7 +171,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         // Carol attempts to add collateral to her non-existent position
         vm.startPrank(CAROL);
         collateralToken.approve(address(positionManager), 1 ether);
-        vm.expectRevert(PositionManagerPositionNotActive.selector);
+        vm.expectRevert(abi.encodeWithSelector(PositionsListDoesNotContainNode.selector, CAROL));
         positionManager.managePosition(1 ether, true, 0, false, CAROL, CAROL, 0);
         vm.stopPrank();
 
@@ -322,7 +187,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         // Bob attempts to add collateral to his closed position
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 1 ether);
-        vm.expectRevert(PositionManagerPositionNotActive.selector);
+        vm.expectRevert(PositionManagerOnlyOnePositionInSystem.selector);
         positionManager.managePosition(1 ether, true, 0, false, BOB, BOB, 0);
         vm.stopPrank();
     }

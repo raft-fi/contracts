@@ -2,9 +2,10 @@
 
 pragma solidity 0.8.19;
 
+import "./IRToken.sol";
+import "./IERC20Indexable.sol";
 import "./IFeeCollector.sol";
 import "./IPriceFeed.sol";
-import "./IRToken.sol";
 
 /// @dev Max fee percentage must be between borrowing spread and 100%.
 error PositionManagerInvalidMaxFeePercentage();
@@ -56,10 +57,6 @@ error NewICRLowerThanMCR(uint256 newICR);
 /// @param netDebt Net debt amount that is below minimum.
 error NetDebtBelowMinimum(uint256 netDebt);
 
-/// @dev Amount repaid must not be larger than the Position's debt.
-/// @param debt Debt amount that is larget than position's actual debt.
-error RepayRAmountExceedsDebt(uint256 debt);
-
 /// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
 error LiquidationProtocolFeeOutOfBound();
 
@@ -75,8 +72,18 @@ interface IPositionManager is IFeeCollector {
     /// @param priceFeed Addres of the contract that provides price for collateral token.
     /// @param collateralToken Address of the token used as collateral.
     /// @param rToken Address of the rToken used by position manager.
+    /// @param raftCollateralToken Address of Raft indexable collateral token.
+    /// @param raftDebtToken Address of Raft indexable debt token.
     /// @param feeRecipient Fee recipient address.
-    event PositionManagerDeployed(IPriceFeed priceFeed, IERC20 collateralToken, IRToken rToken, address feeRecipient);
+    event PositionManagerDeployed(
+        IPriceFeed priceFeed,
+        IERC20 collateralToken,
+        IRToken rToken,
+        IERC20Indexable raftCollateralToken,
+        IERC20Indexable raftDebtToken,
+        address feeRecipient
+    );
+
 
     /// @dev New position is created in Raft.
     /// @param position Address of the user opening new position.
@@ -131,12 +138,8 @@ interface IPositionManager is IFeeCollector {
     event Redemption(uint _attemptedRAmount, uint _actualRAmount, uint _collateralTokenSent, uint _collateralTokenFee);
 
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
-    event BaseRateUpdated(uint256 _baseRate);
-    event LastFeeOpTimeUpdated(uint256 _lastFeeOpTime);
-    event StakesUpdated(address _borrower, uint256 _newStake, uint256 _newTotalStakes);
-    event SystemSnapshotsUpdated(uint256 _totalStakesSnapshot, uint256 _totalCollateralSnapshot);
-    event LTermsUpdated(uint256 _L_CollateralBalance, uint256 _L_RDebt);
-    event PositionSnapshotsUpdated(uint256 _L_CollateralBalance, uint256 _L_RDebt);
+    event BaseRateUpdated(uint _baseRate);
+    event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
 
     struct LiquidationTotals {
         uint256 collGasCompensation;
@@ -160,30 +163,18 @@ interface IPositionManager is IFeeCollector {
     function globalDelegateWhitelist(address delegate) external view returns (bool isWhitelisted);
     function individualDelegateWhitelist(address borrower, address delegate) external view returns (bool isWhitelisted);
 
-    function positions(address _borrower) external view returns (uint256 debt, uint256 coll, uint256 stake);
+    function raftDebtToken() external view returns (IERC20Indexable);
+    function raftCollateralToken() external view returns (IERC20Indexable);
 
     function sortedPositions() external view returns (address first, address last, uint256 maxSize, uint256 size);
 
-    function sortedPositionsNodes(address _id) external view returns (bool exists, address nextId, address prevId);
+    function sortedPositionsNodes(address _id) external view returns(bool exists, address nextId, address prevId);
 
-    function totalStakes() external view returns (uint256);
-    function totalStakesSnapshot() external view returns (uint256);
-
-    function totalCollateralSnapshot() external view returns (uint256);
-
-    function rewardSnapshots(address _borrower)
-        external
-        view
-        returns (uint256 collateralBalance, uint256 debtBalance);
-
-    function getNominalICR(address _borrower) external view returns (uint256);
-    function getCurrentICR(address _borrower, uint256 _price) external view returns (uint256);
+    function getNominalICR(address _borrower) external view returns (uint);
+    function getCurrentICR(address _borrower, uint _price) external view returns (uint);
 
     function liquidate(address _borrower) external;
     function batchLiquidatePositions(address[] calldata _positionArray) external;
-
-    function L_CollateralBalance() external view returns (uint256);
-    function L_RDebt() external view returns (uint256);
 
     function redeemCollateral(
         uint256 _rAmount,
@@ -195,21 +186,7 @@ interface IPositionManager is IFeeCollector {
         uint256 _maxFee
     ) external;
 
-    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price)
-        external
-        view
-        returns (LiquidationTotals memory totals);
-
-    function getPendingCollateralTokenReward(address _borrower) external view returns (uint256);
-
-    function getPendingRDebtReward(address _borrower) external view returns (uint256);
-
-    function hasPendingRewards(address _borrower) external view returns (bool);
-
-    function getEntireDebtAndColl(address _borrower)
-        external
-        view
-        returns (uint256 debt, uint256 coll, uint256 pendingRDebtReward, uint256 pendingCollateralTokenReward);
+    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price) external view returns (LiquidationTotals memory totals);
 
     function getRedemptionRate() external view returns (uint256);
     function getRedemptionRateWithDecay() external view returns (uint256);

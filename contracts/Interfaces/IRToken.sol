@@ -4,8 +4,8 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
-import "./IFeeCollector.sol";
-import "./IPositionManagerDependent.sol";
+import { IFeeCollector } from "./IFeeCollector.sol";
+import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
 
 /// @dev Proposed flash mint fee percentage is too big.
 /// @param feePercentage Proposed flash mint fee percentage.
@@ -18,7 +18,7 @@ interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender, IFeeCollector, I
     /// @dev New R token is deployed
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
     /// @param flashMintFeeRecipient Address of flash mint fee recipient.
-    event RDeployed(IPositionManager positionManager, address flashMintFeeRecipient);
+    event RDeployed(address positionManager, address flashMintFeeRecipient);
 
     /// @return Number representing 100 percentage.
     function PERCENTAGE_BASE() external view returns (uint256);

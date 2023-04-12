@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import "../../contracts/PositionManager.sol";
+import {PositionManager } from "../../contracts/PositionManager.sol";
 import "./utils/PositionManagerUtils.sol";
 import "./utils/TestSetup.t.sol";
 
@@ -59,7 +59,8 @@ contract PositionManagerTest is TestSetup {
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager2), collateralTopUpAmount);
         
-        (uint256 borrowerDebtBefore, uint256 borrowerCollBefore,) = positionManager2.positions(ALICE);
+        uint256 borrowerDebtBefore = positionManager2.raftDebtToken().balanceOf(ALICE);
+        uint256 borrowerCollBefore = positionManager2.raftCollateralToken().balanceOf(ALICE);
         uint256 borrowerRBalanceBefore = positionManager2.rToken().balanceOf(ALICE);
         uint256 borrowerCollateralBalanceBefore = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceBefore = positionManager2.rToken().balanceOf(BOB);
@@ -69,8 +70,11 @@ contract PositionManagerTest is TestSetup {
         uint256 borrowerCollateralBalanceAfter = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceAfter = positionManager2.rToken().balanceOf(BOB);
         uint256 delegateCollateralBalanceAfter = collateralToken.balanceOf(BOB);
-        (uint256 borrowerDebtAfter, uint256 borrowerCollAfter,) = positionManager2.positions(ALICE);
-        (uint256 delegateDebtAfter, uint256 delegateCollAfter,) = positionManager2.positions(BOB);
+        uint256 borrowerDebtAfter = positionManager2.raftDebtToken().balanceOf(ALICE);
+        uint256 borrowerCollAfter = positionManager2.raftCollateralToken().balanceOf(ALICE);
+
+        uint256 delegateDebtAfter = positionManager2.raftDebtToken().balanceOf(BOB);
+        uint256 delegateCollAfter = positionManager2.raftCollateralToken().balanceOf(BOB);
 
         assertEq(borrowerRBalanceAfter, borrowerRBalanceBefore + debtAmount);
         assertEq(borrowerCollateralBalanceAfter, borrowerCollateralBalanceBefore);
@@ -154,33 +158,6 @@ contract PositionManagerTest is TestSetup {
 
     // --- Getters ---
 
-    // Returns stake
-    function testGetPositionStake() public {
-        vm.startPrank(ALICE);
-        PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            icr: 150 * MathUtils._100pct / 100
-        });
-        vm.stopPrank();
-
-        vm.startPrank(BOB);
-        PositionManagerUtils.OpenPositionResult memory bobPosition = PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            icr: 150 * MathUtils._100pct / 100
-        });
-        vm.stopPrank();
-
-        (,, uint256 aliceStake) = positionManager.positions(ALICE);
-        (,, uint256 bobStake) = positionManager.positions(BOB);
-
-        assertEq(aliceStake, alicePosition.collateral);
-        assertEq(bobStake, bobPosition.collateral);
-    }
-
     // Returns collateral
     function testGetPositionCollateral() public {
         vm.startPrank(ALICE);
@@ -201,11 +178,8 @@ contract PositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, uint256 aliceCollateral,) = positionManager.positions(ALICE);
-        (, uint256 bobCollateral,) = positionManager.positions(BOB);
-
-        assertEq(aliceCollateral, alicePosition.collateral);
-        assertEq(bobCollateral, bobPosition.collateral);
+        assertEq(positionManager.raftCollateralToken().balanceOf(ALICE), alicePosition.collateral);
+        assertEq(positionManager.raftCollateralToken().balanceOf(BOB), bobPosition.collateral);
     }
 
     // Returns debt
@@ -228,15 +202,7 @@ contract PositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (uint256 aliceDebt,,) = positionManager.positions(ALICE);
-        (uint256 bobDebt,,) = positionManager.positions(BOB);
-
-        assertEq(aliceDebt, alicePosition.totalDebt);
-        assertEq(bobDebt, bobPosition.totalDebt);
-    }
-
-    // Returns false it position is not active
-    function testHasPendingRewards() public {
-        assertFalse(positionManager.hasPendingRewards(ALICE));
+        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), alicePosition.totalDebt);
+        assertEq(positionManager.raftDebtToken().balanceOf(BOB), bobPosition.totalDebt);
     }
 }

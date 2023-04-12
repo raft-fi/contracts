@@ -38,11 +38,9 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (,, uint256 aliceStake) = positionManager.positions(ALICE);
-        (, uint256 aliceCollateral,) = positionManager.positions(ALICE);
-        (uint256 aliceDebt,,) = positionManager.positions(ALICE);
+        uint256 aliceCollateral = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
-        assertEq(aliceStake, alicePosition.collateral);
         assertEq(aliceCollateral, alicePosition.collateral);
         assertEq(aliceDebt, alicePosition.totalDebt);
     }
@@ -60,11 +58,9 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (,, uint256 aliceStake) = positionManager.positions(ALICE);
-        (, uint256 aliceCollateral,) = positionManager.positions(ALICE);
-        (uint256 aliceDebt,,) = positionManager.positions(ALICE);
+        uint256 aliceCollateral = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
-        assertEq(aliceStake, alicePosition.collateral);
         assertEq(aliceCollateral, alicePosition.collateral);
         assertEq(aliceDebt, alicePosition.totalDebt);
     }
@@ -80,11 +76,7 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (,, uint256 aliceStakeBefore) = positionManager.positions(ALICE);
-        uint256 totalStakesBefore = positionManager.totalStakes();
-        assertEq(totalStakesBefore, aliceStakeBefore);
-
-        (, uint256 positionCollateralBefore,) = positionManager.positions(ALICE);
+        uint256 positionCollateralBefore = positionManager.raftCollateralToken().balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);
 
         uint256 positionManagerBalanceBefore = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));
@@ -97,12 +89,7 @@ contract StEthPositionManagerTest is TestSetup {
         positionManager.managePositionEth{value: collateralTopUpAmount}(0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
-        (,, uint256 aliceStakeAfter) = positionManager.positions(ALICE);
-        uint256 totalStakesAfter = positionManager.totalStakes();
-        assertEq(aliceStakeAfter, aliceStakeBefore + wstEthAmount);
-        assertEq(totalStakesAfter, totalStakesBefore + wstEthAmount);
-
-        (, uint256 positionCollateralAfter,) = positionManager.positions(ALICE);
+        uint256 positionCollateralAfter = positionManager.raftCollateralToken().balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + wstEthAmount);
 
         uint256 positionManagerBalanceAfter = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));
@@ -139,11 +126,7 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (,, uint256 aliceStakeBefore) = positionManager.positions(ALICE);
-        uint256 totalStakesBefore = positionManager.totalStakes();
-        assertEq(totalStakesBefore, aliceStakeBefore);
-
-        (, uint256 positionCollateralBefore,) = positionManager.positions(ALICE);
+        uint256 positionCollateralBefore = positionManager.raftCollateralToken().balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);
 
         uint256 positionManagerBalanceBefore = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));
@@ -157,12 +140,7 @@ contract StEthPositionManagerTest is TestSetup {
         positionManager.managePositionStEth(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
-        (,, uint256 aliceStakeAfter) = positionManager.positions(ALICE);
-        uint256 totalStakesAfter = positionManager.totalStakes();
-        assertEq(aliceStakeAfter, aliceStakeBefore + wstEthAmount);
-        assertEq(totalStakesAfter, totalStakesBefore + wstEthAmount);
-
-        (, uint256 positionCollateralAfter,) = positionManager.positions(ALICE);
+        uint256 positionCollateralAfter = positionManager.raftCollateralToken().balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + wstEthAmount);
 
         uint256 positionManagerBalanceAfter = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));

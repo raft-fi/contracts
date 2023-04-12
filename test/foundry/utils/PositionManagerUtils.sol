@@ -159,7 +159,10 @@ library PositionManagerUtils {
         result.rAmount = rAmount;
 
         if (icr > 0) {
-            (uint256 debt, uint256 collateral,,) = positionManager.getEntireDebtAndColl(borrower);
+            IERC20 raftDebtToken = positionManager.raftDebtToken();
+            IERC20 raftCollateralToken = positionManager.raftCollateralToken();
+            uint256 debt = raftDebtToken.balanceOf(borrower);
+            uint256 collateral = raftCollateralToken.balanceOf(borrower);
             uint256 price = priceFeed.getPrice();
             uint256 targetDebt = collateral * price / icr;
             require(targetDebt > debt, "ICR is already greater than or equal to target");
