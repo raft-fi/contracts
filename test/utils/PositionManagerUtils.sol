@@ -46,18 +46,9 @@ library PositionManagerUtils {
     ) internal returns (OpenPositionResult memory result) {
         result.rAmount = getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT) + extraRAmount;
         result.icr = icr;
-
-        if (result.icr == 0 && amount == 0) {
-            result.icr = 150 * MathUtils._100_PERCENT / 100;
-        }
-
         result.totalDebt = getOpenPositionTotalDebt(positionManager, result.rAmount);
         result.netDebt = MathUtils.getNetDebt(result.totalDebt);
-
-        if (result.icr > 0) {
-            uint256 price = priceFeed.getPrice();
-            amount = result.icr * result.totalDebt / price;
-        }
+        amount = (amount == 0) ? result.icr * result.totalDebt / priceFeed.getPrice() : amount;
 
         if (ethType == ETHType.ETH) {
             IStEth stEth = IPositionManagerStEth(address(positionManager)).stEth();
