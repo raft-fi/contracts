@@ -66,6 +66,9 @@ error InvalidDelegateAddress();
 /// @dev A non-whitelisted delegate cannot adjust positions.
 error DelegateNotWhitelisted();
 
+/// @dev Fee exceeded provided maximum fee percentage
+error FeeExceedsMaxFee(uint fee, uint amount, uint maxFeePercentage);
+
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
     /// @dev New PositionManager contract is deployed.
@@ -201,7 +204,7 @@ interface IPositionManager is IFeeCollector {
 
     function getBorrowingFee(uint rDebt) external view returns (uint);
     function getBorrowingFeeWithDecay(uint _rDebt) external view returns (uint);
-    
+
     function managePosition(
         address _borrower,
         uint256 _collChange,

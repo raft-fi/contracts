@@ -216,11 +216,6 @@ class TestHelper {
     return issuedDebt
   }
 
-  // Adds the gas compensation (50 R)
-  static async getCompositeDebt(contracts, debt) {
-    return contracts.math.getCompositeDebt(debt)
-  }
-
   static async getPositionEntireColl(contracts, position) {
     return this.toBN((await contracts.positionManager.getEntireDebtAndColl(position))[1])
   }
@@ -239,8 +234,7 @@ class TestHelper {
    */
   static async getOpenPositionTotalDebt(contracts, rAmount) {
     const fee = await contracts.positionManager.getBorrowingFee(rAmount)
-    const compositeDebt = await this.getCompositeDebt(contracts, rAmount)
-    return compositeDebt.add(fee)
+    return rAmount.add(contracts.math.R_GAS_COMPENSATION()).add(fee)
   }
 
   /*

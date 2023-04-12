@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { Fixed256x18 } from "@tempus-labs/contracts/math/Fixed256x18.sol";
 import "./Dependencies/MathUtils.sol";
 import "./Interfaces/IPositionManager.sol";
 import "./FeeCollector.sol";
@@ -36,10 +37,10 @@ contract PositionManager is FeeCollector, IPositionManager {
      * (1/2) = d^720 => d = (1/2)^(1/720)
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
-    uint256 public constant REDEMPTION_FEE_FLOOR = MathUtils.DECIMAL_PRECISION / 1000 * 5; // 0.5%
-    uint256 public constant override MAX_BORROWING_SPREAD = MathUtils.DECIMAL_PRECISION / 100; // 1%
-    uint256 public constant MAX_BORROWING_FEE = MathUtils.DECIMAL_PRECISION / 100 * 5; // 5%
-    uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = MathUtils.DECIMAL_PRECISION / 100 * 80; // 80%
+    uint256 public constant REDEMPTION_FEE_FLOOR = MathUtils._100_PERCENT / 1000 * 5; // 0.5%
+    uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
+    uint256 public constant MAX_BORROWING_FEE = MathUtils._100_PERCENT / 100 * 5; // 5%
+    uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = MathUtils._100_PERCENT / 100 * 80; // 80%
 
     /*
     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
@@ -56,7 +57,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     uint256 private totalDebt;
 
     modifier validMaxFeePercentageWhen(uint256 _maxFeePercentage, bool condition) {
-        if (condition && (_maxFeePercentage < borrowingSpread || _maxFeePercentage > MathUtils.DECIMAL_PRECISION)) {
+        if (condition && (_maxFeePercentage < borrowingSpread || _maxFeePercentage > MathUtils._100_PERCENT)) {
             revert PositionManagerInvalidMaxFeePercentage();
         }
         _;
@@ -283,7 +284,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _removePositionFromSortedPositions(_borrower);
         raftDebtToken.burn(_borrower, type(uint256).max);
         raftCollateralToken.burn(_borrower, type(uint256).max);
-        
+
         emit PositionLiquidated(_borrower);
     }
 
@@ -292,14 +293,14 @@ contract PositionManager is FeeCollector, IPositionManager {
         address borrower,
         uint256 icr,
         uint256 price
-    ) 
+    )
         internal view returns (LiquidationTotals memory)
     {
         uint256 entirePositionDebt = raftDebtToken.balanceOf(borrower);
         uint256 entirePositionColl = raftCollateralToken.balanceOf(borrower);
 
         oldLiquidationTotals.rGasCompensation += MathUtils.R_GAS_COMPENSATION;
-        if (icr <= MathUtils._100pct) {
+        if (icr <= MathUtils._100_PERCENT) {
             // redistribution
             uint256 collGasCompensation = MathUtils.getCollGasCompensation(entirePositionColl);
             oldLiquidationTotals.collGasCompensation += collGasCompensation;
@@ -424,7 +425,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 positionDebt = raftDebtToken.balanceOf(_borrower);
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position minus the liquidation reserve
         rLot = Math.min(_maxRamount, positionDebt - MathUtils.R_GAS_COMPENSATION);
-        uint256 collateralToRedeem = rLot * MathUtils.DECIMAL_PRECISION / _price;
+        uint256 collateralToRedeem = rLot.divDown(_price);
 
         // Decrease the debt and collateral of the current Position according to the R lot and corresponding collateralToken to send
         uint256 newDebt = positionDebt - rLot;
@@ -436,7 +437,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             _removePositionFromSortedPositions(_borrower);
             raftDebtToken.burn(_borrower, type(uint256).max);
             raftCollateralToken.burn(_borrower, type(uint256).max);
-            
+
             rToken.burn(address(this), MathUtils.R_GAS_COMPENSATION);
             totalDebt -= MathUtils.R_GAS_COMPENSATION;
             collateralToken.transfer(_borrower, newColl);
@@ -504,7 +505,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 _maxIterations,
         uint256 _maxFeePercentage
     ) external override {
-        if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > MathUtils.DECIMAL_PRECISION) {
+        if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > MathUtils._100_PERCENT) {
             revert PositionManagerMaxFeePercentageOutOfRange();
         }
         if (_rAmount == 0) {
@@ -550,7 +551,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             currentBorrower = nextUserToCheck;
         }
         uint256 totalRRedeemed = _rAmount - remainingR;
-        uint256 totalCollateralTokenDrawn = totalRRedeemed * MathUtils.DECIMAL_PRECISION / price;
+        uint256 totalCollateralTokenDrawn = totalRRedeemed.divDown(price);
 
         if (totalCollateralTokenDrawn == 0) {
             revert UnableToRedeemAnyAmount();
@@ -563,7 +564,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         // Calculate the collateralToken fee
         uint256 collateralTokenFee = _calcRedemptionFee(getRedemptionRate(), totalCollateralTokenDrawn);
 
-        MathUtils.checkIfValidFee(collateralTokenFee, totalCollateralTokenDrawn, _maxFeePercentage);
+        checkValidFee(collateralTokenFee, totalCollateralTokenDrawn, _maxFeePercentage);
 
         // Send the collateralToken fee to the recipient
         collateralToken.transfer(feeRecipient, collateralTokenFee);
@@ -630,8 +631,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 redeemedRFraction = _collateralDrawn * _price / _totalRSupply;
 
         uint256 newBaseRate = decayedBaseRate + redeemedRFraction / BETA;
-        newBaseRate = Math.min(newBaseRate, MathUtils.DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
-        //assert(newBaseRate <= MathUtils.DECIMAL_PRECISION); // This is already enforced in the line above
+        newBaseRate = Math.min(newBaseRate, MathUtils._100_PERCENT); // cap baseRate at a maximum of 100%
         assert(newBaseRate > 0); // Base rate is always non-zero after redemption
 
         // Update the baseRate state variable
@@ -654,7 +654,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     function _calcRedemptionRate(uint256 _baseRate) internal pure returns (uint256) {
         return Math.min(
             REDEMPTION_FEE_FLOOR + _baseRate,
-            MathUtils.DECIMAL_PRECISION // cap at a maximum of 100%
+            MathUtils._100_PERCENT
         );
     }
 
@@ -667,7 +667,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         pure
         returns (uint256 redemptionFee)
     {
-        redemptionFee = _redemptionRate * _collateralDrawn / MathUtils.DECIMAL_PRECISION;
+        redemptionFee = _redemptionRate.mulDown(_collateralDrawn);
         if (redemptionFee >= _collateralDrawn) {
             revert FeeEatsUpAllReturnedCollateral();
         }
@@ -708,13 +708,13 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function _calcBorrowingFee(uint256 _borrowingRate, uint256 _rDebt) internal pure returns (uint256) {
-        return _borrowingRate * _rDebt / MathUtils.DECIMAL_PRECISION;
+        return _borrowingRate.mulDown(_rDebt);
     }
 
     // Updates the baseRate state variable based on time elapsed since the last redemption or R borrowing operation.
     function _decayBaseRateFromBorrowing() internal {
         uint256 decayedBaseRate = _calcDecayedBaseRate();
-        assert(decayedBaseRate <= MathUtils.DECIMAL_PRECISION); // The baseRate can decay to 0
+        assert(decayedBaseRate <= MathUtils._100_PERCENT);  // The baseRate can decay to 0
 
         baseRate = decayedBaseRate;
         emit BaseRateUpdated(decayedBaseRate);
@@ -738,7 +738,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 minutesPassed = (block.timestamp - lastFeeOperationTime) / 1 minutes;
         uint256 decayFactor = MathUtils.decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
-        return baseRate * decayFactor / MathUtils.DECIMAL_PRECISION;
+        return baseRate.mulDown(decayFactor);
     }
 
     /// ---- Liquidation fee functions ---
@@ -748,13 +748,13 @@ contract PositionManager is FeeCollector, IPositionManager {
         pure
         returns (uint256)
     {
-        assert(_fee <= MathUtils.DECIMAL_PRECISION);
+        assert(_fee <= MathUtils._100_PERCENT);
 
         // the value of the position's debt, denominated in collateral token
-        uint256 debtValue = _entireDebt * MathUtils.DECIMAL_PRECISION / _price;
+        uint256 debtValue = _entireDebt.divDown(_price);
         uint256 excessCollateral = _entireColl - debtValue;
 
-        return excessCollateral * _fee / MathUtils.DECIMAL_PRECISION;
+        return excessCollateral.mulDown(_fee);
     }
 
     // --- Helper functions ---
@@ -763,7 +763,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _decayBaseRateFromBorrowing(); // decay the baseRate state variable
         rFee = _getBorrowingFee(_rAmount);
 
-        MathUtils.checkIfValidFee(rFee, _rAmount, _maxFeePercentage);
+        checkValidFee(rFee, _rAmount, _maxFeePercentage);
 
         if (rFee > 0) {
             rToken.mint(feeRecipient, rFee);
@@ -778,10 +778,18 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (netDebt < MathUtils.MIN_NET_DEBT) {
             revert NetDebtBelowMinimum(netDebt);
         }
-        
+
         uint256 newICR = getCurrentICR(position, priceFeed.fetchPrice());
         if (newICR < MathUtils.MCR) {
             revert NewICRLowerThanMCR(newICR);
+        }
+    }
+
+    function checkValidFee(uint _fee, uint _amount, uint _maxFeePercentage) internal pure {
+        uint feePercentage = _fee.divDown(_amount);
+
+        if (feePercentage > _maxFeePercentage) {
+            revert FeeExceedsMaxFee(_fee, _amount, _maxFeePercentage);
         }
     }
 

@@ -81,7 +81,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             true,
             ALICE,
             ALICE,
-            MathUtils._100pct
+            MathUtils._100_PERCENT
         );
         vm.stopPrank();
 
@@ -90,7 +90,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 100e30);
-        positionManager.managePosition(100e30, true, 20e25, true, BOB, BOB, MathUtils._100pct);
+        positionManager.managePosition(100e30, true, 20e25, true, BOB, BOB, MathUtils._100_PERCENT);
         vm.stopPrank();
 
         vm.prank(BOB);
@@ -112,7 +112,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             true,
             ALICE,
             ALICE,
-            MathUtils._100pct
+            MathUtils._100_PERCENT
         );
         vm.stopPrank();
 
@@ -137,7 +137,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             true,
             ALICE,
             ALICE,
-            MathUtils._100pct
+            MathUtils._100_PERCENT
         );
         vm.stopPrank();
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { Fixed256x18 } from "@tempus-labs/contracts/math/Fixed256x18.sol";
 import { MathUtils } from "../Dependencies/MathUtils.sol";
 import {
     IChainlinkPriceOracle,
@@ -12,6 +13,8 @@ import {
 import { BasePriceOracle } from "./BasePriceOracle.sol";
 
 contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
+    using Fixed256x18 for uint256;
+
     AggregatorV3Interface public immutable override priceAggregator;
 
     uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
@@ -145,7 +148,7 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         * - If price decreased, the percentage deviation is in relation to the the previous price.
         * - If price increased, the percentage deviation is in relation to the current price.
         */
-        uint256 percentDeviation = (maxPrice - minPrice) * MathUtils.DECIMAL_PRECISION / maxPrice;
+        uint256 percentDeviation = (maxPrice - minPrice).divDown(maxPrice);
 
         // Return true if price has more than doubled, or more than halved.
         return percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;

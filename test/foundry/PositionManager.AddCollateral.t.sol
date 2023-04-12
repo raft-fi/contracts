@@ -63,7 +63,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils._100pct));
+        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils._100_PERCENT));
         positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }
