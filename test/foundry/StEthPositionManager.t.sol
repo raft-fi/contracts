@@ -33,7 +33,7 @@ contract StEthPositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: IERC20(WSTETH_ADDRESS),
-            icr: 150 * MathUtils._100pct / 100,
+            icr: 150 * MathUtils._100_PERCENT / 100,
             ethType: PositionManagerUtils.ETHType.ETH
         });
         vm.stopPrank();
@@ -53,7 +53,7 @@ contract StEthPositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: IERC20(WSTETH_ADDRESS),
-            icr: 150 * MathUtils._100pct / 100,
+            icr: 150 * MathUtils._100_PERCENT / 100,
             ethType: PositionManagerUtils.ETHType.STETH
         });
         vm.stopPrank();

@@ -165,7 +165,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 150 * MathUtils._100pct / 100
+            icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();
 
@@ -174,7 +174,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 150 * MathUtils._100pct / 100
+            icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();
 
@@ -189,7 +189,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 150 * MathUtils._100pct / 100
+            icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();
 
@@ -198,7 +198,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 150 * MathUtils._100pct / 100
+            icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();
 
