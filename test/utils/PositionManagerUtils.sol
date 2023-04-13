@@ -162,7 +162,7 @@ library PositionManagerUtils {
         uint256 icr,
         uint256 amount
     ) internal view returns (uint256 rAmount, uint256 totalDebt, uint256 newAmount) {
-        rAmount = getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT) + extraRAmount;
+        rAmount = getNetBorrowingAmount(positionManager, positionManager.minDebt()) + extraRAmount;
         totalDebt = getOpenPositionTotalDebt(positionManager, rAmount);
         newAmount = (amount == 0) ? icr * totalDebt / priceFeed.getPrice() : amount;
     }

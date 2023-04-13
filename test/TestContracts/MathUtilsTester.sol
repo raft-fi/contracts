@@ -7,10 +7,6 @@ import {MathUtils} from "../../contracts/Dependencies/MathUtils.sol";
 /* Tester contract for math functions in Math.sol library. */
 
 contract MathUtilsTester {
-    function MIN_NET_DEBT() external pure returns (uint256) {
-        return MathUtils.MIN_NET_DEBT;
-    }
-
     function MCR() external pure returns (uint256) {
         return MathUtils.MCR;
     }

@@ -39,7 +39,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
     }
 
     function testSuccessfulPositionOpening() public {
-        uint256 aliceExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT);
+        uint256 aliceExtraRAmount =
+            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt());
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -60,7 +61,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         assertTrue(alicePositionExists);
 
         uint256 bobExtraRAmount =
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT + 47789898e22);
+            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 47789898e22);
 
         vm.startPrank(BOB);
         PositionManagerUtils.openPosition({
@@ -511,7 +512,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         assertEq(collateralBefore, 0);
         assertEq(debtBefore, 0);
 
-        uint256 rAmount = MathUtils.MIN_NET_DEBT;
+        uint256 rAmount = positionManager.minDebt();
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({

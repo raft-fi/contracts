@@ -12,9 +12,6 @@ library MathUtils {
     // Minimum collateral ratio for individual positions
     uint256 public constant MCR = 110 * _100_PERCENT / 100; // 110%
 
-    // Minimum amount of net R debt a position must have
-    uint256 public constant MIN_NET_DEBT = 1800e18;
-
     /* Precision for Nominal ICR (independent of price). Rationale for the value:
      *
      * - Making it “too high” could lead to overflows.

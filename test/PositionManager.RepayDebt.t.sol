@@ -62,11 +62,14 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         assertLt(positionManager.getCurrentICR(collateralToken, ALICE, price), MathUtils.MCR);
 
-        uint256 repaymentAmount = 1;
+        uint256 repaymentAmount = 1e18;
 
-        vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, MathUtils.MIN_NET_DEBT - 1));
+        vm.startPrank(ALICE);
+        vm.expectRevert(
+            abi.encodeWithSelector(NetDebtBelowMinimum.selector, positionManager.minDebt() - repaymentAmount)
+        );
         positionManager.managePosition(collateralToken, 0, false, repaymentAmount, false, ALICE, ALICE, 0);
+        vm.stopPrank();
     }
 
     // Succeeds when it would leave position with net debt >= minimum net debt
@@ -79,7 +82,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             collateralToken,
             100e30,
             true,
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT + 2),
+            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 2),
             true,
             ALICE,
             ALICE,
@@ -111,17 +114,16 @@ contract PositionManagerRepayDebtTest is TestSetup {
             collateralToken,
             100e30,
             true,
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT + 1),
+            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 1),
             true,
             ALICE,
             ALICE,
             MathUtils._100_PERCENT
         );
-        vm.stopPrank();
 
-        vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, MathUtils.MIN_NET_DEBT - 1));
+        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, positionManager.minDebt() - 1));
         positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
+        vm.stopPrank();
     }
 
     // Reverts when borrowing rate > 0% and it would leave position with net debt < minimum net debt
@@ -137,7 +139,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             collateralToken,
             100e30,
             true,
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT + 1),
+            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 1),
             true,
             ALICE,
             ALICE,
@@ -145,9 +147,10 @@ contract PositionManagerRepayDebtTest is TestSetup {
         );
         vm.stopPrank();
 
-        vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, MathUtils.MIN_NET_DEBT - 1));
+        vm.startPrank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, positionManager.minDebt() - 1));
         positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
+        vm.stopPrank();
     }
 
     // Reverts when calling address does not have active position

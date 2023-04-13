@@ -58,6 +58,9 @@ error NewICRLowerThanMCR(uint256 newICR);
 /// @param netDebt Net debt amount that is below minimum.
 error NetDebtBelowMinimum(uint256 netDebt);
 
+/// @dev Min debt value cannot be zero.
+error MinNetDebtCannotBeZero();
+
 /// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
 error LiquidationProtocolFeeOutOfBound();
 
@@ -147,6 +150,10 @@ interface IPositionManager is IFeeCollector {
     /// @param position Address of user that was the owner of the liquidated position.
     event PositionLiquidated(address indexed position);
 
+    /// @dev Minimum debt is changed.
+    /// @param newMinDebt New value that was set to be minimum debt.
+    event MinDebtChanged(uint256 newMinDebt);
+
     event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
     event Redemption(
         uint256 _attemptedRAmount, uint256 _actualRAmount, uint256 _collateralTokenSent, uint256 _collateralTokenFee
@@ -189,6 +196,13 @@ interface IPositionManager is IFeeCollector {
     /// @param _borrower Address of the borrower.
     /// @return collateralToken Address of collateral token.
     function collateralTokenPerBorrowers(address _borrower) external view returns (IERC20 collateralToken);
+
+    /// @return Minimum debt for open positions
+    function minDebt() external view returns (uint256);
+
+    /// @dev Sets the new min debt. Reverts if it is zero.
+    /// @param newMinDebt New minimum debt to be used.
+    function setMinDebt(uint256 newMinDebt) external;
 
     function liquidationProtocolFee() external view returns (uint256);
     function MAX_BORROWING_SPREAD() external view returns (uint256);
