@@ -43,10 +43,9 @@ library PositionManagerUtils {
         uint256 amount,
         ETHType ethType
     ) internal returns (OpenPositionResult memory result) {
-        result.rAmount = getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT) + extraRAmount;
         result.icr = icr;
-        result.totalDebt = getOpenPositionTotalDebt(positionManager, result.rAmount);
-        amount = (amount == 0) ? result.icr * result.totalDebt / priceFeed.getPrice() : amount;
+        (result.rAmount, result.totalDebt, amount) =
+            getOpenPositionSetupValues(positionManager, priceFeed, extraRAmount, icr, amount);
 
         if (ethType == ETHType.ETH) {
             IStEth stEth = IPositionManagerStEth(address(positionManager)).stEth();
@@ -154,6 +153,18 @@ library PositionManagerUtils {
             amount,
             ETHType.WSTETH
         );
+    }
+
+    function getOpenPositionSetupValues(
+        IPositionManager positionManager,
+        PriceFeedTestnet priceFeed,
+        uint256 extraRAmount,
+        uint256 icr,
+        uint256 amount
+    ) internal view returns (uint256 rAmount, uint256 totalDebt, uint256 newAmount) {
+        rAmount = getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT) + extraRAmount;
+        totalDebt = getOpenPositionTotalDebt(positionManager, rAmount);
+        newAmount = (amount == 0) ? icr * totalDebt / priceFeed.getPrice() : amount;
     }
 
     function withdrawR(
