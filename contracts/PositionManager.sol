@@ -28,7 +28,8 @@ import {
     BorrowingSpreadExceedsMaximum,
     NetDebtBelowMinimum,
     NewICRLowerThanMCR,
-    FeeExceedsMaxFee
+    FeeExceedsMaxFee,
+    MinNetDebtCannotBeZero
 } from "./Interfaces/IPositionManager.sol";
 import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
 import {FeeCollector} from "./FeeCollector.sol";
@@ -58,6 +59,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         individualDelegateWhitelist;
 
     uint256 public override liquidationProtocolFee;
+    uint256 public override minDebt;
 
     mapping(IERC20 collateralToken => SortedPositions.Data data) public override sortedPositions;
 
@@ -127,6 +129,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             string(bytes.concat("r", bytes(IERC20Metadata(address(rToken)).symbol()), "-d"))
         );
         setLiquidationProtocolFee(_liquidationProtocolFee);
+        setMinDebt(3000e18);
         for (uint256 i = 0; i < delegates.length; ++i) {
             if (delegates[i] == address(0)) {
                 revert InvalidDelegateAddress();
@@ -152,6 +155,14 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         liquidationProtocolFee = _liquidationProtocolFee;
         emit LiquidationProtocolFeeChanged(_liquidationProtocolFee);
+    }
+
+    function setMinDebt(uint256 newMinDebt) public override onlyOwner {
+        if (newMinDebt == 0) {
+            revert MinNetDebtCannotBeZero();
+        }
+        minDebt = newMinDebt;
+        emit MinDebtChanged(newMinDebt);
     }
 
     function managePosition(
@@ -229,8 +240,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (_collChange == 0 && _rChange == 0) {
             revert NoCollateralOrDebtChange();
         }
-        bool newPosition = !sortedPositions[_collateralToken].nodes[_borrower].exists;
-        _adjustDebt(_borrower, _rChange, _isDebtIncrease, _maxFeePercentage, newPosition);
+        _adjustDebt(_borrower, _rChange, _isDebtIncrease, _maxFeePercentage);
         _adjustCollateral(_collateralToken, _borrower, _collChange, _isCollIncrease, _needsCollateralTransfer);
 
         if (raftDebtToken.balanceOf(_borrower) == 0) {
@@ -238,6 +248,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             _removePositionFromSortedPositions(_collateralToken, _borrower);
         } else {
             checkValidPosition(_collateralToken, _borrower);
+            bool newPosition = !sortedPositions[_collateralToken].nodes[_borrower].exists;
             sortedPositions[_collateralToken].update(
                 this, _collateralToken, _borrower, getNominalICR(_collateralToken, _borrower), _upperHint, _lowerHint
             );
@@ -248,13 +259,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
     }
 
-    function _adjustDebt(
-        address _borrower,
-        uint256 _rChange,
-        bool _isDebtIncrease,
-        uint256 _maxFeePercentage,
-        bool _newPosition
-    ) internal {
+    function _adjustDebt(address _borrower, uint256 _rChange, bool _isDebtIncrease, uint256 _maxFeePercentage)
+        internal
+    {
         if (_rChange == 0) {
             return;
         }
@@ -480,7 +487,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             *
             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
             */
-            if (newNICR != _partialRedemptionHintNICR || newDebt < MathUtils.MIN_NET_DEBT) {
+            if (newNICR != _partialRedemptionHintNICR || newDebt < minDebt) {
                 rLot = 0;
             } else {
                 sortedPositions[_collateralToken].update(
@@ -847,12 +854,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
     }
 
-    // --- 'Require' wrapper functions ---
-
     function checkValidPosition(IERC20 _collateralToken, address position) internal {
-        uint256 netDebt = raftDebtToken.balanceOf(position);
-        if (netDebt < MathUtils.MIN_NET_DEBT) {
-            revert NetDebtBelowMinimum(netDebt);
+        uint256 positionDebt = raftDebtToken.balanceOf(position);
+        if (positionDebt < minDebt) {
+            revert NetDebtBelowMinimum(positionDebt);
         }
 
         uint256 newICR = getCurrentICR(_collateralToken, position, priceFeeds[_collateralToken].fetchPrice());
