@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
 import {IPriceOracle} from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
 import {ChainlinkPriceOracle} from "../contracts/Oracles/ChainlinkPriceOracle.sol";
 import {TellorPriceOracle} from "../contracts/Oracles/TellorPriceOracle.sol";
@@ -9,8 +8,9 @@ import {PriceFeed, IPriceFeed} from "../contracts/PriceFeed.sol";
 import {MockChainlink} from "./TestContracts/MockChainlink.sol";
 import {MockTellor} from "./TestContracts/MockTellor.sol";
 import {PriceFeedTester} from "./TestContracts/PriceFeedTester.sol";
+import {TestSetup} from "./utils/TestSetup.t.sol";
 
-contract PriceFeedTest is Test {
+contract PriceFeedTest is TestSetup {
     MockChainlink public mockChainlink;
     ChainlinkPriceOracle public chainlinkPriceOracle;
     MockTellor public mockTellor;
@@ -20,13 +20,15 @@ contract PriceFeedTest is Test {
 
     address public randomAddress;
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         randomAddress = makeAddr("randomAddress");
 
         mockChainlink = new MockChainlink();
-        chainlinkPriceOracle = new ChainlinkPriceOracle(mockChainlink);
+        chainlinkPriceOracle = new ChainlinkPriceOracle(mockChainlink, collateralToken);
         mockTellor = new MockTellor();
-        tellorPriceOracle = new TellorPriceOracle(mockTellor);
+        tellorPriceOracle = new TellorPriceOracle(mockTellor, collateralToken);
 
         _fillCorrectDataForChainlinkOracle();
 
@@ -38,7 +40,7 @@ contract PriceFeedTest is Test {
         new PriceFeed(IPriceOracle(address(0)), IPriceOracle(address(0)), 5e16);
 
         MockChainlink newMockChainlink = new MockChainlink();
-        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(newMockChainlink);
+        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(newMockChainlink, collateralToken);
         vm.expectRevert(IPriceFeed.PrimaryOracleBrokenOrFrozenOrBadResult.selector);
         new PriceFeed(newChainlinkPriceOracle, IPriceOracle(address(0)), 5e16);
 
@@ -53,7 +55,7 @@ contract PriceFeedTest is Test {
     }
 
     function testSetPrimaryOracle() public {
-        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(mockChainlink);
+        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(mockChainlink, collateralToken);
         priceFeed.setPrimaryOracle(newChainlinkPriceOracle);
 
         assertEq(address(newChainlinkPriceOracle), address(priceFeed.primaryOracle()));
@@ -64,7 +66,7 @@ contract PriceFeedTest is Test {
         priceFeed.setPrimaryOracle(IPriceOracle(address(0)));
 
         MockChainlink newMockChainlink = new MockChainlink();
-        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(newMockChainlink);
+        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(newMockChainlink, collateralToken);
         vm.expectRevert(IPriceFeed.PrimaryOracleBrokenOrFrozenOrBadResult.selector);
         priceFeed.setPrimaryOracle(newChainlinkPriceOracle);
 
@@ -74,7 +76,7 @@ contract PriceFeedTest is Test {
     }
 
     function testSetSecondaryOracle() public {
-        TellorPriceOracle newTellorPriceOracle = new TellorPriceOracle(mockTellor);
+        TellorPriceOracle newTellorPriceOracle = new TellorPriceOracle(mockTellor, collateralToken);
         priceFeed.setSecondaryOracle(newTellorPriceOracle);
 
         assertEq(address(newTellorPriceOracle), address(priceFeed.secondaryOracle()));
@@ -85,7 +87,7 @@ contract PriceFeedTest is Test {
         priceFeed.setSecondaryOracle(IPriceOracle(address(0)));
 
         MockTellor newMockTellor = new MockTellor();
-        TellorPriceOracle newTellorPriceOracle = new TellorPriceOracle(newMockTellor);
+        TellorPriceOracle newTellorPriceOracle = new TellorPriceOracle(newMockTellor, collateralToken);
 
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -113,6 +115,52 @@ contract PriceFeedTest is Test {
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
         priceFeed.setPriceDifferenceBetweenOracles(1e16);
+    }
+
+    // Test wstEth Chainlink Oracle with wstEth index change
+    function testWstEthChainlinkOracleWithDifferentIndex() public {
+        // Oracle price price is 10.00000000
+        mockChainlink.setDecimals(8);
+        mockChainlink.setPrevPrice(10e8);
+        mockChainlink.setPrice(10e8);
+        priceFeed.fetchPrice();
+        uint256 price = priceFeed.lastGoodPrice();
+        // Check Raft PriceFeed gives 10, with 18 digit precision
+        assertEq(price, 10e18);
+
+        vm.mockCall(
+            address(collateralToken),
+            abi.encodeWithSelector(collateralToken.stEthPerToken.selector),
+            abi.encode(15e17) // 1.5
+        );
+        // Check Raft PriceFeed gives 15, with 18 digit precision
+        priceFeed.fetchPrice();
+        price = priceFeed.lastGoodPrice();
+        assertEq(price, 15e18);
+    }
+
+    // Test wstEth Tellor Oracle with wstEth index change
+    function testWstEthTellorOracleWithDifferentIndex() public {
+        // Primary oracle breaks with negative price
+        mockChainlink.setPrevPrice(10e8);
+        mockChainlink.setPrice(-5000);
+
+        mockTellor.setPrice(10e6);
+
+        priceFeed.fetchPrice();
+
+        uint256 price = priceFeed.lastGoodPrice();
+        assertEq(price, 10e18);
+
+        vm.mockCall(
+            address(collateralToken),
+            abi.encodeWithSelector(collateralToken.stEthPerToken.selector),
+            abi.encode(15e17) // 1.5
+        );
+        // Check Raft PriceFeed gives 15, with 18 digit precision
+        priceFeed.fetchPrice();
+        price = priceFeed.lastGoodPrice();
+        assertEq(price, 15e18);
     }
 
     // Primary oracle working: fetchPrice should return the correct price, taking into account the number of decimal
