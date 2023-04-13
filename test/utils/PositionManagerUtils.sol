@@ -21,7 +21,6 @@ library PositionManagerUtils {
 
     struct OpenPositionResult {
         uint256 rAmount;
-        uint256 netDebt;
         uint256 totalDebt;
         uint256 icr;
         uint256 collateral;
@@ -47,7 +46,6 @@ library PositionManagerUtils {
         result.rAmount = getNetBorrowingAmount(positionManager, MathUtils.MIN_NET_DEBT) + extraRAmount;
         result.icr = icr;
         result.totalDebt = getOpenPositionTotalDebt(positionManager, result.rAmount);
-        result.netDebt = MathUtils.getNetDebt(result.totalDebt);
         amount = (amount == 0) ? result.icr * result.totalDebt / priceFeed.getPrice() : amount;
 
         if (ethType == ETHType.ETH) {
@@ -212,7 +210,7 @@ library PositionManagerUtils {
         returns (uint256)
     {
         uint256 fee = _positionManager.getBorrowingFee(rAmount);
-        return rAmount + MathUtils.R_GAS_COMPENSATION + fee;
+        return rAmount + fee;
     }
 
     function getAmountWithBorrowingFee(IPositionManager _positionManager, uint256 _rAmount)

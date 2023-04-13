@@ -19,20 +19,12 @@ contract PositionManagerTester is PositionManager {
         address[] memory delegates
     ) PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee, delegates) {}
 
-    function getCollGasCompensation(uint256 _coll) external pure returns (uint256) {
-        return MathUtils.getCollGasCompensation(_coll);
-    }
-
-    function getCollLiquidationProtocolFee(uint256 _entireColl, uint256 _entireDebt, uint256 _price, uint256 _fee)
+    function getCollLiquidationProtocolFee(uint256 _entireColl, uint256 _entireDebt, uint256 _price, uint256)
         external
-        pure
-        returns (uint256)
+        view
+        returns (uint256 fee)
     {
-        return _getCollLiquidationProtocolFee(_entireColl, _entireDebt, _price, _fee);
-    }
-
-    function getRGasCompensation() external pure returns (uint256) {
-        return MathUtils.R_GAS_COMPENSATION;
+        (fee,) = splitLiquidationCollateral(_entireColl, _entireDebt, _price, false);
     }
 
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint256) {
@@ -49,9 +41,5 @@ contract PositionManagerTester is PositionManager {
 
     function setBaseRate(uint256 _baseRate) external {
         baseRate = _baseRate;
-    }
-
-    function getActualDebtFromComposite(uint256 _debtVal) external pure returns (uint256) {
-        return MathUtils.getNetDebt(_debtVal);
     }
 }
