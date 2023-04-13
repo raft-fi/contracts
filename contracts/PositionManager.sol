@@ -230,7 +230,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             revert NoCollateralOrDebtChange();
         }
         bool newPosition = !sortedPositions[_collateralToken].nodes[_borrower].exists;
-        _adjustDebt(_borrower, _rChange, _isDebtIncrease, _maxFeePercentage, newPosition);
+        _adjustDebt(_borrower, _rChange, _isDebtIncrease, _maxFeePercentage);
         _adjustCollateral(_collateralToken, _borrower, _collChange, _isCollIncrease, _needsCollateralTransfer);
 
         if (raftDebtToken.balanceOf(_borrower) == 0) {
@@ -252,8 +252,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         address _borrower,
         uint256 _rChange,
         bool _isDebtIncrease,
-        uint256 _maxFeePercentage,
-        bool _newPosition
+        uint256 _maxFeePercentage
     ) internal {
         if (_rChange == 0) {
             return;
