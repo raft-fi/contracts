@@ -2,9 +2,10 @@
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {AggregatorV3Interface} from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
 import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "../Dependencies/MathUtils.sol";
-import {IChainlinkPriceOracle, AggregatorV3Interface, ChainlinkResponse} from "./Interfaces/IChainlinkPriceOracle.sol";
+import {IChainlinkPriceOracle, ChainlinkResponse} from "./Interfaces/IChainlinkPriceOracle.sol";
 import {PriceOracleResponse} from "./Interfaces/IPriceOracle.sol";
 import {BasePriceOracle} from "./BasePriceOracle.sol";
 
