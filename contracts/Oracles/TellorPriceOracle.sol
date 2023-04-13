@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IWstEth} from "../Dependencies/IWstEth.sol";
 import {PriceOracleResponse} from "./Interfaces/IPriceOracle.sol";
 import {ITellorPriceOracle, ITellor, TellorResponse} from "./Interfaces/ITellorPriceOracle.sol";
 import {BasePriceOracle} from "./BasePriceOracle.sol";
@@ -13,7 +14,7 @@ contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
 
     uint256 private constant ETHUSD_TELLOR_REQ_ID = 1;
 
-    constructor(ITellor _tellor) {
+    constructor(ITellor _tellor, IWstEth _wstEth) BasePriceOracle(_wstEth) {
         if (address(_tellor) == address(0)) {
             revert InvalidTellorAddress();
         }
@@ -26,7 +27,7 @@ contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
         if (_tellorIsBroken(_tellorResponse) || _oracleIsFrozen(_tellorResponse.timestamp)) {
             return (PriceOracleResponse(true, false, 0));
         }
-        return (PriceOracleResponse(false, false, _scalePriceByDigits(_tellorResponse.value, TELLOR_DIGITS)));
+        return (PriceOracleResponse(false, false, _convertIntoWstEthPrice(_tellorResponse.value, TELLOR_DIGITS)));
     }
 
     function _getCurrentTellorResponse() internal view returns (TellorResponse memory tellorResponse) {
