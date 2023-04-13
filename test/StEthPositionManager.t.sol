@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IStEth} from "../contracts/Dependencies/IStEth.sol";
+import {IWstEth} from "../contracts/Dependencies/IWstEth.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {IPositionManagerStEth, StEthPositionManager} from "../contracts/StEthPositionManager.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
@@ -25,7 +26,7 @@ contract StEthPositionManagerTest is TestSetup {
         priceFeed = new PriceFeedTestnet();
         positionManager = new StEthPositionManager(
             priceFeed,
-            IERC20(WSTETH_ADDRESS),
+            IWstEth(WSTETH_ADDRESS),
             POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
             new address[](0)
@@ -44,7 +45,7 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateral = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 aliceCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
         uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
         assertEq(aliceCollateral, alicePosition.collateral);
@@ -64,7 +65,7 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateral = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 aliceCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
         uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
         assertEq(aliceCollateral, alicePosition.collateral);
@@ -72,20 +73,21 @@ contract StEthPositionManagerTest is TestSetup {
     }
 
     function testDepositEth() public {
+        IERC20 _collateralToken = IERC20(WSTETH_ADDRESS);
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStEth({
             positionManager: positionManager,
             priceFeed: priceFeed,
-            collateralToken: IERC20(WSTETH_ADDRESS),
+            collateralToken: _collateralToken,
             icr: 2 ether,
             ethType: PositionManagerUtils.ETHType.ETH
         });
         vm.stopPrank();
 
-        uint256 positionCollateralBefore = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 positionCollateralBefore = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);
 
-        uint256 positionManagerBalanceBefore = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));
+        uint256 positionManagerBalanceBefore = _collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerBalanceBefore, result.collateral);
 
         uint256 collateralTopUpAmount = 1 ether;
@@ -95,10 +97,10 @@ contract StEthPositionManagerTest is TestSetup {
         positionManager.managePositionEth{value: collateralTopUpAmount}(0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
-        uint256 positionCollateralAfter = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 positionCollateralAfter = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + wstEthAmount);
 
-        uint256 positionManagerBalanceAfter = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));
+        uint256 positionManagerBalanceAfter = _collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerBalanceAfter, positionManagerBalanceBefore + wstEthAmount);
     }
 
@@ -122,20 +124,22 @@ contract StEthPositionManagerTest is TestSetup {
     function testDepositStEth() public {
         _depositETH(ALICE, 50 ether);
 
+        IERC20 _collateralToken = IERC20(WSTETH_ADDRESS);
+
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStEth({
             positionManager: positionManager,
             priceFeed: priceFeed,
-            collateralToken: IERC20(WSTETH_ADDRESS),
+            collateralToken: _collateralToken,
             icr: 2 ether,
             ethType: PositionManagerUtils.ETHType.STETH
         });
         vm.stopPrank();
 
-        uint256 positionCollateralBefore = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 positionCollateralBefore = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);
 
-        uint256 positionManagerBalanceBefore = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));
+        uint256 positionManagerBalanceBefore = _collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerBalanceBefore, result.collateral);
 
         uint256 collateralTopUpAmount = 1 ether;
@@ -146,10 +150,10 @@ contract StEthPositionManagerTest is TestSetup {
         positionManager.managePositionStEth(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
-        uint256 positionCollateralAfter = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 positionCollateralAfter = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + wstEthAmount);
 
-        uint256 positionManagerBalanceAfter = IERC20(WSTETH_ADDRESS).balanceOf(address(positionManager));
+        uint256 positionManagerBalanceAfter = _collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerBalanceAfter, positionManagerBalanceBefore + wstEthAmount);
     }
 

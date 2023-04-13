@@ -16,7 +16,7 @@ contract MathUtilsTester {
     }
 
     // Non-view wrapper for gas test
-    function callDecPowTx(uint256 _base, uint256 _n) external returns (uint256) {
+    function callDecPowTx(uint256 _base, uint256 _n) external pure returns (uint256) {
         return MathUtils.decPow(_base, _n);
     }
 

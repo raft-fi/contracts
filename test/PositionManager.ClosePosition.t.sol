@@ -23,12 +23,11 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManager(
-            priceFeed,
-            collateralToken,
-            POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
             new address[](0)
         );
+        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+
         rToken = positionManager.rToken();
 
         collateralToken.mint(ALICE, 10e36);
@@ -48,7 +47,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateral = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 aliceCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
 
         // Artificially mint to Alice so she has enough to close her position
         vm.prank(address(positionManager));
@@ -62,7 +61,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         // Alice attempts to close her position
         vm.startPrank(ALICE);
         vm.expectRevert(PositionManagerOnlyOnePositionInSystem.selector);
-        positionManager.managePosition(aliceCollateral, false, aliceDebt, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, aliceCollateral, false, aliceDebt, false, ALICE, ALICE, 0);
     }
 
     // Reduces position's collateral and debt to zero
@@ -89,7 +88,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateralBefore = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 aliceCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 bobRBalance = rToken.balanceOf(BOB);
 
@@ -106,13 +105,15 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         // Alice attempts to close position
         vm.prank(ALICE);
-        positionManager.managePosition(aliceCollateralBefore, false, aliceDebtBefore, false, ALICE, ALICE, 0);
+        positionManager.managePosition(
+            collateralToken, aliceCollateralBefore, false, aliceDebtBefore, false, ALICE, ALICE, 0
+        );
 
         uint256 aliceCollateralBalanceAfter = collateralToken.balanceOf(ALICE);
-        uint256 aliceCollateralAfter = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 aliceCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 aliceDebtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 aliceRBalanceAfter = rToken.balanceOf(ALICE);
-        uint256 bobCollateralAfter = positionManager.raftCollateralToken().balanceOf(BOB);
+        uint256 bobCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
         uint256 positionManagerCollateralBalance = collateralToken.balanceOf(address(positionManager));
 
         assertEq(aliceCollateralAfter, 0);
@@ -150,13 +151,15 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         // Confirm Bob's R balance is less than his position debt
         uint256 bobRBalance = rToken.balanceOf(BOB);
-        uint256 bobPositionCollateral = positionManager.raftCollateralToken().balanceOf(BOB);
+        uint256 bobPositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
         uint256 bobPositionDebt = positionManager.raftDebtToken().balanceOf(BOB);
 
         assertEq(bobPositionDebt, bobRBalance);
 
         vm.prank(BOB);
-        positionManager.managePosition(bobPositionCollateral, false, bobPositionDebt, false, BOB, BOB, 0);
+        positionManager.managePosition(
+            collateralToken, bobPositionCollateral, false, bobPositionDebt, false, BOB, BOB, 0
+        );
     }
 
     // Reverts if borrower has insufficient R balance to repay his entire debt when borrowing rate > 0%
@@ -189,13 +192,15 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         // Confirm Bob's R balance is less than his position debt
         uint256 bobRBalance = rToken.balanceOf(BOB);
-        uint256 bobPositionCollateral = positionManager.raftCollateralToken().balanceOf(BOB);
+        uint256 bobPositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
         uint256 bobPositionDebt = positionManager.raftDebtToken().balanceOf(BOB);
 
         assertGt(bobPositionDebt, bobRBalance);
 
         vm.prank(BOB);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(bobPositionCollateral, false, bobPositionDebt, false, BOB, BOB, 0);
+        positionManager.managePosition(
+            collateralToken, bobPositionCollateral, false, bobPositionDebt, false, BOB, BOB, 0
+        );
     }
 }

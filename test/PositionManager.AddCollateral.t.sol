@@ -27,12 +27,10 @@ contract PositionManagerAddCollateralTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManager(
-            priceFeed,
-            collateralToken,
-            POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
             new address[](0)
         );
+        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -63,14 +61,14 @@ contract PositionManagerAddCollateralTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        assertLt(positionManager.getCurrentICR(ALICE, price), MathUtils.MCR);
+        assertLt(positionManager.getCurrentICR(collateralToken, ALICE, price), MathUtils.MCR);
 
         uint256 collateralTopUpAmount = 1;
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
         vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils._100_PERCENT));
-        positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }
 
@@ -92,7 +90,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
         uint256 positionManagerBalanceAfter = collateralToken.balanceOf(address(positionManager));
@@ -111,16 +109,16 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 positionCollateralBefore = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 positionCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 collateralTopUpAmount = 1 ether;
 
         // Alice adds second collateral
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
-        uint256 positionCollateralAfter = positionManager.raftCollateralToken().balanceOf(ALICE);
+        uint256 positionCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + collateralTopUpAmount);
     }
 
@@ -137,19 +135,19 @@ contract PositionManagerAddCollateralTest is TestSetup {
         vm.stopPrank();
 
         // check Alice is in the list before
-        (bool alicePositionInListBefore,,) = positionManager.sortedPositionsNodes(ALICE);
-        (,,, uint256 listSizeBefore) = positionManager.sortedPositions();
+        (bool alicePositionInListBefore,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
+        (,,, uint256 listSizeBefore) = positionManager.sortedPositions(collateralToken);
         assertTrue(alicePositionInListBefore);
         assertGt(listSizeBefore, 0);
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), 1e18);
-        positionManager.managePosition(1e18, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 1e18, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
         // check Alice is still in the list after
-        (bool alicePositionInListAfter,,) = positionManager.sortedPositionsNodes(ALICE);
-        (,,, uint256 listSizeAfter) = positionManager.sortedPositions();
+        (bool alicePositionInListAfter,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
+        (,,, uint256 listSizeAfter) = positionManager.sortedPositions(collateralToken);
         assertTrue(alicePositionInListAfter);
         assertGt(listSizeAfter, 0);
     }
@@ -178,23 +176,23 @@ contract PositionManagerAddCollateralTest is TestSetup {
         vm.startPrank(CAROL);
         collateralToken.approve(address(positionManager), 1 ether);
         vm.expectRevert(abi.encodeWithSelector(PositionsListDoesNotContainNode.selector, CAROL));
-        positionManager.managePosition(1 ether, true, 0, false, CAROL, CAROL, 0);
+        positionManager.managePosition(collateralToken, 1 ether, true, 0, false, CAROL, CAROL, 0);
         vm.stopPrank();
 
         // Price drops
         priceFeed.setPrice(100e18);
 
         // Bob gets liquidated
-        positionManager.liquidate(BOB);
+        positionManager.liquidate(collateralToken, BOB);
 
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(BOB);
+        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
         assertFalse(bobPositionExists);
 
         // Bob attempts to add collateral to his closed position
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 1 ether);
         vm.expectRevert(PositionManagerOnlyOnePositionInSystem.selector);
-        positionManager.managePosition(1 ether, true, 0, false, BOB, BOB, 0);
+        positionManager.managePosition(collateralToken, 1 ether, true, 0, false, BOB, BOB, 0);
         vm.stopPrank();
     }
 }

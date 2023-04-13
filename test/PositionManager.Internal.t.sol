@@ -18,12 +18,10 @@ contract PositionManagerInternalTest is TestSetup {
         super.setUp();
 
         positionManager = new PositionManagerTester(
-            PRICE_FEED,
-            collateralToken,
-            POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
             new address[](0)
         );
+        positionManager.addCollateralToken(collateralToken, PRICE_FEED, POSITIONS_SIZE);
 
         decayBaseRateSeconds = [
             0,

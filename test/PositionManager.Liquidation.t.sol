@@ -27,12 +27,11 @@ contract PositionManagerLiquidationTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManager(
-            priceFeed,
-            collateralToken,
-            POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
             new address[](0)
         );
+        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+
         rToken = positionManager.rToken();
 
         collateralToken.mint(ALICE, 10e36);
@@ -64,7 +63,7 @@ contract PositionManagerLiquidationTest is TestSetup {
 
         uint256 price = priceFeed.getPrice();
 
-        uint256 icrBefore = positionManager.getCurrentICR(BOB, price);
+        uint256 icrBefore = positionManager.getCurrentICR(collateralToken, BOB, price);
         assertEq(icrBefore, 4e18);
 
         // Bob increases debt to 180 R, lowering his ICR to 1.11
@@ -72,23 +71,24 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.startPrank(BOB);
         PositionManagerUtils.withdrawR({
             positionManager: positionManager,
+            collateralToken: collateralToken,
             priceFeed: priceFeed,
             borrower: BOB,
             icr: targetICR
         });
         vm.stopPrank();
 
-        uint256 icrAfter = positionManager.getCurrentICR(BOB, price);
+        uint256 icrAfter = positionManager.getCurrentICR(collateralToken, BOB, price);
         assertEq(icrAfter, targetICR);
 
         // price drops to 1ETH:100R, reducing Bob's ICR below MCR
         priceFeed.setPrice(100e18);
 
         // liquidate position
-        positionManager.liquidate(BOB);
+        positionManager.liquidate(collateralToken, BOB);
 
         // Bob's position is closed
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(BOB);
+        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
         assertFalse(bobPositionExists);
     }
 
@@ -122,16 +122,16 @@ contract PositionManagerLiquidationTest is TestSetup {
         priceFeed.setPrice(105e18);
         uint256 price = priceFeed.getPrice();
 
-        uint256 aliceICR = positionManager.getCurrentICR(ALICE, price);
+        uint256 aliceICR = positionManager.getCurrentICR(collateralToken, ALICE, price);
         assertEq(aliceICR, 105 * MathUtils._100_PERCENT / 100);
 
         // Liquidate the position
-        positionManager.liquidate(ALICE);
+        positionManager.liquidate(collateralToken, ALICE);
 
-        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(ALICE);
+        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
         assertFalse(alicePositionExists);
 
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(BOB);
+        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
         assertTrue(bobPositionExists);
     }
 
@@ -155,11 +155,11 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        (bool carolPositionExists,,) = positionManager.sortedPositionsNodes(CAROL);
+        (bool carolPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
         assertFalse(carolPositionExists);
 
         vm.expectRevert(PositionManagerPositionNotActive.selector);
-        positionManager.liquidate(CAROL);
+        positionManager.liquidate(collateralToken, CAROL);
 
         vm.startPrank(CAROL);
         PositionManagerUtils.openPosition({
@@ -170,20 +170,20 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        (bool carolPositionExistsBeforeLiquidation,,) = positionManager.sortedPositionsNodes(CAROL);
+        (bool carolPositionExistsBeforeLiquidation,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
         assertTrue(carolPositionExistsBeforeLiquidation);
 
         // Price drops, Carol ICR falls below MCR
         priceFeed.setPrice(100e18);
 
         // Carol liquidated, and her position is closed
-        positionManager.liquidate(CAROL);
+        positionManager.liquidate(collateralToken, CAROL);
 
-        (bool carolPositionExistsAfterLiquidation,,) = positionManager.sortedPositionsNodes(CAROL);
+        (bool carolPositionExistsAfterLiquidation,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
         assertFalse(carolPositionExistsAfterLiquidation);
 
         vm.expectRevert(PositionManagerPositionNotActive.selector);
-        positionManager.liquidate(CAROL);
+        positionManager.liquidate(collateralToken, CAROL);
     }
 
     // Does nothing if position has >= 110% ICR
@@ -206,24 +206,24 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        (,,, uint256 listSizeBefore) = positionManager.sortedPositions();
+        (,,, uint256 listSizeBefore) = positionManager.sortedPositions(collateralToken);
         uint256 price = priceFeed.getPrice();
 
         // Check Bob's ICR > 110%
-        uint256 bobICR = positionManager.getCurrentICR(BOB, price);
+        uint256 bobICR = positionManager.getCurrentICR(collateralToken, BOB, price);
         assertTrue(bobICR >= MathUtils.MCR);
 
         // Attempt to liquidate Bob
         vm.expectRevert(NothingToLiquidate.selector);
-        positionManager.liquidate(BOB);
+        positionManager.liquidate(collateralToken, BOB);
 
         // Check Bob active, check Alice active
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(BOB);
+        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
         assertTrue(bobPositionExists);
-        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(ALICE);
+        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
         assertTrue(alicePositionExists);
 
-        (,,, uint256 listSizeAfter) = positionManager.sortedPositions();
+        (,,, uint256 listSizeAfter) = positionManager.sortedPositions(collateralToken);
         assertEq(listSizeBefore, listSizeAfter);
     }
 
@@ -276,9 +276,9 @@ contract PositionManagerLiquidationTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        uint256 aliceICRBefore = positionManager.getCurrentICR(ALICE, price);
-        uint256 bobICRBefore = positionManager.getCurrentICR(BOB, price);
-        uint256 carolICRBefore = positionManager.getCurrentICR(CAROL, price);
+        uint256 aliceICRBefore = positionManager.getCurrentICR(collateralToken, ALICE, price);
+        uint256 bobICRBefore = positionManager.getCurrentICR(collateralToken, BOB, price);
+        uint256 carolICRBefore = positionManager.getCurrentICR(collateralToken, CAROL, price);
 
         /* Before liquidation:
         Alice ICR: 2 * 100 / 50 = 400%
@@ -290,11 +290,11 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertGe(bobICRBefore, MathUtils.MCR);
         assertLe(carolICRBefore, MathUtils.MCR);
 
-        positionManager.liquidate(DAVE);
+        positionManager.liquidate(collateralToken, DAVE);
 
-        uint256 aliceICRAfter = positionManager.getCurrentICR(ALICE, price);
-        uint256 bobICRAfter = positionManager.getCurrentICR(BOB, price);
-        uint256 carolICRAfter = positionManager.getCurrentICR(CAROL, price);
+        uint256 aliceICRAfter = positionManager.getCurrentICR(collateralToken, ALICE, price);
+        uint256 bobICRAfter = positionManager.getCurrentICR(collateralToken, BOB, price);
+        uint256 carolICRAfter = positionManager.getCurrentICR(collateralToken, CAROL, price);
 
         assertGe(aliceICRAfter, MathUtils.MCR); // TODO OVDE PADA @MIJOVIC
         assertLe(bobICRAfter, MathUtils.MCR);
