@@ -25,12 +25,10 @@ contract PositionManagerTest is TestSetup {
         priceFeed = new PriceFeedTestnet();
         priceFeed.setPrice(1e18);
         positionManager = new PositionManager(
-            priceFeed,
-            collateralToken,
-            POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
             new address[](0)
         );
+        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -43,12 +41,10 @@ contract PositionManagerTest is TestSetup {
         globalDelegates[0] = address(BOB);
         collateralToken.mint(ALICE, 10 ether);
         PositionManager positionManager2 = new PositionManager(
-            priceFeed,
-            collateralToken,
-            POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
             globalDelegates
         );
+        positionManager2.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -66,21 +62,23 @@ contract PositionManagerTest is TestSetup {
         collateralToken.approve(address(positionManager2), collateralTopUpAmount);
 
         uint256 borrowerDebtBefore = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollBefore = positionManager2.raftCollateralToken().balanceOf(ALICE);
+        uint256 borrowerCollBefore = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 borrowerRBalanceBefore = positionManager2.rToken().balanceOf(ALICE);
         uint256 borrowerCollateralBalanceBefore = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceBefore = positionManager2.rToken().balanceOf(BOB);
         uint256 delegateCollateralBalanceBefore = collateralToken.balanceOf(BOB);
-        positionManager2.managePosition(ALICE, collateralTopUpAmount, true, debtAmount, true, ALICE, ALICE, 0);
+        positionManager2.managePosition(
+            collateralToken, ALICE, collateralTopUpAmount, true, debtAmount, true, ALICE, ALICE, 0
+        );
         uint256 borrowerRBalanceAfter = positionManager2.rToken().balanceOf(ALICE);
         uint256 borrowerCollateralBalanceAfter = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceAfter = positionManager2.rToken().balanceOf(BOB);
         uint256 delegateCollateralBalanceAfter = collateralToken.balanceOf(BOB);
         uint256 borrowerDebtAfter = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollAfter = positionManager2.raftCollateralToken().balanceOf(ALICE);
+        uint256 borrowerCollAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
 
         uint256 delegateDebtAfter = positionManager2.raftDebtToken().balanceOf(BOB);
-        uint256 delegateCollAfter = positionManager2.raftCollateralToken().balanceOf(BOB);
+        uint256 delegateCollAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(BOB);
 
         assertEq(borrowerRBalanceAfter, borrowerRBalanceBefore + debtAmount);
         assertEq(borrowerCollateralBalanceAfter, borrowerCollateralBalanceBefore);
@@ -108,7 +106,7 @@ contract PositionManagerTest is TestSetup {
         uint256 collateralTopUpAmount = 1 ether;
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
     }
 
     function testNonDelegateCannotManagePosition() public {
@@ -117,7 +115,7 @@ contract PositionManagerTest is TestSetup {
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
 
         vm.expectRevert(DelegateNotWhitelisted.selector);
-        positionManager.managePosition(ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
     }
 
     function testIndividualDelegateCannotManageOtherPositions() public {
@@ -139,7 +137,7 @@ contract PositionManagerTest is TestSetup {
 
         vm.prank(BOB);
         vm.expectRevert(DelegateNotWhitelisted.selector);
-        positionManager.managePosition(ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
     }
 
     // --- Borrowing Spread ---
@@ -183,8 +181,8 @@ contract PositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertEq(positionManager.raftCollateralToken().balanceOf(ALICE), alicePosition.collateral);
-        assertEq(positionManager.raftCollateralToken().balanceOf(BOB), bobPosition.collateral);
+        assertEq(positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE), alicePosition.collateral);
+        assertEq(positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB), bobPosition.collateral);
     }
 
     // Returns debt

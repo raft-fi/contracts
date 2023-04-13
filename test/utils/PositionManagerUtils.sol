@@ -65,7 +65,9 @@ library PositionManagerUtils {
             result.collateral = wstEthAmount;
         } else {
             collateralToken.approve(address(positionManager), amount);
-            positionManager.managePosition(amount, true, result.rAmount, true, upperHint, lowerHint, maxFeePercentage);
+            positionManager.managePosition(
+                collateralToken, amount, true, result.rAmount, true, upperHint, lowerHint, maxFeePercentage
+            );
             result.collateral = amount;
         }
     }
@@ -156,6 +158,7 @@ library PositionManagerUtils {
 
     function withdrawR(
         IPositionManager positionManager,
+        IERC20 _collateralToken,
         PriceFeedTestnet priceFeed,
         address borrower,
         uint256 maxFeePercentage,
@@ -172,7 +175,7 @@ library PositionManagerUtils {
 
         if (icr > 0) {
             IERC20 raftDebtToken = positionManager.raftDebtToken();
-            IERC20 raftCollateralToken = positionManager.raftCollateralToken();
+            IERC20 raftCollateralToken = positionManager.raftCollateralTokens(_collateralToken);
             uint256 debt = raftDebtToken.balanceOf(borrower);
             uint256 collateral = raftCollateralToken.balanceOf(borrower);
             uint256 price = priceFeed.getPrice();
@@ -184,15 +187,21 @@ library PositionManagerUtils {
             result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, result.rAmount);
         }
 
-        positionManager.managePosition(0, false, result.rAmount, true, upperHint, lowerHint, maxFeePercentage);
+        positionManager.managePosition(
+            _collateralToken, 0, false, result.rAmount, true, upperHint, lowerHint, maxFeePercentage
+        );
     }
 
-    function withdrawR(IPositionManager positionManager, PriceFeedTestnet priceFeed, address borrower, uint256 icr)
-        internal
-        returns (WithdrawRResult memory result)
-    {
+    function withdrawR(
+        IPositionManager positionManager,
+        IERC20 collateralToken,
+        PriceFeedTestnet priceFeed,
+        address borrower,
+        uint256 icr
+    ) internal returns (WithdrawRResult memory result) {
         uint256 maxFee = MathUtils._100_PERCENT;
-        result = withdrawR(positionManager, priceFeed, borrower, maxFee, 0, icr, address(0), address(0));
+        result =
+            withdrawR(positionManager, collateralToken, priceFeed, borrower, maxFee, 0, icr, address(0), address(0));
     }
 
     function getNetBorrowingAmount(IPositionManager _positionManager, uint256 _debtWithFee)

@@ -2,12 +2,20 @@
 pragma solidity 0.8.19;
 
 import {IStEth} from "../Dependencies/IStEth.sol";
+import {IWstEth} from "../Dependencies/IWstEth.sol";
 import {IPositionManager} from "./IPositionManager.sol";
 
 /// @notice Interface for the StEthPositionManager contract.
 interface IPositionManagerStEth is IPositionManager {
+    // --- Errors ---
+
     /// @dev Send ether to contract failed.
     error SendEtherFailed();
+
+    // --- Functions ---
+
+    /// @dev Return wstEth address
+    function wstEth() external returns (IWstEth);
 
     /// @dev Return stEth address
     function stEth() external returns (IStEth);

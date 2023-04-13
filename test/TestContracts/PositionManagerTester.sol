@@ -11,13 +11,9 @@ import {MathUtils} from "../../contracts/Dependencies/MathUtils.sol";
 for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
-    constructor(
-        IPriceFeed _priceFeed,
-        IERC20 _collateralToken,
-        uint256 _positionsSize,
-        uint256 _liquidationProtocolFee,
-        address[] memory delegates
-    ) PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee, delegates) {}
+    constructor(uint256 _liquidationProtocolFee, address[] memory delegates)
+        PositionManager(_liquidationProtocolFee, delegates)
+    {}
 
     function getCollLiquidationProtocolFee(uint256 _entireColl, uint256 _entireDebt, uint256 _price, uint256)
         external

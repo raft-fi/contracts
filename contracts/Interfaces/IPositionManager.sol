@@ -72,20 +72,32 @@ error FeeExceedsMaxFee(uint256 fee, uint256 amount, uint256 maxFeePercentage);
 
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
+    // --- Errors ---
+
+    /// @dev Collateral token is not added.
+    error CollateralTokenNotAdded();
+
+    /// @dev Borrower has a different collateral token.
+    error BorrowerHasDifferentCollateralToken();
+
+    /// @dev Collateral token already added.
+    error CollateralTokenAlreadyAdded();
+
+    // --- Events ---
+
     /// @dev New PositionManager contract is deployed.
-    /// @param priceFeed Addres of the contract that provides price for collateral token.
-    /// @param collateralToken Address of the token used as collateral.
     /// @param rToken Address of the rToken used by position manager.
-    /// @param raftCollateralToken Address of Raft indexable collateral token.
     /// @param raftDebtToken Address of Raft indexable debt token.
     /// @param feeRecipient Fee recipient address.
-    event PositionManagerDeployed(
-        IPriceFeed priceFeed,
-        IERC20 collateralToken,
-        IRToken rToken,
-        IERC20Indexable raftCollateralToken,
-        IERC20Indexable raftDebtToken,
-        address feeRecipient
+    event PositionManagerDeployed(IRToken rToken, IERC20Indexable raftDebtToken, address feeRecipient);
+
+    /// @dev New collateral token is added to the system.
+    /// @param collateralToken Address of the token used as collateral.
+    /// @param raftCollateralToken Address of Raft indexable collateral token.
+    /// @param priceFeed Addres of the contract that provides price for collateral token.
+    /// @param positionSize Position size for the doubly linked list.
+    event PositionManagerCollateralTokenAdded(
+        IERC20 collateralToken, IERC20Indexable raftCollateralToken, IPriceFeed priceFeed, uint256 positionSize
     );
 
     /// @dev New position is created in Raft.
@@ -115,6 +127,7 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Liquidation was executed.
     /// @param liquidator Liquidator that executed liquidation sequence.
+    /// @param collateralToken Collateral token used for liquidation.
     /// @param debtToOffset Total debt offset for the liquidation sequence.
     /// @param collToSendToProtocol Total collateral sent to protocol.
     /// @param collToSendToLiquidator Total collateral sent to liquidator.
@@ -122,6 +135,7 @@ interface IPositionManager is IFeeCollector {
     /// @param collToRedistribute Total collateral amount to redestribute to currently open positions.
     event Liquidation(
         address indexed liquidator,
+        IERC20 indexed collateralToken,
         uint256 debtToOffset,
         uint256 collToSendToProtocol,
         uint256 collToSendToLiquidator,
@@ -152,33 +166,72 @@ interface IPositionManager is IFeeCollector {
 
     // --- Functions ---
 
-    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) external;
+    /// @dev Returns address of the rToken used by position manager.
+    /// @return Address of the rToken used by position manager.
+    function rToken() external view returns (IRToken);
+
+    function raftDebtToken() external view returns (IERC20Indexable);
+
+    /// @dev Return Raft indexable collateral token for the given collateral token.
+    /// @param _collateralToken Address of the token used as collateral.
+    /// @return raftCollateralToken Address of Raft indexable collateral token.
+    function raftCollateralTokens(IERC20 _collateralToken)
+        external
+        view
+        returns (IERC20Indexable raftCollateralToken);
+
+    /// @dev Return price feed for the given collateral token.
+    /// @param _collateralToken Address of the token used as collateral.
+    /// @return priceFeed Address of the contract that provides price for collateral token.
+    function priceFeeds(IERC20 _collateralToken) external view returns (IPriceFeed priceFeed);
+
+    /// @dev Return collateral token per borrower.
+    /// @param _borrower Address of the borrower.
+    /// @return collateralToken Address of collateral token.
+    function collateralTokenPerBorrowers(address _borrower) external view returns (IERC20 collateralToken);
+
     function liquidationProtocolFee() external view returns (uint256);
     function MAX_BORROWING_SPREAD() external view returns (uint256);
     function MAX_LIQUIDATION_PROTOCOL_FEE() external view returns (uint256);
-    function collateralToken() external view returns (IERC20);
-    function rToken() external view returns (IRToken);
-    function priceFeed() external view returns (IPriceFeed);
+
     function globalDelegateWhitelist(address delegate) external view returns (bool isWhitelisted);
     function individualDelegateWhitelist(address borrower, address delegate)
         external
         view
         returns (bool isWhitelisted);
 
-    function raftDebtToken() external view returns (IERC20Indexable);
-    function raftCollateralToken() external view returns (IERC20Indexable);
+    /// @dev A doubly linked list of Positions, sorted by their sorted by their collateral ratios.
+    /// @param _collateralToken Address of the token used as collateral.
+    function sortedPositions(IERC20 _collateralToken)
+        external
+        view
+        returns (address first, address last, uint256 maxSize, uint256 size);
 
-    function sortedPositions() external view returns (address first, address last, uint256 maxSize, uint256 size);
+    /// @dev Adds new collateral token to the system.
+    /// @param _collateralToken Address of the token used as collateral.
+    /// @param _priceFeed Address of the price feed for the collateral token.
+    /// @param _positionsSize Max size of the per-collateral doubly linked list of positions.
+    function addCollateralToken(IERC20 _collateralToken, IPriceFeed _priceFeed, uint256 _positionsSize) external;
 
-    function sortedPositionsNodes(address _id) external view returns (bool exists, address nextId, address prevId);
+    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) external;
 
-    function getNominalICR(address _borrower) external view returns (uint256);
-    function getCurrentICR(address _borrower, uint256 _price) external view returns (uint256);
+    function sortedPositionsNodes(IERC20 _collateralToken, address _id)
+        external
+        view
+        returns (bool exists, address nextId, address prevId);
 
-    function liquidate(address _borrower) external;
-    function batchLiquidatePositions(address[] calldata _positionArray) external;
+    function getNominalICR(IERC20 _collateralToken, address _borrower) external view returns (uint256);
+    function getCurrentICR(IERC20 _collateralToken, address _borrower, uint256 _price)
+        external
+        view
+        returns (uint256);
+
+    function liquidate(IERC20 _collateralToken, address _borrower) external;
+
+    function batchLiquidatePositions(IERC20 _collateralToken, address[] calldata _positionArray) external;
 
     function redeemCollateral(
+        IERC20 _collateralToken,
         uint256 _rAmount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
@@ -188,7 +241,7 @@ interface IPositionManager is IFeeCollector {
         uint256 _maxFee
     ) external;
 
-    function simulateBatchLiquidatePositions(address[] memory _positionArray, uint256 _price)
+    function simulateBatchLiquidatePositions(IERC20 _collateralToken, address[] memory _positionArray, uint256 _price)
         external
         view
         returns (LiquidationTotals memory totals);
@@ -208,6 +261,7 @@ interface IPositionManager is IFeeCollector {
     function getBorrowingFeeWithDecay(uint256 _rDebt) external view returns (uint256);
 
     function managePosition(
+        IERC20 _collateralToken,
         address _borrower,
         uint256 _collChange,
         bool _isCollIncrease,
@@ -219,6 +273,7 @@ interface IPositionManager is IFeeCollector {
     ) external;
 
     function managePosition(
+        IERC20 _collateralToken,
         uint256 _collChange,
         bool _isCollIncrease,
         uint256 _rChange,

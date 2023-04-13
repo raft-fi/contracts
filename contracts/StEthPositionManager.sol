@@ -9,16 +9,20 @@ import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
 import {PositionManager} from "./PositionManager.sol";
 
 contract StEthPositionManager is IPositionManagerStEth, PositionManager {
+    IWstEth public immutable override wstEth;
     IStEth public immutable override stEth;
 
     constructor(
         IPriceFeed _priceFeed,
-        IERC20 _collateralToken,
+        IWstEth _wstEth,
         uint256 _positionsSize,
         uint256 _liquidationProtocolFee,
         address[] memory delegates
-    ) PositionManager(_priceFeed, _collateralToken, _positionsSize, _liquidationProtocolFee, delegates) {
-        stEth = IStEth(address(IWstEth(address(_collateralToken)).stETH()));
+    ) PositionManager(_liquidationProtocolFee, delegates) {
+        wstEth = _wstEth;
+        stEth = IStEth(address(_wstEth.stETH()));
+
+        _addCollateralToken(_wstEth, _priceFeed, _positionsSize);
     }
 
     function managePositionEth(
@@ -28,16 +32,25 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
         address _lowerHint,
         uint256 _maxFeePercentage
     ) external payable override {
-        uint256 wstEthBalanceBefore = IWstEth(address(collateralToken)).balanceOf(address(this));
-        (bool sent,) = address(collateralToken).call{value: msg.value}("");
+        uint256 wstEthBalanceBefore = wstEth.balanceOf(address(this));
+        (bool sent,) = address(wstEth).call{value: msg.value}("");
         if (!sent) {
             revert SendEtherFailed();
         }
-        uint256 wstEthBalanceAfter = IWstEth(address(collateralToken)).balanceOf(address(this));
+        uint256 wstEthBalanceAfter = wstEth.balanceOf(address(this));
         uint256 wstEthAmount = wstEthBalanceAfter - wstEthBalanceBefore;
 
         _managePosition(
-            msg.sender, wstEthAmount, true, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, false
+            wstEth,
+            msg.sender,
+            wstEthAmount,
+            true,
+            _rChange,
+            _isDebtIncrease,
+            _upperHint,
+            _lowerHint,
+            _maxFeePercentage,
+            false
         );
     }
 
@@ -49,16 +62,25 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
         address _lowerHint,
         uint256 _maxFeePercentage
     ) external payable override {
-        uint256 wstEthBalanceBefore = IWstEth(address(collateralToken)).balanceOf(address(this));
-        (bool sent,) = address(collateralToken).call{value: msg.value}("");
+        uint256 wstEthBalanceBefore = wstEth.balanceOf(address(this));
+        (bool sent,) = address(wstEth).call{value: msg.value}("");
         if (!sent) {
             revert SendEtherFailed();
         }
-        uint256 wstEthBalanceAfter = IWstEth(address(collateralToken)).balanceOf(address(this));
+        uint256 wstEthBalanceAfter = wstEth.balanceOf(address(this));
         uint256 wstEthAmount = wstEthBalanceAfter - wstEthBalanceBefore;
 
         _managePosition(
-            _borrower, wstEthAmount, true, _rChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, false
+            wstEth,
+            _borrower,
+            wstEthAmount,
+            true,
+            _rChange,
+            _isDebtIncrease,
+            _upperHint,
+            _lowerHint,
+            _maxFeePercentage,
+            false
         );
     }
 
@@ -73,9 +95,10 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
     ) external override {
         if (_isCollIncrease) {
             stEth.transferFrom(msg.sender, address(this), _collChange);
-            stEth.approve(address(collateralToken), _collChange);
-            uint256 wstEthAmount = IWstEth(address(collateralToken)).wrap(_collChange);
+            stEth.approve(address(wstEth), _collChange);
+            uint256 wstEthAmount = wstEth.wrap(_collChange);
             _managePosition(
+                wstEth,
                 msg.sender,
                 wstEthAmount,
                 _isCollIncrease,
@@ -88,6 +111,7 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
             );
         } else {
             _managePosition(
+                wstEth,
                 msg.sender,
                 _collChange,
                 _isCollIncrease,
@@ -98,7 +122,7 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
                 _maxFeePercentage,
                 false
             );
-            uint256 stEthAmount = IWstEth(address(collateralToken)).unwrap(_collChange);
+            uint256 stEthAmount = wstEth.unwrap(_collChange);
             stEth.transfer(msg.sender, stEthAmount);
         }
     }
@@ -115,9 +139,10 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
     ) external override {
         if (_isCollIncrease) {
             stEth.transferFrom(msg.sender, address(this), _collChange);
-            stEth.approve(address(collateralToken), _collChange);
-            uint256 wstEthAmount = IWstEth(address(collateralToken)).wrap(_collChange);
+            stEth.approve(address(wstEth), _collChange);
+            uint256 wstEthAmount = wstEth.wrap(_collChange);
             _managePosition(
+                wstEth,
                 _borrower,
                 wstEthAmount,
                 _isCollIncrease,
@@ -130,6 +155,7 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
             );
         } else {
             _managePosition(
+                wstEth,
                 _borrower,
                 _collChange,
                 _isCollIncrease,
@@ -140,7 +166,7 @@ contract StEthPositionManager is IPositionManagerStEth, PositionManager {
                 _maxFeePercentage,
                 false
             );
-            uint256 stEthAmount = IWstEth(address(collateralToken)).unwrap(_collChange);
+            uint256 stEthAmount = wstEth.unwrap(_collChange);
             stEth.transfer(msg.sender, stEthAmount);
         }
     }
