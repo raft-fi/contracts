@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {CallerIsNotPositionManager} from "../contracts/Interfaces/IPositionManagerDependent.sol";
-import {RToken, IRToken, FlashFeePercentageTooBig} from "../contracts/RToken.sol";
+import {IPositionManagerDependent} from "../contracts/Interfaces/IPositionManagerDependent.sol";
+import {RToken, IRToken} from "../contracts/RToken.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract RTokenTest is TestSetup {
@@ -49,7 +49,7 @@ contract RTokenTest is TestSetup {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         token.setFlashMintFeePercentage(1);
 
-        vm.expectRevert(abi.encodeWithSelector(FlashFeePercentageTooBig.selector, 1_000));
+        vm.expectRevert(abi.encodeWithSelector(IRToken.FlashFeePercentageTooBig.selector, 1_000));
         token.setFlashMintFeePercentage(1_000);
 
         token.setFlashMintFeePercentage(500);
@@ -64,11 +64,11 @@ contract RTokenTest is TestSetup {
 
     function testUnauthorizedMintOrBurn() public {
         vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, ALICE));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManagerDependent.CallerIsNotPositionManager.selector, ALICE));
         token.mint(ALICE, 1);
 
         vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(CallerIsNotPositionManager.selector, ALICE));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManagerDependent.CallerIsNotPositionManager.selector, ALICE));
         token.burn(ALICE, 1);
     }
 

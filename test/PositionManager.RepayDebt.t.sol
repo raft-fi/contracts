@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManager, NetDebtBelowMinimum} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {IRToken} from "../contracts/Interfaces/IRToken.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
@@ -66,7 +66,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         vm.startPrank(ALICE);
         vm.expectRevert(
-            abi.encodeWithSelector(NetDebtBelowMinimum.selector, positionManager.minDebt() - repaymentAmount)
+            abi.encodeWithSelector(
+                IPositionManager.NetDebtBelowMinimum.selector, positionManager.minDebt() - repaymentAmount
+            )
         );
         positionManager.managePosition(collateralToken, 0, false, repaymentAmount, false, ALICE, ALICE, 0);
         vm.stopPrank();
@@ -121,7 +123,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
             MathUtils._100_PERCENT
         );
 
-        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, positionManager.minDebt() - 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(IPositionManager.NetDebtBelowMinimum.selector, positionManager.minDebt() - 1)
+        );
         positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }
@@ -148,7 +152,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, positionManager.minDebt() - 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(IPositionManager.NetDebtBelowMinimum.selector, positionManager.minDebt() - 1)
+        );
         positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }

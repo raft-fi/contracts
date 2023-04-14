@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {
-    IPositionManager,
-    PositionManagerOnlyOnePositionInSystem,
-    NewICRLowerThanMCR
-} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {PositionsListDoesNotContainNode} from "../contracts/SortedPositions.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
@@ -67,7 +63,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils._100_PERCENT));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils._100_PERCENT));
         positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }
@@ -191,7 +187,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         // Bob attempts to add collateral to his closed position
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 1 ether);
-        vm.expectRevert(PositionManagerOnlyOnePositionInSystem.selector);
+        vm.expectRevert(IPositionManager.OnlyOnePositionInSystem.selector);
         positionManager.managePosition(collateralToken, 1 ether, true, 0, false, BOB, BOB, 0);
         vm.stopPrank();
     }

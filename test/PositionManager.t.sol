@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {
-    IPositionManager,
-    DelegateNotWhitelisted,
-    BorrowingSpreadExceedsMaximum
-} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
@@ -114,7 +110,7 @@ contract PositionManagerTest is TestSetup {
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
 
-        vm.expectRevert(DelegateNotWhitelisted.selector);
+        vm.expectRevert(IPositionManager.DelegateNotWhitelisted.selector);
         positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
     }
 
@@ -136,7 +132,7 @@ contract PositionManagerTest is TestSetup {
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
 
         vm.prank(BOB);
-        vm.expectRevert(DelegateNotWhitelisted.selector);
+        vm.expectRevert(IPositionManager.DelegateNotWhitelisted.selector);
         positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
     }
 
@@ -155,7 +151,7 @@ contract PositionManagerTest is TestSetup {
 
     function testOutOfBoundsSetBorrowingSpread() public {
         uint256 maxBorrowingSpread = positionManager.MAX_BORROWING_SPREAD();
-        vm.expectRevert(BorrowingSpreadExceedsMaximum.selector);
+        vm.expectRevert(IPositionManager.BorrowingSpreadExceedsMaximum.selector);
         positionManager.setBorrowingSpread(maxBorrowingSpread + 1);
     }
 

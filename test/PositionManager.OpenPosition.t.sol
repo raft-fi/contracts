@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManager, NewICRLowerThanMCR} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManagerTester} from "./TestContracts/PositionManagerTester.sol";
 import {IRToken} from "../contracts/Interfaces/IRToken.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
@@ -497,7 +497,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         (uint256 rAmount, uint256 totalDebt, uint256 amount) =
             PositionManagerUtils.getOpenPositionSetupValues(positionManager, priceFeed, 0, bobICR, 0);
         collateralToken.approve(address(positionManager), amount);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, bobICR));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, bobICR));
         positionManager.managePosition(
             collateralToken, amount, true, rAmount, true, address(0), address(0), MathUtils._100_PERCENT
         );
