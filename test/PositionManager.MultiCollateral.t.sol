@@ -2,11 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {
-    IPositionManager,
-    PositionManagerOnlyOnePositionInSystem,
-    NewICRLowerThanMCR
-} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {PositionsListDoesNotContainNode} from "../contracts/SortedPositions.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";

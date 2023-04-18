@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -8,74 +7,74 @@ import {IERC20Indexable} from "./IERC20Indexable.sol";
 import {IFeeCollector} from "./IFeeCollector.sol";
 import {IPriceFeed} from "./IPriceFeed.sol";
 
-/// @dev Max fee percentage must be between borrowing spread and 100%.
-error PositionManagerInvalidMaxFeePercentage();
-
-/// @dev Max fee percentage must be between 0.5% and 100%.
-error PositionManagerMaxFeePercentageOutOfRange();
-
-/// @dev Position is not active (either does not exist or closed).
-error PositionManagerPositionNotActive();
-
-/// @dev Requested redemption amount is > user's R token balance.
-error PositionManagerRedemptionAmountExceedsBalance();
-
-/// @dev Only one position in the system.
-error PositionManagerOnlyOnePositionInSystem();
-
-/// @dev Amount is zero.
-error PositionManagerAmountIsZero();
-
-/// @dev Nothing to liquidate.
-error NothingToLiquidate();
-
-/// @dev Unable to redeem any amount.
-error UnableToRedeemAnyAmount();
-
-/// @dev Position array must is empty.
-error PositionArrayEmpty();
-
-/// @dev Fee would eat up all returned collateral.
-error FeeEatsUpAllReturnedCollateral();
-
-/// @dev Borrowing spread exceeds maximum.
-error BorrowingSpreadExceedsMaximum();
-
-/// @dev Trying to withdraw more collateral than what user has available.
-error WithdrawingMoreThanAvailableCollateral();
-
-/// @dev Cannot withdraw and add collateral at the same time.
-error NotSingularCollateralChange();
-
-/// @dev There must be either a collateral change or a debt change.
-error NoCollateralOrDebtChange();
-
-/// @dev An operation that would result in ICR < MCR is not permitted.
-/// @param newICR Resulting ICR that is bellow MCR.
-error NewICRLowerThanMCR(uint256 newICR);
-
-/// @dev Position's net debt must be greater than minimum.
-/// @param netDebt Net debt amount that is below minimum.
-error NetDebtBelowMinimum(uint256 netDebt);
-
-/// @dev Min debt value cannot be zero.
-error MinNetDebtCannotBeZero();
-
-/// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
-error LiquidationProtocolFeeOutOfBound();
-
-/// @dev The provided delegate address is invalid.
-error InvalidDelegateAddress();
-
-/// @dev A non-whitelisted delegate cannot adjust positions.
-error DelegateNotWhitelisted();
-
-/// @dev Fee exceeded provided maximum fee percentage
-error FeeExceedsMaxFee(uint256 fee, uint256 amount, uint256 maxFeePercentage);
-
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
     // --- Errors ---
+
+    /// @dev Max fee percentage must be between borrowing spread and 100%.
+    error InvalidMaxFeePercentage();
+
+    /// @dev Max fee percentage must be between 0.5% and 100%.
+    error MaxFeePercentageOutOfRange();
+
+    /// @dev Position is not active (either does not exist or closed).
+    error PositionNotActive();
+
+    /// @dev Requested redemption amount is > user's R token balance.
+    error RedemptionAmountExceedsBalance();
+
+    /// @dev Only one position in the system.
+    error OnlyOnePositionInSystem();
+
+    /// @dev Amount is zero.
+    error AmountIsZero();
+
+    /// @dev Nothing to liquidate.
+    error NothingToLiquidate();
+
+    /// @dev Unable to redeem any amount.
+    error UnableToRedeemAnyAmount();
+
+    /// @dev Position array must is empty.
+    error PositionArrayEmpty();
+
+    /// @dev Fee would eat up all returned collateral.
+    error FeeEatsUpAllReturnedCollateral();
+
+    /// @dev Borrowing spread exceeds maximum.
+    error BorrowingSpreadExceedsMaximum();
+
+    /// @dev Trying to withdraw more collateral than what user has available.
+    error WithdrawingMoreThanAvailableCollateral();
+
+    /// @dev Cannot withdraw and add collateral at the same time.
+    error NotSingularCollateralChange();
+
+    /// @dev There must be either a collateral change or a debt change.
+    error NoCollateralOrDebtChange();
+
+    /// @dev An operation that would result in ICR < MCR is not permitted.
+    /// @param newICR Resulting ICR that is bellow MCR.
+    error NewICRLowerThanMCR(uint256 newICR);
+
+    /// @dev Position's net debt must be greater than minimum.
+    /// @param netDebt Net debt amount that is below minimum.
+    error NetDebtBelowMinimum(uint256 netDebt);
+
+    /// @dev Min debt value cannot be zero.
+    error MinNetDebtCannotBeZero();
+
+    /// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
+    error LiquidationProtocolFeeOutOfBound();
+
+    /// @dev The provided delegate address is invalid.
+    error InvalidDelegateAddress();
+
+    /// @dev A non-whitelisted delegate cannot adjust positions.
+    error DelegateNotWhitelisted();
+
+    /// @dev Fee exceeded provided maximum fee percentage
+    error FeeExceedsMaxFee(uint256 fee, uint256 amount, uint256 maxFeePercentage);
 
     /// @dev Collateral token is not added.
     error CollateralTokenNotAdded();
@@ -99,7 +98,7 @@ interface IPositionManager is IFeeCollector {
     /// @param raftCollateralToken Address of Raft indexable collateral token.
     /// @param priceFeed Addres of the contract that provides price for collateral token.
     /// @param positionSize Position size for the doubly linked list.
-    event PositionManagerCollateralTokenAdded(
+    event CollateralTokenAdded(
         IERC20 collateralToken, IERC20Indexable raftCollateralToken, IPriceFeed priceFeed, uint256 positionSize
     );
 

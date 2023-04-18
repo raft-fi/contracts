@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManager, NewICRLowerThanMCR} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
@@ -64,7 +64,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils._100_PERCENT));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils._100_PERCENT));
         positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }
@@ -135,7 +135,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Carol withdraws exactly all her collateral
         vm.prank(CAROL);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, 0));
         positionManager.managePosition(collateralToken, carolCollateral, false, 0, false, CAROL, CAROL, 0);
 
         // Bob attempts to withdraw 1 wei more than his collateral
@@ -168,7 +168,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
         vm.prank(BOB);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
         positionManager.managePosition(collateralToken, 1, false, 0, false, BOB, BOB, 0);
     }
 
@@ -229,7 +229,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Alice attempts to withdraw all collateral
         vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, 0));
         positionManager.managePosition(collateralToken, aliceCollateral, false, 0, false, ALICE, ALICE, 0);
     }
 

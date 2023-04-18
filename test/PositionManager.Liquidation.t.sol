@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {
-    IPositionManager,
-    PositionManagerPositionNotActive,
-    NothingToLiquidate
-} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {IRToken} from "../contracts/Interfaces/IRToken.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
@@ -158,7 +154,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         (bool carolPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
         assertFalse(carolPositionExists);
 
-        vm.expectRevert(PositionManagerPositionNotActive.selector);
+        vm.expectRevert(IPositionManager.PositionNotActive.selector);
         positionManager.liquidate(collateralToken, CAROL);
 
         vm.startPrank(CAROL);
@@ -182,7 +178,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         (bool carolPositionExistsAfterLiquidation,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
         assertFalse(carolPositionExistsAfterLiquidation);
 
-        vm.expectRevert(PositionManagerPositionNotActive.selector);
+        vm.expectRevert(IPositionManager.PositionNotActive.selector);
         positionManager.liquidate(collateralToken, CAROL);
     }
 
@@ -214,7 +210,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertTrue(bobICR >= MathUtils.MCR);
 
         // Attempt to liquidate Bob
-        vm.expectRevert(NothingToLiquidate.selector);
+        vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(collateralToken, BOB);
 
         // Check Bob active, check Alice active

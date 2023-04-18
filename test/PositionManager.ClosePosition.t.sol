@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManager, PositionManagerOnlyOnePositionInSystem} from "../contracts/Interfaces/IPositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {IRToken} from "../contracts/Interfaces/IRToken.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
@@ -60,7 +60,7 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         // Alice attempts to close her position
         vm.startPrank(ALICE);
-        vm.expectRevert(PositionManagerOnlyOnePositionInSystem.selector);
+        vm.expectRevert(IPositionManager.OnlyOnePositionInSystem.selector);
         positionManager.managePosition(collateralToken, aliceCollateral, false, aliceDebt, false, ALICE, ALICE, 0);
     }
 

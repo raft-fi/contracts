@@ -3,14 +3,7 @@ pragma solidity 0.8.19;
 
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {IRToken} from "../contracts/Interfaces/IRToken.sol";
-import {
-    PositionManager,
-    NoCollateralOrDebtChange,
-    FeeExceedsMaxFee,
-    NetDebtBelowMinimum,
-    PositionManagerInvalidMaxFeePercentage,
-    NewICRLowerThanMCR
-} from "../contracts/PositionManager.sol";
+import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManagerTester} from "./TestContracts/PositionManagerTester.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
 import {WstETHTokenMock} from "./TestContracts/WstETHTokenMock.sol";
@@ -76,7 +69,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         vm.prank(CAROL);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
         positionManager.managePosition(collateralToken, 0, false, 1, true, CAROL, CAROL, MathUtils._100_PERCENT);
 
         // Price drops
@@ -88,7 +81,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 withdrawalAmount = 1;
 
         vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils._100_PERCENT - 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils._100_PERCENT - 1)
+        );
         positionManager.managePosition(
             collateralToken, 0, false, withdrawalAmount, true, ALICE, ALICE, MathUtils._100_PERCENT
         );
@@ -213,7 +208,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             icr: 2e18
         });
 
-        vm.expectRevert(PositionManagerInvalidMaxFeePercentage.selector);
+        vm.expectRevert(IPositionManager.InvalidMaxFeePercentage.selector);
         positionManager.managePosition(collateralToken, 0, false, 1e18, true, ALICE, ALICE, MathUtils._100_PERCENT + 1);
     }
 
@@ -287,7 +282,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         uint256 maxFee = 5 * MathUtils._100_PERCENT / 100 - 1;
         vm.prank(ALICE);
-        vm.expectRevert(abi.encodeWithSelector(FeeExceedsMaxFee.selector, 0.15e18, 3e18, maxFee));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.15e18, 3e18, maxFee));
         positionManager.managePosition(collateralToken, 0, false, 3e18, true, ALICE, ALICE, maxFee);
 
         baseRate = positionManager.baseRate();
@@ -296,7 +291,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         // Attempt with max fee = 1%
         maxFee = MathUtils._100_PERCENT / 100;
         vm.prank(BOB);
-        vm.expectRevert(abi.encodeWithSelector(FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
         positionManager.managePosition(collateralToken, 0, false, 1e18, true, ALICE, ALICE, maxFee);
 
         baseRate = positionManager.baseRate();
@@ -305,7 +300,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         // Attempt with max fee = 3.754%
         maxFee = 3754 * MathUtils._100_PERCENT / 100000;
         vm.prank(CAROL);
-        vm.expectRevert(abi.encodeWithSelector(FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
         positionManager.managePosition(collateralToken, 0, false, 1e18, true, ALICE, ALICE, maxFee);
 
         baseRate = positionManager.baseRate();
@@ -314,7 +309,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         // Attempt with max fee = 0.5%
         maxFee = 5 * MathUtils._100_PERCENT / 1000;
         vm.prank(DAVE);
-        vm.expectRevert(abi.encodeWithSelector(FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
         positionManager.managePosition(collateralToken, 0, false, 1e18, true, ALICE, ALICE, maxFee);
     }
 
@@ -991,7 +986,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Carol with no active position attempts to withdraw R
         vm.prank(CAROL);
-        vm.expectRevert(abi.encodeWithSelector(NetDebtBelowMinimum.selector, 100e18));
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NetDebtBelowMinimum.selector, 100e18));
         positionManager.managePosition(collateralToken, 0, false, 100e18, true, CAROL, CAROL, MathUtils._100_PERCENT);
     }
 
@@ -1021,7 +1016,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Alice attempts to withdraw 0 R
         vm.prank(ALICE);
-        vm.expectRevert(NoCollateralOrDebtChange.selector);
+        vm.expectRevert(IPositionManager.NoCollateralOrDebtChange.selector);
         positionManager.managePosition(collateralToken, 0, false, 0, true, ALICE, ALICE, MathUtils._100_PERCENT);
     }
 

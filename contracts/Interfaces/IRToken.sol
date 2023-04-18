@@ -7,18 +7,24 @@ import {IERC3156FlashLender} from "@openzeppelin/contracts/interfaces/IERC3156Fl
 import {IFeeCollector} from "./IFeeCollector.sol";
 import {IPositionManagerDependent} from "./IPositionManagerDependent.sol";
 
-/// @dev Proposed flash mint fee percentage is too big.
-/// @param feePercentage Proposed flash mint fee percentage.
-error FlashFeePercentageTooBig(uint256 feePercentage);
-
 /// @dev Interface of R stablecoin token. Implements some standards like IERC20, IERC20Permit, and IERC3156FlashLender.
 /// Raft's specific implementation contains IFeeCollector and IPositionManagerDependent.
 /// PositionManager can mint and burn R when particular actions happen with user's position.
 interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender, IFeeCollector, IPositionManagerDependent {
+    /// --- Errors ---
+
+    /// @dev Proposed flash mint fee percentage is too big.
+    /// @param feePercentage Proposed flash mint fee percentage.
+    error FlashFeePercentageTooBig(uint256 feePercentage);
+
+    // --- Events ---
+
     /// @dev New R token is deployed
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
     /// @param flashMintFeeRecipient Address of flash mint fee recipient.
     event RDeployed(address positionManager, address flashMintFeeRecipient);
+
+    // --- Functions ---
 
     /// @return Number representing 100 percentage.
     function PERCENTAGE_BASE() external view returns (uint256);

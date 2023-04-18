@@ -9,28 +9,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "./Dependencies/MathUtils.sol";
 import {IERC20Indexable} from "./Interfaces/IERC20Indexable.sol";
-import {
-    IPositionManager,
-    PositionManagerInvalidMaxFeePercentage,
-    PositionManagerPositionNotActive,
-    InvalidDelegateAddress,
-    LiquidationProtocolFeeOutOfBound,
-    DelegateNotWhitelisted,
-    NoCollateralOrDebtChange,
-    PositionArrayEmpty,
-    NothingToLiquidate,
-    PositionManagerMaxFeePercentageOutOfRange,
-    PositionManagerAmountIsZero,
-    PositionManagerRedemptionAmountExceedsBalance,
-    UnableToRedeemAnyAmount,
-    PositionManagerOnlyOnePositionInSystem,
-    FeeEatsUpAllReturnedCollateral,
-    BorrowingSpreadExceedsMaximum,
-    NetDebtBelowMinimum,
-    NewICRLowerThanMCR,
-    FeeExceedsMaxFee,
-    MinNetDebtCannotBeZero
-} from "./Interfaces/IPositionManager.sol";
+import {IPositionManager} from "./Interfaces/IPositionManager.sol";
 import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
 import {FeeCollector} from "./FeeCollector.sol";
 import {SortedPositions} from "./SortedPositions.sol";
@@ -107,14 +86,14 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     modifier validMaxFeePercentageWhen(uint256 _maxFeePercentage, bool condition) {
         if (condition && (_maxFeePercentage < borrowingSpread || _maxFeePercentage > MathUtils._100_PERCENT)) {
-            revert PositionManagerInvalidMaxFeePercentage();
+            revert InvalidMaxFeePercentage();
         }
         _;
     }
 
     modifier onlyActivePosition(IERC20 _collateralToken, address _borrower) {
         if (!sortedPositions[_collateralToken].nodes[_borrower].exists) {
-            revert PositionManagerPositionNotActive();
+            revert PositionNotActive();
         }
         _;
     }
@@ -560,13 +539,13 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 _maxFeePercentage
     ) external override {
         if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > MathUtils._100_PERCENT) {
-            revert PositionManagerMaxFeePercentageOutOfRange();
+            revert MaxFeePercentageOutOfRange();
         }
         if (_rAmount == 0) {
-            revert PositionManagerAmountIsZero();
+            revert AmountIsZero();
         }
         if (rToken.balanceOf(msg.sender) < _rAmount) {
-            revert PositionManagerRedemptionAmountExceedsBalance();
+            revert RedemptionAmountExceedsBalance();
         }
 
         address currentBorrower;
@@ -669,7 +648,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function _removePositionFromSortedPositions(IERC20 _collateralToken, address _borrower) internal {
         if (sortedPositions[_collateralToken].size <= 1) {
-            revert PositionManagerOnlyOnePositionInSystem();
+            revert OnlyOnePositionInSystem();
         }
         sortedPositions[_collateralToken].remove(_borrower);
         collateralTokenPerBorrowers[_borrower] = IERC20(address(0));
@@ -797,9 +776,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
         priceFeeds[_collateralToken] = _priceFeed;
         sortedPositions[_collateralToken].maxSize = _positionsSize;
-        emit PositionManagerCollateralTokenAdded(
-            _collateralToken, raftCollateralTokens[_collateralToken], _priceFeed, _positionsSize
-        );
+        emit CollateralTokenAdded(_collateralToken, raftCollateralTokens[_collateralToken], _priceFeed, _positionsSize);
     }
 
     // Update the last fee operation time only if time passed >= decay interval. This prevents base rate griefing.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {InvalidFeeRecipient} from "../contracts/Interfaces/IFeeCollector.sol";
+import {IFeeCollector} from "../contracts/Interfaces/IFeeCollector.sol";
 import {FeeCollectorTester} from "./TestContracts/FeeCollectorTester.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
@@ -28,7 +28,7 @@ contract FeeCollectorTest is TestSetup {
     }
 
     function testInvalidSetFeeRecipient() public {
-        vm.expectRevert(InvalidFeeRecipient.selector);
+        vm.expectRevert(IFeeCollector.InvalidFeeRecipient.selector);
         feeCollector.setFeeRecipient(address(0));
     }
 }
