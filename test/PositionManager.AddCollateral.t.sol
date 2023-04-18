@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
-import {PositionsListDoesNotContainNode} from "../contracts/SortedPositions.sol";
+import {SortedPositions} from "../contracts/SortedPositions.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
 import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
@@ -170,7 +170,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         // Carol attempts to add collateral to her non-existent position
         vm.startPrank(CAROL);
         collateralToken.approve(address(positionManager), 1 ether);
-        vm.expectRevert(abi.encodeWithSelector(PositionsListDoesNotContainNode.selector, CAROL));
+        vm.expectRevert(abi.encodeWithSelector(SortedPositions.DoesNotContainPosition.selector, CAROL));
         positionManager.managePosition(collateralToken, 1 ether, true, 0, false, CAROL, CAROL, 0);
         vm.stopPrank();
 

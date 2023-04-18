@@ -683,6 +683,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (address(raftCollateralTokens[_collateralToken]) != address(0)) {
             revert CollateralTokenAlreadyAdded();
         }
+        if (_positionsSize == 0) {
+            revert SortedPositions.SizeCannotBeZero();
+        }
+
         raftCollateralTokens[_collateralToken] = new ERC20Indexable(
             address(this),
             string(bytes.concat("Raft ", bytes(IERC20Metadata(address(_collateralToken)).name()), " collateral")),
