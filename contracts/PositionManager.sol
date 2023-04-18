@@ -431,24 +431,24 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Redemption functions ---
 
-    // Redeem as much collateral as possible from _borrower's Position in exchange for R up to _maxRAmount
+    // Redeem as much collateral as possible from _borrower's Position in exchange for R up to maxDebtAmount
     function _redeemCollateralFromPosition(
         IERC20 _collateralToken,
         address _borrower,
-        uint256 _maxRAmount,
+        uint256 maxDebtAmount,
         uint256 _price,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR
-    ) internal returns (uint256 rLot) {
+    ) internal returns (uint256 debtLot) {
         uint256 positionDebt = raftDebtToken.balanceOf(_borrower);
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position
-        rLot = Math.min(_maxRAmount, positionDebt);
-        uint256 collateralToRedeem = rLot.divDown(_price);
+        debtLot = Math.min(maxDebtAmount, positionDebt);
+        uint256 collateralToRedeem = debtLot.divDown(_price);
 
         // Decrease the debt and collateral of the current Position according to the R lot and corresponding
         // collateralToken to send
-        uint256 newDebt = positionDebt - rLot;
+        uint256 newDebt = positionDebt - debtLot;
         uint256 newColl = raftCollateralTokens[_collateralToken].balanceOf(_borrower) - collateralToRedeem;
 
         if (newDebt == 0) {
@@ -467,13 +467,13 @@ contract PositionManager is FeeCollector, IPositionManager {
             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
             */
             if (newNICR != _partialRedemptionHintNICR || newDebt < minDebt) {
-                rLot = 0;
+                debtLot = 0;
             } else {
                 sortedPositions[_collateralToken].update(
                     this, _collateralToken, _borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint
                 );
 
-                raftDebtToken.burn(_borrower, rLot);
+                raftDebtToken.burn(_borrower, debtLot);
                 raftCollateralTokens[_collateralToken].burn(_borrower, collateralToRedeem);
             }
         }
@@ -495,7 +495,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         return nextPosition == address(0) || getCurrentICR(_collateralToken, nextPosition, _price) < MathUtils.MCR;
     }
 
-    /* Send _rAmount R to the system and redeem the corresponding amount of collateral from as many Positions as are
+    /* Send debtAmount R to the system and redeem the corresponding amount of collateral from as many Positions as are
     needed to fill the redemption
     * request.  Applies pending rewards to a Position before reducing its debt and coll.
     *
@@ -530,7 +530,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     // solhint-disable-next-line code-complexity
     function redeemCollateral(
         IERC20 _collateralToken,
-        uint256 _rAmount,
+        uint256 debtAmount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
@@ -541,10 +541,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > MathUtils._100_PERCENT) {
             revert MaxFeePercentageOutOfRange();
         }
-        if (_rAmount == 0) {
+        if (debtAmount == 0) {
             revert AmountIsZero();
         }
-        if (rToken.balanceOf(msg.sender) < _rAmount) {
+        if (rToken.balanceOf(msg.sender) < debtAmount) {
             revert RedemptionAmountExceedsBalance();
         }
 
@@ -563,33 +563,33 @@ contract PositionManager is FeeCollector, IPositionManager {
             }
         }
 
-        uint256 remainingR = _rAmount;
+        uint256 remainingDebt = debtAmount;
         // Loop through the Positions starting from the one with lowest collateral ratio until _amount of R is exchanged
         // for collateral
         if (_maxIterations == 0) _maxIterations = type(uint256).max;
-        while (currentBorrower != address(0) && remainingR > 0 && _maxIterations > 0) {
+        while (currentBorrower != address(0) && remainingDebt > 0 && _maxIterations > 0) {
             _maxIterations--;
             // Save the address of the Position preceding the current one, before potentially modifying the list
             address nextUserToCheck = sortedPositions[_collateralToken].nodes[currentBorrower].prevId;
 
-            uint256 rLot = _redeemCollateralFromPosition(
+            uint256 debtLot = _redeemCollateralFromPosition(
                 _collateralToken,
                 currentBorrower,
-                remainingR,
+                remainingDebt,
                 price,
                 _upperPartialRedemptionHint,
                 _lowerPartialRedemptionHint,
                 _partialRedemptionHintNICR
             );
 
-            if (rLot == 0) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum),
+            if (debtLot == 0) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum),
                 // therefore we could not redeem from the last Position
 
-            remainingR -= rLot;
+            remainingDebt -= debtLot;
             currentBorrower = nextUserToCheck;
         }
-        uint256 totalRRedeemed = _rAmount - remainingR;
-        uint256 totalCollateralTokenDrawn = totalRRedeemed.divDown(price);
+        uint256 totalRedeemed = debtAmount - remainingDebt;
+        uint256 totalCollateralTokenDrawn = totalRedeemed.divDown(price);
 
         if (totalCollateralTokenDrawn == 0) {
             revert UnableToRedeemAnyAmount();
@@ -607,11 +607,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         // Send the collateralToken fee to the recipient
         _collateralToken.safeTransfer(feeRecipient, collateralTokenFee);
 
-        emit Redemption(_rAmount, totalRRedeemed, totalCollateralTokenDrawn, collateralTokenFee);
+        emit Redemption(debtAmount, totalRedeemed, totalCollateralTokenDrawn, collateralTokenFee);
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateralToken to msg.sender
-        rToken.burn(msg.sender, totalRRedeemed);
-        totalDebt -= totalRRedeemed;
+        rToken.burn(msg.sender, totalRedeemed);
+        totalDebt -= totalRedeemed;
 
         // Send collateralToken to account
         uint256 collateralTokenToSendToRedeemer = totalCollateralTokenDrawn - collateralTokenFee;
@@ -671,9 +671,9 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         /* Convert the drawn collateralToken back to R at face value rate (1 R:1 USD), in order to get
         * the fraction of total supply that was redeemed at face value. */
-        uint256 redeemedRFraction = _collateralDrawn * _price / _totalRSupply;
+        uint256 redeemedFraction = _collateralDrawn * _price / _totalRSupply;
 
-        uint256 newBaseRate = decayedBaseRate + redeemedRFraction / BETA;
+        uint256 newBaseRate = decayedBaseRate + redeemedFraction / BETA;
         newBaseRate = Math.min(newBaseRate, MathUtils._100_PERCENT); // cap baseRate at a maximum of 100%
         assert(newBaseRate > 0); // Base rate is always non-zero after redemption
 
@@ -816,14 +816,14 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Helper functions ---
 
-    function _triggerBorrowingFee(address _borrower, uint256 _rAmount, uint256 _maxFeePercentage)
+    function _triggerBorrowingFee(address _borrower, uint256 debtAmount, uint256 _maxFeePercentage)
         internal
         returns (uint256 rFee)
     {
         _decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        rFee = _getBorrowingFee(_rAmount);
+        rFee = _getBorrowingFee(debtAmount);
 
-        checkValidFee(rFee, _rAmount, _maxFeePercentage);
+        checkValidFee(rFee, debtAmount, _maxFeePercentage);
 
         if (rFee > 0) {
             rToken.mint(feeRecipient, rFee);

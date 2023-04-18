@@ -165,7 +165,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -175,7 +175,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -196,7 +196,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -206,7 +206,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -230,7 +230,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -240,7 +240,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -263,7 +263,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -273,7 +273,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -298,7 +298,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -308,7 +308,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();

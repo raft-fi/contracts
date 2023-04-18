@@ -20,14 +20,14 @@ library PositionManagerUtils {
     }
 
     struct OpenPositionResult {
-        uint256 rAmount;
+        uint256 debtAmount;
         uint256 totalDebt;
         uint256 icr;
         uint256 collateral;
     }
 
-    struct WithdrawRResult {
-        uint256 rAmount;
+    struct WithdrawDebtResult {
+        uint256 debtAmount;
         uint256 increasedTotalDebt;
     }
 
@@ -36,7 +36,7 @@ library PositionManagerUtils {
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
         uint256 maxFeePercentage,
-        uint256 extraRAmount,
+        uint256 extraDebtAmount,
         address upperHint,
         address lowerHint,
         uint256 icr,
@@ -44,14 +44,14 @@ library PositionManagerUtils {
         ETHType ethType
     ) internal returns (OpenPositionResult memory result) {
         result.icr = icr;
-        (result.rAmount, result.totalDebt, amount) =
-            getOpenPositionSetupValues(positionManager, priceFeed, extraRAmount, icr, amount);
+        (result.debtAmount, result.totalDebt, amount) =
+            getOpenPositionSetupValues(positionManager, priceFeed, extraDebtAmount, icr, amount);
 
         if (ethType == ETHType.ETH) {
             IStEth stEth = IPositionManagerStEth(address(positionManager)).stEth();
             uint256 wstEthAmount = stEth.getSharesByPooledEth(amount);
             IPositionManagerStEth(address(positionManager)).managePositionEth{value: amount}(
-                result.rAmount, true, upperHint, lowerHint, maxFeePercentage
+                result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
             );
             result.collateral = wstEthAmount;
         } else if (ethType == ETHType.STETH) {
@@ -59,13 +59,13 @@ library PositionManagerUtils {
             uint256 wstEthAmount = stEth.getSharesByPooledEth(amount);
             stEth.approve(address(positionManager), amount);
             IPositionManagerStEth(address(positionManager)).managePositionStEth(
-                amount, true, result.rAmount, true, upperHint, lowerHint, maxFeePercentage
+                amount, true, result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
             );
             result.collateral = wstEthAmount;
         } else {
             collateralToken.approve(address(positionManager), amount);
             positionManager.managePosition(
-                collateralToken, amount, true, result.rAmount, true, upperHint, lowerHint, maxFeePercentage
+                collateralToken, amount, true, result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
             );
             result.collateral = amount;
         }
@@ -116,7 +116,7 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
-        uint256 extraRAmount,
+        uint256 extraDebtAmount,
         uint256 icr
     ) internal returns (OpenPositionResult memory result) {
         result = openPosition(
@@ -124,7 +124,7 @@ library PositionManagerUtils {
             priceFeed,
             collateralToken,
             MathUtils._100_PERCENT,
-            extraRAmount,
+            extraDebtAmount,
             address(0),
             address(0),
             icr,
@@ -137,7 +137,7 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
-        uint256 extraRAmount,
+        uint256 extraDebtAmount,
         uint256 icr,
         uint256 amount
     ) internal returns (OpenPositionResult memory result) {
@@ -146,7 +146,7 @@ library PositionManagerUtils {
             priceFeed,
             collateralToken,
             MathUtils._100_PERCENT,
-            extraRAmount,
+            extraDebtAmount,
             address(0),
             address(0),
             icr,
@@ -158,31 +158,32 @@ library PositionManagerUtils {
     function getOpenPositionSetupValues(
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
-        uint256 extraRAmount,
+        uint256 extraDebtAmount,
         uint256 icr,
         uint256 amount
-    ) internal view returns (uint256 rAmount, uint256 totalDebt, uint256 newAmount) {
-        rAmount = getNetBorrowingAmount(positionManager, positionManager.minDebt()) + extraRAmount;
-        totalDebt = getAmountWithBorrowingFee(positionManager, rAmount);
+    ) internal view returns (uint256 debtAmount, uint256 totalDebt, uint256 newAmount) {
+        debtAmount = getNetBorrowingAmount(positionManager, positionManager.minDebt()) + extraDebtAmount;
+        totalDebt = getAmountWithBorrowingFee(positionManager, debtAmount);
         newAmount = (amount == 0) ? icr * totalDebt / priceFeed.getPrice() : amount;
     }
 
-    function withdrawR(
+    function withdrawDebt(
         IPositionManager positionManager,
         IERC20 _collateralToken,
         PriceFeedTestnet priceFeed,
         address borrower,
         uint256 maxFeePercentage,
-        uint256 rAmount,
+        uint256 debtAmount,
         uint256 icr,
         address upperHint,
         address lowerHint
-    ) internal returns (WithdrawRResult memory result) {
+    ) internal returns (WithdrawDebtResult memory result) {
         require(
-            !(rAmount > 0 && icr > 0) && (rAmount > 0 || icr > 0), "Specify either R amount or target ICR, but not both"
+            !(debtAmount > 0 && icr > 0) && (debtAmount > 0 || icr > 0),
+            "Specify either R amount or target ICR, but not both"
         );
 
-        result.rAmount = rAmount;
+        result.debtAmount = debtAmount;
 
         if (icr > 0) {
             IERC20 raftDebtToken = positionManager.raftDebtToken();
@@ -193,26 +194,26 @@ library PositionManagerUtils {
             uint256 targetDebt = collateral * price / icr;
             require(targetDebt > debt, "Target debt is not greater than current debt");
             result.increasedTotalDebt = targetDebt - debt;
-            result.rAmount = getNetBorrowingAmount(positionManager, result.increasedTotalDebt);
+            result.debtAmount = getNetBorrowingAmount(positionManager, result.increasedTotalDebt);
         } else {
-            result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, result.rAmount);
+            result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, result.debtAmount);
         }
 
         positionManager.managePosition(
-            _collateralToken, 0, false, result.rAmount, true, upperHint, lowerHint, maxFeePercentage
+            _collateralToken, 0, false, result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
         );
     }
 
-    function withdrawR(
+    function withdrawDebt(
         IPositionManager positionManager,
         IERC20 collateralToken,
         PriceFeedTestnet priceFeed,
         address borrower,
         uint256 icr
-    ) internal returns (WithdrawRResult memory result) {
+    ) internal returns (WithdrawDebtResult memory result) {
         uint256 maxFee = MathUtils._100_PERCENT;
         result =
-            withdrawR(positionManager, collateralToken, priceFeed, borrower, maxFee, 0, icr, address(0), address(0));
+            withdrawDebt(positionManager, collateralToken, priceFeed, borrower, maxFee, 0, icr, address(0), address(0));
     }
 
     function getNetBorrowingAmount(IPositionManager _positionManager, uint256 _debtWithFee)
@@ -224,11 +225,11 @@ library PositionManagerUtils {
         return _debtWithFee.divUp(MathUtils._100_PERCENT + borrowingRate);
     }
 
-    function getAmountWithBorrowingFee(IPositionManager positionManager, uint256 rAmount)
+    function getAmountWithBorrowingFee(IPositionManager positionManager, uint256 debtAmount)
         internal
         view
         returns (uint256)
     {
-        return rAmount + positionManager.getBorrowingFee(rAmount);
+        return debtAmount + positionManager.getBorrowingFee(debtAmount);
     }
 }
