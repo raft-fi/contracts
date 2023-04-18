@@ -106,6 +106,11 @@ interface IPositionManager is IFeeCollector {
         IERC20 collateralToken, IERC20Indexable raftCollateralToken, IPriceFeed priceFeed, uint256 positionSize
     );
 
+    /// @dev Global delegate is added or removed to whitelist.
+    /// @param delegate Address of the delegate that was whitelisted.
+    /// @param isWhitelisted True if it is added to whitelist, false otherwise.
+    event GlobalDelegateUpdated(address delegate, bool isWhitelisted);
+
     /// @dev New position is created in Raft.
     /// @param position Address of the user opening new position.
     event PositionCreated(address indexed position);
@@ -209,6 +214,11 @@ interface IPositionManager is IFeeCollector {
     function liquidationProtocolFee() external view returns (uint256);
     function MAX_BORROWING_SPREAD() external view returns (uint256);
     function MAX_LIQUIDATION_PROTOCOL_FEE() external view returns (uint256);
+
+    /// @dev Global delegate is added or removed to whitelist.
+    /// @param delegate Address of the delegate that is being added or removed.
+    /// @param isWhitelisted True if it is added to whitelist, false otherwise.
+    function setGlobalDelegateWhitelist(address delegate, bool isWhitelisted) external;
 
     function globalDelegateWhitelist(address delegate) external view returns (bool isWhitelisted);
     function individualDelegateWhitelist(address borrower, address delegate)

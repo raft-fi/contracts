@@ -117,13 +117,19 @@ contract PositionManager is FeeCollector, IPositionManager {
         setMinDebt(3000e18);
         setSplitLiquidationCollateral(newSplitLiquidationCollateral);
         for (uint256 i = 0; i < delegates.length; ++i) {
-            if (delegates[i] == address(0)) {
-                revert InvalidDelegateAddress();
-            }
-            globalDelegateWhitelist[delegates[i]] = true;
+            setGlobalDelegateWhitelist(delegates[i], true);
         }
 
         emit PositionManagerDeployed(rToken, raftDebtToken, msg.sender);
+    }
+
+    function setGlobalDelegateWhitelist(address delegate, bool isWhitelisted) public override onlyOwner {
+        if (delegate == address(0)) {
+            revert InvalidDelegateAddress();
+        }
+        globalDelegateWhitelist[delegate] = isWhitelisted;
+
+        emit GlobalDelegateUpdated(delegate, isWhitelisted);
     }
 
     function addCollateralToken(IERC20 _collateralToken, IPriceFeed _priceFeed, uint256 _positionsSize)
