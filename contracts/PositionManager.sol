@@ -230,7 +230,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         } else {
             checkValidPosition(_collateralToken, _borrower);
             bool newPosition = !sortedPositions[_collateralToken].nodes[_borrower].exists;
-            sortedPositions[_collateralToken].update(
+            sortedPositions[_collateralToken]._update(
                 this, _collateralToken, _borrower, getNominalICR(_collateralToken, _borrower), _upperHint, _lowerHint
             );
             if (newPosition) {
@@ -378,8 +378,13 @@ contract PositionManager is FeeCollector, IPositionManager {
             if (newNICR != _partialRedemptionHintNICR || newDebt < minDebt) {
                 debtLot = 0;
             } else {
-                sortedPositions[_collateralToken].update(
-                    this, _collateralToken, _borrower, newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint
+                sortedPositions[_collateralToken]._update(
+                    this,
+                    _collateralToken,
+                    _borrower,
+                    newNICR,
+                    _upperPartialRedemptionHint,
+                    _lowerPartialRedemptionHint
                 );
 
                 raftDebtToken.burn(_borrower, debtLot);
@@ -400,7 +405,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             return false;
         }
 
-        address nextPosition = sortedPositions[_collateralToken].nodes[_firstRedemptionHint].nextId;
+        address nextPosition = sortedPositions[_collateralToken].nodes[_firstRedemptionHint].nextID;
         return nextPosition == address(0) || getCurrentICR(_collateralToken, nextPosition, _price) < MathUtils.MCR;
     }
 
@@ -466,9 +471,10 @@ contract PositionManager is FeeCollector, IPositionManager {
             currentBorrower = sortedPositions[_collateralToken].last;
             // Find the first position with ICR >= MathUtils.MCR
             while (
-                currentBorrower != address(0) && getCurrentICR(_collateralToken, currentBorrower, price) < MathUtils.MCR
+                currentBorrower != address(0)
+                    && getCurrentICR(_collateralToken, currentBorrower, price) < MathUtils.MCR
             ) {
-                currentBorrower = sortedPositions[_collateralToken].nodes[currentBorrower].prevId;
+                currentBorrower = sortedPositions[_collateralToken].nodes[currentBorrower].previousID;
             }
         }
 
@@ -479,7 +485,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         while (currentBorrower != address(0) && remainingDebt > 0 && _maxIterations > 0) {
             _maxIterations--;
             // Save the address of the Position preceding the current one, before potentially modifying the list
-            address nextUserToCheck = sortedPositions[_collateralToken].nodes[currentBorrower].prevId;
+            address nextUserToCheck = sortedPositions[_collateralToken].nodes[currentBorrower].previousID;
 
             uint256 debtLot = _redeemCollateralFromPosition(
                 _collateralToken,
@@ -555,11 +561,13 @@ contract PositionManager is FeeCollector, IPositionManager {
         raftCollateralTokens[_collateralToken].setIndex(_collateralToken.balanceOf(address(this)));
     }
 
-    function _removePositionFromSortedPositions(IERC20 _collateralToken, address _borrower, bool burnTokens) internal {
+    function _removePositionFromSortedPositions(IERC20 _collateralToken, address _borrower, bool burnTokens)
+        internal
+    {
         if (sortedPositions[_collateralToken].size <= 1) {
             revert OnlyOnePositionInSystem();
         }
-        sortedPositions[_collateralToken].remove(_borrower);
+        sortedPositions[_collateralToken]._remove(_borrower);
         collateralTokenPerBorrowers[_borrower] = IERC20(address(0));
 
         if (burnTokens) {
@@ -773,10 +781,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         external
         view
         override
-        returns (bool exists, address nextId, address prevId)
+        returns (bool exists, address nextID, address previousID)
     {
         exists = sortedPositions[_collateralToken].nodes[_id].exists;
-        nextId = sortedPositions[_collateralToken].nodes[_id].nextId;
-        prevId = sortedPositions[_collateralToken].nodes[_id].prevId;
+        nextID = sortedPositions[_collateralToken].nodes[_id].nextID;
+        previousID = sortedPositions[_collateralToken].nodes[_id].previousID;
     }
 }

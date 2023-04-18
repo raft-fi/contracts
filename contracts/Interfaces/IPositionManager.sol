@@ -219,7 +219,7 @@ interface IPositionManager is IFeeCollector {
     function sortedPositionsNodes(IERC20 _collateralToken, address _id)
         external
         view
-        returns (bool exists, address nextId, address prevId);
+        returns (bool exists, address nextID, address previousID);
 
     function getNominalICR(IERC20 _collateralToken, address _borrower) external view returns (uint256);
     function getCurrentICR(IERC20 _collateralToken, address _borrower, uint256 _price)

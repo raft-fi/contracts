@@ -34,6 +34,43 @@ import {PositionManagerDependent} from "./PositionManagerDependent.sol";
 ///   runtime. The list relies on the property that ordering by ICR is maintained as the collateralToken:USD price
 ///   varies.
 library SortedPositions {
+    // --- Types ---
+
+    /// @dev Information for a node in the list.
+    /// @param exists Whether the node exists in the list.
+    /// @param nextID The ID of next node (smaller NICR) in the list.
+    /// @param previousID The ID of previous node (larger NICR) in the list.
+    struct Node {
+        bool exists;
+        address nextID;
+        address previousID;
+    }
+
+    /// @dev Information for the sorted position list.
+    /// @param first The first element of the list (largest NICR).
+    /// @param last The last element of the list (smallest NICR).
+    /// @param maxSize The maximum size of the list.
+    /// @param size The current size of the list.
+    /// @param nodes The nodes in the list.
+    struct Data {
+        address first;
+        address last;
+        uint256 maxSize;
+        uint256 size;
+        mapping(address => Node) nodes;
+    }
+
+    // --- Events ---
+
+    /// @dev Emitted when a node is added to the list.
+    /// @param id The ID of the node.
+    /// @param nicr The NICR of the position.
+    event NodeAdded(address id, uint256 nicr);
+
+    /// @dev Emitted when a node is removed from the list.
+    /// @param id The ID of the node.
+    event NodeRemoved(address id);
+
     // --- Errors ---
 
     /// @dev Positions list size cannot be zero.
@@ -56,137 +93,36 @@ library SortedPositions {
     /// @dev Position's NICR is zero.
     error NICRIsZero();
 
-    // --- Events ---
-
-    /// @dev Emitted when a node is added to the list.
-    /// @param _id The ID of the node.
-    /// @param nicr The NICR of the position.
-    event NodeAdded(address _id, uint256 nicr);
-
-    /// @dev Emitted when a node is removed from the list.
-    /// @param _id The ID of the node.
-    event NodeRemoved(address _id);
-
-    /// @dev Information for a node in the list.
-    /// @param exists Whether the node exists in the list.
-    /// @param nextId The ID of next node (smaller NICR) in the list.
-    /// @param prevId The ID of previous node (larger NICR) in the list.
-    struct Node {
-        bool exists;
-        address nextId;
-        address prevId;
-    }
-
-    /// @dev Information for the sorted position list.
-    /// @param first The first element of the list (largest NICR).
-    /// @param last The last element of the list (smallest NICR).
-    /// @param maxSize The maximum size of the list.
-    /// @param size The current size of the list.
-    /// @param nodes The nodes in the list.
-    struct Data {
-        address first;
-        address last;
-        uint256 maxSize;
-        uint256 size;
-        mapping(address => Node) nodes;
-    }
-
-    /// @dev Adds a node to the list.
-    /// @param list The list.
-    /// @param _positionManager The position manager.
-    /// @param _collateralToken The collateral token.
-    /// @param _id The ID of the node to insert.
-    /// @param nicr The NICR of the position.
-    /// @param _prevId The ID of previous node for the insert position.
-    /// @param _nextId The ID of next node for the insert position.
-    // solhint-disable-next-line code-complexity
-    function insert(
-        Data storage list,
-        IPositionManager _positionManager,
-        IERC20 _collateralToken,
-        address _id,
-        uint256 nicr,
-        address _prevId,
-        address _nextId
-    ) private {
-        if (list.size == list.maxSize) {
-            revert ListIsFull();
-        }
-        if (list.nodes[_id].exists) {
-            revert AlreadyContainsPosition(_id);
-        }
-        if (_id == address(0)) {
-            revert PositionIDZero();
-        }
-        if (nicr == 0) {
-            revert NICRIsZero();
-        }
-
-        address prevId = _prevId;
-        address nextId = _nextId;
-
-        if (!validInsertPosition(list, _positionManager, _collateralToken, nicr, prevId, nextId)) {
-            // Sender's hint was not a valid insert position
-            // Use sender's hint to find a valid insert position
-            (prevId, nextId) = findInsertPosition(list, _positionManager, _collateralToken, nicr, prevId, nextId);
-        }
-
-        list.nodes[_id].exists = true;
-
-        if (prevId == address(0) && nextId == address(0)) {
-            // Insert as first and last
-            list.first = _id;
-            list.last = _id;
-        } else if (prevId == address(0)) {
-            // Insert before `prevId` as the first
-            list.nodes[_id].nextId = list.first;
-            list.nodes[list.first].prevId = _id;
-            list.first = _id;
-        } else if (nextId == address(0)) {
-            // Insert after `nextId` as the last
-            list.nodes[_id].prevId = list.last;
-            list.nodes[list.last].nextId = _id;
-            list.last = _id;
-        } else {
-            // Insert at insert position between `prevId` and `nextId`
-            list.nodes[_id].nextId = nextId;
-            list.nodes[_id].prevId = prevId;
-            list.nodes[prevId].nextId = _id;
-            list.nodes[nextId].prevId = _id;
-        }
-
-        ++list.size;
-        emit NodeAdded(_id, nicr);
-    }
+    // --- Functions ---
 
     /// @dev Removes the node with the given ID from the list.
     /// @param list The list.
-    /// @param _id The ID of the node to remove.
-    function remove(Data storage list, address _id) internal {
-        if (!list.nodes[_id].exists) {
-            revert DoesNotContainPosition(_id);
+    /// @param id The ID of the node to remove.
+    function _remove(Data storage list, address id) internal {
+        if (!list.nodes[id].exists) {
+            revert DoesNotContainPosition(id);
         }
 
         if (list.size > 1) {
             // List contains more than a single node
-            if (_id == list.first) {
+            if (id == list.first) {
                 // The removed node is the first
                 // Set first to next node
-                list.first = list.nodes[_id].nextId;
+                list.first = list.nodes[id].nextID;
                 // Set prev pointer of new first to null
-                list.nodes[list.first].prevId = address(0);
-            } else if (_id == list.last) {
+                list.nodes[list.first].previousID = address(0);
+            } else if (id == list.last) {
                 // The removed node is the last
                 // Set last to previous node
-                list.last = list.nodes[_id].prevId;
+                list.last = list.nodes[id].previousID;
                 // Set next pointer of new last to null
-                list.nodes[list.last].nextId = address(0);
+                list.nodes[list.last].nextID = address(0);
             } else {
                 // The removed node is neither the first nor the last
                 // Set next pointer of previous node to the next node
-                list.nodes[list.nodes[_id].prevId].nextId = list.nodes[_id].nextId;
+                list.nodes[list.nodes[id].previousID].nextID = list.nodes[id].nextID;
                 // Set prev pointer of next node to the previous node
-                list.nodes[list.nodes[_id].nextId].prevId = list.nodes[_id].prevId;
+                list.nodes[list.nodes[id].nextID].previousID = list.nodes[id].previousID;
             }
         } else {
             // List contains a single node
@@ -195,195 +131,259 @@ library SortedPositions {
             list.last = address(0);
         }
 
-        delete list.nodes[_id];
+        delete list.nodes[id];
         --list.size;
-        emit NodeRemoved(_id);
+        emit NodeRemoved(id);
     }
 
     /// @dev Updates the node at a new position, based on its new NICR.
     /// @param list The list.
-    /// @param _positionManager The position manager.
-    /// @param _collateralToken The collateral token.
-    /// @param _id The ID of the node to update.
-    /// @param _newNICR New ICR of the position.
-    /// @param _prevId The ID of the previous node for the new insert position.
-    /// @param _nextId The ID of the next node for the new insert position.
-    function update(
+    /// @param positionManager The position manager.
+    /// @param collateralToken The collateral token.
+    /// @param id The ID of the node to update.
+    /// @param newNICR New ICR of the position.
+    /// @param previousID The ID of the previous node for the new insert position.
+    /// @param nextID The ID of the next node for the new insert position.
+    function _update(
         Data storage list,
-        IPositionManager _positionManager,
-        IERC20 _collateralToken,
-        address _id,
-        uint256 _newNICR,
-        address _prevId,
-        address _nextId
+        IPositionManager positionManager,
+        IERC20 collateralToken,
+        address id,
+        uint256 newNICR,
+        address previousID,
+        address nextID
     ) internal {
-        if (_newNICR == 0) {
+        if (newNICR == 0) {
             revert NICRIsZero();
         }
 
-        if (list.nodes[_id].exists) {
-            // Remove node from the list
-            remove(list, _id);
+        if (list.nodes[id].exists) {
+            _remove(list, id);
         }
 
-        insert(list, _positionManager, _collateralToken, _id, _newNICR, _prevId, _nextId);
+        _insert(list, positionManager, collateralToken, id, newNICR, previousID, nextID);
+    }
+
+    /// @dev Adds a node to the list.
+    /// @param list The list.
+    /// @param positionManager The position manager.
+    /// @param collateralToken The collateral token.
+    /// @param id The ID of the node to insert.
+    /// @param nicr The NICR of the position.
+    /// @param previousID The ID of previous node for the insert position.
+    /// @param nextID The ID of next node for the insert position.
+    // solhint-disable-next-line code-complexity
+    function _insert(
+        Data storage list,
+        IPositionManager positionManager,
+        IERC20 collateralToken,
+        address id,
+        uint256 nicr,
+        address previousID,
+        address nextID
+    ) private {
+        if (list.size == list.maxSize) {
+            revert ListIsFull();
+        }
+        if (list.nodes[id].exists) {
+            revert AlreadyContainsPosition(id);
+        }
+        if (id == address(0)) {
+            revert PositionIDZero();
+        }
+        if (nicr == 0) {
+            revert NICRIsZero();
+        }
+
+        if (!_isValidInsertPosition(list, positionManager, collateralToken, nicr, previousID, nextID)) {
+            // Sender's hint was not a valid insert position
+            // Use sender's hint to find a valid insert position
+            (previousID, nextID) =
+                _findInsertPosition(list, positionManager, collateralToken, nicr, previousID, nextID);
+        }
+
+        list.nodes[id].exists = true;
+
+        if (previousID == address(0) && nextID == address(0)) {
+            // Insert as first and last
+            list.first = id;
+            list.last = id;
+        } else if (previousID == address(0)) {
+            // Insert before `previousID` as the first
+            list.nodes[id].nextID = list.first;
+            list.nodes[list.first].previousID = id;
+            list.first = id;
+        } else if (nextID == address(0)) {
+            // Insert after `nextID` as the last
+            list.nodes[id].previousID = list.last;
+            list.nodes[list.last].nextID = id;
+            list.last = id;
+        } else {
+            // Insert at insert position between `previousID` and `nextID`
+            list.nodes[id].nextID = nextID;
+            list.nodes[id].previousID = previousID;
+            list.nodes[previousID].nextID = id;
+            list.nodes[nextID].previousID = id;
+        }
+
+        ++list.size;
+        emit NodeAdded(id, nicr);
     }
 
     /// @dev Checks whether a pair of nodes is a valid insertion point for a new node with the given NICR.
     /// @param list The list.
-    /// @param _positionManager The position manager.
-    /// @param _collateralToken The collateral token.
+    /// @param positionManager The position manager.
+    /// @param collateralToken The collateral token.
     /// @param nicr The NICR of the position.
-    /// @param _prevId The ID of the previous node for the insert position.
-    /// @param _nextId The ID of the next node for the insert position.
+    /// @param previousID The ID of the previous node for the insert position.
+    /// @param nextID The ID of the next node for the insert position.
     /// @return True if the pair of nodes is a valid insertion point for a new node with the given NICR.
-    function validInsertPosition(
+    function _isValidInsertPosition(
         Data storage list,
-        IPositionManager _positionManager,
-        IERC20 _collateralToken,
+        IPositionManager positionManager,
+        IERC20 collateralToken,
         uint256 nicr,
-        address _prevId,
-        address _nextId
+        address previousID,
+        address nextID
     ) private view returns (bool) {
         // `(null, null)` is a valid insert position if the list is empty
-        if (_prevId == address(0) && _nextId == address(0)) {
+        if (previousID == address(0) && nextID == address(0)) {
             return list.size == 0;
         }
 
-        // `(null, _nextId)` is a valid insert position if `_nextId` is the first of the list
-        if (_prevId == address(0)) {
-            return list.first == _nextId && nicr >= _positionManager.getNominalICR(_collateralToken, _nextId);
+        // `(null, nextID)` is a valid insert position if `nextID` is the first of the list
+        if (previousID == address(0)) {
+            return list.first == nextID && nicr >= positionManager.getNominalICR(collateralToken, nextID);
         }
 
-        // `(_prevId, null)` is a valid insert position if `_prevId` is the last of the list
-        if (_nextId == address(0)) {
-            return list.last == _prevId && nicr <= _positionManager.getNominalICR(_collateralToken, _prevId);
+        // `(previousID, null)` is a valid insert position if `previousID` is the last of the list
+        if (nextID == address(0)) {
+            return list.last == previousID && nicr <= positionManager.getNominalICR(collateralToken, previousID);
         }
 
-        // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `nicr` falls between the
+        // `(previousID, nextID)` is a valid insert position if they are adjacent nodes and `nicr` falls between the
         // two nodes' NICRs
-        return list.nodes[_prevId].nextId == _nextId
-            && _positionManager.getNominalICR(_collateralToken, _prevId) >= nicr
-            && nicr >= _positionManager.getNominalICR(_collateralToken, _nextId);
+        return list.nodes[previousID].nextID == nextID
+            && positionManager.getNominalICR(collateralToken, previousID) >= nicr
+            && nicr >= positionManager.getNominalICR(collateralToken, nextID);
     }
 
     /// @dev Descends the list (larger NICRs to smaller NICRs) to find a valid insert position.
     /// @param data The list.
-    /// @param _positionManager The position manager.
-    /// @param _collateralToken The collateral token.
+    /// @param positionManager The position manager.
+    /// @param collateralToken The collateral token.
     /// @param nicr The NICR of the position.
-    /// @param _startId The ID of a node to start descending the list from.
+    /// @param startId The ID of a node to start descending the list from.
     /// @return The IDs of the previous and next nodes for the insert position.
     function _descendList(
         Data storage data,
-        IPositionManager _positionManager,
-        IERC20 _collateralToken,
+        IPositionManager positionManager,
+        IERC20 collateralToken,
         uint256 nicr,
-        address _startId
+        address startId
     ) private view returns (address, address) {
-        // If `_startId` is the first, check if the insert position is before the first
-        if (data.first == _startId && nicr >= _positionManager.getNominalICR(_collateralToken, _startId)) {
-            return (address(0), _startId);
+        // If `startId` is the first, check if the insert position is before the first
+        if (data.first == startId && nicr >= positionManager.getNominalICR(collateralToken, startId)) {
+            return (address(0), startId);
         }
 
-        address prevId = _startId;
-        address nextId = data.nodes[prevId].nextId;
+        address previousID = startId;
+        address nextID = data.nodes[previousID].nextID;
 
         // Descend the list until we reach the end or until we find a valid insert position
         while (
-            prevId != address(0) && !validInsertPosition(data, _positionManager, _collateralToken, nicr, prevId, nextId)
+            previousID != address(0)
+                && !_isValidInsertPosition(data, positionManager, collateralToken, nicr, previousID, nextID)
         ) {
-            prevId = data.nodes[prevId].nextId;
-            nextId = data.nodes[prevId].nextId;
+            previousID = data.nodes[previousID].nextID;
+            nextID = data.nodes[previousID].nextID;
         }
 
-        return (prevId, nextId);
+        return (previousID, nextID);
     }
 
     /// @dev Ascends the list (smaller NICRs to larger NICRs) to find a valid insert position.
     /// @param data The list.
-    /// @param _positionManager The position manager.
-    /// @param _collateralToken The collateral token.
+    /// @param positionManager The position manager.
+    /// @param collateralToken The collateral token.
     /// @param nicr The NICR of the position.
-    /// @param _startId The ID of a node to start ascending the list from.
+    /// @param startId The ID of a node to start ascending the list from.
     /// @return The IDs of the previous and next nodes for the insert position.
     function _ascendList(
         Data storage data,
-        IPositionManager _positionManager,
-        IERC20 _collateralToken,
+        IPositionManager positionManager,
+        IERC20 collateralToken,
         uint256 nicr,
-        address _startId
+        address startId
     ) private view returns (address, address) {
-        // If `_startId` is the last, check if the insert position is after the last
-        if (data.last == _startId && nicr <= _positionManager.getNominalICR(_collateralToken, _startId)) {
-            return (_startId, address(0));
+        // If `startId` is the last, check if the insert position is after the last
+        if (data.last == startId && nicr <= positionManager.getNominalICR(collateralToken, startId)) {
+            return (startId, address(0));
         }
 
-        address nextId = _startId;
-        address prevId = data.nodes[nextId].prevId;
+        address nextID = startId;
+        address previousID = data.nodes[nextID].previousID;
 
         // Ascend the list until we reach the end or until we find a valid insertion point
         while (
-            nextId != address(0) && !validInsertPosition(data, _positionManager, _collateralToken, nicr, prevId, nextId)
+            nextID != address(0)
+                && !_isValidInsertPosition(data, positionManager, collateralToken, nicr, previousID, nextID)
         ) {
-            nextId = data.nodes[nextId].prevId;
-            prevId = data.nodes[nextId].prevId;
+            nextID = data.nodes[nextID].previousID;
+            previousID = data.nodes[nextID].previousID;
         }
 
-        return (prevId, nextId);
+        return (previousID, nextID);
     }
 
     /// @dev Finds the insert position for a new node with the given NICR.
     /// @param data The list.
-    /// @param _positionManager The position manager.
-    /// @param _collateralToken The collateral token.
+    /// @param positionManager The position manager.
+    /// @param collateralToken The collateral token.
     /// @param nicr The NICR of the position.
-    /// @param _prevId The ID of the previous node for the insert position.
-    /// @param _nextId The ID of the next node for the insert position.
+    /// @param previousID The ID of the previous node for the insert position.
+    /// @param nextID The ID of the next node for the insert position.
     /// @return The IDs of the previous and next nodes for the insert position.
-    function findInsertPosition(
+    function _findInsertPosition(
         Data storage data,
-        IPositionManager _positionManager,
-        IERC20 _collateralToken,
+        IPositionManager positionManager,
+        IERC20 collateralToken,
         uint256 nicr,
-        address _prevId,
-        address _nextId
+        address previousID,
+        address nextID
     ) private view returns (address, address) {
-        address prevId = _prevId;
-        address nextId = _nextId;
-
-        // `prevId` does not exist anymore or now has a smaller NICR than the given NICR
+        // `previousID` does not exist anymore or now has a smaller NICR than the given NICR
         if (
-            prevId != address(0)
-                && (!data.nodes[prevId].exists || nicr > _positionManager.getNominalICR(_collateralToken, prevId))
+            previousID != address(0)
+                && (!data.nodes[previousID].exists || nicr > positionManager.getNominalICR(collateralToken, previousID))
         ) {
-            prevId = address(0);
+            previousID = address(0);
         }
 
-        // `nextId` does not exist anymore or now has a larger NICR than the given NICR
+        // `nextID` does not exist anymore or now has a larger NICR than the given NICR
         if (
-            nextId != address(0)
-                && (!data.nodes[nextId].exists || nicr < _positionManager.getNominalICR(_collateralToken, nextId))
+            nextID != address(0)
+                && (!data.nodes[nextID].exists || nicr < positionManager.getNominalICR(collateralToken, nextID))
         ) {
-            nextId = address(0);
+            nextID = address(0);
         }
 
         // No hint - descend list starting from first
-        if (prevId == address(0) && nextId == address(0)) {
-            return _descendList(data, _positionManager, _collateralToken, nicr, data.first);
+        if (previousID == address(0) && nextID == address(0)) {
+            return _descendList(data, positionManager, collateralToken, nicr, data.first);
         }
 
-        // No `prevId` for hint - ascend list starting from `nextId`
-        if (prevId == address(0)) {
-            return _ascendList(data, _positionManager, _collateralToken, nicr, nextId);
+        // No `previousID` for hint - ascend list starting from `nextID`
+        if (previousID == address(0)) {
+            return _ascendList(data, positionManager, collateralToken, nicr, nextID);
         }
 
-        // No `nextId` for hint - descend list starting from `prevId`
-        if (nextId == address(0)) {
-            return _descendList(data, _positionManager, _collateralToken, nicr, prevId);
+        // No `nextID` for hint - descend list starting from `previousID`
+        if (nextID == address(0)) {
+            return _descendList(data, positionManager, collateralToken, nicr, previousID);
         }
 
-        // Descend list starting from `prevId`
-        return _descendList(data, _positionManager, _collateralToken, nicr, prevId);
+        // Descend list starting from `previousID`
+        return _descendList(data, positionManager, collateralToken, nicr, previousID);
     }
 }
