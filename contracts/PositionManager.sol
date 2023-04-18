@@ -226,7 +226,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (raftDebtToken.balanceOf(_borrower) == 0) {
             // position was closed, remove it
-            _removePositionFromSortedPositions(_collateralToken, _borrower);
+            _removePositionFromSortedPositions(_collateralToken, _borrower, false);
         } else {
             checkValidPosition(_collateralToken, _borrower);
             bool newPosition = !sortedPositions[_collateralToken].nodes[_borrower].exists;
@@ -297,138 +297,47 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Position Liquidation functions ---
 
     // Single liquidation function. Closes the position if its ICR is lower than the minimum collateral ratio.
-    function liquidate(IERC20 _collateralToken, address _borrower)
+    function liquidate(IERC20 collateralToken, address borrower)
         external
         override
-        onlyActivePosition(_collateralToken, _borrower)
+        onlyActivePosition(collateralToken, borrower)
     {
-        address[] memory borrowers = new address[](1);
-        borrowers[0] = _borrower;
-        batchLiquidatePositions(_collateralToken, borrowers);
-    }
+        uint256 price = priceFeeds[collateralToken].fetchPrice();
+        uint256 icr = getCurrentICR(collateralToken, borrower, price);
+        if (icr >= MathUtils.MCR) {
+            revert NothingToLiquidate();
+        }
 
-    // --- Inner single liquidation functions ---
-
-    // Liquidate one position
-    function _liquidate(
-        IERC20 _collateralToken,
-        LiquidationTotals memory _oldLiquidationTotals,
-        address _borrower,
-        uint256 icr,
-        uint256 _price
-    ) internal returns (LiquidationTotals memory newLiquidationTotals) {
-        newLiquidationTotals =
-            increaseLiquidationTotals(_collateralToken, _oldLiquidationTotals, _borrower, icr, _price);
-
-        _removePositionFromSortedPositions(_collateralToken, _borrower);
-        raftDebtToken.burn(_borrower, type(uint256).max);
-        raftCollateralTokens[_collateralToken].burn(_borrower, type(uint256).max);
-
-        emit PositionLiquidated(_borrower);
-    }
-
-    function increaseLiquidationTotals(
-        IERC20 collateralToken,
-        LiquidationTotals memory oldLiquidationTotals,
-        address borrower,
-        uint256 icr,
-        uint256 price
-    ) internal view returns (LiquidationTotals memory) {
         uint256 entirePositionDebt = raftDebtToken.balanceOf(borrower);
         uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].balanceOf(borrower);
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
 
-        (uint256 collateralToSendToProtocol, uint256 collateralToSendToLiquidator) =
+        (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
             splitLiquidationCollateral(entirePositionCollateral, entirePositionDebt, price, isRedistribution);
-        oldLiquidationTotals.collateralToSendToProtocol += collateralToSendToProtocol;
-        oldLiquidationTotals.collateralToSendToLiquidator += collateralToSendToLiquidator;
 
-        if (isRedistribution) {
-            assert(collateralToSendToProtocol == 0);
-            oldLiquidationTotals.debtToRedistribute += entirePositionDebt;
-            oldLiquidationTotals.collateralToRedistribute += entirePositionCollateral - collateralToSendToLiquidator;
-        } else {
-            oldLiquidationTotals.debtToOffset += entirePositionDebt;
+        if (!isRedistribution) {
+            rToken.burn(msg.sender, entirePositionDebt);
+            totalDebt -= entirePositionDebt;
+            // Collateral is sent to protocol as a fee only in case of liquidation
+            collateralToken.transfer(feeRecipient, collateralLiquidationFee);
         }
 
-        return (oldLiquidationTotals);
-    }
+        collateralToken.transfer(msg.sender, collateralToSendToLiquidator);
 
-    function simulateBatchLiquidatePositions(IERC20 _collateralToken, address[] memory _positionArray, uint256 _price)
-        external
-        view
-        override
-        returns (LiquidationTotals memory totals)
-    {
-        uint256 _positionArrayLength = _positionArray.length;
-        for (uint256 i = 0; i < _positionArrayLength; ++i) {
-            address user = _positionArray[i];
-            IERC20 collateralTokenPerBorrower = collateralTokenPerBorrowers[user];
-            if (_collateralToken == collateralTokenPerBorrower) {
-                uint256 icr = getCurrentICR(_collateralToken, user, _price);
+        _removePositionFromSortedPositions(collateralToken, borrower, true);
 
-                if (icr < MathUtils.MCR) {
-                    // Add liquidation values to their respective running totals
-                    totals = increaseLiquidationTotals(_collateralToken, totals, user, icr, _price);
-                }
-            }
-        }
-    }
-
-    /*
-    * Attempt to liquidate a custom list of positions provided by the caller.
-    */
-    function batchLiquidatePositions(IERC20 _collateralToken, address[] memory _positionArray) public override {
-        if (_positionArray.length == 0) {
-            revert PositionArrayEmpty();
-        }
-
-        // Perform the appropriate liquidation sequence - tally values and obtain their totals.
-        LiquidationTotals memory totals = _batchLiquidate(_collateralToken, _positionArray);
-
-        if (totals.collateralToRedistribute + totals.collateralToSendToLiquidator == 0) {
-            revert NothingToLiquidate();
-        }
-
-        _collateralToken.transfer(msg.sender, totals.collateralToSendToLiquidator);
-        _collateralToken.transfer(feeRecipient, totals.collateralToSendToProtocol);
-
-        if (totals.debtToOffset != 0) {
-            rToken.burn(msg.sender, totals.debtToOffset);
-            totalDebt -= totals.debtToOffset;
-        }
-
-        updateDebtAndCollateralIndex(_collateralToken);
+        updateDebtAndCollateralIndex(collateralToken);
 
         emit Liquidation(
             msg.sender,
-            _collateralToken,
-            totals.debtToOffset,
-            totals.collateralToSendToProtocol,
-            totals.collateralToSendToLiquidator,
-            totals.debtToRedistribute,
-            totals.collateralToRedistribute
+            borrower,
+            collateralToken,
+            entirePositionDebt,
+            entirePositionCollateral,
+            collateralToSendToLiquidator,
+            collateralLiquidationFee,
+            isRedistribution
         );
-    }
-
-    function _batchLiquidate(IERC20 _collateralToken, address[] memory _positionArray)
-        internal
-        returns (LiquidationTotals memory totals)
-    {
-        uint256 price = priceFeeds[_collateralToken].fetchPrice();
-        uint256 _positionArrayLength = _positionArray.length;
-        for (uint256 i = 0; i < _positionArrayLength; ++i) {
-            address user = _positionArray[i];
-            IERC20 collateralTokenPerBorrower = collateralTokenPerBorrowers[user];
-            if (_collateralToken == collateralTokenPerBorrower) {
-                uint256 icr = getCurrentICR(_collateralToken, user, price);
-
-                if (icr < MathUtils.MCR) {
-                    // Add liquidation values to their respective running totals
-                    totals = _liquidate(_collateralToken, totals, user, icr, price);
-                }
-            }
-        }
     }
 
     // --- Redemption functions ---
@@ -455,9 +364,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (newDebt == 0) {
             // No debt left in the Position (except for the liquidation reserve), therefore the position gets closed
-            _removePositionFromSortedPositions(_collateralToken, _borrower);
-            raftDebtToken.burn(_borrower, type(uint256).max);
-            raftCollateralTokens[_collateralToken].burn(_borrower, type(uint256).max);
+            _removePositionFromSortedPositions(_collateralToken, _borrower, true);
             _collateralToken.safeTransfer(_borrower, newCollateral);
         } else {
             uint256 newNICR = MathUtils.computeNominalCR(newCollateral, newDebt);
@@ -648,12 +555,17 @@ contract PositionManager is FeeCollector, IPositionManager {
         raftCollateralTokens[_collateralToken].setIndex(_collateralToken.balanceOf(address(this)));
     }
 
-    function _removePositionFromSortedPositions(IERC20 _collateralToken, address _borrower) internal {
+    function _removePositionFromSortedPositions(IERC20 _collateralToken, address _borrower, bool burnTokens) internal {
         if (sortedPositions[_collateralToken].size <= 1) {
             revert OnlyOnePositionInSystem();
         }
         sortedPositions[_collateralToken].remove(_borrower);
         collateralTokenPerBorrowers[_borrower] = IERC20(address(0));
+
+        if (burnTokens) {
+            raftDebtToken.burn(_borrower, type(uint256).max);
+            raftCollateralTokens[_collateralToken].burn(_borrower, type(uint256).max);
+        }
         emit PositionClosed(_borrower);
     }
 
