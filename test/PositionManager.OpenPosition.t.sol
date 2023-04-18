@@ -527,7 +527,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
         uint256 collateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 debtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
-        uint256 expectedDebt = PositionManagerUtils.getOpenPositionTotalDebt(positionManager, rAmount);
+        uint256 expectedDebt = PositionManagerUtils.getAmountWithBorrowingFee(positionManager, rAmount);
 
         assertGt(collateralAfter, 0);
         assertGt(debtAfter, 0);

@@ -163,7 +163,7 @@ library PositionManagerUtils {
         uint256 amount
     ) internal view returns (uint256 rAmount, uint256 totalDebt, uint256 newAmount) {
         rAmount = getNetBorrowingAmount(positionManager, positionManager.minDebt()) + extraRAmount;
-        totalDebt = getOpenPositionTotalDebt(positionManager, rAmount);
+        totalDebt = getAmountWithBorrowingFee(positionManager, rAmount);
         newAmount = (amount == 0) ? icr * totalDebt / priceFeed.getPrice() : amount;
     }
 
@@ -224,20 +224,11 @@ library PositionManagerUtils {
         return _debtWithFee.divUp(MathUtils._100_PERCENT + borrowingRate);
     }
 
-    function getOpenPositionTotalDebt(IPositionManager _positionManager, uint256 rAmount)
+    function getAmountWithBorrowingFee(IPositionManager positionManager, uint256 rAmount)
         internal
         view
         returns (uint256)
     {
-        uint256 fee = _positionManager.getBorrowingFee(rAmount);
-        return rAmount + fee;
-    }
-
-    function getAmountWithBorrowingFee(IPositionManager _positionManager, uint256 _rAmount)
-        internal
-        view
-        returns (uint256)
-    {
-        return _rAmount + _positionManager.getBorrowingFee(_rAmount);
+        return rAmount + positionManager.getBorrowingFee(rAmount);
     }
 }
