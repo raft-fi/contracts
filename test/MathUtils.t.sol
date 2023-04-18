@@ -292,57 +292,57 @@ contract MathUtilsTest is Test {
 
     // --- computeCR() ---
 
-    // Returns 0 if position's coll is worth 0
-    function testComputeCRReturnsZeroForZeroColl() public {
+    // Returns 0 if position's collateral is worth 0
+    function testComputeCRReturnsZeroForZeroCollateral() public {
         uint256 price = 0;
-        uint256 coll = 1 ether;
+        uint256 collateral = 1 ether;
         uint256 debt = 100e18;
 
-        assertEq(MathUtils.computeCR(coll, debt, price), 0);
+        assertEq(MathUtils.computeCR(collateral, debt, price), 0);
     }
 
-    // Returns 1 for ETH:USD = 100, coll = 1 ETH, debt = 100 R
-    function testComputeCRReturnsMaxForMaxColl() public {
+    // Returns 1 for ETH:USD = 100, collateral = 1 ETH, debt = 100 R
+    function testComputeCRReturnsMaxForMaxCollateral() public {
         uint256 price = 100e18;
-        uint256 coll = 1 ether;
+        uint256 collateral = 1 ether;
         uint256 debt = 100e18;
 
-        assertEq(MathUtils.computeCR(coll, debt, price), 1e18);
+        assertEq(MathUtils.computeCR(collateral, debt, price), 1e18);
     }
 
-    // Returns correct CR for ETH:USD = 100, coll = 200 ETH, debt = 30 R
+    // Returns correct CR for ETH:USD = 100, collateral = 200 ETH, debt = 30 R
     function testComputeCRReturnsCorrectCR1() public {
         uint256 price = 100e18;
-        uint256 coll = 200 ether;
+        uint256 collateral = 200 ether;
         uint256 debt = 30e18;
 
-        assertEq(MathUtils.computeCR(coll, debt, price), 666666666666666666666);
+        assertEq(MathUtils.computeCR(collateral, debt, price), 666666666666666666666);
     }
 
-    // Returns correct CR for ETH:USD = 250, coll = 1350 ETH, debt = 127 R
+    // Returns correct CR for ETH:USD = 250, collateral = 1350 ETH, debt = 127 R
     function testComputeCRReturnsCorrectCR2() public {
         uint256 price = 250e18;
-        uint256 coll = 1350 ether;
+        uint256 collateral = 1350 ether;
         uint256 debt = 127e18;
 
-        assertEq(MathUtils.computeCR(coll, debt, price), 2657480314960629921259);
+        assertEq(MathUtils.computeCR(collateral, debt, price), 2657480314960629921259);
     }
 
-    // Returns correct CR for ETH:USD = 100, coll = 1 ETH, debt = 54321 R
+    // Returns correct CR for ETH:USD = 100, collateral = 1 ETH, debt = 54321 R
     function testComputeCRReturnsCorrectCR3() public {
         uint256 price = 100e18;
-        uint256 coll = 1 ether;
+        uint256 collateral = 1 ether;
         uint256 debt = 54321e18;
 
-        assertEq(MathUtils.computeCR(coll, debt, price), 1840908672520756);
+        assertEq(MathUtils.computeCR(collateral, debt, price), 1840908672520756);
     }
 
-    // Returns 2^256-1 if position has non-zero coll and zero debt
+    // Returns 2^256-1 if position has non-zero collateral and zero debt
     function testComputeCRReturnsMaxForZeroDebt() public {
         uint256 price = 100e18;
-        uint256 coll = 1 ether;
+        uint256 collateral = 1 ether;
         uint256 debt = 0;
 
-        assertEq(MathUtils.computeCR(coll, debt, price), type(uint256).max);
+        assertEq(MathUtils.computeCR(collateral, debt, price), type(uint256).max);
     }
 }

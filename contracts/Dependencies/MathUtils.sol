@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 
 library MathUtils {
     uint256 public constant MINUTES_IN_1000_YEARS = 1000 * 356 days / 1 minutes;
@@ -71,18 +71,18 @@ library MathUtils {
         return decMul(x, y);
     }
 
-    function computeNominalCR(uint256 _coll, uint256 _debt) internal pure returns (uint256) {
+    function computeNominalCR(uint256 _collateral, uint256 _debt) internal pure returns (uint256) {
         if (_debt > 0) {
-            return _coll * NICR_PRECISION / _debt;
+            return _collateral * NICR_PRECISION / _debt;
         }
 
         // Return the maximal value for uint256 if the Position has a debt of 0. Represents "infinite" CR.
         return type(uint256).max;
     }
 
-    function computeCR(uint256 _coll, uint256 _debt, uint256 _price) internal pure returns (uint256) {
+    function computeCR(uint256 _collateral, uint256 _debt, uint256 _price) internal pure returns (uint256) {
         if (_debt > 0) {
-            return _coll * _price / _debt;
+            return _collateral * _price / _debt;
         }
 
         // Return the maximal value for uint256 if the Position has a debt of 0. Represents "infinite" CR.

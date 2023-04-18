@@ -58,7 +58,7 @@ contract PositionManagerTest is TestSetup {
         collateralToken.approve(address(positionManager2), collateralTopUpAmount);
 
         uint256 borrowerDebtBefore = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollBefore = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 borrowerCollateralBefore = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 borrowerRBalanceBefore = positionManager2.rToken().balanceOf(ALICE);
         uint256 borrowerCollateralBalanceBefore = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceBefore = positionManager2.rToken().balanceOf(BOB);
@@ -71,19 +71,19 @@ contract PositionManagerTest is TestSetup {
         uint256 delegateRBalanceAfter = positionManager2.rToken().balanceOf(BOB);
         uint256 delegateCollateralBalanceAfter = collateralToken.balanceOf(BOB);
         uint256 borrowerDebtAfter = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 borrowerCollateralAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
 
         uint256 delegateDebtAfter = positionManager2.raftDebtToken().balanceOf(BOB);
-        uint256 delegateCollAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(BOB);
+        uint256 delegateCollateralAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(BOB);
 
         assertEq(borrowerRBalanceAfter, borrowerRBalanceBefore + debtAmount);
         assertEq(borrowerCollateralBalanceAfter, borrowerCollateralBalanceBefore);
         assertEq(delegateRBalanceAfter, delegateRBalanceBefore);
         assertEq(delegateCollateralBalanceAfter, delegateCollateralBalanceBefore - collateralTopUpAmount);
         assertEq(borrowerDebtAfter - borrowerDebtBefore, debtAmount);
-        assertEq(borrowerCollAfter - borrowerCollBefore, collateralTopUpAmount);
+        assertEq(borrowerCollateralAfter - borrowerCollateralBefore, collateralTopUpAmount);
         assertEq(delegateDebtAfter, 0);
-        assertEq(delegateCollAfter, 0);
+        assertEq(delegateCollateralAfter, 0);
     }
 
     function testIndividualDelegates() public {

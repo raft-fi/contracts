@@ -17,12 +17,13 @@ contract PositionManagerTester is PositionManager {
     {}
     // solhint-enable no-empty-blocks
 
-    function getCollLiquidationProtocolFee(uint256 _entireColl, uint256 _entireDebt, uint256 _price, uint256)
-        external
-        view
-        returns (uint256 fee)
-    {
-        (fee,) = splitLiquidationCollateral(_entireColl, _entireDebt, _price, false);
+    function getCollateralLiquidationProtocolFee(
+        uint256 _entireCollateral,
+        uint256 _entireDebt,
+        uint256 _price,
+        uint256
+    ) external view returns (uint256 fee) {
+        (fee,) = splitLiquidationCollateral(_entireCollateral, _entireDebt, _price, false);
     }
 
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint256) {

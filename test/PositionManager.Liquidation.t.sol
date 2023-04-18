@@ -298,7 +298,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         /*
 
         // Though Bob's true ICR (including pending rewards) is below the MCR,
-        //      check that Bob's raw coll and debt has not changed, and that his "raw" ICR is above the MCR
+        //      check that Bob's raw collateral and debt has not changed, and that his "raw" ICR is above the MCR
        uint256 bobDebt = positionManager.raftDebtToken().balanceOf(BOB);
         uint256 bobPositionCollateral = positionManager.raftCollateralToken().balanceOf(BOB);
 

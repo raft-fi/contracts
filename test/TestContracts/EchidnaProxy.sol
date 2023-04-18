@@ -62,12 +62,12 @@ pragma solidity 0.8.19;
 //        borrowerOperations.openPosition(_maxFee, _debtAmount, _upperHint, _lowerHint, _ETH);
 //    }
 
-//     function addCollPrx(uint _ETH, address _upperHint, address _lowerHint) external {
-//         borrowerOperations.addColl(_upperHint, _lowerHint, _ETH);
+//     function addCollateralPrx(uint _ETH, address _upperHint, address _lowerHint) external {
+//         borrowerOperations.addCollateral(_upperHint, _lowerHint, _ETH);
 //     }
 
-//     function withdrawCollPrx(uint _amount, address _upperHint, address _lowerHint) external {
-//         borrowerOperations.withdrawColl(_amount, _upperHint, _lowerHint);
+//     function withdrawCollateralPrx(uint _amount, address _upperHint, address _lowerHint) external {
+//         borrowerOperations.withdrawCollateral(_amount, _upperHint, _lowerHint);
 //     }
 
 //     function withdrawDebtPrx(uint _amount, address _upperHint, address _lowerHint, uint _maxFee) external {
@@ -82,9 +82,9 @@ pragma solidity 0.8.19;
 //         borrowerOperations.closePosition();
 //     }
 
-//     function adjustPositionPrx(uint _ETH, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease,
+//     function adjustPositionPrx(uint _ETH, uint _collateralWithdrawal, uint _debtChange, bool _isDebtIncrease,
 //         address _upperHint, address _lowerHint, uint _maxFee) external {
-//         borrowerOperations.adjustPosition(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint,
+//         borrowerOperations.adjustPosition(_maxFee, _collateralWithdrawal, _debtChange, _isDebtIncrease, _upperHint,
 // _lowerHint, _ETH);
 //     }
 

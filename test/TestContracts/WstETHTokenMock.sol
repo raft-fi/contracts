@@ -2,11 +2,11 @@
 pragma solidity 0.8.19;
 
 import {ERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IWstEth} from "../../contracts/Dependencies/IWstEth.sol";
+import {IWstETH} from "../../contracts/Dependencies/IWstETH.sol";
 
 // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.3.0/contracts/mocks/ERC20Mock.sol
 // mock class using ERC20
-contract WstETHTokenMock is ERC20("Wrapped liquid staked Ether 2.0", "wstETH"), IWstEth {
+contract WstETHTokenMock is ERC20("Wrapped liquid staked Ether 2.0", "wstETH"), IWstETH {
     function mint(address account, uint256 amount) public {
         _mint(account, amount);
     }
