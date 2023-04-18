@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPriceFeed} from "../../contracts/Interfaces/IPriceFeed.sol";
+import {ISplitLiquidationCollateral} from "../../contracts/Interfaces/ISplitLiquidationCollateral.sol";
 import {PositionManager} from "../../contracts/PositionManager.sol";
 import {MathUtils} from "../../contracts/Dependencies/MathUtils.sol";
 
@@ -12,19 +13,12 @@ for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
     // solhint-disable no-empty-blocks
-    constructor(uint256 _liquidationProtocolFee, address[] memory delegates)
-        PositionManager(_liquidationProtocolFee, delegates)
-    {}
+    constructor(
+        uint256 _liquidationProtocolFee,
+        address[] memory delegates,
+        ISplitLiquidationCollateral newSplitLiquidationCollateral
+    ) PositionManager(_liquidationProtocolFee, delegates, newSplitLiquidationCollateral) {}
     // solhint-enable no-empty-blocks
-
-    function getCollateralLiquidationProtocolFee(
-        uint256 _entireCollateral,
-        uint256 _entireDebt,
-        uint256 _price,
-        uint256
-    ) external view returns (uint256 fee) {
-        (fee,) = splitLiquidationCollateral(_entireCollateral, _entireDebt, _price, false);
-    }
 
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint256) {
         baseRate = _calcDecayedBaseRate();

@@ -29,7 +29,8 @@ contract PositionManagerStETHTest is TestSetup {
             IWstETH(WSTETH_ADDRESS),
             POSITIONS_SIZE,
             LIQUIDATION_PROTOCOL_FEE,
-            new address[](0)
+            new address[](0),
+            SPLIT_LIQUIDATION_COLLATERAL
         );
         stETH = positionManager.stETH();
     }

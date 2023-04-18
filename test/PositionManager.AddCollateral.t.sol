@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
+import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
 import {SortedPositions} from "../contracts/SortedPositions.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
@@ -16,14 +17,17 @@ contract PositionManagerAddCollateralTest is TestSetup {
 
     PriceFeedTestnet public priceFeed;
     IPositionManager public positionManager;
+    SplitLiquidationCollateral public splitLiquidationCollateral;
 
     function setUp() public override {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
+        splitLiquidationCollateral = new SplitLiquidationCollateral();
         positionManager = new PositionManager(
             LIQUIDATION_PROTOCOL_FEE,
-            new address[](0)
+            new address[](0),
+            splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 

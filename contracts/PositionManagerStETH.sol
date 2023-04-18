@@ -6,6 +6,7 @@ import {IStETH} from "./Dependencies/IStETH.sol";
 import {IWstETH} from "./Dependencies/IWstETH.sol";
 import {IPositionManagerStETH} from "./Interfaces/IPositionManagerStETH.sol";
 import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
+import {ISplitLiquidationCollateral} from "./Interfaces/ISplitLiquidationCollateral.sol";
 import {PositionManager} from "./PositionManager.sol";
 
 contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
@@ -17,8 +18,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         IWstETH _wstETH,
         uint256 _positionsSize,
         uint256 _liquidationProtocolFee,
-        address[] memory delegates
-    ) PositionManager(_liquidationProtocolFee, delegates) {
+        address[] memory delegates,
+        ISplitLiquidationCollateral newSplitLiquidationCollateral
+    ) PositionManager(_liquidationProtocolFee, delegates, newSplitLiquidationCollateral) {
         wstETH = _wstETH;
         stETH = IStETH(address(_wstETH.stETH()));
 
