@@ -42,12 +42,12 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 100000e18,
+            extraDebtAmount: 100000e18,
             icr: 2e18
         });
         vm.stopPrank();
 
-        uint256 aliceCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
 
         // Artificially mint to Alice so she has enough to close her position
         vm.prank(address(positionManager));
@@ -61,19 +61,21 @@ contract PositionManagerClosePositionTest is TestSetup {
         // Alice attempts to close her position
         vm.startPrank(ALICE);
         vm.expectRevert(IPositionManager.OnlyOnePositionInSystem.selector);
-        positionManager.managePosition(collateralToken, aliceCollateral, false, aliceDebt, false, ALICE, ALICE, 0);
+        positionManager.managePosition(
+            collateralToken, alicePositionCollateral, false, aliceDebt, false, ALICE, ALICE, 0
+        );
     }
 
     // Reduces position's collateral and debt to zero
     function testCollateralDebtToZero() public {
-        uint256 aliceCollateralBalanceBefore = collateralToken.balanceOf(ALICE);
+        uint256 aliceCollateralBefore = collateralToken.balanceOf(ALICE);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -83,16 +85,16 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
 
-        uint256 aliceCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 alicePositionCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 bobRBalance = rToken.balanceOf(BOB);
 
-        assertGt(aliceCollateralBefore, 0);
+        assertGt(alicePositionCollateralBefore, 0);
         assertGt(aliceDebtBefore, 0);
         assertGt(bobRBalance, 0);
 
@@ -106,21 +108,21 @@ contract PositionManagerClosePositionTest is TestSetup {
         // Alice attempts to close position
         vm.prank(ALICE);
         positionManager.managePosition(
-            collateralToken, aliceCollateralBefore, false, aliceDebtBefore, false, ALICE, ALICE, 0
+            collateralToken, alicePositionCollateralBefore, false, aliceDebtBefore, false, ALICE, ALICE, 0
         );
 
-        uint256 aliceCollateralBalanceAfter = collateralToken.balanceOf(ALICE);
-        uint256 aliceCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 aliceCollateralAfter = collateralToken.balanceOf(ALICE);
+        uint256 alicePositionCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
         uint256 aliceDebtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
-        uint256 aliceRBalanceAfter = rToken.balanceOf(ALICE);
-        uint256 bobCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
+        uint256 aliceDebtBalanceAfter = rToken.balanceOf(ALICE);
+        uint256 bobPositionCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
         uint256 positionManagerCollateralBalance = collateralToken.balanceOf(address(positionManager));
 
-        assertEq(aliceCollateralAfter, 0);
+        assertEq(alicePositionCollateralAfter, 0);
         assertEq(aliceDebtAfter, 0);
-        assertEq(positionManagerCollateralBalance, bobCollateralAfter);
-        assertEq(aliceCollateralBalanceAfter, aliceCollateralBalanceBefore);
-        assertEq(aliceRBalanceAfter, aliceRBalanceBefore - aliceDebtBefore);
+        assertEq(positionManagerCollateralBalance, bobPositionCollateralAfter);
+        assertEq(aliceCollateralAfter, aliceCollateralBefore);
+        assertEq(aliceDebtBalanceAfter, aliceRBalanceBefore - aliceDebtBefore);
     }
 
     // Succeeds when borrower's R balance is equals to his entire debt and borrowing rate = 0
@@ -130,7 +132,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 15000e18,
+            extraDebtAmount: 15000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -140,7 +142,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 5000e18,
+            extraDebtAmount: 5000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -171,7 +173,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 15000e18,
+            extraDebtAmount: 15000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -181,7 +183,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 5000e18,
+            extraDebtAmount: 5000e18,
             icr: 2e18
         });
         vm.stopPrank();

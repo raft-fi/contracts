@@ -155,7 +155,7 @@ interface IPositionManager is IFeeCollector {
 
     event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
     event Redemption(
-        uint256 _attemptedRAmount, uint256 _actualRAmount, uint256 _collateralTokenSent, uint256 _collateralTokenFee
+        uint256 _attemptedAmount, uint256 _actualAmount, uint256 _collateralTokenSent, uint256 _collateralTokenFee
     );
 
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
@@ -245,7 +245,7 @@ interface IPositionManager is IFeeCollector {
 
     function redeemCollateral(
         IERC20 _collateralToken,
-        uint256 _rAmount,
+        uint256 debtAmount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,

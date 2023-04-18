@@ -104,7 +104,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 20e18,
+            extraDebtAmount: 20e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -114,7 +114,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 20e18,
+            extraDebtAmount: 20e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -124,7 +124,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 20e18,
+            extraDebtAmount: 20e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -134,7 +134,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 20e18,
+            extraDebtAmount: 20e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -173,7 +173,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10e18,
+            extraDebtAmount: 10e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -183,7 +183,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 20e18,
+            extraDebtAmount: 20e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -193,7 +193,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -203,7 +203,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
 
@@ -218,7 +218,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 60e18,
+            extraDebtAmount: 60e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -228,7 +228,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 60e18,
+            extraDebtAmount: 60e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -238,7 +238,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 70e18,
+            extraDebtAmount: 70e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -248,7 +248,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 80e18,
+            extraDebtAmount: 80e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -258,7 +258,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 180e18,
+            extraDebtAmount: 180e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -319,7 +319,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 60e18,
+            extraDebtAmount: 60e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -329,7 +329,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 60e18,
+            extraDebtAmount: 60e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -339,7 +339,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 70e18,
+            extraDebtAmount: 70e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -349,7 +349,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 80e18,
+            extraDebtAmount: 80e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -359,7 +359,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 180e18,
+            extraDebtAmount: 180e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -425,7 +425,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 30e18,
+            extraDebtAmount: 30e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -435,7 +435,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -445,7 +445,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -455,7 +455,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -465,7 +465,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -510,7 +510,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 30e18,
+            extraDebtAmount: 30e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -520,7 +520,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -530,7 +530,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -587,7 +587,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 30e18,
+            extraDebtAmount: 30e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -597,7 +597,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -607,7 +607,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -659,7 +659,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 30e18,
+            extraDebtAmount: 30e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -669,7 +669,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -679,7 +679,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -689,7 +689,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -740,7 +740,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 30e18,
+            extraDebtAmount: 30e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -750,7 +750,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -760,7 +760,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -770,7 +770,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -821,7 +821,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 30e18,
+            extraDebtAmount: 30e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -834,7 +834,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -844,7 +844,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -854,7 +854,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -902,7 +902,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 30e18,
+            extraDebtAmount: 30e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -912,7 +912,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 40e18,
+            extraDebtAmount: 40e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -922,7 +922,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -932,7 +932,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 50e18,
+            extraDebtAmount: 50e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -1026,7 +1026,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 0,
+            extraDebtAmount: 0,
             icr: 0,
             amount: 100 ether
         });

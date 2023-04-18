@@ -39,7 +39,7 @@ pragma solidity 0.8.19;
 //     }
 
 //     function redeemCollateralPrx(
-//         uint _rAmount,
+//         uint _debtAmount,
 //         address _firstRedemptionHint,
 //         address _upperPartialRedemptionHint,
 //         address _lowerPartialRedemptionHint,
@@ -47,15 +47,20 @@ pragma solidity 0.8.19;
 //         uint _maxIterations,
 //         uint _maxFee
 //     ) external {
-//         positionManager.redeemCollateral(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint,
+//         positionManager.redeemCollateral(_debtAmount, _firstRedemptionHint, _upperPartialRedemptionHint,
 //             _lowerPartialRedemptionHint, _partialRedemptionHintNICR, _maxIterations, _maxFee);
 //     }
 
 //     // Borrower Operations
-//     function openPositionPrx(uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint _maxFee) external
-// {
-//         borrowerOperations.openPosition(_maxFee, _rAmount, _upperHint, _lowerHint, _ETH);
-//     }
+//    function openPositionPrx(
+//        uint _ETH,
+//        uint _debtAmount,
+//        address _upperHint,
+//        address _lowerHint,
+//        uint _maxFee
+//    ) external {
+//        borrowerOperations.openPosition(_maxFee, _debtAmount, _upperHint, _lowerHint, _ETH);
+//    }
 
 //     function addCollPrx(uint _ETH, address _upperHint, address _lowerHint) external {
 //         borrowerOperations.addColl(_upperHint, _lowerHint, _ETH);
@@ -65,12 +70,12 @@ pragma solidity 0.8.19;
 //         borrowerOperations.withdrawColl(_amount, _upperHint, _lowerHint);
 //     }
 
-//     function withdrawRPrx(uint _amount, address _upperHint, address _lowerHint, uint _maxFee) external {
-//         borrowerOperations.withdrawR(_maxFee, _amount, _upperHint, _lowerHint);
+//     function withdrawDebtPrx(uint _amount, address _upperHint, address _lowerHint, uint _maxFee) external {
+//         borrowerOperations.withdrawDebt(_maxFee, _amount, _upperHint, _lowerHint);
 //     }
 
 //     function repayRPrx(uint _amount, address _upperHint, address _lowerHint) external {
-//         borrowerOperations.repayR(_amount, _upperHint, _lowerHint);
+//         borrowerOperations.repayDebt(_amount, _upperHint, _lowerHint);
 //     }
 
 //     function closePositionPrx() external {

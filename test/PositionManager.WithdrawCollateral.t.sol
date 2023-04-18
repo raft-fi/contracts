@@ -75,7 +75,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -85,7 +85,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 10000e18,
+            extraDebtAmount: 10000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -129,18 +129,18 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 bobCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
-        uint256 carolCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(CAROL);
+        uint256 bobPositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
+        uint256 carolPositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(CAROL);
 
         // Carol withdraws exactly all her collateral
         vm.prank(CAROL);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, 0));
-        positionManager.managePosition(collateralToken, carolCollateral, false, 0, false, CAROL, CAROL, 0);
+        positionManager.managePosition(collateralToken, carolPositionCollateral, false, 0, false, CAROL, CAROL, 0);
 
         // Bob attempts to withdraw 1 wei more than his collateral
         vm.prank(BOB);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(collateralToken, bobCollateral + 1, false, 0, false, BOB, BOB, 0);
+        positionManager.managePosition(collateralToken, bobPositionCollateral + 1, false, 0, false, BOB, BOB, 0);
     }
 
     // Succeeds when borrowing rate = 0% and withdrawal would bring the user's ICR < MCR
@@ -220,7 +220,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
 
         // Check position is active
         (bool alicePositionExistsBefore,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
@@ -229,7 +229,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         // Alice attempts to withdraw all collateral
         vm.prank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, 0));
-        positionManager.managePosition(collateralToken, aliceCollateral, false, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, alicePositionCollateral, false, 0, false, ALICE, ALICE, 0);
     }
 
     // Leaves the position active when the user withdraws less than all the collateral
@@ -267,7 +267,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 alicePositionCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
 
         uint256 withdrawAmount = 1 ether;
 
@@ -276,9 +276,9 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         positionManager.managePosition(collateralToken, withdrawAmount, false, 0, false, ALICE, ALICE, 0);
 
         // Check 1 ether remaining
-        uint256 aliceCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 alicePositionCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
 
-        assertEq(aliceCollateralAfter, aliceCollateralBefore - withdrawAmount);
+        assertEq(alicePositionCollateralAfter, alicePositionCollateralBefore - withdrawAmount);
     }
 
     // Reduces position manager's collateral by correct amount
@@ -309,7 +309,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 0,
+            extraDebtAmount: 0,
             icr: 2e18
         });
         vm.stopPrank();

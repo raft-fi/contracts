@@ -45,10 +45,10 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
+        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
         uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
-        assertEq(aliceCollateral, alicePosition.collateral);
+        assertEq(alicePositionCollateral, alicePosition.collateral);
         assertEq(aliceDebt, alicePosition.totalDebt);
     }
 
@@ -65,10 +65,10 @@ contract StEthPositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
+        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
         uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
-        assertEq(aliceCollateral, alicePosition.collateral);
+        assertEq(alicePositionCollateral, alicePosition.collateral);
         assertEq(aliceDebt, alicePosition.totalDebt);
     }
 

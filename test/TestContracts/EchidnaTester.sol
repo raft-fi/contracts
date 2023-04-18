@@ -110,14 +110,14 @@ pragma solidity 0.8.19;
 
 //     function redeemCollateralExt(
 //         uint _i,
-//         uint _rAmount,
+//         uint debtAmount,
 //         address _firstRedemptionHint,
 //         address _upperPartialRedemptionHint,
 //         address _lowerPartialRedemptionHint,
 //         uint _partialRedemptionHintNICR
 //     ) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].redeemCollateralPrx(_rAmount, _firstRedemptionHint, _upperPartialRedemptionHint,
+//         echidnaProxies[actor].redeemCollateralPrx(debtAmount, _firstRedemptionHint, _upperPartialRedemptionHint,
 // _lowerPartialRedemptionHint, _partialRedemptionHintNICR, 0, 0);
 //     }
 
@@ -132,31 +132,30 @@ pragma solidity 0.8.19;
 //         return ETH;
 //     }
 
-//     function getAdjustedR(uint ETH, uint _rAmount, uint ratio) internal view returns (uint) {
+//     function getAdjustedDebt(uint ETH, uint debtAmount, uint ratio) internal view returns (uint) {
 //         uint price = priceFeedTestnet.getPrice();
-//         uint rAmount = _rAmount;
-//         uint compositeDebt = rAmount + R_GAS_COMPENSATION;
+//         uint compositeDebt = debtAmount + R_GAS_COMPENSATION;
 //         uint ICR = MathUtils.computeCR(ETH, compositeDebt, price);
 //         if (ICR < ratio) {
 //             compositeDebt = ETH * price / ratio;
-//             rAmount = compositeDebt - R_GAS_COMPENSATION;
+//             debtAmount = compositeDebt - R_GAS_COMPENSATION;
 //         }
-//         return rAmount;
+//         return debtAmount;
 //     }
 
-//     function openPositionExt(uint _i, uint _ETH, uint _rAmount) public {
+//     function openPositionExt(uint _i, uint _ETH, uint debtAmount) public {
 //         uint actor = _i % NUMBER_OF_ACTORS;
 //         EchidnaProxy echidnaProxy = echidnaProxies[actor];
 //         uint actorBalance = address(echidnaProxy).balance;
 
 //         // we pass in CCR instead of MCR in case it’s the first one
 //         uint ETH = getAdjustedETH(actorBalance, _ETH, CCR);
-//         uint rAmount = getAdjustedR(ETH, _rAmount, CCR);
+//         uint debtAmount = getAdjustedDebt(ETH, debtAmount, CCR);
 
 //         //console.log('ETH', ETH);
-//         //console.log('rAmount', rAmount);
+//         //console.log('debtAmount', debtAmount);
 
-//         echidnaProxy.openPositionPrx(ETH, rAmount, address(0), address(0), 0);
+//         echidnaProxy.openPositionPrx(ETH, debtAmount, address(0), address(0), 0);
 
 //         numberOfPositions = positionManager.getPositionOwnersCount();
 //         assert(numberOfPositions > 0);
@@ -164,10 +163,10 @@ pragma solidity 0.8.19;
 //         //assert(numberOfPositions == 0);
 //     }
 
-//     function openPositionRawExt(uint _i, uint _ETH, uint _rAmount, address _upperHint, address _lowerHint, uint
+//     function openPositionRawExt(uint _i, uint _ETH, uint debtAmount, address _upperHint, address _lowerHint, uint
 // _maxFee) public {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].openPositionPrx(_ETH, _rAmount, _upperHint, _lowerHint, _maxFee);
+//         echidnaProxies[actor].openPositionPrx(_ETH, debtAmount, _upperHint, _lowerHint, _maxFee);
 //     }
 
 //     function addCollExt(uint _i, uint _ETH) external {
@@ -190,9 +189,9 @@ pragma solidity 0.8.19;
 //         echidnaProxies[actor].withdrawCollPrx(_amount, _upperHint, _lowerHint);
 //     }
 
-//     function withdrawRExt(uint _i, uint _amount, address _upperHint, address _lowerHint, uint _maxFee) external {
+//     function withdrawDebtExt(uint _i, uint _amount, address _upperHint, address _lowerHint, uint _maxFee) external {
 //         uint actor = _i % NUMBER_OF_ACTORS;
-//         echidnaProxies[actor].withdrawRPrx(_amount, _upperHint, _lowerHint, _maxFee);
+//         echidnaProxies[actor].withdrawDebtPrx(_amount, _upperHint, _lowerHint, _maxFee);
 //     }
 
 //     function repayRExt(uint _i, uint _amount, address _upperHint, address _lowerHint) external {
@@ -215,7 +214,7 @@ pragma solidity 0.8.19;
 //         uint debtChange = _debtChange;
 //         if (_isDebtIncrease) {
 //             // TODO: add current amount already withdrawn:
-//             debtChange = getAdjustedR(ETH, uint(_debtChange), MCR);
+//             debtChange = getAdjustedDebt(ETH, uint(_debtChange), MCR);
 //         }
 //         // TODO: collWithdrawal, debtChange
 //         echidnaProxy.adjustPositionPrx(ETH, _collWithdrawal, debtChange, _isDebtIncrease, address(0), address(0), 0);

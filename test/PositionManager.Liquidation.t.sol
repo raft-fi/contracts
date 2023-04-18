@@ -64,7 +64,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         // Bob increases debt to 180 R, lowering his ICR to 1.11
         uint256 targetICR = 1111111111111111111;
         vm.startPrank(BOB);
-        PositionManagerUtils.withdrawR({
+        PositionManagerUtils.withdrawDebt({
             positionManager: positionManager,
             collateralToken: collateralToken,
             priceFeed: priceFeed,
@@ -97,7 +97,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 0,
+            extraDebtAmount: 0,
             icr: 200e18,
             amount: 100 ether
         });
@@ -232,7 +232,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 100e18,
+            extraDebtAmount: 100e18,
             icr: 8e18
         });
         vm.stopPrank();
@@ -242,7 +242,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 100e18,
+            extraDebtAmount: 100e18,
             icr: 2.21e18
         });
         vm.stopPrank();
@@ -252,7 +252,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraRAmount: 100e18,
+            extraDebtAmount: 100e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -300,9 +300,9 @@ contract PositionManagerLiquidationTest is TestSetup {
         // Though Bob's true ICR (including pending rewards) is below the MCR,
         //      check that Bob's raw coll and debt has not changed, and that his "raw" ICR is above the MCR
        uint256 bobDebt = positionManager.raftDebtToken().balanceOf(BOB);
-        uint256 bobCollateral = positionManager.raftCollateralToken().balanceOf(BOB);
+        uint256 bobPositionCollateral = positionManager.raftCollateralToken().balanceOf(BOB);
 
-        uint256 bobRawICR = bobCollateral * price / bobDebt;
+        uint256 bobRawICR = bobPositionCollateral * price / bobDebt;
         assertGe(bobRawICR, MathUtils.MCR);
 
         vm.startPrank(EVE);
@@ -339,8 +339,8 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertFalse(carolPositionExists);
 
         // Confirm token balances have not changed
-        assertEq(rToken.balanceOf(ALICE), alicePosition.rAmount);
-        assertEq(rToken.balanceOf(BOB), bobPosition.rAmount);
-        assertEq(rToken.balanceOf(CAROL), carolPosition.rAmount); */
+        assertEq(rToken.balanceOf(ALICE), alicePosition.debtAmount);
+        assertEq(rToken.balanceOf(BOB), bobPosition.debtAmount);
+        assertEq(rToken.balanceOf(CAROL), carolPosition.debtAmount); */
     }
 }
