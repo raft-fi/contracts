@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IWstEth} from "../../Dependencies/IWstEth.sol";
+import {IWstETH} from "../../Dependencies/IWstETH.sol";
 
 struct PriceOracleResponse {
     bool isBrokenOrFrozen;
@@ -13,12 +13,12 @@ interface IPriceOracle {
     // --- Errors ---
 
     /// @dev Invalid wstETH address.
-    error InvalidWstEthAddress();
+    error InvalidWstETHAddress();
 
     // --- Functions ---
 
     /// @dev Return wstETH address.
-    function wstEth() external view returns (IWstEth);
+    function wstETH() external view returns (IWstETH);
 
     /// @dev Maximum time period allowed since oracle latest round data timestamp, beyond which oracle is considered
     /// frozen.

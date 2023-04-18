@@ -2,12 +2,12 @@
 pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "../../contracts/Dependencies/MathUtils.sol";
-import {IStEth} from "../../contracts/Dependencies/IStEth.sol";
+import {IStETH} from "../../contracts/Dependencies/IStETH.sol";
 import {IPositionManager} from "../../contracts/Interfaces/IPositionManager.sol";
-import {IPositionManagerStEth} from "../../contracts/Interfaces/IPositionManagerStEth.sol";
-import {StEthPositionManager} from "../../contracts/StEthPositionManager.sol";
+import {IPositionManagerStETH} from "../../contracts/Interfaces/IPositionManagerStETH.sol";
+import {PositionManagerStETH} from "../../contracts/PositionManagerStETH.sol";
 import {PriceFeedTestnet} from "../TestContracts/PriceFeedTestnet.sol";
 
 library PositionManagerUtils {
@@ -48,20 +48,20 @@ library PositionManagerUtils {
             getOpenPositionSetupValues(positionManager, priceFeed, extraDebtAmount, icr, amount);
 
         if (ethType == ETHType.ETH) {
-            IStEth stEth = IPositionManagerStEth(address(positionManager)).stEth();
-            uint256 wstEthAmount = stEth.getSharesByPooledEth(amount);
-            IPositionManagerStEth(address(positionManager)).managePositionEth{value: amount}(
+            IStETH stETH = IPositionManagerStETH(address(positionManager)).stETH();
+            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
+            IPositionManagerStETH(address(positionManager)).managePositionEth{value: amount}(
                 result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
             );
-            result.collateral = wstEthAmount;
+            result.collateral = wstETHAmount;
         } else if (ethType == ETHType.STETH) {
-            IStEth stEth = IPositionManagerStEth(address(positionManager)).stEth();
-            uint256 wstEthAmount = stEth.getSharesByPooledEth(amount);
-            stEth.approve(address(positionManager), amount);
-            IPositionManagerStEth(address(positionManager)).managePositionStEth(
+            IStETH stETH = IPositionManagerStETH(address(positionManager)).stETH();
+            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
+            stETH.approve(address(positionManager), amount);
+            IPositionManagerStETH(address(positionManager)).managePositionStETH(
                 amount, true, result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
             );
-            result.collateral = wstEthAmount;
+            result.collateral = wstETHAmount;
         } else {
             collateralToken.approve(address(positionManager), amount);
             positionManager.managePosition(
@@ -91,7 +91,7 @@ library PositionManagerUtils {
         );
     }
 
-    function openPositionStEth(
+    function openPositionStETH(
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,

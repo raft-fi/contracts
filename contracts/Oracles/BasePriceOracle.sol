@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "../Dependencies/MathUtils.sol";
-import {IWstEth} from "../Dependencies/IWstEth.sol";
+import {IWstETH} from "../Dependencies/IWstETH.sol";
 import {IPriceOracle} from "./Interfaces/IPriceOracle.sol";
 
 abstract contract BasePriceOracle is IPriceOracle {
     using Fixed256x18 for uint256;
 
-    IWstEth public immutable override wstEth;
+    IWstETH public immutable override wstETH;
 
     uint256 public constant override TIMEOUT = 3 hours;
 
     uint256 public constant override TARGET_DIGITS = 18;
 
-    constructor(IWstEth _wstEth) {
-        if (address(_wstEth) == address(0)) {
-            revert InvalidWstEthAddress();
+    constructor(IWstETH _wstETH) {
+        if (address(_wstETH) == address(0)) {
+            revert InvalidWstETHAddress();
         }
-        wstEth = IWstEth(_wstEth);
+        wstETH = IWstETH(_wstETH);
     }
 
     function _oracleIsFrozen(uint256 responseTimestamp) internal view returns (bool) {
         return (block.timestamp - responseTimestamp) > TIMEOUT;
     }
 
-    function _convertIntoWstEthPrice(uint256 _price, uint256 _answerDigits) internal view returns (uint256) {
-        return _scalePriceByDigits(_price, _answerDigits).mulDown(wstEth.stEthPerToken());
+    function _convertIntoWstETHPrice(uint256 _price, uint256 _answerDigits) internal view returns (uint256) {
+        return _scalePriceByDigits(_price, _answerDigits).mulDown(wstETH.stEthPerToken());
     }
 
     function _scalePriceByDigits(uint256 _price, uint256 _answerDigits) internal pure returns (uint256) {

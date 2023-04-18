@@ -117,8 +117,8 @@ contract PriceFeedTest is TestSetup {
         priceFeed.setPriceDifferenceBetweenOracles(1e16);
     }
 
-    // Test wstEth Chainlink Oracle with wstEth index change
-    function testWstEthChainlinkOracleWithDifferentIndex() public {
+    // Test wstETH Chainlink Oracle with wstETH index change
+    function testWstETHChainlinkOracleWithDifferentIndex() public {
         // Oracle price price is 10.00000000
         mockChainlink.setDecimals(8);
         mockChainlink.setPrevPrice(10e8);
@@ -139,8 +139,8 @@ contract PriceFeedTest is TestSetup {
         assertEq(price, 15e18);
     }
 
-    // Test wstEth Tellor Oracle with wstEth index change
-    function testWstEthTellorOracleWithDifferentIndex() public {
+    // Test wstETH Tellor Oracle with wstETH index change
+    function testWstETHTellorOracleWithDifferentIndex() public {
         // Primary oracle breaks with negative price
         mockChainlink.setPrevPrice(10e8);
         mockChainlink.setPrice(-5000);

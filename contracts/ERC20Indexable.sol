@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {IERC20Indexable} from "./Interfaces/IERC20Indexable.sol";
 import {PositionManagerDependent} from "./PositionManagerDependent.sol";
 

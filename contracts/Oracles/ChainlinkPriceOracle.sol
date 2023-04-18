@@ -3,8 +3,8 @@ pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {AggregatorV3Interface} from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
-import {IWstEth} from "../Dependencies/IWstEth.sol";
-import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {IWstETH} from "../Dependencies/IWstETH.sol";
+import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "../Dependencies/MathUtils.sol";
 import {IChainlinkPriceOracle, ChainlinkResponse} from "./Interfaces/IChainlinkPriceOracle.sol";
 import {PriceOracleResponse} from "./Interfaces/IPriceOracle.sol";
@@ -17,7 +17,7 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
 
     uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
 
-    constructor(AggregatorV3Interface _priceAggregatorAddress, IWstEth _wstEth) BasePriceOracle(_wstEth) {
+    constructor(AggregatorV3Interface _priceAggregatorAddress, IWstETH _wstETH) BasePriceOracle(_wstETH) {
         if (address(_priceAggregatorAddress) == address(0)) {
             revert InvalidPriceAggregatorAddress();
         }
@@ -39,7 +39,7 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
             PriceOracleResponse(
                 false,
                 _chainlinkPriceChangeAboveMax(_chainlinkResponse, _prevChainlinkResponse),
-                _convertIntoWstEthPrice(uint256(_chainlinkResponse.answer), _chainlinkResponse.decimals)
+                _convertIntoWstETHPrice(uint256(_chainlinkResponse.answer), _chainlinkResponse.decimals)
             )
         );
     }
@@ -126,8 +126,8 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         ChainlinkResponse memory _prevResponse
     ) internal view returns (bool) {
         uint256 currentScaledPrice =
-            _convertIntoWstEthPrice(uint256(_currentResponse.answer), _currentResponse.decimals);
-        uint256 prevScaledPrice = _convertIntoWstEthPrice(uint256(_prevResponse.answer), _prevResponse.decimals);
+            _convertIntoWstETHPrice(uint256(_currentResponse.answer), _currentResponse.decimals);
+        uint256 prevScaledPrice = _convertIntoWstETHPrice(uint256(_prevResponse.answer), _prevResponse.decimals);
 
         uint256 minPrice = Math.min(currentScaledPrice, prevScaledPrice);
         uint256 maxPrice = Math.max(currentScaledPrice, prevScaledPrice);

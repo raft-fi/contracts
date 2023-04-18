@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {Fixed256x18} from "@tempus-labs/contracts/math/Fixed256x18.sol";
+import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "./Dependencies/MathUtils.sol";
 import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
 import {IPriceOracle, PriceOracleResponse} from "./Oracles/Interfaces/IPriceOracle.sol";

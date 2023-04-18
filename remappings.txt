@@ -1,5 +1,5 @@
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
-@tempus-labs/contracts/=lib/tempus-utils/contracts/
+@tempusfinance/tempus-utils/contracts/=lib/tempus-utils/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @smartcontractkit/chainlink=lib/chainlink/contracts/src/v0.8

@@ -131,18 +131,18 @@ interface IPositionManager is IFeeCollector {
     /// @param liquidator Liquidator that executed liquidation sequence.
     /// @param collateralToken Collateral token used for liquidation.
     /// @param debtToOffset Total debt offset for the liquidation sequence.
-    /// @param collToSendToProtocol Total collateral sent to protocol.
-    /// @param collToSendToLiquidator Total collateral sent to liquidator.
+    /// @param collateralToSendToProtocol Total collateral sent to protocol.
+    /// @param collateralToSendToLiquidator Total collateral sent to liquidator.
     /// @param debtToRedistribute Total debt to redistribute to currently open positions.
-    /// @param collToRedistribute Total collateral amount to redistribute to currently open positions.
+    /// @param collateralToRedistribute Total collateral amount to redistribute to currently open positions.
     event Liquidation(
         address indexed liquidator,
         IERC20 indexed collateralToken,
         uint256 debtToOffset,
-        uint256 collToSendToProtocol,
-        uint256 collToSendToLiquidator,
+        uint256 collateralToSendToProtocol,
+        uint256 collateralToSendToLiquidator,
         uint256 debtToRedistribute,
-        uint256 collToRedistribute
+        uint256 collateralToRedistribute
     );
 
     /// @dev Position is liquidated.
@@ -154,9 +154,7 @@ interface IPositionManager is IFeeCollector {
     event MinDebtChanged(uint256 newMinDebt);
 
     event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
-    event Redemption(
-        uint256 _attemptedAmount, uint256 _actualAmount, uint256 _collateralTokenSent, uint256 _collateralTokenFee
-    );
+    event Redemption(uint256 _attemptedAmount, uint256 _actualAmount, uint256 _collateralSent, uint256 _fee);
 
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
     event BaseRateUpdated(uint256 _baseRate);
@@ -164,10 +162,10 @@ interface IPositionManager is IFeeCollector {
 
     struct LiquidationTotals {
         uint256 debtToOffset;
-        uint256 collToSendToProtocol;
-        uint256 collToSendToLiquidator;
+        uint256 collateralToSendToProtocol;
+        uint256 collateralToSendToLiquidator;
         uint256 debtToRedistribute;
-        uint256 collToRedistribute;
+        uint256 collateralToRedistribute;
     }
 
     // --- Functions ---
@@ -276,8 +274,8 @@ interface IPositionManager is IFeeCollector {
     function managePosition(
         IERC20 _collateralToken,
         address _borrower,
-        uint256 _collChange,
-        bool _isCollIncrease,
+        uint256 _collateralChange,
+        bool _isCollateralIncrease,
         uint256 _rChange,
         bool _isDebtIncrease,
         address _upperHint,
@@ -287,8 +285,8 @@ interface IPositionManager is IFeeCollector {
 
     function managePosition(
         IERC20 _collateralToken,
-        uint256 _collChange,
-        bool _isCollIncrease,
+        uint256 _collateralChange,
+        bool _isCollateralIncrease,
         uint256 _rChange,
         bool _isDebtIncrease,
         address _upperHint,
