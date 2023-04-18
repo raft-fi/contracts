@@ -6,9 +6,11 @@ import {RToken} from "../../contracts/RToken.sol";
 import {IPositionManager} from "../../contracts/Interfaces/IPositionManager.sol";
 
 contract RTokenTester is RToken {
+    // solhint-disable no-empty-blocks
     constructor(IPositionManager _positionManager, address _feeRecipient)
         RToken(address(_positionManager), _feeRecipient)
     {}
+    // solhint-enable no-empty-blocks
 
     function unprotectedMint(address _account, uint256 _amount) external {
         // No check on caller here

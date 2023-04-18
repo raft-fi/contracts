@@ -312,11 +312,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         IERC20 _collateralToken,
         LiquidationTotals memory _oldLiquidationTotals,
         address _borrower,
-        uint256 _ICR,
+        uint256 icr,
         uint256 _price
     ) internal returns (LiquidationTotals memory newLiquidationTotals) {
         newLiquidationTotals =
-            increaseLiquidationTotals(_collateralToken, _oldLiquidationTotals, _borrower, _ICR, _price);
+            increaseLiquidationTotals(_collateralToken, _oldLiquidationTotals, _borrower, icr, _price);
 
         _removePositionFromSortedPositions(_collateralToken, _borrower);
         raftDebtToken.burn(_borrower, type(uint256).max);
@@ -363,11 +363,11 @@ contract PositionManager is FeeCollector, IPositionManager {
             address user = _positionArray[i];
             IERC20 collateralTokenPerBorrower = collateralTokenPerBorrowers[user];
             if (_collateralToken == collateralTokenPerBorrower) {
-                uint256 ICR = getCurrentICR(_collateralToken, user, _price);
+                uint256 icr = getCurrentICR(_collateralToken, user, _price);
 
-                if (ICR < MathUtils.MCR) {
+                if (icr < MathUtils.MCR) {
                     // Add liquidation values to their respective running totals
-                    totals = increaseLiquidationTotals(_collateralToken, totals, user, ICR, _price);
+                    totals = increaseLiquidationTotals(_collateralToken, totals, user, icr, _price);
                 }
             }
         }
@@ -419,11 +419,11 @@ contract PositionManager is FeeCollector, IPositionManager {
             address user = _positionArray[i];
             IERC20 collateralTokenPerBorrower = collateralTokenPerBorrowers[user];
             if (_collateralToken == collateralTokenPerBorrower) {
-                uint256 ICR = getCurrentICR(_collateralToken, user, price);
+                uint256 icr = getCurrentICR(_collateralToken, user, price);
 
-                if (ICR < MathUtils.MCR) {
+                if (icr < MathUtils.MCR) {
                     // Add liquidation values to their respective running totals
-                    totals = _liquidate(_collateralToken, totals, user, ICR, price);
+                    totals = _liquidate(_collateralToken, totals, user, icr, price);
                 }
             }
         }

@@ -11,9 +11,11 @@ import {MathUtils} from "../../contracts/Dependencies/MathUtils.sol";
 for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
+    // solhint-disable no-empty-blocks
     constructor(uint256 _liquidationProtocolFee, address[] memory delegates)
         PositionManager(_liquidationProtocolFee, delegates)
     {}
+    // solhint-enable no-empty-blocks
 
     function getCollLiquidationProtocolFee(uint256 _entireColl, uint256 _entireDebt, uint256 _price, uint256)
         external

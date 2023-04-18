@@ -178,10 +178,12 @@ library PositionManagerUtils {
         address upperHint,
         address lowerHint
     ) internal returns (WithdrawDebtResult memory result) {
+        // solhint-disable reason-string
         require(
             !(debtAmount > 0 && icr > 0) && (debtAmount > 0 || icr > 0),
             "Specify either R amount or target ICR, but not both"
         );
+        // solhint-enable reason-string
 
         result.debtAmount = debtAmount;
 
@@ -192,6 +194,7 @@ library PositionManagerUtils {
             uint256 collateral = raftCollateralToken.balanceOf(borrower);
             uint256 price = priceFeed.getPrice();
             uint256 targetDebt = collateral * price / icr;
+            // solhint-disable-next-line reason-string
             require(targetDebt > debt, "Target debt is not greater than current debt");
             result.increasedTotalDebt = targetDebt - debt;
             result.debtAmount = getNetBorrowingAmount(positionManager, result.increasedTotalDebt);

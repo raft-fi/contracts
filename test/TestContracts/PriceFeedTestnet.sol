@@ -38,9 +38,12 @@ contract PriceFeedTestnet is IPriceFeed {
         return true;
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function setPrimaryOracle(IPriceOracle _primaryOracle) external {}
 
+    // solhint-disable-next-line no-empty-blocks
     function setSecondaryOracle(IPriceOracle _secondaryOracle) external {}
 
+    // solhint-disable-next-line no-empty-blocks
     function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external {}
 }
