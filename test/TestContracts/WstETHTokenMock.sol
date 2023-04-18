@@ -19,8 +19,10 @@ contract WstETHTokenMock is ERC20("Wrapped liquid staked Ether 2.0", "wstETH"), 
         return IERC20(address(0));
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function wrap(uint256 _stETHAmount) external returns (uint256) {}
 
+    // solhint-disable-next-line no-empty-blocks
     function unwrap(uint256 _wstETHAmount) external returns (uint256) {}
 
     function getWstETHByStETH(uint256 _stETHAmount) external pure returns (uint256) {

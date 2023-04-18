@@ -57,7 +57,7 @@ Positions,
 runtime.
 *   The list relies on the property that ordering by ICR is maintained as the collateralToken:USD price varies.*/
 library SortedPositions {
-    event NodeAdded(address _id, uint256 _NICR);
+    event NodeAdded(address _id, uint256 nicr);
     event NodeRemoved(address _id);
 
     // Information for a node in the list
@@ -79,7 +79,7 @@ library SortedPositions {
     /*
      * @dev Add a node to the list
      * @param _id Node's id
-     * @param _NICR Node's NICR
+     * @param nicr Node's NICR
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
@@ -89,7 +89,7 @@ library SortedPositions {
         IPositionManager _positionManager,
         IERC20 _collateralToken,
         address _id,
-        uint256 _NICR,
+        uint256 nicr,
         address _prevId,
         address _nextId
     ) private {
@@ -102,17 +102,17 @@ library SortedPositions {
         if (_id == address(0)) {
             revert PositionIDZero();
         }
-        if (_NICR == 0) {
+        if (nicr == 0) {
             revert PositionsNICRZero();
         }
 
         address prevId = _prevId;
         address nextId = _nextId;
 
-        if (!validInsertPosition(data, _positionManager, _collateralToken, _NICR, prevId, nextId)) {
+        if (!validInsertPosition(data, _positionManager, _collateralToken, nicr, prevId, nextId)) {
             // Sender's hint was not a valid insert position
             // Use sender's hint to find a valid insert position
-            (prevId, nextId) = findInsertPosition(data, _positionManager, _collateralToken, _NICR, prevId, nextId);
+            (prevId, nextId) = findInsertPosition(data, _positionManager, _collateralToken, nicr, prevId, nextId);
         }
 
         data.nodes[_id].exists = true;
@@ -140,7 +140,7 @@ library SortedPositions {
         }
 
         ++data.size;
-        emit NodeAdded(_id, _NICR);
+        emit NodeAdded(_id, nicr);
     }
 
     /*
@@ -214,7 +214,7 @@ library SortedPositions {
 
     /*
      * @dev Check if a pair of nodes is a valid insertion point for a new node with the given NICR
-     * @param _NICR Node's NICR
+     * @param nicr Node's NICR
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
@@ -222,7 +222,7 @@ library SortedPositions {
         Data storage data,
         IPositionManager _positionManager,
         IERC20 _collateralToken,
-        uint256 _NICR,
+        uint256 nicr,
         address _prevId,
         address _nextId
     ) private view returns (bool) {
@@ -231,34 +231,34 @@ library SortedPositions {
             return data.size == 0;
         } else if (_prevId == address(0)) {
             // `(null, _nextId)` is a valid insert position if `_nextId` is the first of the list
-            return data.first == _nextId && _NICR >= _positionManager.getNominalICR(_collateralToken, _nextId);
+            return data.first == _nextId && nicr >= _positionManager.getNominalICR(_collateralToken, _nextId);
         } else if (_nextId == address(0)) {
             // `(_prevId, null)` is a valid insert position if `_prevId` is the last of the list
-            return data.last == _prevId && _NICR <= _positionManager.getNominalICR(_collateralToken, _prevId);
+            return data.last == _prevId && nicr <= _positionManager.getNominalICR(_collateralToken, _prevId);
         } else {
-            // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the
+            // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `nicr` falls between the
             // two nodes' NICRs
             return data.nodes[_prevId].nextId == _nextId
-                && _positionManager.getNominalICR(_collateralToken, _prevId) >= _NICR
-                && _NICR >= _positionManager.getNominalICR(_collateralToken, _nextId);
+                && _positionManager.getNominalICR(_collateralToken, _prevId) >= nicr
+                && nicr >= _positionManager.getNominalICR(_collateralToken, _nextId);
         }
     }
 
     /*
      * @dev Descend the list (larger NICRs to smaller NICRs) to find a valid insert position
      * @param _positionManager PositionManager contract, passed in as param to save SLOAD’s
-     * @param _NICR Node's NICR
+     * @param nicr Node's NICR
      * @param _startId Id of node to start descending the list from
      */
     function _descendList(
         Data storage data,
         IPositionManager _positionManager,
         IERC20 _collateralToken,
-        uint256 _NICR,
+        uint256 nicr,
         address _startId
     ) private view returns (address, address) {
         // If `_startId` is the first, check if the insert position is before the first
-        if (data.first == _startId && _NICR >= _positionManager.getNominalICR(_collateralToken, _startId)) {
+        if (data.first == _startId && nicr >= _positionManager.getNominalICR(_collateralToken, _startId)) {
             return (address(0), _startId);
         }
 
@@ -267,8 +267,7 @@ library SortedPositions {
 
         // Descend the list until we reach the end or until we find a valid insert position
         while (
-            prevId != address(0)
-                && !validInsertPosition(data, _positionManager, _collateralToken, _NICR, prevId, nextId)
+            prevId != address(0) && !validInsertPosition(data, _positionManager, _collateralToken, nicr, prevId, nextId)
         ) {
             prevId = data.nodes[prevId].nextId;
             nextId = data.nodes[prevId].nextId;
@@ -280,18 +279,18 @@ library SortedPositions {
     /*
      * @dev Ascend the list (smaller NICRs to larger NICRs) to find a valid insert position
      * @param _positionManager PositionManager contract, passed in as param to save SLOAD’s
-     * @param _NICR Node's NICR
+     * @param nicr Node's NICR
      * @param _startId Id of node to start ascending the list from
      */
     function _ascendList(
         Data storage data,
         IPositionManager _positionManager,
         IERC20 _collateralToken,
-        uint256 _NICR,
+        uint256 nicr,
         address _startId
     ) private view returns (address, address) {
         // If `_startId` is the last, check if the insert position is after the last
-        if (data.last == _startId && _NICR <= _positionManager.getNominalICR(_collateralToken, _startId)) {
+        if (data.last == _startId && nicr <= _positionManager.getNominalICR(_collateralToken, _startId)) {
             return (_startId, address(0));
         }
 
@@ -300,8 +299,7 @@ library SortedPositions {
 
         // Ascend the list until we reach the end or until we find a valid insertion point
         while (
-            nextId != address(0)
-                && !validInsertPosition(data, _positionManager, _collateralToken, _NICR, prevId, nextId)
+            nextId != address(0) && !validInsertPosition(data, _positionManager, _collateralToken, nicr, prevId, nextId)
         ) {
             nextId = data.nodes[nextId].prevId;
             prevId = data.nodes[nextId].prevId;
@@ -312,7 +310,7 @@ library SortedPositions {
 
     /*
      * @dev Find the insert position for a new node with the given NICR
-     * @param _NICR Node's NICR
+     * @param nicr Node's NICR
      * @param _prevId Id of previous node for the insert position
      * @param _nextId Id of next node for the insert position
      */
@@ -320,7 +318,7 @@ library SortedPositions {
         Data storage data,
         IPositionManager _positionManager,
         IERC20 _collateralToken,
-        uint256 _NICR,
+        uint256 nicr,
         address _prevId,
         address _nextId
     ) private view returns (address, address) {
@@ -328,14 +326,14 @@ library SortedPositions {
         address nextId = _nextId;
 
         if (prevId != address(0)) {
-            if (!data.nodes[prevId].exists || _NICR > _positionManager.getNominalICR(_collateralToken, prevId)) {
+            if (!data.nodes[prevId].exists || nicr > _positionManager.getNominalICR(_collateralToken, prevId)) {
                 // `prevId` does not exist anymore or now has a smaller NICR than the given NICR
                 prevId = address(0);
             }
         }
 
         if (nextId != address(0)) {
-            if (!data.nodes[nextId].exists || _NICR < _positionManager.getNominalICR(_collateralToken, nextId)) {
+            if (!data.nodes[nextId].exists || nicr < _positionManager.getNominalICR(_collateralToken, nextId)) {
                 // `nextId` does not exist anymore or now has a larger NICR than the given NICR
                 nextId = address(0);
             }
@@ -343,16 +341,16 @@ library SortedPositions {
 
         if (prevId == address(0) && nextId == address(0)) {
             // No hint - descend list starting from first
-            return _descendList(data, _positionManager, _collateralToken, _NICR, data.first);
+            return _descendList(data, _positionManager, _collateralToken, nicr, data.first);
         } else if (prevId == address(0)) {
             // No `prevId` for hint - ascend list starting from `nextId`
-            return _ascendList(data, _positionManager, _collateralToken, _NICR, nextId);
+            return _ascendList(data, _positionManager, _collateralToken, nicr, nextId);
         } else if (nextId == address(0)) {
             // No `nextId` for hint - descend list starting from `prevId`
-            return _descendList(data, _positionManager, _collateralToken, _NICR, prevId);
+            return _descendList(data, _positionManager, _collateralToken, nicr, prevId);
         } else {
             // Descend list starting from `prevId`
-            return _descendList(data, _positionManager, _collateralToken, _NICR, prevId);
+            return _descendList(data, _positionManager, _collateralToken, nicr, prevId);
         }
     }
 }

@@ -494,7 +494,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         // Bob attempts to open a 109% ICR position
         vm.startPrank(BOB);
         uint256 bobICR = 109 * MathUtils._100_PERCENT / 100;
-        (uint256 debtAmount, uint256 totalDebt, uint256 amount) =
+        (uint256 debtAmount,, uint256 amount) =
             PositionManagerUtils.getOpenPositionSetupValues(positionManager, priceFeed, 0, bobICR, 0);
         collateralToken.approve(address(positionManager), amount);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, bobICR));
