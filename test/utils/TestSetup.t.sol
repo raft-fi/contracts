@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Test} from "forge-std/Test.sol";
 import {IPositionManager} from "../../contracts/Interfaces/IPositionManager.sol";
 import {IPriceFeed} from "../../contracts/Interfaces/IPriceFeed.sol";
+import {ISplitLiquidationCollateral} from "../../contracts/Interfaces/ISplitLiquidationCollateral.sol";
 import {WstETHTokenMock} from "../TestContracts/WstETHTokenMock.sol";
 
 contract TestSetup is Test {
@@ -28,6 +29,8 @@ contract TestSetup is Test {
     // Mocked contract addresses
     IPriceFeed public constant PRICE_FEED = IPriceFeed(address(12345));
     IPositionManager public constant POSITION_MANAGER = IPositionManager(address(34567));
+    ISplitLiquidationCollateral public constant SPLIT_LIQUIDATION_COLLATERAL =
+        ISplitLiquidationCollateral(address(56789));
 
     // Collateral token mock
     WstETHTokenMock public collateralToken;

@@ -6,6 +6,7 @@ import {PositionManager} from "../contracts/PositionManager.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
 import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
+import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerTest is TestSetup {
@@ -22,7 +23,8 @@ contract PositionManagerTest is TestSetup {
         priceFeed.setPrice(1e18);
         positionManager = new PositionManager(
             LIQUIDATION_PROTOCOL_FEE,
-            new address[](0)
+            new address[](0),
+            SPLIT_LIQUIDATION_COLLATERAL
         );
         positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 
@@ -38,7 +40,8 @@ contract PositionManagerTest is TestSetup {
         collateralToken.mint(ALICE, 10 ether);
         PositionManager positionManager2 = new PositionManager(
             LIQUIDATION_PROTOCOL_FEE,
-            globalDelegates
+            globalDelegates,
+            SPLIT_LIQUIDATION_COLLATERAL
         );
         positionManager2.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 
@@ -153,6 +156,24 @@ contract PositionManagerTest is TestSetup {
         uint256 maxBorrowingSpread = positionManager.MAX_BORROWING_SPREAD();
         vm.expectRevert(IPositionManager.BorrowingSpreadExceedsMaximum.selector);
         positionManager.setBorrowingSpread(maxBorrowingSpread + 1);
+    }
+
+    // --- Split liquidation collateral ---
+    function testSetSplitLiquidationCollateral() public {
+        SplitLiquidationCollateral newSplitLiquidationCollateral = new SplitLiquidationCollateral();
+
+        positionManager.setSplitLiquidationCollateral(newSplitLiquidationCollateral);
+        assertEq(address(positionManager.splitLiquidationCollateral()), address(newSplitLiquidationCollateral));
+    }
+
+    function testCannotSetSplitLiquidationCollateral() public {
+        vm.expectRevert(IPositionManager.SplitLiquidationCollateralCannotBeZero.selector);
+        positionManager.setSplitLiquidationCollateral(SplitLiquidationCollateral(address(0)));
+
+        SplitLiquidationCollateral newSplitLiquidationCollateral = new SplitLiquidationCollateral();
+        vm.prank(ALICE);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        positionManager.setSplitLiquidationCollateral(newSplitLiquidationCollateral);
     }
 
     // --- Getters ---

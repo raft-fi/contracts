@@ -5,6 +5,7 @@ import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {IRToken} from "../contracts/Interfaces/IRToken.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
+import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
 import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
@@ -14,6 +15,7 @@ contract PositionManagerLiquidationTest is TestSetup {
     uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
 
     PriceFeedTestnet public priceFeed;
+    SplitLiquidationCollateral public splitLiquidationCollateral;
     IPositionManager public positionManager;
     IRToken public rToken;
 
@@ -21,9 +23,11 @@ contract PositionManagerLiquidationTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
+        splitLiquidationCollateral = new SplitLiquidationCollateral();
         positionManager = new PositionManager(
             LIQUIDATION_PROTOCOL_FEE,
-            new address[](0)
+            new address[](0),
+            splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 

@@ -19,7 +19,8 @@ contract PositionManagerInternalTest is TestSetup {
 
         positionManager = new PositionManagerTester(
             LIQUIDATION_PROTOCOL_FEE,
-            new address[](0)
+            new address[](0),
+            SPLIT_LIQUIDATION_COLLATERAL
         );
         positionManager.addCollateralToken(collateralToken, PRICE_FEED, POSITIONS_SIZE);
 

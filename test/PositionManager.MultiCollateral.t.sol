@@ -28,7 +28,8 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
         positionManager = new PositionManager(
             LIQUIDATION_PROTOCOL_FEE,
-            new address[](0)
+            new address[](0),
+            SPLIT_LIQUIDATION_COLLATERAL
         );
 
         priceFeed = new PriceFeedTestnet();

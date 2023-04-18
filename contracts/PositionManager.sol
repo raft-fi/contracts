@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -11,10 +10,11 @@ import {MathUtils} from "./Dependencies/MathUtils.sol";
 import {IERC20Indexable} from "./Interfaces/IERC20Indexable.sol";
 import {IPositionManager} from "./Interfaces/IPositionManager.sol";
 import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
-import {FeeCollector} from "./FeeCollector.sol";
-import {SortedPositions} from "./SortedPositions.sol";
-import {RToken, IRToken} from "./RToken.sol";
+import {ISplitLiquidationCollateral} from "./Interfaces/ISplitLiquidationCollateral.sol";
 import {ERC20Indexable} from "./ERC20Indexable.sol";
+import {FeeCollector} from "./FeeCollector.sol";
+import {RToken, IRToken} from "./RToken.sol";
+import {SortedPositions} from "./SortedPositions.sol";
 
 contract PositionManager is FeeCollector, IPositionManager {
     using SafeERC20 for IERC20;
@@ -39,6 +39,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     uint256 public override liquidationProtocolFee;
     uint256 public override minDebt;
+
+    ISplitLiquidationCollateral public override splitLiquidationCollateral;
 
     mapping(IERC20 collateralToken => SortedPositions.Data data) public override sortedPositions;
 
@@ -100,7 +102,11 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Constructor ---
 
-    constructor(uint256 _liquidationProtocolFee, address[] memory delegates) FeeCollector(msg.sender) {
+    constructor(
+        uint256 _liquidationProtocolFee,
+        address[] memory delegates,
+        ISplitLiquidationCollateral newSplitLiquidationCollateral
+    ) FeeCollector(msg.sender) {
         rToken = new RToken(address(this), msg.sender);
         raftDebtToken = new ERC20Indexable(
             address(this),
@@ -109,6 +115,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
         setLiquidationProtocolFee(_liquidationProtocolFee);
         setMinDebt(3000e18);
+        setSplitLiquidationCollateral(newSplitLiquidationCollateral);
         for (uint256 i = 0; i < delegates.length; ++i) {
             if (delegates[i] == address(0)) {
                 revert InvalidDelegateAddress();
@@ -142,6 +149,18 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
         minDebt = newMinDebt;
         emit MinDebtChanged(newMinDebt);
+    }
+
+    function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral)
+        public
+        override
+        onlyOwner
+    {
+        if (address(newSplitLiquidationCollateral) == address(0)) {
+            revert SplitLiquidationCollateralCannotBeZero();
+        }
+        splitLiquidationCollateral = newSplitLiquidationCollateral;
+        emit SplitLiquidationCollateralChanged(newSplitLiquidationCollateral);
     }
 
     function managePosition(
@@ -312,8 +331,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].balanceOf(borrower);
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
 
-        (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
-            splitLiquidationCollateral(entirePositionCollateral, entirePositionDebt, price, isRedistribution);
+        (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) = splitLiquidationCollateral.split(
+            entirePositionCollateral, entirePositionDebt, price, isRedistribution, liquidationProtocolFee
+        );
 
         if (!isRedistribution) {
             rToken.burn(msg.sender, entirePositionDebt);
@@ -720,24 +740,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 decayFactor = MathUtils.decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
         return baseRate.mulDown(decayFactor);
-    }
-
-    /// ---- Liquidation fee functions ---
-
-    function splitLiquidationCollateral(uint256 collateral, uint256 debt, uint256 price, bool isRedistribution)
-        internal
-        view
-        returns (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator)
-    {
-        if (isRedistribution) {
-            collateralToSendToProtocol = 0;
-            collateralToSentToLiquidator = collateral / 200;
-        } else {
-            uint256 debtValue = debt.divDown(price);
-            uint256 excessCollateral = collateral - debtValue;
-            collateralToSendToProtocol = excessCollateral.mulDown(liquidationProtocolFee);
-            collateralToSentToLiquidator = collateral - collateralToSendToProtocol;
-        }
     }
 
     // --- Helper functions ---

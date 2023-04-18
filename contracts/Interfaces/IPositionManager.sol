@@ -2,10 +2,11 @@
 pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IRToken} from "./IRToken.sol";
 import {IERC20Indexable} from "./IERC20Indexable.sol";
 import {IFeeCollector} from "./IFeeCollector.sol";
 import {IPriceFeed} from "./IPriceFeed.sol";
+import {IRToken} from "./IRToken.sol";
+import {ISplitLiquidationCollateral} from "./ISplitLiquidationCollateral.sol";
 
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
@@ -85,6 +86,9 @@ interface IPositionManager is IFeeCollector {
     /// @dev Collateral token already added.
     error CollateralTokenAlreadyAdded();
 
+    /// @dev Split liquidation collateral cannot be zero.
+    error SplitLiquidationCollateralCannotBeZero();
+
     // --- Events ---
 
     /// @dev New PositionManager contract is deployed.
@@ -158,6 +162,10 @@ interface IPositionManager is IFeeCollector {
     event BaseRateUpdated(uint256 _baseRate);
     event LastFeeOpTimeUpdated(uint256 _lastFeeOpTime);
 
+    /// @dev Split liquidation collateral is changed.
+    /// @param newSplitLiquidationCollateral New value that was set to be split liquidation collateral.
+    event SplitLiquidationCollateralChanged(ISplitLiquidationCollateral indexed newSplitLiquidationCollateral);
+
     // --- Functions ---
 
     /// @dev Returns address of the rToken used by position manager.
@@ -190,6 +198,13 @@ interface IPositionManager is IFeeCollector {
     /// @dev Sets the new min debt. Reverts if it is zero.
     /// @param newMinDebt New minimum debt to be used.
     function setMinDebt(uint256 newMinDebt) external;
+
+    /// @dev Returns address of the split liquidation collateral contract.
+    function splitLiquidationCollateral() external view returns (ISplitLiquidationCollateral);
+
+    /// @dev Sets the new split liquidation collateral contract.
+    /// @param newSplitLiquidationCollateral New split liquidation collateral contract address.
+    function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral) external;
 
     function liquidationProtocolFee() external view returns (uint256);
     function MAX_BORROWING_SPREAD() external view returns (uint256);
