@@ -96,7 +96,7 @@ interface IPositionManager is IFeeCollector {
     /// @dev New collateral token is added to the system.
     /// @param collateralToken Address of the token used as collateral.
     /// @param raftCollateralToken Address of Raft indexable collateral token.
-    /// @param priceFeed Addres of the contract that provides price for collateral token.
+    /// @param priceFeed Address of the contract that provides price for collateral token.
     /// @param positionSize Position size for the doubly linked list.
     event CollateralTokenAdded(
         IERC20 collateralToken, IERC20Indexable raftCollateralToken, IPriceFeed priceFeed, uint256 positionSize
@@ -133,8 +133,8 @@ interface IPositionManager is IFeeCollector {
     /// @param debtToOffset Total debt offset for the liquidation sequence.
     /// @param collToSendToProtocol Total collateral sent to protocol.
     /// @param collToSendToLiquidator Total collateral sent to liquidator.
-    /// @param debtToRedistribute Total debt to redestribute to currently open positions.
-    /// @param collToRedistribute Total collateral amount to redestribute to currently open positions.
+    /// @param debtToRedistribute Total debt to redistribute to currently open positions.
+    /// @param collToRedistribute Total collateral amount to redistribute to currently open positions.
     event Liquidation(
         address indexed liquidator,
         IERC20 indexed collateralToken,

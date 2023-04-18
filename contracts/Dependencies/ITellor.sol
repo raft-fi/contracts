@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 interface ITellor {
     /**
-     * @dev Counts the number of values that have been submited for the request
+     * @dev Counts the number of values that have been submitted for the request
      * if called for the currentRequest being mined it can tell you how many miners have submitted a value for that
      * request so far
      * @param _requestId the requestId to look up
@@ -20,9 +20,9 @@ interface ITellor {
     function getTimestampbyRequestIDandIndex(uint256 _requestID, uint256 _index) external view returns (uint256);
 
     /**
-     * @dev Retreive value from oracle based on timestamp
+     * @dev Retrieve value from oracle based on timestamp
      * @param _requestId being requested
-     * @param _timestamp to retreive data/value from
+     * @param _timestamp to retrieve data/value from
      * @return value for timestamp submitted
      */
     function retrieveData(uint256 _requestId, uint256 _timestamp) external view returns (uint256);

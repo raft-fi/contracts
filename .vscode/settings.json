@@ -6,5 +6,24 @@
     "editor.defaultFormatter": "tamasfe.even-better-toml"
   },
   "npm.exclude": "**/lib/**",
-  "solidity.formatter": "forge"
+  "solidity.formatter": "forge",
+  "cSpell.words": [
+    "chainlink",
+    "collateralization",
+    "concat",
+    "EPOCHSECONDS",
+    "ETHUSD",
+    "IERC",
+    "mixedcase",
+    "NICR",
+    "smartcontractkit",
+    "solhint",
+    "STETH",
+    "struct",
+    "Tellor",
+    "TOKENMOCK",
+    "undercollateralized",
+    "WSTETH",
+    "yarnrc"
+  ]
 }

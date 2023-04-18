@@ -312,7 +312,7 @@ contract PriceFeedTest is TestSetup {
     }
 
     // Primary oracle latest round call reverted, secondary oracle working, return the secondary oracle price
-    function testFetchPricePrimaryOracleLatestRoungCallRevert() public {
+    function testFetchPricePrimaryOracleLatestWrongCallRevert() public {
         mockChainlink.setPrevPrice(999 * 10 ** 8);
         mockChainlink.setPrice(999 * 10 ** 8);
         priceFeed.setLastGoodPrice(999 * 10 ** 18);

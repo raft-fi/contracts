@@ -6,7 +6,6 @@ import {IRToken} from "../contracts/Interfaces/IRToken.sol";
 import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManagerTester} from "./TestContracts/PositionManagerTester.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
-import {WstETHTokenMock} from "./TestContracts/WstETHTokenMock.sol";
 import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 

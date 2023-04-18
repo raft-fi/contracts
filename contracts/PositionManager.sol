@@ -431,11 +431,11 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Redemption functions ---
 
-    // Redeem as much collateral as possible from _borrower's Position in exchange for R up to _maxRamount
+    // Redeem as much collateral as possible from _borrower's Position in exchange for R up to _maxRAmount
     function _redeemCollateralFromPosition(
         IERC20 _collateralToken,
         address _borrower,
-        uint256 _maxRamount,
+        uint256 _maxRAmount,
         uint256 _price,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
@@ -443,7 +443,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     ) internal returns (uint256 rLot) {
         uint256 positionDebt = raftDebtToken.balanceOf(_borrower);
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Position
-        rLot = Math.min(_maxRamount, positionDebt);
+        rLot = Math.min(_maxRAmount, positionDebt);
         uint256 collateralToRedeem = rLot.divDown(_price);
 
         // Decrease the debt and collateral of the current Position according to the R lot and corresponding

@@ -413,7 +413,7 @@ pragma solidity 0.8.19;
 //             positionsBalance += rToken.balanceOf(address(currentPosition));
 //             currentPosition = sortedPositions.getNext(currentPosition);
 //         }
-//         // we cannot state equality because tranfers are made to external addresses too
+//         // we cannot state equality because transfers are made to external addresses too
 //         if (totalSupply <= stabilityPoolBalance + positionsBalance + borrowerOperationsBalance) {
 //             return false;
 //         }
