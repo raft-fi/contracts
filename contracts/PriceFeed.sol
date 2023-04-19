@@ -7,7 +7,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "./Dependencies/MathUtils.sol";
 import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
-import {IPriceOracle, PriceOracleResponse} from "./Oracles/Interfaces/IPriceOracle.sol";
+import {IPriceOracle} from "./Oracles/Interfaces/IPriceOracle.sol";
 
 contract PriceFeed is IPriceFeed, Ownable2Step {
     using Fixed256x18 for uint256;
@@ -43,11 +43,11 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     }
 
     function fetchPrice() external override returns (uint256 price) {
-        PriceOracleResponse memory primaryOracleResponse = primaryOracle.getPriceOracleResponse();
+        IPriceOracle.PriceOracleResponse memory primaryOracleResponse = primaryOracle.getPriceOracleResponse();
         // If primary oracle is broken or frozen, try secondary oracle
         if (primaryOracleResponse.isBrokenOrFrozen) {
             // If secondary oracle is broken then both oracles are untrusted, so return the last good price
-            PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
+            IPriceOracle.PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
             if (secondaryOracleResponse.isBrokenOrFrozen || secondaryOracleResponse.priceChangeAboveMax) {
                 return lastGoodPrice;
             }
@@ -58,7 +58,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         // If primary oracle price has changed by > 50% between two consecutive rounds, compare it to secondary oracle's
         // price
         if (primaryOracleResponse.priceChangeAboveMax) {
-            PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
+            IPriceOracle.PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
             // If primary oracle is broken or frozen, both oracles are untrusted, and return last good price
             if (secondaryOracleResponse.isBrokenOrFrozen) {
                 return lastGoodPrice;
@@ -125,7 +125,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             revert InvalidPrimaryOracle();
         }
 
-        PriceOracleResponse memory primaryOracleResponse = _primaryOracle.getPriceOracleResponse();
+        IPriceOracle.PriceOracleResponse memory primaryOracleResponse = _primaryOracle.getPriceOracleResponse();
 
         if (primaryOracleResponse.isBrokenOrFrozen || primaryOracleResponse.priceChangeAboveMax) {
             revert PrimaryOracleBrokenOrFrozenOrBadResult();

@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 
 contract MathUtilsTest is Test {
-    // --- decPow() ---
+    // --- _decPow() ---
 
     // For exponent = 0, returns 1, regardless of base
     function testDecPowExponentZero() public {
@@ -13,7 +13,7 @@ contract MathUtilsTest is Test {
             [0, 1, 1e18, 123244254546, 990000000000000000, 897890990909098978678609090, 8789789e27];
 
         for (uint256 i = 0; i < bases.length; i++) {
-            uint256 result = MathUtils.decPow(bases[i], 0);
+            uint256 result = MathUtils._decPow(bases[i], 0);
             assertEq(result, 1e18);
         }
     }
@@ -33,7 +33,7 @@ contract MathUtilsTest is Test {
         ];
 
         for (uint256 i = 0; i < bases.length; i++) {
-            uint256 result = MathUtils.decPow(bases[i], 1);
+            uint256 result = MathUtils._decPow(bases[i], 1);
             assertEq(result, bases[i]);
         }
     }
@@ -43,7 +43,7 @@ contract MathUtilsTest is Test {
         uint64[10] memory exponents = [1, 3, 17, 44, 118, 1000, 1e6, 1e9, 1e12, 1e18];
 
         for (uint256 i = 0; i < exponents.length; i++) {
-            uint256 result = MathUtils.decPow(0, exponents[i]);
+            uint256 result = MathUtils._decPow(0, exponents[i]);
             assertEq(result, 0);
         }
     }
@@ -53,7 +53,7 @@ contract MathUtilsTest is Test {
         uint64[11] memory exponents = [0, 1, 3, 17, 44, 118, 1000, 1e6, 1e9, 1e12, 1e18];
 
         for (uint256 i = 0; i < exponents.length; i++) {
-            uint256 result = MathUtils.decPow(1e18, exponents[i]);
+            uint256 result = MathUtils._decPow(1e18, exponents[i]);
             assertEq(result, 1e18);
         }
     }
@@ -66,7 +66,7 @@ contract MathUtilsTest is Test {
             [1e18, 2.25e18, 0.25e18, 0.103041e18, 16e18, 0.01e18, 0.0001e18, 0.9801e18, 15733.939225e18, 9999800001e18];
 
         for (uint256 i = 0; i < bases.length; i++) {
-            uint256 result = MathUtils.decPow(bases[i], 2);
+            uint256 result = MathUtils._decPow(bases[i], 2);
             assertEq(result, expected[i]);
         }
     }
@@ -236,7 +236,7 @@ contract MathUtilsTest is Test {
         ];
 
         for (uint256 i = 0; i < bases.length; i++) {
-            uint256 result = MathUtils.decPow(bases[i], exponents[i]);
+            uint256 result = MathUtils._decPow(bases[i], exponents[i]);
             assertEq(result, expected[i]);
         }
     }
@@ -245,7 +245,7 @@ contract MathUtilsTest is Test {
     function testDecPowNotDecayingToZeroSecondsInOneMonth(uint256 base) public {
         base = bound(base, 0.999995e18, 0.999999999999999999e18);
         uint256 exponent = 30 * 24 * 60 * 60;
-        uint256 result = MathUtils.decPow(base, exponent);
+        uint256 result = MathUtils._decPow(base, exponent);
         assertGt(result, 0);
     }
 
@@ -253,7 +253,7 @@ contract MathUtilsTest is Test {
     function testDecPowNotDecayingToZeroSecondsInThreeMonths(uint256 base) public {
         base = bound(base, 0.999999e18, 0.999999999999e18);
         uint256 exponent = 3 * 30 * 24 * 60 * 60;
-        uint256 result = MathUtils.decPow(base, exponent);
+        uint256 result = MathUtils._decPow(base, exponent);
         assertGt(result, 0);
     }
 
@@ -261,7 +261,7 @@ contract MathUtilsTest is Test {
     function testDecPowNotDecayingToZeroMinutesInOneMonth(uint256 base) public {
         base = bound(base, 0.9997e18, 0.999999999999999999e18);
         uint256 exponent = 30 * 24 * 60;
-        uint256 result = MathUtils.decPow(base, exponent);
+        uint256 result = MathUtils._decPow(base, exponent);
         assertGt(result, 0);
     }
 
@@ -270,7 +270,7 @@ contract MathUtilsTest is Test {
         uint256 minutesInYear = 365 * 24 * 60;
         base = bound(base, 0.99999e18, 0.999999999999999999e18);
         exponent = bound(exponent, minutesInYear, 5 * minutesInYear);
-        uint256 result = MathUtils.decPow(base, exponent);
+        uint256 result = MathUtils._decPow(base, exponent);
         assertGt(result, 0);
     }
 
@@ -278,7 +278,7 @@ contract MathUtilsTest is Test {
     function testDecPowNotDecayingToZeroMinutesInTenYears(uint256 base) public {
         base = bound(base, 0.999999e18, 0.999999999999999999e18);
         uint256 exponent = 10 * 365 * 24 * 60;
-        uint256 result = MathUtils.decPow(base, exponent);
+        uint256 result = MathUtils._decPow(base, exponent);
         assertGt(result, 0);
     }
 
@@ -286,63 +286,63 @@ contract MathUtilsTest is Test {
     function testDecPowNotDecayingToZeroMinutesInHundredYears(uint256 base) public {
         base = bound(base, 0.9999999e18, 0.999999999999999999e18);
         uint256 exponent = 100 * 365 * 24 * 60;
-        uint256 result = MathUtils.decPow(base, exponent);
+        uint256 result = MathUtils._decPow(base, exponent);
         assertGt(result, 0);
     }
 
-    // --- computeCR() ---
+    // --- _computeCR() ---
 
     // Returns 0 if position's collateral is worth 0
-    function testComputeCRReturnsZeroForZeroCollateral() public {
+    function test_computeCRReturnsZeroForZeroCollateral() public {
         uint256 price = 0;
         uint256 collateral = 1 ether;
         uint256 debt = 100e18;
 
-        assertEq(MathUtils.computeCR(collateral, debt, price), 0);
+        assertEq(MathUtils._computeCR(collateral, debt, price), 0);
     }
 
     // Returns 1 for ETH:USD = 100, collateral = 1 ETH, debt = 100 R
-    function testComputeCRReturnsMaxForMaxCollateral() public {
+    function test_computeCRReturnsMaxForMaxCollateral() public {
         uint256 price = 100e18;
         uint256 collateral = 1 ether;
         uint256 debt = 100e18;
 
-        assertEq(MathUtils.computeCR(collateral, debt, price), 1e18);
+        assertEq(MathUtils._computeCR(collateral, debt, price), 1e18);
     }
 
     // Returns correct CR for ETH:USD = 100, collateral = 200 ETH, debt = 30 R
-    function testComputeCRReturnsCorrectCR1() public {
+    function test_computeCRReturnsCorrectCR1() public {
         uint256 price = 100e18;
         uint256 collateral = 200 ether;
         uint256 debt = 30e18;
 
-        assertEq(MathUtils.computeCR(collateral, debt, price), 666666666666666666666);
+        assertEq(MathUtils._computeCR(collateral, debt, price), 666666666666666666666);
     }
 
     // Returns correct CR for ETH:USD = 250, collateral = 1350 ETH, debt = 127 R
-    function testComputeCRReturnsCorrectCR2() public {
+    function test_computeCRReturnsCorrectCR2() public {
         uint256 price = 250e18;
         uint256 collateral = 1350 ether;
         uint256 debt = 127e18;
 
-        assertEq(MathUtils.computeCR(collateral, debt, price), 2657480314960629921259);
+        assertEq(MathUtils._computeCR(collateral, debt, price), 2657480314960629921259);
     }
 
     // Returns correct CR for ETH:USD = 100, collateral = 1 ETH, debt = 54321 R
-    function testComputeCRReturnsCorrectCR3() public {
+    function test_computeCRReturnsCorrectCR3() public {
         uint256 price = 100e18;
         uint256 collateral = 1 ether;
         uint256 debt = 54321e18;
 
-        assertEq(MathUtils.computeCR(collateral, debt, price), 1840908672520756);
+        assertEq(MathUtils._computeCR(collateral, debt, price), 1840908672520756);
     }
 
     // Returns 2^256-1 if position has non-zero collateral and zero debt
-    function testComputeCRReturnsMaxForZeroDebt() public {
+    function test_computeCRReturnsMaxForZeroDebt() public {
         uint256 price = 100e18;
         uint256 collateral = 1 ether;
         uint256 debt = 0;
 
-        assertEq(MathUtils.computeCR(collateral, debt, price), type(uint256).max);
+        assertEq(MathUtils._computeCR(collateral, debt, price), type(uint256).max);
     }
 }

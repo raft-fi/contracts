@@ -4,14 +4,16 @@ pragma solidity 0.8.19;
 import {ITellor} from "../../Dependencies/ITellor.sol";
 import {IPriceOracle} from "./IPriceOracle.sol";
 
-struct TellorResponse {
-    bool isRetrieved;
-    uint256 value;
-    uint256 timestamp;
-    bool success;
-}
-
 interface ITellorPriceOracle is IPriceOracle {
+    // --- Types ---
+
+    struct TellorResponse {
+        bool isRetrieved;
+        uint256 value;
+        uint256 timestamp;
+        bool success;
+    }
+
     // --- Errors ---
 
     /// @dev Emitted when the Tellor address is invalid.
