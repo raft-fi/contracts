@@ -50,7 +50,7 @@ library PositionManagerUtils {
         if (ethType == ETHType.ETH) {
             IStETH stETH = IPositionManagerStETH(address(positionManager)).stETH();
             uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
-            IPositionManagerStETH(address(positionManager)).managePositionEth{value: amount}(
+            IPositionManagerStETH(address(positionManager)).managePositionETH{value: amount}(
                 result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
             );
             result.collateral = wstETHAmount;

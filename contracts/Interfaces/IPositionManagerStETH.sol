@@ -9,79 +9,79 @@ import {IPositionManager} from "./IPositionManager.sol";
 interface IPositionManagerStETH is IPositionManager {
     // --- Errors ---
 
-    /// @dev Send ether to contract failed.
-    error SendEtherFailed();
+    /// @dev Sending ether has failed.
+    error SendingEtherFailed();
 
     // --- Functions ---
 
-    /// @dev Return wstETH address
+    /// @dev Returns wstETH token.
     function wstETH() external returns (IWstETH);
 
-    /// @dev Return stETH address
+    /// @dev Returns stETH token.
     function stETH() external returns (IStETH);
 
-    /// @dev Manage position with ether
-    /// @param _rChange Amount of rToken to add or remove.
-    /// @param _isDebtIncrease True if adding rToken, false if removing.
-    /// @param _upperHint Address of the position with a higher collateralization ratio.
-    /// @param _lowerHint Address of the position with a lower collateralization ratio.
-    /// @param _maxFeePercentage Maximum fee percentage.
-    function managePositionEth(
-        uint256 _rChange,
+    /// @dev Manages the position with ether for the borrower (the caller).
+    /// @param _debtChange The amount of R to add or remove.
+    /// @param _isDebtIncrease True if the debt is being increased, false otherwise.
+    /// @param _upperHint The upper hint for the position ID.
+    /// @param _lowerHint The lower hint for the position ID.
+    /// @param _maxFeePercentage The maximum fee percentage to pay for the position management.
+    function managePositionETH(
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
         uint256 _maxFeePercentage
     ) external payable;
 
-    /// @dev Manage position with ether, on behalf of a borrower
-    /// @param _borrower The position to manage.
-    /// @param _rChange Amount of rToken to add or remove.
-    /// @param _isDebtIncrease True if adding rToken, false if removing.
-    /// @param _upperHint Address of the position with a higher collateralization ratio.
-    /// @param _lowerHint Address of the position with a lower collateralization ratio.
-    /// @param _maxFeePercentage Maximum fee percentage.
-    function managePositionEth(
+    /// @dev Manages the position with ether on behalf of a given borrower.
+    /// @param _borrower The address of the borrower.
+    /// @param _debtChange The amount of R to add or remove.
+    /// @param _isDebtIncrease True if the debt is being increased, false otherwise.
+    /// @param _upperHint The upper hint for the position ID.
+    /// @param _lowerHint The lower hint for the position ID.
+    /// @param _maxFeePercentage The maximum fee percentage to pay for the position management.
+    function managePositionETH(
         address _borrower,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
         uint256 _maxFeePercentage
     ) external payable;
 
-    /// @dev Manage position with stETH
-    /// @param _collateralChange Amount of collateral to add or remove.
-    /// @param _isCollateralIncrease True if adding collateral, false if removing.
-    /// @param _rChange Amount of rToken to add or remove.
-    /// @param _isDebtIncrease True if adding rToken, false if removing.
-    /// @param _upperHint Address of the position with a higher collateralization ratio.
-    /// @param _lowerHint Address of the position with a lower collateralization ratio.
-    /// @param _maxFeePercentage Maximum fee percentage.
+    /// @dev Manages the position with stETH for the borrower (the caller).
+    /// @param _collateralChange The amount of stETH to add or remove.
+    /// @param _isCollateralIncrease True if the collateral is being increased, false otherwise.
+    /// @param _debtChange The amount of R to add or remove.
+    /// @param _isDebtIncrease True if the debt is being increased, false otherwise.
+    /// @param _upperHint The upper hint for the position ID.
+    /// @param _lowerHint The lower hint for the position ID.
+    /// @param _maxFeePercentage The maximum fee percentage to pay for the position management.
     function managePositionStETH(
         uint256 _collateralChange,
         bool _isCollateralIncrease,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
         uint256 _maxFeePercentage
     ) external;
 
-    /// @dev Manage position with stETH, on behalf of a borrower
-    /// @param _borrower The position to manage.
-    /// @param _collateralChange Amount of collateral to add or remove.
-    /// @param _isCollateralIncrease True if adding collateral, false if removing.
-    /// @param _rChange Amount of rToken to add or remove.
-    /// @param _isDebtIncrease True if adding rToken, false if removing.
-    /// @param _upperHint Address of the position with a higher collateralization ratio.
-    /// @param _lowerHint Address of the position with a lower collateralization ratio.
-    /// @param _maxFeePercentage Maximum fee percentage.
+    /// @dev Manages the position with stETH on behalf of a given borrower.
+    /// @param _borrower The address of the borrower.
+    /// @param _collateralChange The amount of stETH to add or remove.
+    /// @param _isCollateralIncrease True if the collateral is being increased, false otherwise.
+    /// @param _debtChange The amount of R to add or remove.
+    /// @param _isDebtIncrease True if the debt is being increased, false otherwise.
+    /// @param _upperHint The upper hint for the position ID.
+    /// @param _lowerHint The lower hint for the position ID.
+    /// @param _maxFeePercentage The maximum fee percentage to pay for the position management.
     function managePositionStETH(
         address _borrower,
         uint256 _collateralChange,
         bool _isCollateralIncrease,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
