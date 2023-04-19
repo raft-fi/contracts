@@ -35,7 +35,7 @@ contract PositionManagerStETHTest is TestSetup {
         stETH = positionManager.stETH();
     }
 
-    function testGetPositionEth() public {
+    function testGetPositionETH() public {
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPositionStETH({
             positionManager: positionManager,
@@ -73,7 +73,7 @@ contract PositionManagerStETHTest is TestSetup {
         assertEq(aliceDebt, alicePosition.totalDebt);
     }
 
-    function testDepositEth() public {
+    function testDepositETH() public {
         IERC20 _collateralToken = IERC20(WSTETH_ADDRESS);
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStETH({
@@ -105,7 +105,7 @@ contract PositionManagerStETHTest is TestSetup {
         assertEq(positionManagerBalanceAfter, positionManagerBalanceBefore + wstETHAmount);
     }
 
-    function testCannotDepositEth() public {
+    function testCannotDepositETH() public {
         vm.startPrank(ALICE);
         PositionManagerUtils.openPositionStETH({
             positionManager: positionManager,

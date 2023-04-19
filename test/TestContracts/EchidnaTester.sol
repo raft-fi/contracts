@@ -135,7 +135,7 @@ pragma solidity 0.8.19;
 //     function getAdjustedDebt(uint ETH, uint debtAmount, uint ratio) internal view returns (uint) {
 //         uint price = priceFeedTestnet.getPrice();
 //         uint compositeDebt = debtAmount + R_GAS_COMPENSATION;
-//         uint ICR = MathUtils.computeCR(ETH, compositeDebt, price);
+//         uint ICR = MathUtils._computeCR(ETH, compositeDebt, price);
 //         if (ICR < ratio) {
 //             compositeDebt = ETH * price / ratio;
 //             debtAmount = compositeDebt - R_GAS_COMPENSATION;

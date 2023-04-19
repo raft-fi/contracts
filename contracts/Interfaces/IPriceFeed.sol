@@ -4,6 +4,23 @@ pragma solidity 0.8.19;
 import {IPriceOracle} from "../Oracles/Interfaces/IPriceOracle.sol";
 
 interface IPriceFeed {
+    // --- Events ---
+
+    /// @dev Last good price has been updated.
+    event LastGoodPriceUpdated(uint256 lastGoodPrice);
+
+    /// @dev Price difference between oracles has been updated.
+    /// @param priceDifferenceBetweenOracles New price difference between oracles.
+    event PriceDifferenceBetweenOraclesUpdated(uint256 priceDifferenceBetweenOracles);
+
+    /// @dev Primary oracle has been updated.
+    /// @param primaryOracle New primary oracle.
+    event PrimaryOracleUpdated(IPriceOracle primaryOracle);
+
+    /// @dev Secondary oracle has been updated.
+    /// @param secondaryOracle New secondary oracle.
+    event SecondaryOracleUpdated(IPriceOracle secondaryOracle);
+
     // --- Errors ---
 
     /// @dev Invalid primary oracle.
@@ -12,28 +29,11 @@ interface IPriceFeed {
     /// @dev Invalid secondary oracle.
     error InvalidSecondaryOracle();
 
-    /// @dev Primary oracle is broken or frozen or bad result.
+    /// @dev Primary oracle is broken or frozen or has bad result.
     error PrimaryOracleBrokenOrFrozenOrBadResult();
 
     /// @dev Invalid price difference between oracles.
     error InvalidPriceDifferenceBetweenOracles();
-
-    // --- Events ---
-
-    /// @dev Emitted when last good price is updated.
-    event LastGoodPriceUpdated(uint256 _lastGoodPrice);
-
-    /// @dev Emitted when price difference between oracles is updated.
-    /// @param _priceDifferenceBetweenOracles New price difference between oracles.
-    event PriceDifferenceBetweenOraclesUpdated(uint256 _priceDifferenceBetweenOracles);
-
-    /// @dev Emitted when primary oracle is updated.
-    /// @param _primaryOracle New primary oracle.
-    event PrimaryOracleUpdated(IPriceOracle _primaryOracle);
-
-    /// @dev Emitted when secondary oracle is updated.
-    /// @param _secondaryOracle New secondary oracle.
-    event SecondaryOracleUpdated(IPriceOracle _secondaryOracle);
 
     // --- Functions ---
 
@@ -50,16 +50,16 @@ interface IPriceFeed {
     function priceDifferenceBetweenOracles() external returns (uint256);
 
     /// @dev Set primary oracle address.
-    /// @param _primaryOracle Primary oracle address.
-    function setPrimaryOracle(IPriceOracle _primaryOracle) external;
+    /// @param primaryOracle Primary oracle address.
+    function setPrimaryOracle(IPriceOracle primaryOracle) external;
 
     /// @dev Set secondary oracle address.
-    /// @param _secondaryOracle Secondary oracle address.
-    function setSecondaryOracle(IPriceOracle _secondaryOracle) external;
+    /// @param secondaryOracle Secondary oracle address.
+    function setSecondaryOracle(IPriceOracle secondaryOracle) external;
 
     /// @dev Set the maximum relative price difference between two oracle responses.
-    /// @param _priceDifferenceBetweenOracles The maximum relative price difference between two oracle responses.
-    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external;
+    /// @param priceDifferenceBetweenOracles The maximum relative price difference between two oracle responses.
+    function setPriceDifferenceBetweenOracles(uint256 priceDifferenceBetweenOracles) external;
 
     /// @dev Returns the latest price obtained from the Oracle. Called by Raft functions that require a current price.
     ///
@@ -69,6 +69,6 @@ interface IPriceFeed {
     /// Uses a primary oracle and a fallback oracle in case primary fails. If both fail,
     /// it uses the last good price seen by Raft.
     ///
-    /// @return _currentPrice Returned price.
-    function fetchPrice() external returns (uint256 _currentPrice);
+    /// @return currentPrice Returned price.
+    function fetchPrice() external returns (uint256 currentPrice);
 }

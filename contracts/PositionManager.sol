@@ -42,10 +42,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     mapping(IERC20 collateralToken => SortedPositions.Data data) public override sortedPositions;
 
-    /*
-     * Half-life of 12h. 12h = 720 min
-     * (1/2) = d^720 => d = (1/2)^(1/720)
-     */
+    /// @notice Half-life of 12h (720 min).
+    /// @dev (1/2) = d^720 => d = (1/2)^(1/720)
     uint256 public constant MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
 
     uint256 public constant MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10000 * 25; // 0.25%
@@ -440,7 +438,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             _removePositionFromSortedPositions(_collateralToken, _borrower, true);
             _collateralToken.safeTransfer(_borrower, newCollateral);
         } else {
-            uint256 newNICR = MathUtils.computeNominalCR(newCollateral, newDebt);
+            uint256 newNICR = MathUtils._computeNominalCR(newCollateral, newDebt);
 
             /*
             * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
@@ -583,7 +581,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @dev Returns the nominal collateral ratio (ICR) of a given position, without the price. Takes the position's
     /// pending collateral and debt rewards from redistributions into account.
     function getNominalICR(IERC20 collateralToken, address borrower) public view override returns (uint256 nicr) {
-        return MathUtils.computeNominalCR(
+        return MathUtils._computeNominalCR(
             raftCollateralTokens[collateralToken].balanceOf(borrower), raftDebtToken.balanceOf(borrower)
         );
     }
@@ -596,7 +594,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         override
         returns (uint256)
     {
-        return MathUtils.computeCR(
+        return MathUtils._computeCR(
             raftCollateralTokens[collateralToken].balanceOf(borrower), raftDebtToken.balanceOf(borrower), price
         );
     }
@@ -768,7 +766,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function _calcDecayedBaseRate() internal view returns (uint256) {
         uint256 minutesPassed = (block.timestamp - lastFeeOperationTime) / 1 minutes;
-        uint256 decayFactor = MathUtils.decPow(MINUTE_DECAY_FACTOR, minutesPassed);
+        uint256 decayFactor = MathUtils._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
         return baseRate.mulDown(decayFactor);
     }

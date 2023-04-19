@@ -3,64 +3,69 @@ pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IWstETH} from "../Dependencies/IWstETH.sol";
-import {PriceOracleResponse} from "./Interfaces/IPriceOracle.sol";
-import {ITellorPriceOracle, ITellor, TellorResponse} from "./Interfaces/ITellorPriceOracle.sol";
+import {ITellorPriceOracle, ITellor} from "./Interfaces/ITellorPriceOracle.sol";
 import {BasePriceOracle} from "./BasePriceOracle.sol";
 
 contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
+    // --- Constants & immutables ---
+
     ITellor public immutable override tellor;
 
     uint256 private constant TELLOR_DIGITS = 6;
 
     uint256 private constant ETHUSD_TELLOR_REQ_ID = 1;
 
-    constructor(ITellor _tellor, IWstETH _wstETH) BasePriceOracle(_wstETH) {
-        if (address(_tellor) == address(0)) {
+    // --- Constructor ---
+
+    constructor(ITellor tellor_, IWstETH wstETH_) BasePriceOracle(wstETH_) {
+        if (address(tellor_) == address(0)) {
             revert InvalidTellorAddress();
         }
-        tellor = ITellor(_tellor);
+        tellor = ITellor(tellor_);
     }
 
-    function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
-        TellorResponse memory _tellorResponse = _getCurrentTellorResponse();
+    // --- Functions ---
 
-        if (_tellorIsBroken(_tellorResponse) || _oracleIsFrozen(_tellorResponse.timestamp)) {
+    function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
+        TellorResponse memory tellorResponse = _getCurrentTellorResponse();
+
+        if (_tellorIsBroken(tellorResponse) || _oracleIsFrozen(tellorResponse.timestamp)) {
             return (PriceOracleResponse(true, false, 0));
         }
-        return (PriceOracleResponse(false, false, _convertIntoWstETHPrice(_tellorResponse.value, TELLOR_DIGITS)));
+        return (PriceOracleResponse(false, false, _convertIntoWstETHPrice(tellorResponse.value, TELLOR_DIGITS)));
     }
 
     function _getCurrentTellorResponse() internal view returns (TellorResponse memory tellorResponse) {
-        uint256 _count;
-        uint256 _time;
-        uint256 _value;
+        uint256 count;
+        uint256 time;
+        uint256 value;
 
-        try tellor.getNewValueCountbyRequestId(ETHUSD_TELLOR_REQ_ID) returns (uint256 count) {
-            _count = count;
+        try tellor.getNewValueCountbyRequestId(ETHUSD_TELLOR_REQ_ID) returns (uint256 count_) {
+            count = count_;
         } catch {
             return (tellorResponse);
         }
 
-        try tellor.getTimestampbyRequestIDandIndex(ETHUSD_TELLOR_REQ_ID, _count - 1) returns (uint256 time) {
-            _time = time;
+        try tellor.getTimestampbyRequestIDandIndex(ETHUSD_TELLOR_REQ_ID, count - 1) returns (uint256 time_) {
+            time = time_;
         } catch {
             return (tellorResponse);
         }
 
-        try tellor.retrieveData(ETHUSD_TELLOR_REQ_ID, _time) returns (uint256 value) {
-            _value = value;
+        try tellor.retrieveData(ETHUSD_TELLOR_REQ_ID, time) returns (uint256 value_) {
+            value = value_;
         } catch {
             return (tellorResponse);
         }
 
-        tellorResponse.isRetrieved = _value > 0;
-        tellorResponse.value = _value;
-        tellorResponse.timestamp = _time;
+        tellorResponse.isRetrieved = value > 0;
+        tellorResponse.value = value;
+        tellorResponse.timestamp = time;
         tellorResponse.success = true;
     }
 
-    function _tellorIsBroken(TellorResponse memory _response) internal view returns (bool) {
-        return !_response.success || _response.timestamp == 0 || _response.timestamp > block.timestamp
-            || _response.value == 0;
+    function _tellorIsBroken(TellorResponse memory response) internal view returns (bool) {
+        return
+            !response.success || response.timestamp == 0 || response.timestamp > block.timestamp || response.value == 0;
     }
 }

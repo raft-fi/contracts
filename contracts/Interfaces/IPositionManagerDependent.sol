@@ -9,6 +9,6 @@ interface IPositionManagerDependent {
 
     // --- Functions ---
 
-    // @dev Returns address of the PositionManager contract.
+    /// @dev Returns address of the PositionManager contract.
     function positionManager() external view returns (address);
 }

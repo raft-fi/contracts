@@ -11,18 +11,18 @@ import {IPositionManagerDependent} from "./IPositionManagerDependent.sol";
 /// Raft's specific implementation contains IFeeCollector and IPositionManagerDependent.
 /// PositionManager can mint and burn R when particular actions happen with user's position.
 interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender, IFeeCollector, IPositionManagerDependent {
-    /// --- Errors ---
-
-    /// @dev Proposed flash mint fee percentage is too big.
-    /// @param feePercentage Proposed flash mint fee percentage.
-    error FlashFeePercentageTooBig(uint256 feePercentage);
-
     // --- Events ---
 
     /// @dev New R token is deployed
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
     /// @param flashMintFeeRecipient Address of flash mint fee recipient.
     event RDeployed(address positionManager, address flashMintFeeRecipient);
+
+    /// --- Errors ---
+
+    /// @dev Proposed flash mint fee percentage is too big.
+    /// @param feePercentage Proposed flash mint fee percentage.
+    error FlashFeePercentageTooBig(uint256 feePercentage);
 
     // --- Functions ---
 

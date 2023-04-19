@@ -6,16 +6,21 @@ import {AggregatorV3Interface} from "@smartcontractkit/chainlink/interfaces/Aggr
 import {IWstETH} from "../Dependencies/IWstETH.sol";
 import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "../Dependencies/MathUtils.sol";
-import {IChainlinkPriceOracle, ChainlinkResponse} from "./Interfaces/IChainlinkPriceOracle.sol";
-import {PriceOracleResponse} from "./Interfaces/IPriceOracle.sol";
+import {IChainlinkPriceOracle} from "./Interfaces/IChainlinkPriceOracle.sol";
 import {BasePriceOracle} from "./BasePriceOracle.sol";
 
 contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
+    // --- Types ---
+
     using Fixed256x18 for uint256;
+
+    // --- Constants & immutables ---
 
     AggregatorV3Interface public immutable override priceAggregator;
 
     uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
+
+    // --- Constructor ---
 
     constructor(AggregatorV3Interface _priceAggregatorAddress, IWstETH _wstETH) BasePriceOracle(_wstETH) {
         if (address(_priceAggregatorAddress) == address(0)) {
@@ -24,22 +29,24 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         priceAggregator = _priceAggregatorAddress;
     }
 
+    // --- Functions ---
+
     function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
-        ChainlinkResponse memory _chainlinkResponse = _getCurrentChainlinkResponse();
-        ChainlinkResponse memory _prevChainlinkResponse =
-            _getPrevChainlinkResponse(_chainlinkResponse.roundId, _chainlinkResponse.decimals);
+        ChainlinkResponse memory chainlinkResponse = _getCurrentChainlinkResponse();
+        ChainlinkResponse memory prevChainlinkResponse =
+            _getPrevChainlinkResponse(chainlinkResponse.roundId, chainlinkResponse.decimals);
 
         if (
-            _chainlinkIsBroken(_chainlinkResponse, _prevChainlinkResponse)
-                || _oracleIsFrozen(_chainlinkResponse.timestamp)
+            _chainlinkIsBroken(chainlinkResponse, prevChainlinkResponse)
+                || _oracleIsFrozen(chainlinkResponse.timestamp)
         ) {
             return (PriceOracleResponse(true, false, 0));
         }
         return (
             PriceOracleResponse(
                 false,
-                _chainlinkPriceChangeAboveMax(_chainlinkResponse, _prevChainlinkResponse),
-                _convertIntoWstETHPrice(uint256(_chainlinkResponse.answer), _chainlinkResponse.decimals)
+                _chainlinkPriceChangeAboveMax(chainlinkResponse, prevChainlinkResponse),
+                _convertIntoWstETHPrice(uint256(chainlinkResponse.answer), chainlinkResponse.decimals)
             )
         );
     }
@@ -70,7 +77,7 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         }
     }
 
-    function _getPrevChainlinkResponse(uint80 _currentRoundId, uint8 _currentDecimals)
+    function _getPrevChainlinkResponse(uint80 currentRoundID, uint8 currentDecimals)
         internal
         view
         returns (ChainlinkResponse memory prevChainlinkResponse)
@@ -80,19 +87,19 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         * in a previous round.  We assume the decimals used in the previous round are the same as the current round.
         */
 
-        if (_currentRoundId == 0) {
+        if (currentRoundID == 0) {
             return prevChainlinkResponse;
         }
 
         // Try to get the price data from the previous round:
-        try priceAggregator.getRoundData(_currentRoundId - 1) returns (
+        try priceAggregator.getRoundData(currentRoundID - 1) returns (
             uint80 roundId, int256 answer, uint256, /* startedAt */ uint256 timestamp, uint80 /* answeredInRound */
         ) {
             // If call to Chainlink succeeds, return the response and success = true
             prevChainlinkResponse.roundId = roundId;
             prevChainlinkResponse.answer = answer;
             prevChainlinkResponse.timestamp = timestamp;
-            prevChainlinkResponse.decimals = _currentDecimals;
+            prevChainlinkResponse.decimals = currentDecimals;
             prevChainlinkResponse.success = true;
             return prevChainlinkResponse;
         } catch {
@@ -108,26 +115,25 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
     * 2) Chainlink is the PriceFeed's preferred primary oracle - having two consecutive valid round responses adds
     * peace of mind when using or returning to Chainlink.
     */
-    function _chainlinkIsBroken(ChainlinkResponse memory _currentResponse, ChainlinkResponse memory _prevResponse)
+    function _chainlinkIsBroken(ChainlinkResponse memory currentResponse, ChainlinkResponse memory prevResponse)
         internal
         view
         returns (bool)
     {
-        return _badChainlinkResponse(_currentResponse) || _badChainlinkResponse(_prevResponse);
+        return _badChainlinkResponse(currentResponse) || _badChainlinkResponse(prevResponse);
     }
 
-    function _badChainlinkResponse(ChainlinkResponse memory _response) internal view returns (bool) {
-        return !_response.success || _response.roundId == 0 || _response.timestamp == 0
-            || _response.timestamp > block.timestamp || _response.answer <= 0;
+    function _badChainlinkResponse(ChainlinkResponse memory response) internal view returns (bool) {
+        return !response.success || response.roundId == 0 || response.timestamp == 0
+            || response.timestamp > block.timestamp || response.answer <= 0;
     }
 
     function _chainlinkPriceChangeAboveMax(
-        ChainlinkResponse memory _currentResponse,
-        ChainlinkResponse memory _prevResponse
+        ChainlinkResponse memory currentResponse,
+        ChainlinkResponse memory prevResponse
     ) internal view returns (bool) {
-        uint256 currentScaledPrice =
-            _convertIntoWstETHPrice(uint256(_currentResponse.answer), _currentResponse.decimals);
-        uint256 prevScaledPrice = _convertIntoWstETHPrice(uint256(_prevResponse.answer), _prevResponse.decimals);
+        uint256 currentScaledPrice = _convertIntoWstETHPrice(uint256(currentResponse.answer), currentResponse.decimals);
+        uint256 prevScaledPrice = _convertIntoWstETHPrice(uint256(prevResponse.answer), prevResponse.decimals);
 
         uint256 minPrice = Math.min(currentScaledPrice, prevScaledPrice);
         uint256 maxPrice = Math.max(currentScaledPrice, prevScaledPrice);
