@@ -48,7 +48,8 @@ contract PositionManager is FeeCollector, IPositionManager {
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
 
-    uint256 public constant REDEMPTION_FEE_FLOOR = MathUtils._100_PERCENT / 1000 * 5; // 0.5%
+    uint256 public constant MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10000 * 25; // 0.25%
+    uint256 public constant MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 100 * 2; // 2%
     uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
     uint256 public constant MAX_BORROWING_FEE = MathUtils._100_PERCENT / 100 * 5; // 5%
     uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = MathUtils._100_PERCENT / 100 * 80; // 80%
@@ -58,6 +59,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     uint256 public constant BETA = 2;
 
     uint256 public override borrowingSpread;
+    uint256 public override redemptionSpread;
     uint256 public baseRate;
 
     /// @dev The timestamp of the latest fee operation (redemption or new R issuance).
@@ -127,6 +129,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             string(bytes.concat("r", bytes(IERC20Metadata(address(rToken)).symbol()), "-d"))
         );
         setLiquidationProtocolFee(_liquidationProtocolFee);
+        setRedemptionSpread(MathUtils._100_PERCENT / 100);
         setMinDebt(3000e18);
         setSplitLiquidationCollateral(newSplitLiquidationCollateral);
         for (uint256 i = 0; i < delegates.length; ++i) {
@@ -494,7 +497,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 _maxIterations,
         uint256 _maxFeePercentage
     ) external override {
-        if (_maxFeePercentage < REDEMPTION_FEE_FLOOR || _maxFeePercentage > MathUtils._100_PERCENT) {
+        if (_maxFeePercentage < MIN_REDEMPTION_SPREAD || _maxFeePercentage > MathUtils._100_PERCENT) {
             revert MaxFeePercentageOutOfRange();
         }
         if (debtAmount == 0) {
@@ -649,6 +652,14 @@ contract PositionManager is FeeCollector, IPositionManager {
         return newBaseRate;
     }
 
+    function setRedemptionSpread(uint256 redemptionSpread_) public override onlyOwner {
+        if (redemptionSpread_ < MIN_REDEMPTION_SPREAD || redemptionSpread_ > MAX_REDEMPTION_SPREAD) {
+            revert RedemptionSpreadOutOfRange();
+        }
+        redemptionSpread = redemptionSpread_;
+        emit RedemptionSpreadUpdated(redemptionSpread_);
+    }
+
     function getRedemptionRate() public view override returns (uint256) {
         return _calcRedemptionRate(baseRate);
     }
@@ -657,8 +668,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         return _calcRedemptionRate(_calcDecayedBaseRate());
     }
 
-    function _calcRedemptionRate(uint256 _baseRate) internal pure returns (uint256) {
-        return Math.min(REDEMPTION_FEE_FLOOR + _baseRate, MathUtils._100_PERCENT);
+    function _calcRedemptionRate(uint256 _baseRate) internal view returns (uint256) {
+        return _baseRate + redemptionSpread;
     }
 
     function getRedemptionFeeWithDecay(uint256 _collateralAmount) external view override returns (uint256) {
