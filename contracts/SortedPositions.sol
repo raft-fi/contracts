@@ -95,7 +95,7 @@ library SortedPositions {
 
     // --- Functions ---
 
-    /// @dev Removes the node with the given ID from the list.
+    /// @dev Removes the node with a given ID from the list.
     /// @param list The list.
     /// @param id The ID of the node to remove.
     function _remove(Data storage list, address id) internal {
@@ -230,14 +230,14 @@ library SortedPositions {
         emit NodeAdded(id, nicr);
     }
 
-    /// @dev Checks whether a pair of nodes is a valid insertion point for a new node with the given NICR.
+    /// @dev Checks whether a pair of nodes is a valid insertion point for a new node with a given NICR.
     /// @param list The list.
     /// @param positionManager The position manager.
     /// @param collateralToken The collateral token.
     /// @param nicr The NICR of the position.
     /// @param previousID The ID of the previous node for the insert position.
     /// @param nextID The ID of the next node for the insert position.
-    /// @return True if the pair of nodes is a valid insertion point for a new node with the given NICR.
+    /// @return True if the pair of nodes is a valid insertion point for a new node with a given NICR.
     function _isValidInsertPosition(
         Data storage list,
         IPositionManager positionManager,
@@ -336,7 +336,7 @@ library SortedPositions {
         return (previousID, nextID);
     }
 
-    /// @dev Finds the insert position for a new node with the given NICR.
+    /// @dev Finds the insert position for a new node with a given NICR.
     /// @param data The list.
     /// @param positionManager The position manager.
     /// @param collateralToken The collateral token.
@@ -352,7 +352,7 @@ library SortedPositions {
         address previousID,
         address nextID
     ) private view returns (address, address) {
-        // `previousID` does not exist anymore or now has a smaller NICR than the given NICR
+        // `previousID` does not exist anymore or now has a smaller NICR than a given NICR
         if (
             previousID != address(0)
                 && (!data.nodes[previousID].exists || nicr > positionManager.getNominalICR(collateralToken, previousID))
@@ -360,7 +360,7 @@ library SortedPositions {
             previousID = address(0);
         }
 
-        // `nextID` does not exist anymore or now has a larger NICR than the given NICR
+        // `nextID` does not exist anymore or now has a larger NICR than a given NICR
         if (
             nextID != address(0)
                 && (!data.nodes[nextID].exists || nicr < positionManager.getNominalICR(collateralToken, nextID))

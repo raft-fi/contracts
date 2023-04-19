@@ -21,8 +21,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     using SortedPositions for SortedPositions.Data;
     using Fixed256x18 for uint256;
 
-    // --- Connected contract declarations ---
-
     IRToken public immutable override rToken;
 
     IERC20Indexable public immutable override raftDebtToken;
@@ -31,7 +29,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     mapping(IERC20 collateralToken => IPriceFeed priceFeed) public override priceFeeds;
 
-    mapping(address borrower => IERC20 collateralToken) public override collateralTokenPerBorrowers;
+    mapping(address borrower => IERC20 collateralToken) public override collateralTokenForBorrower;
 
     mapping(address delegate => bool isWhitelisted) public override globalDelegateWhitelist;
     mapping(address borrower => mapping(address delegate => bool isWhitelisted)) public override
@@ -49,26 +47,26 @@ contract PositionManager is FeeCollector, IPositionManager {
      * (1/2) = d^720 => d = (1/2)^(1/720)
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
+
     uint256 public constant REDEMPTION_FEE_FLOOR = MathUtils._100_PERCENT / 1000 * 5; // 0.5%
     uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
     uint256 public constant MAX_BORROWING_FEE = MathUtils._100_PERCENT / 100 * 5; // 5%
     uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = MathUtils._100_PERCENT / 100 * 80; // 80%
 
-    /*
-    * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate
-    from a redemption.
-    * Corresponds to (1 / ALPHA) in the white paper.
-    */
+    /// @dev Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
+    /// Corresponds to (1 / ALPHA) in the white paper.
     uint256 public constant BETA = 2;
 
     uint256 public override borrowingSpread;
     uint256 public baseRate;
 
-    // The timestamp of the latest fee operation (redemption or new R issuance)
+    /// @dev The timestamp of the latest fee operation (redemption or new R issuance).
     uint256 public lastFeeOperationTime;
 
     uint256 private totalDebt;
 
+    /// @dev Checks if the collateral token has been added to the position manager, or reverts otherwise.
+    /// @param _collateralToken The collateral token to check.
     modifier collateralTokenExists(IERC20 _collateralToken) {
         if (address(raftCollateralTokens[_collateralToken]) == address(0)) {
             revert CollateralTokenNotAdded();
@@ -76,16 +74,24 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
+    /// @dev Checks if the borrower has a position with the collateral token or doesn't have a position at all, or
+    /// reverts otherwise.
+    /// @param _borrower The borrower to check.
+    /// @param _collateralToken The collateral token to check.
     modifier onlyDepositedCollateralTokenOrNew(address _borrower, IERC20 _collateralToken) {
         if (
-            collateralTokenPerBorrowers[_borrower] != IERC20(address(0))
-                && collateralTokenPerBorrowers[_borrower] != _collateralToken
+            collateralTokenForBorrower[_borrower] != IERC20(address(0))
+                && collateralTokenForBorrower[_borrower] != _collateralToken
         ) {
             revert BorrowerHasDifferentCollateralToken();
         }
         _;
     }
 
+    /// @dev Checks if the max fee percentage is between the borrowing spread and 100%, or reverts otherwise. When the
+    /// condition is false, the check is skipped.
+    /// @param _maxFeePercentage The max fee percentage to check.
+    /// @param condition If true, the check will be performed.
     modifier validMaxFeePercentageWhen(uint256 _maxFeePercentage, bool condition) {
         if (condition && (_maxFeePercentage < borrowingSpread || _maxFeePercentage > MathUtils._100_PERCENT)) {
             revert InvalidMaxFeePercentage();
@@ -93,6 +99,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
+    /// @dev Checks if the borrower has an active position with the collateral token, or reverts otherwise.
+    /// @param _collateralToken The collateral token to check.
+    /// @param _borrower The borrower to check.
     modifier onlyActivePosition(IERC20 _collateralToken, address _borrower) {
         if (!sortedPositions[_collateralToken].nodes[_borrower].exists) {
             revert PositionNotActive();
@@ -102,6 +111,10 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Constructor ---
 
+    /// @dev Initializes the position manager.
+    /// @param _liquidationProtocolFee The liquidation protocol fee.
+    /// @param delegates The delegates to whitelist.
+    /// @param newSplitLiquidationCollateral The split liquidation collateral contract.
     constructor(
         uint256 _liquidationProtocolFee,
         address[] memory delegates,
@@ -174,7 +187,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         address _borrower,
         uint256 _collateralChange,
         bool _isCollateralIncrease,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
@@ -185,7 +198,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             _borrower,
             _collateralChange,
             _isCollateralIncrease,
-            _rChange,
+            _debtChange,
             _isDebtIncrease,
             _upperHint,
             _lowerHint,
@@ -198,7 +211,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         IERC20 _collateralToken,
         uint256 _collateralChange,
         bool _isCollateralIncrease,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
@@ -209,7 +222,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             msg.sender,
             _collateralChange,
             _isCollateralIncrease,
-            _rChange,
+            _debtChange,
             _isDebtIncrease,
             _upperHint,
             _lowerHint,
@@ -218,12 +231,22 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
     }
 
+    /// @dev Manages the position on behalf of a given borrower.
+    /// @param _collateralToken The token the borrower used as collateral.
+    /// @param _borrower The address of the borrower.
+    /// @param _collateralChange The amount of collateral to add or remove.
+    /// @param _isCollateralIncrease True if the collateral is being increased, false otherwise.
+    /// @param _debtChange The amount of R to add or remove.
+    /// @param _isDebtIncrease True if the debt is being increased, false otherwise.
+    /// @param _upperHint The upper hint for the position ID.
+    /// @param _lowerHint The lower hint for the position ID.
+    /// @param _maxFeePercentage The maximum fee percentage to pay for the position management.
     function _managePosition(
         IERC20 _collateralToken,
         address _borrower,
         uint256 _collateralChange,
         bool _isCollateralIncrease,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
@@ -241,10 +264,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         ) {
             revert DelegateNotWhitelisted();
         }
-        if (_collateralChange == 0 && _rChange == 0) {
+        if (_collateralChange == 0 && _debtChange == 0) {
             revert NoCollateralOrDebtChange();
         }
-        _adjustDebt(_borrower, _rChange, _isDebtIncrease, _maxFeePercentage);
+        _adjustDebt(_borrower, _debtChange, _isDebtIncrease, _maxFeePercentage);
         _adjustCollateral(
             _collateralToken, _borrower, _collateralChange, _isCollateralIncrease, _needsCollateralTransfer
         );
@@ -259,33 +282,46 @@ contract PositionManager is FeeCollector, IPositionManager {
                 this, _collateralToken, _borrower, getNominalICR(_collateralToken, _borrower), _upperHint, _lowerHint
             );
             if (newPosition) {
-                collateralTokenPerBorrowers[_borrower] = _collateralToken;
+                collateralTokenForBorrower[_borrower] = _collateralToken;
                 emit PositionCreated(_borrower);
             }
         }
     }
 
-    function _adjustDebt(address _borrower, uint256 _rChange, bool _isDebtIncrease, uint256 _maxFeePercentage)
+    /// @dev Adjusts the debt of a given borrower by burning or minting the corresponding amount of R and the Raft
+    /// debt token. If the debt is being increased, the borrowing fee is also triggered.
+    /// @param _borrower The address of the borrower.
+    /// @param _debtChange The amount of R to add or remove. Must be positive.
+    /// @param _isDebtIncrease True if the debt is being increased, false otherwise.
+    /// @param _maxFeePercentage The maximum fee percentage.
+    function _adjustDebt(address _borrower, uint256 _debtChange, bool _isDebtIncrease, uint256 _maxFeePercentage)
         internal
     {
-        if (_rChange == 0) {
+        if (_debtChange == 0) {
             return;
         }
 
         if (_isDebtIncrease) {
-            uint256 debtChange = _rChange + _triggerBorrowingFee(_borrower, _rChange, _maxFeePercentage);
+            uint256 debtChange = _debtChange + _triggerBorrowingFee(_borrower, _debtChange, _maxFeePercentage);
             raftDebtToken.mint(_borrower, debtChange);
             totalDebt += debtChange;
-            rToken.mint(_borrower, _rChange);
+            rToken.mint(_borrower, _debtChange);
         } else {
-            totalDebt -= _rChange;
-            raftDebtToken.burn(_borrower, _rChange);
-            rToken.burn(_borrower, _rChange);
+            totalDebt -= _debtChange;
+            raftDebtToken.burn(_borrower, _debtChange);
+            rToken.burn(_borrower, _debtChange);
         }
 
-        emit DebtChanged(_borrower, _rChange, _isDebtIncrease);
+        emit DebtChanged(_borrower, _debtChange, _isDebtIncrease);
     }
 
+    /// @dev Adjusts the collateral of a given borrower by burning or minting the corresponding amount of Raft
+    /// collateral token and transferring the corresponding amount of collateral token.
+    /// @param _collateralToken The token the borrower used as collateral.
+    /// @param _borrower The address of the borrower.
+    /// @param _collateralChange The amount of collateral to add or remove. Must be positive.
+    /// @param _isCollateralIncrease True if the collateral is being increased, false otherwise.
+    /// @param _needsCollateralTransfer True if the collateral token needs to be transferred, false otherwise.
     function _adjustCollateral(
         IERC20 _collateralToken,
         address _borrower,
@@ -321,7 +357,6 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Position Liquidation functions ---
 
-    // Single liquidation function. Closes the position if its ICR is lower than the minimum collateral ratio.
     function liquidate(IERC20 collateralToken, address borrower)
         external
         override
@@ -368,7 +403,16 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Redemption functions ---
 
-    // Redeem as much collateral as possible from _borrower's Position in exchange for R up to maxDebtAmount
+    /// @dev Redeem as much collateral as possible from the borrower's position in the exchange for R (up to max debt
+    /// amount).
+    /// @param _collateralToken The token the borrower used as collateral.
+    /// @param _borrower The address of the borrower.
+    /// @param maxDebtAmount The maximum amount of R to redeem.
+    /// @param _price The price of the collateral token.
+    /// @param _upperPartialRedemptionHint The address of the upper partial redemption hint.
+    /// @param _lowerPartialRedemptionHint The address of the lower partial redemption hint.
+    /// @param _partialRedemptionHintNICR The NICR of the partial redemption hint.
+    /// @return debtLot The amount of R redeemed.
     function _redeemCollateralFromPosition(
         IERC20 _collateralToken,
         address _borrower,
@@ -419,6 +463,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
     }
 
+    /// @dev Checks if the first redemption hint is valid.
+    /// @param _collateralToken The token the borrower used as collateral.
+    /// @param _firstRedemptionHint The address of the first redemption hint.
+    /// @param _price The price of the collateral token.
     function _isValidFirstRedemptionHint(IERC20 _collateralToken, address _firstRedemptionHint, uint256 _price)
         internal
         view
@@ -435,38 +483,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         return nextPosition == address(0) || getCurrentICR(_collateralToken, nextPosition, _price) < MathUtils.MCR;
     }
 
-    /* Send debtAmount R to the system and redeem the corresponding amount of collateral from as many Positions as are
-    needed to fill the redemption
-    * request.  Applies pending rewards to a Position before reducing its debt and collateral.
-    *
-    * Note that if _amount is very large, this function can run out of gas, specially if traversed positions are small.
-    This can be easily avoided by
-    * splitting the total _amount in appropriate chunks and calling the function multiple times.
-    *
-    * Param `_maxIterations` can also be provided, so the loop through Positions is capped (if it’s zero, it will be
-    ignored).This makes it easier to
-    * avoid OOG for the frontend, as only knowing approximately the average cost of an iteration is enough, without
-    needing to know the “topology”
-    * of the position list. It also avoids the need to set the cap in stone in the contract, nor doing gas calculations,
-    as both gas price and opcode
-    * costs can vary.
-    *
-    * All Positions that are redeemed from -- with the likely exception of the last one -- will end up with no debt
-    left, therefore they will be closed.
-    * If the last Position does have some remaining debt, it has a finite ICR, and the reinsertion could be anywhere in
-    the list, therefore it requires a hint.
-    * A frontend should use getRedemptionHints() to calculate what the ICR of this Position will be after redemption,
-    and pass a hint for its position
-    * in the sortedPositions list along with the ICR value that the hint was found for.
-    *
-    * If another transaction modifies the list between calling getRedemptionHints() and passing the hints to
-    redeemCollateral(), it
-    * is very likely that the last (partially) redeemed Position would end up with a different ICR than what the hint is
-    for. In this case the
-    * redemption will stop after the last completely redeemed Position and the sender will keep the remaining R amount,
-    which they can attempt
-    * to redeem later.
-    */
     // solhint-disable-next-line code-complexity
     function redeemCollateral(
         IERC20 _collateralToken,
@@ -561,16 +577,16 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Helper functions ---
 
-    // Return the nominal collateral ratio (ICR) of a given Position, without the price. Takes a position's pending
-    // collateral and debt rewards from redistributions into account.
+    /// @dev Returns the nominal collateral ratio (ICR) of a given position, without the price. Takes the position's
+    /// pending collateral and debt rewards from redistributions into account.
     function getNominalICR(IERC20 collateralToken, address borrower) public view override returns (uint256 nicr) {
         return MathUtils.computeNominalCR(
             raftCollateralTokens[collateralToken].balanceOf(borrower), raftDebtToken.balanceOf(borrower)
         );
     }
 
-    // Return the current collateral ratio (ICR) of a given Position. Takes a position's pending collateral and debt
-    // rewards from redistributions into account.
+    /// @dev Returns the current collateral ratio (ICR) of a given position. Takes the position's pending collateral and
+    /// debt rewards from redistributions into account.
     function getCurrentICR(IERC20 collateralToken, address borrower, uint256 price)
         public
         view
@@ -582,6 +598,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
     }
 
+    /// @dev Updates debt and collateral indexes for a given collateral token.
+    /// @param _collateralToken The collateral token for which to update the indexes.
     function updateDebtAndCollateralIndex(IERC20 _collateralToken) internal {
         raftDebtToken.setIndex(totalDebt);
         raftCollateralTokens[_collateralToken].setIndex(_collateralToken.balanceOf(address(this)));
@@ -594,7 +612,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             revert OnlyOnePositionInSystem();
         }
         sortedPositions[_collateralToken]._remove(_borrower);
-        collateralTokenPerBorrowers[_borrower] = IERC20(address(0));
+        collateralTokenForBorrower[_borrower] = IERC20(address(0));
 
         if (burnTokens) {
             raftDebtToken.burn(_borrower, type(uint256).max);
@@ -605,12 +623,9 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Redemption fee functions ---
 
-    /*
-    * This function has two impacts on the baseRate state variable:
-    * 1) decays the baseRate based on time passed since last redemption or R borrowing operation.
-    * then,
-    * 2) increases the baseRate based on the amount redeemed, as a proportion of total supply
-    */
+    /// @dev Updates the base rate from a redemption operation. Impacts on the base rate:
+    /// 1. decays the base rate based on time passed since last redemption or R borrowing operation,
+    /// 2. increases the base rate based on the amount redeemed, as a proportion of total supply.
     function _updateBaseRateFromRedemption(uint256 _collateralDrawn, uint256 _price, uint256 _totalRSupply)
         internal
         returns (uint256)
@@ -646,17 +661,17 @@ contract PositionManager is FeeCollector, IPositionManager {
         return Math.min(REDEMPTION_FEE_FLOOR + _baseRate, MathUtils._100_PERCENT);
     }
 
-    function getRedemptionFeeWithDecay(uint256 _collateralDrawn) external view override returns (uint256) {
-        return _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
+    function getRedemptionFeeWithDecay(uint256 _collateralAmount) external view override returns (uint256) {
+        return _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralAmount);
     }
 
-    function _calcRedemptionFee(uint256 _redemptionRate, uint256 _collateralDrawn)
+    function _calcRedemptionFee(uint256 _redemptionRate, uint256 _collateralAmount)
         internal
         pure
         returns (uint256 redemptionFee)
     {
-        redemptionFee = _redemptionRate.mulDown(_collateralDrawn);
-        if (redemptionFee >= _collateralDrawn) {
+        redemptionFee = _redemptionRate.mulDown(_collateralAmount);
+        if (redemptionFee >= _collateralAmount) {
             revert FeeEatsUpAllReturnedCollateral();
         }
     }
@@ -699,7 +714,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         return _borrowingRate.mulDown(_rDebt);
     }
 
-    // Updates the baseRate state variable based on time elapsed since the last redemption or R borrowing operation.
+    /// @dev Updates the base rate based on time elapsed since the last redemption or R borrowing operation.
     function _decayBaseRateFromBorrowing() internal {
         uint256 decayedBaseRate = _calcDecayedBaseRate();
         assert(decayedBaseRate <= MathUtils._100_PERCENT); // The baseRate can decay to 0
@@ -712,7 +727,6 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Internal fee functions ---
 
-    // Add a new collateral token to the system
     function _addCollateralToken(IERC20 _collateralToken, IPriceFeed _priceFeed, uint256 _positionsSize) internal {
         if (address(raftCollateralTokens[_collateralToken]) != address(0)) {
             revert CollateralTokenAlreadyAdded();
@@ -731,7 +745,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit CollateralTokenAdded(_collateralToken, raftCollateralTokens[_collateralToken], _priceFeed, _positionsSize);
     }
 
-    // Update the last fee operation time only if time passed >= decay interval. This prevents base rate griefing.
+    /// @dev Update the last fee operation time only if time passed >= decay interval. This prevents base rate griefing.
     function _updateLastFeeOpTime() internal {
         uint256 timePassed = block.timestamp - lastFeeOperationTime;
 
@@ -789,10 +803,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         external
         view
         override
-        returns (bool exists, address nextID, address previousID)
+        returns (bool exists, address previousID, address nextID)
     {
         exists = sortedPositions[_collateralToken].nodes[_id].exists;
-        nextID = sortedPositions[_collateralToken].nodes[_id].nextID;
         previousID = sortedPositions[_collateralToken].nodes[_id].previousID;
+        nextID = sortedPositions[_collateralToken].nodes[_id].nextID;
     }
 }

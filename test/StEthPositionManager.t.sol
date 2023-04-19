@@ -95,7 +95,7 @@ contract PositionManagerStETHTest is TestSetup {
 
         vm.startPrank(ALICE);
         uint256 wstETHAmount = stETH.getSharesByPooledEth(collateralTopUpAmount);
-        positionManager.managePositionEth{value: collateralTopUpAmount}(0, false, ALICE, ALICE, 0);
+        positionManager.managePositionETH{value: collateralTopUpAmount}(0, false, ALICE, ALICE, 0);
         vm.stopPrank();
 
         uint256 positionCollateralAfter = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
@@ -117,8 +117,8 @@ contract PositionManagerStETHTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(ALICE);
-        vm.expectRevert(IPositionManagerStETH.SendEtherFailed.selector);
-        positionManager.managePositionEth{value: 0}(0, false, ALICE, ALICE, 0);
+        vm.expectRevert(IPositionManagerStETH.SendingEtherFailed.selector);
+        positionManager.managePositionETH{value: 0}(0, false, ALICE, ALICE, 0);
         vm.stopPrank();
     }
 

@@ -27,8 +27,8 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         _addCollateralToken(_wstETH, _priceFeed, _positionsSize);
     }
 
-    function managePositionEth(
-        uint256 _rChange,
+    function managePositionETH(
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
@@ -37,7 +37,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
         (bool sent,) = address(wstETH).call{value: msg.value}("");
         if (!sent) {
-            revert SendEtherFailed();
+            revert SendingEtherFailed();
         }
         uint256 wstETHBalanceAfter = wstETH.balanceOf(address(this));
         uint256 wstETHAmount = wstETHBalanceAfter - wstETHBalanceBefore;
@@ -47,7 +47,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
             msg.sender,
             wstETHAmount,
             true,
-            _rChange,
+            _debtChange,
             _isDebtIncrease,
             _upperHint,
             _lowerHint,
@@ -56,9 +56,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         );
     }
 
-    function managePositionEth(
+    function managePositionETH(
         address _borrower,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
@@ -67,7 +67,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
         (bool sent,) = address(wstETH).call{value: msg.value}("");
         if (!sent) {
-            revert SendEtherFailed();
+            revert SendingEtherFailed();
         }
         uint256 wstETHBalanceAfter = wstETH.balanceOf(address(this));
         uint256 wstETHAmount = wstETHBalanceAfter - wstETHBalanceBefore;
@@ -77,7 +77,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
             _borrower,
             wstETHAmount,
             true,
-            _rChange,
+            _debtChange,
             _isDebtIncrease,
             _upperHint,
             _lowerHint,
@@ -89,7 +89,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
     function managePositionStETH(
         uint256 _collateralChange,
         bool _isCollateralIncrease,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
@@ -104,7 +104,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 msg.sender,
                 wstETHAmount,
                 _isCollateralIncrease,
-                _rChange,
+                _debtChange,
                 _isDebtIncrease,
                 _upperHint,
                 _lowerHint,
@@ -117,7 +117,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 msg.sender,
                 _collateralChange,
                 _isCollateralIncrease,
-                _rChange,
+                _debtChange,
                 _isDebtIncrease,
                 _upperHint,
                 _lowerHint,
@@ -133,7 +133,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         address _borrower,
         uint256 _collateralChange,
         bool _isCollateralIncrease,
-        uint256 _rChange,
+        uint256 _debtChange,
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint,
@@ -148,7 +148,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 _borrower,
                 wstETHAmount,
                 _isCollateralIncrease,
-                _rChange,
+                _debtChange,
                 _isDebtIncrease,
                 _upperHint,
                 _lowerHint,
@@ -161,7 +161,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 _borrower,
                 _collateralChange,
                 _isCollateralIncrease,
-                _rChange,
+                _debtChange,
                 _isDebtIncrease,
                 _upperHint,
                 _lowerHint,
