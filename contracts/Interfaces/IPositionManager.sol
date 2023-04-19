@@ -42,6 +42,9 @@ interface IPositionManager is IFeeCollector {
     /// @dev Borrowing spread exceeds maximum.
     error BorrowingSpreadExceedsMaximum();
 
+    /// @dev Redemption spread is out of allowed range.
+    error RedemptionSpreadOutOfRange();
+
     /// @dev There must be either a collateral change or a debt change.
     error NoCollateralOrDebtChange();
 
@@ -167,6 +170,10 @@ interface IPositionManager is IFeeCollector {
     /// @param _borrowingSpread The new borrowing spread.
     event BorrowingSpreadUpdated(uint256 _borrowingSpread);
 
+    /// @dev Redemption spread has been updated.
+    /// @param redemptionSpread The new redemption spread.
+    event RedemptionSpreadUpdated(uint256 redemptionSpread);
+
     /// @dev Base rate has been updated.
     /// @param _baseRate The new base rate.
     event BaseRateUpdated(uint256 _baseRate);
@@ -224,6 +231,12 @@ interface IPositionManager is IFeeCollector {
 
     /// @return The max borrowing spread.
     function MAX_BORROWING_SPREAD() external view returns (uint256);
+
+    /// @return The min redemption spread.
+    function MIN_REDEMPTION_SPREAD() external view returns (uint256);
+
+    /// @return The max redemption spread.
+    function MAX_REDEMPTION_SPREAD() external view returns (uint256);
 
     /// @return The max liquidation protocol fee.
     function MAX_LIQUIDATION_PROTOCOL_FEE() external view returns (uint256);
@@ -322,6 +335,13 @@ interface IPositionManager is IFeeCollector {
         uint256 _maxFee
     ) external;
 
+    /// @return The current redemption spread.
+    function redemptionSpread() external view returns (uint256);
+
+    /// @dev Sets the new redemption spread.
+    /// @param redemptionSpread_ New redemption spread to be used.
+    function setRedemptionSpread(uint256 redemptionSpread_) external;
+
     /// @return The current redemption rate.
     function getRedemptionRate() external view returns (uint256);
 
@@ -333,11 +353,11 @@ interface IPositionManager is IFeeCollector {
     /// @return The redemption fee with decay.
     function getRedemptionFeeWithDecay(uint256 _collateralAmount) external view returns (uint256);
 
-    /// @return The current borrowing rate.
+    /// @return The current borrowing spread.
     function borrowingSpread() external view returns (uint256);
 
-    /// @dev Sets the new borrowing rate.
-    /// @param _borrowingSpread New borrowing rate to be used.
+    /// @dev Sets the new borrowing spread.
+    /// @param _borrowingSpread New borrowing spread to be used.
     function setBorrowingSpread(uint256 _borrowingSpread) external;
 
     /// @return The current borrowing rate.

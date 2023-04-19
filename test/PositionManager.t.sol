@@ -152,10 +152,34 @@ contract PositionManagerTest is TestSetup {
         positionManager.setBorrowingSpread(100);
     }
 
-    function testOutOfBoundsSetBorrowingSpread() public {
+    function testOutOfRangeSetBorrowingSpread() public {
         uint256 maxBorrowingSpread = positionManager.MAX_BORROWING_SPREAD();
         vm.expectRevert(IPositionManager.BorrowingSpreadExceedsMaximum.selector);
         positionManager.setBorrowingSpread(maxBorrowingSpread + 1);
+    }
+
+    // --- Redemption Spread ---
+
+    function testSetRedemptionSpread() public {
+        uint256 spread = positionManager.MIN_REDEMPTION_SPREAD() + 1;
+        positionManager.setRedemptionSpread(spread);
+        assertEq(positionManager.redemptionSpread(), spread);
+    }
+
+    function testUnauthorizedSetRedemptionSpread() public {
+        vm.prank(ALICE);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        positionManager.setRedemptionSpread(100);
+    }
+
+    function testOutOfRangeSetRedemptionSpread() public {
+        uint256 minRedemptionSpread = positionManager.MIN_REDEMPTION_SPREAD();
+        vm.expectRevert(IPositionManager.RedemptionSpreadOutOfRange.selector);
+        positionManager.setRedemptionSpread(minRedemptionSpread - 1);
+
+        uint256 maxRedemptionSpread = positionManager.MAX_REDEMPTION_SPREAD();
+        vm.expectRevert(IPositionManager.RedemptionSpreadOutOfRange.selector);
+        positionManager.setRedemptionSpread(maxRedemptionSpread + 1);
     }
 
     // --- Split liquidation collateral ---
