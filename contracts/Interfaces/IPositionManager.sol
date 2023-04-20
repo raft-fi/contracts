@@ -56,12 +56,6 @@ interface IPositionManager is IFeeCollector {
     /// @param netDebt Net debt amount that is below minimum.
     error NetDebtBelowMinimum(uint256 netDebt);
 
-    /// @dev Min debt value cannot be zero.
-    error MinNetDebtCannotBeZero();
-
-    /// @dev The provided Liquidation Protocol Fee is out of the allowed bound.
-    error LiquidationProtocolFeeOutOfBound();
-
     /// @dev The provided delegate address is invalid.
     error InvalidDelegateAddress();
 
@@ -151,14 +145,6 @@ interface IPositionManager is IFeeCollector {
         bool isRedistribution
     );
 
-    /// @dev Minimum debt has been changed.
-    /// @param newMinDebt New value that was set to be minimum debt.
-    event MinDebtChanged(uint256 newMinDebt);
-
-    /// @dev The liquidation protocol fee has been changed.
-    /// @param _liquidationProtocolFee The new liquidation protocol fee.
-    event LiquidationProtocolFeeChanged(uint256 _liquidationProtocolFee);
-
     /// @dev Redemption has been executed.
     /// @param _attemptedAmount The amount of debt that was attempted to be redeemed.
     /// @param _actualAmount The amount of debt that was actually redeemed.
@@ -212,22 +198,12 @@ interface IPositionManager is IFeeCollector {
     /// @return priceFeed The contract that provides a price for the collateral token.
     function priceFeeds(IERC20 _collateralToken) external view returns (IPriceFeed priceFeed);
 
-    /// @return Minimum debt for open positions
-    function minDebt() external view returns (uint256);
-
-    /// @dev Sets the new min debt. Reverts if it is zero.
-    /// @param newMinDebt New minimum debt to be used.
-    function setMinDebt(uint256 newMinDebt) external;
-
     /// @dev Returns address of the split liquidation collateral contract.
     function splitLiquidationCollateral() external view returns (ISplitLiquidationCollateral);
 
     /// @dev Sets the new split liquidation collateral contract.
     /// @param newSplitLiquidationCollateral New split liquidation collateral contract address.
     function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral) external;
-
-    /// @return The liquidation protocol fee.
-    function liquidationProtocolFee() external view returns (uint256);
 
     /// @return The max borrowing spread.
     function MAX_BORROWING_SPREAD() external view returns (uint256);
@@ -237,9 +213,6 @@ interface IPositionManager is IFeeCollector {
 
     /// @return The max redemption spread.
     function MAX_REDEMPTION_SPREAD() external view returns (uint256);
-
-    /// @return The max liquidation protocol fee.
-    function MAX_LIQUIDATION_PROTOCOL_FEE() external view returns (uint256);
 
     /// @dev Adds global delegate to or removes it from the whitelist.
     /// @param delegate The address of the delegate that is being added or removed.
@@ -276,10 +249,6 @@ interface IPositionManager is IFeeCollector {
     /// @param _priceFeed The price feed for the collateral token.
     /// @param _positionsSize The maximum size of the per-collateral-token list of positions.
     function addCollateralToken(IERC20 _collateralToken, IPriceFeed _priceFeed, uint256 _positionsSize) external;
-
-    /// @dev Sets the new liquidation protocol fee.
-    /// @param _liquidationProtocolFee New liquidation protocol fee to be used.
-    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) external;
 
     /// @dev Returns the position node for a given position ID.
     /// @param _collateralToken The token used as collateral.

@@ -13,11 +13,9 @@ for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
     // solhint-disable no-empty-blocks
-    constructor(
-        uint256 _liquidationProtocolFee,
-        address[] memory delegates,
-        ISplitLiquidationCollateral newSplitLiquidationCollateral
-    ) PositionManager(_liquidationProtocolFee, delegates, newSplitLiquidationCollateral) {}
+    constructor(address[] memory delegates, ISplitLiquidationCollateral newSplitLiquidationCollateral)
+        PositionManager(delegates, newSplitLiquidationCollateral)
+    {}
     // solhint-enable no-empty-blocks
 
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint256) {

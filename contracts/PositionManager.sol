@@ -35,9 +35,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     mapping(address borrower => mapping(address delegate => bool isWhitelisted)) public override
         individualDelegateWhitelist;
 
-    uint256 public override liquidationProtocolFee;
-    uint256 public override minDebt;
-
     ISplitLiquidationCollateral public override splitLiquidationCollateral;
 
     mapping(IERC20 collateralToken => SortedPositions.Data data) public override sortedPositions;
@@ -50,7 +47,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     uint256 public constant MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 100 * 2; // 2%
     uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
     uint256 public constant MAX_BORROWING_FEE = MathUtils._100_PERCENT / 100 * 5; // 5%
-    uint256 public constant override MAX_LIQUIDATION_PROTOCOL_FEE = MathUtils._100_PERCENT / 100 * 80; // 80%
 
     /// @dev Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
     /// Corresponds to (1 / ALPHA) in the white paper.
@@ -112,23 +108,18 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Constructor ---
 
     /// @dev Initializes the position manager.
-    /// @param _liquidationProtocolFee The liquidation protocol fee.
     /// @param delegates The delegates to whitelist.
     /// @param newSplitLiquidationCollateral The split liquidation collateral contract.
-    constructor(
-        uint256 _liquidationProtocolFee,
-        address[] memory delegates,
-        ISplitLiquidationCollateral newSplitLiquidationCollateral
-    ) FeeCollector(msg.sender) {
+    constructor(address[] memory delegates, ISplitLiquidationCollateral newSplitLiquidationCollateral)
+        FeeCollector(msg.sender)
+    {
         rToken = new RToken(address(this), msg.sender);
         raftDebtToken = new ERC20Indexable(
             address(this),
             string(bytes.concat("Raft ", bytes(IERC20Metadata(address(rToken)).name()), " debt")),
             string(bytes.concat("r", bytes(IERC20Metadata(address(rToken)).symbol()), "-d"))
         );
-        setLiquidationProtocolFee(_liquidationProtocolFee);
         setRedemptionSpread(MathUtils._100_PERCENT / 100);
-        setMinDebt(3000e18);
         setSplitLiquidationCollateral(newSplitLiquidationCollateral);
         for (uint256 i = 0; i < delegates.length; ++i) {
             setGlobalDelegateWhitelist(delegates[i], true);
@@ -152,23 +143,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         onlyOwner
     {
         _addCollateralToken(_collateralToken, _priceFeed, _positionsSize);
-    }
-
-    function setLiquidationProtocolFee(uint256 _liquidationProtocolFee) public override onlyOwner {
-        if (_liquidationProtocolFee > MAX_LIQUIDATION_PROTOCOL_FEE) {
-            revert LiquidationProtocolFeeOutOfBound();
-        }
-
-        liquidationProtocolFee = _liquidationProtocolFee;
-        emit LiquidationProtocolFeeChanged(_liquidationProtocolFee);
-    }
-
-    function setMinDebt(uint256 newMinDebt) public override onlyOwner {
-        if (newMinDebt == 0) {
-            revert MinNetDebtCannotBeZero();
-        }
-        minDebt = newMinDebt;
-        emit MinDebtChanged(newMinDebt);
     }
 
     function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral)
@@ -373,9 +347,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].balanceOf(borrower);
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
 
-        (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) = splitLiquidationCollateral.split(
-            entirePositionCollateral, entirePositionDebt, price, isRedistribution, liquidationProtocolFee
-        );
+        (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
+            splitLiquidationCollateral.split(entirePositionCollateral, entirePositionDebt, price, isRedistribution);
 
         if (!isRedistribution) {
             rToken.burn(msg.sender, entirePositionDebt);
@@ -446,7 +419,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             *
             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
             */
-            if (newNICR != _partialRedemptionHintNICR || newDebt < minDebt) {
+            if (newNICR != _partialRedemptionHintNICR || newDebt < splitLiquidationCollateral.LOW_TOTAL_DEBT()) {
                 debtLot = 0;
             } else {
                 sortedPositions[_collateralToken]._update(
@@ -790,7 +763,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function checkValidPosition(IERC20 _collateralToken, address position) internal {
         uint256 positionDebt = raftDebtToken.balanceOf(position);
-        if (positionDebt < minDebt) {
+        if (positionDebt < splitLiquidationCollateral.LOW_TOTAL_DEBT()) {
             revert NetDebtBelowMinimum(positionDebt);
         }
 

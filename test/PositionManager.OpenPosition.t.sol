@@ -11,7 +11,6 @@ import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerOpenPositionTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -23,9 +22,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManagerTester(
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
-            SPLIT_LIQUIDATION_COLLATERAL
+            splitLiquidationCollateral
         );
         rToken = positionManager.rToken();
 
@@ -40,8 +38,9 @@ contract PositionManagerOpenPositionTest is TestSetup {
     }
 
     function testSuccessfulPositionOpening() public {
-        uint256 aliceExtraRAmount =
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt());
+        uint256 aliceExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(
+            positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT()
+        );
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -61,8 +60,9 @@ contract PositionManagerOpenPositionTest is TestSetup {
         (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
         assertTrue(alicePositionExists);
 
-        uint256 bobExtraRAmount =
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 47789898e22);
+        uint256 bobExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(
+            positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 47789898e22
+        );
 
         vm.startPrank(BOB);
         PositionManagerUtils.openPosition({
@@ -513,7 +513,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         assertEq(collateralBefore, 0);
         assertEq(debtBefore, 0);
 
-        uint256 debtAmount = positionManager.minDebt();
+        uint256 debtAmount = positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT();
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({

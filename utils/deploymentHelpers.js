@@ -8,7 +8,6 @@ const RTokenTester = artifacts.require("./RTokenTester.sol")
 const WstETHTokenMock = artifacts.require("./WstETHTokenMock.sol")
 
 const { TestHelper: th } = require("./testHelpers.js")
-const LIQUIDATION_PROTOCOL_FEE = th.dec(50, 16) // 50%
 
 /* "Liquity core" consists of all contracts in the core Liquity system.
 
@@ -32,7 +31,7 @@ class DeploymentHelper {
   static async deployLiquityCoreHardhat(feeRecipient) {
     const priceFeedTestnet = await PriceFeedTestnet.new({ from: feeRecipient })
     const wstETHTokenMock = await WstETHTokenMock.new({ from: feeRecipient })
-    const positionManager = await PositionManagerTester.new(priceFeedTestnet.address, wstETHTokenMock.address, maxBytes32, LIQUIDATION_PROTOCOL_FEE, [], { from: feeRecipient })
+    const positionManager = await PositionManagerTester.new(priceFeedTestnet.address, wstETHTokenMock.address, maxBytes32, [], { from: feeRecipient })
     const rToken = await RTokenTester.at(await positionManager.rToken(), feeRecipient)
     const math = await MathUtilsTester.new({ from: feeRecipient })
     RTokenTester.setAsDeployed(rToken)

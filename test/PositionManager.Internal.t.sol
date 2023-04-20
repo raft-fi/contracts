@@ -6,7 +6,6 @@ import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerInternalTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
 
     PositionManagerTester public positionManager;
 
@@ -18,9 +17,8 @@ contract PositionManagerInternalTest is TestSetup {
         super.setUp();
 
         positionManager = new PositionManagerTester(
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
-            SPLIT_LIQUIDATION_COLLATERAL
+            splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, PRICE_FEED, POSITIONS_SIZE);
 

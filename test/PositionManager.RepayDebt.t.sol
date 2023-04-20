@@ -11,7 +11,6 @@ import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerRepayDebtTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -23,9 +22,8 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManager(
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
-            SPLIT_LIQUIDATION_COLLATERAL
+            splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 
@@ -67,7 +65,8 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.startPrank(ALICE);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPositionManager.NetDebtBelowMinimum.selector, positionManager.minDebt() - repaymentAmount
+                IPositionManager.NetDebtBelowMinimum.selector,
+                positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - repaymentAmount
             )
         );
         positionManager.managePosition(collateralToken, 0, false, repaymentAmount, false, ALICE, ALICE, 0);
@@ -84,7 +83,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
             collateralToken,
             100e30,
             true,
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 2),
+            PositionManagerUtils.getNetBorrowingAmount(
+                positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 2
+            ),
             true,
             ALICE,
             ALICE,
@@ -116,7 +117,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
             collateralToken,
             100e30,
             true,
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 1),
+            PositionManagerUtils.getNetBorrowingAmount(
+                positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 1
+            ),
             true,
             ALICE,
             ALICE,
@@ -124,7 +127,10 @@ contract PositionManagerRepayDebtTest is TestSetup {
         );
 
         vm.expectRevert(
-            abi.encodeWithSelector(IPositionManager.NetDebtBelowMinimum.selector, positionManager.minDebt() - 1)
+            abi.encodeWithSelector(
+                IPositionManager.NetDebtBelowMinimum.selector,
+                positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - 1
+            )
         );
         positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
         vm.stopPrank();
@@ -143,7 +149,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
             collateralToken,
             100e30,
             true,
-            PositionManagerUtils.getNetBorrowingAmount(positionManager, positionManager.minDebt() + 1),
+            PositionManagerUtils.getNetBorrowingAmount(
+                positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 1
+            ),
             true,
             ALICE,
             ALICE,
@@ -153,7 +161,10 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         vm.startPrank(ALICE);
         vm.expectRevert(
-            abi.encodeWithSelector(IPositionManager.NetDebtBelowMinimum.selector, positionManager.minDebt() - 1)
+            abi.encodeWithSelector(
+                IPositionManager.NetDebtBelowMinimum.selector,
+                positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - 1
+            )
         );
         positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
         vm.stopPrank();

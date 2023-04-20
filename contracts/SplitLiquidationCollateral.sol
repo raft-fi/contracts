@@ -15,31 +15,40 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     uint256 private constant MEDIUM_REDISTRUBTOR_REWARD_RATE = 125e14;
     uint256 private constant HIGH_REDISTRUBTOR_REWARD_RATE = 50e14;
 
-    function split(
-        uint256 totalCollateral,
-        uint256 totalDebt,
-        uint256 price,
-        bool isRedistribution,
-        uint256 liquidationProtocolFee
-    ) external pure returns (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator) {
+    uint256 private constant LOW_LIQUIDATOR_REWARD_RATE = 1e18;
+    uint256 private constant MEDIUM_LIQUIDATOR_REWARD_RATE = 65e16;
+    uint256 private constant HIGH_LIQUIDATOR_REWARD_RATE = 50e16;
+
+    uint256 public constant override LOW_TOTAL_DEBT = 3_000e18;
+    uint256 private constant MEDIUM_TOTAL_DEBT = 100_000e18;
+    uint256 private constant HIGH_TOTAL_DEBT = 1_000_000e18;
+
+    function split(uint256 totalCollateral, uint256 totalDebt, uint256 price, bool isRedistribution)
+        external
+        pure
+        returns (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator)
+    {
         if (isRedistribution) {
             collateralToSendToProtocol = 0;
             collateralToSentToLiquidator =
                 totalCollateral.mulDown(_calculateRedistributorRewardRate(totalCollateral)).divDown(1e18);
         } else {
-            uint256 debtValue = totalDebt.divDown(price);
-            uint256 excessCollateral = totalCollateral - debtValue;
-            collateralToSendToProtocol = excessCollateral.mulDown(liquidationProtocolFee);
-            collateralToSentToLiquidator = totalCollateral - collateralToSendToProtocol;
+            uint256 matchingCollateral = totalDebt.divDown(price);
+            uint256 excessCollateral = totalCollateral - matchingCollateral;
+            uint256 liquidatorReward =
+                excessCollateral.mulDown(_calculateLiquidatorRewardRate(totalDebt)).divDown(1e18);
+            collateralToSendToProtocol = excessCollateral - liquidatorReward;
+            collateralToSentToLiquidator = liquidatorReward;
         }
     }
 
+    // Formula from https://docs.raft.fi/how-it-works/returning/redistribution#redistributor-reward
     function _calculateRedistributorRewardRate(uint256 totalCollateral) internal pure returns (uint256) {
         if (totalCollateral <= LOW_TOTAL_COLLATERAL) {
             return LOW_REDISTRUBTOR_REWARD_RATE;
         }
         if (totalCollateral <= MEDIUM_TOTAL_COLLATERAL) {
-            return _calculateRedistributorRewardRateFormula(
+            return _calculateRewardRateFormula(
                 totalCollateral,
                 LOW_TOTAL_COLLATERAL,
                 MEDIUM_TOTAL_COLLATERAL,
@@ -48,7 +57,7 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
             );
         }
         if (totalCollateral <= HIGH_TOTAL_COLLATERAL) {
-            return _calculateRedistributorRewardRateFormula(
+            return _calculateRewardRateFormula(
                 totalCollateral,
                 MEDIUM_TOTAL_COLLATERAL,
                 HIGH_TOTAL_COLLATERAL,
@@ -59,17 +68,38 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
         return HIGH_REDISTRUBTOR_REWARD_RATE;
     }
 
-    // Formula from https://docs.raft.fi/how-it-works/returning/redistribution#redistributor-reward
-    function _calculateRedistributorRewardRateFormula(
-        uint256 collateral,
-        uint256 collateralUpperBound,
-        uint256 collateraLowerBound,
-        uint256 redistributorRewardRateUpperBound,
-        uint256 redistributorRewardRateLowerBound
+    // Formula from https://docs.raft.fi/how-it-works/returning/liquidation#liquidator-reward
+    function _calculateLiquidatorRewardRate(uint256 totalDebt) internal pure returns (uint256) {
+        if (totalDebt <= LOW_TOTAL_DEBT) {
+            return LOW_LIQUIDATOR_REWARD_RATE;
+        }
+        if (totalDebt <= MEDIUM_TOTAL_DEBT) {
+            return _calculateRewardRateFormula(
+                totalDebt, LOW_TOTAL_DEBT, MEDIUM_TOTAL_DEBT, LOW_LIQUIDATOR_REWARD_RATE, MEDIUM_LIQUIDATOR_REWARD_RATE
+            );
+        }
+        if (totalDebt <= HIGH_TOTAL_DEBT) {
+            return _calculateRewardRateFormula(
+                totalDebt,
+                MEDIUM_TOTAL_DEBT,
+                HIGH_TOTAL_DEBT,
+                MEDIUM_LIQUIDATOR_REWARD_RATE,
+                HIGH_LIQUIDATOR_REWARD_RATE
+            );
+        }
+        return HIGH_LIQUIDATOR_REWARD_RATE;
+    }
+
+    function _calculateRewardRateFormula(
+        uint256 amount,
+        uint256 amountlUpperBound,
+        uint256 amountLowerBound,
+        uint256 rewardRateUpperBound,
+        uint256 rewardRateLowerBound
     ) internal pure returns (uint256) {
-        return redistributorRewardRateUpperBound
-            - (redistributorRewardRateUpperBound - redistributorRewardRateLowerBound).mulDown(
-                collateral - collateralUpperBound
-            ).divDown(collateraLowerBound - collateralUpperBound);
+        return rewardRateUpperBound
+            - (rewardRateUpperBound - rewardRateLowerBound).mulDown(amount - amountlUpperBound).divDown(
+                amountLowerBound - amountlUpperBound
+            );
     }
 }

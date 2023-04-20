@@ -12,7 +12,6 @@ import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerMultiCollateralTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -27,9 +26,8 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         super.setUp();
 
         positionManager = new PositionManager(
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
-            SPLIT_LIQUIDATION_COLLATERAL
+            splitLiquidationCollateral
         );
 
         priceFeed = new PriceFeedTestnet();

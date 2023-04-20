@@ -17,10 +17,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         IPriceFeed _priceFeed,
         IWstETH _wstETH,
         uint256 _positionsSize,
-        uint256 _liquidationProtocolFee,
         address[] memory delegates,
         ISplitLiquidationCollateral newSplitLiquidationCollateral
-    ) PositionManager(_liquidationProtocolFee, delegates, newSplitLiquidationCollateral) {
+    ) PositionManager(delegates, newSplitLiquidationCollateral) {
         wstETH = _wstETH;
         stETH = IStETH(address(_wstETH.stETH()));
 

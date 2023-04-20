@@ -6,6 +6,7 @@ import {IStETH} from "../contracts/Dependencies/IStETH.sol";
 import {IWstETH} from "../contracts/Dependencies/IWstETH.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {IPositionManagerStETH, PositionManagerStETH} from "../contracts/PositionManagerStETH.sol";
+import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
@@ -14,23 +15,23 @@ contract PositionManagerStETHTest is TestSetup {
     address public constant WSTETH_ADDRESS = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
 
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
 
     PriceFeedTestnet public priceFeed;
     PositionManagerStETH public positionManager;
     IStETH public stETH;
+    SplitLiquidationCollateral public splitLiquidationCollateralNew;
 
     function setUp() public override {
         vm.createSelectFork("mainnet", 16_974_953);
 
         priceFeed = new PriceFeedTestnet();
+        splitLiquidationCollateralNew = new SplitLiquidationCollateral();
         positionManager = new PositionManagerStETH(
             priceFeed,
             IWstETH(WSTETH_ADDRESS),
             POSITIONS_SIZE,
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
-            SPLIT_LIQUIDATION_COLLATERAL
+            splitLiquidationCollateralNew
         );
         stETH = positionManager.stETH();
     }
