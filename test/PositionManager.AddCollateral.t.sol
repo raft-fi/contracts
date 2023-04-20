@@ -171,7 +171,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         // Carol attempts to add collateral to her non-existent position
         vm.startPrank(CAROL);
         collateralToken.approve(address(positionManager), 1 ether);
-        vm.expectRevert(abi.encodeWithSelector(SortedPositions.DoesNotContainPosition.selector, CAROL));
+        vm.expectRevert(IPositionManager.InvalidPosition.selector);
         positionManager.managePosition(collateralToken, 1 ether, true, 0, false, CAROL, CAROL, 0);
         vm.stopPrank();
 
@@ -187,7 +187,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         // Bob attempts to add collateral to his closed position
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 1 ether);
-        vm.expectRevert(IPositionManager.OnlyOnePositionInSystem.selector);
+        vm.expectRevert(IPositionManager.InvalidPosition.selector);
         positionManager.managePosition(collateralToken, 1 ether, true, 0, false, BOB, BOB, 0);
         vm.stopPrank();
     }
