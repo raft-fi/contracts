@@ -12,12 +12,10 @@ import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerAddCollateralTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
     IPositionManager public positionManager;
-    SplitLiquidationCollateral public splitLiquidationCollateral;
 
     function setUp() public override {
         super.setUp();
@@ -25,7 +23,6 @@ contract PositionManagerAddCollateralTest is TestSetup {
         priceFeed = new PriceFeedTestnet();
         splitLiquidationCollateral = new SplitLiquidationCollateral();
         positionManager = new PositionManager(
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
             splitLiquidationCollateral
         );

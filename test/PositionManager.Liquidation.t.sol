@@ -12,10 +12,8 @@ import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
 
     PriceFeedTestnet public priceFeed;
-    SplitLiquidationCollateral public splitLiquidationCollateral;
     IPositionManager public positionManager;
     IRToken public rToken;
 
@@ -23,9 +21,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        splitLiquidationCollateral = new SplitLiquidationCollateral();
         positionManager = new PositionManager(
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
             splitLiquidationCollateral
         );

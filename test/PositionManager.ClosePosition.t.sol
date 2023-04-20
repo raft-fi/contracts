@@ -11,7 +11,6 @@ import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerClosePositionTest is TestSetup {
     uint256 public constant POSITIONS_SIZE = 10;
-    uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -23,9 +22,8 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManager(
-            LIQUIDATION_PROTOCOL_FEE,
             new address[](0),
-            SPLIT_LIQUIDATION_COLLATERAL
+            splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
 
