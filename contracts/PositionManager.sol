@@ -95,16 +95,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
-    /// @dev Checks if the borrower has an active position with the collateral token, or reverts otherwise.
-    /// @param _collateralToken The collateral token to check.
-    /// @param _borrower The borrower to check.
-    modifier onlyActivePosition(IERC20 _collateralToken, address _borrower) {
-        if (!sortedPositions[_collateralToken].nodes[_borrower].exists) {
-            revert PositionNotActive();
-        }
-        _;
-    }
-
     // --- Constructor ---
 
     /// @dev Initializes the position manager.
@@ -138,11 +128,25 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function addCollateralToken(IERC20 _collateralToken, IPriceFeed _priceFeed, uint256 _positionsSize)
-        external
+        public
         override
         onlyOwner
     {
-        _addCollateralToken(_collateralToken, _priceFeed, _positionsSize);
+        if (address(raftCollateralTokens[_collateralToken]) != address(0)) {
+            revert CollateralTokenAlreadyAdded();
+        }
+        if (_positionsSize == 0) {
+            revert SortedPositions.SizeCannotBeZero();
+        }
+
+        raftCollateralTokens[_collateralToken] = new ERC20Indexable(
+            address(this),
+            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(_collateralToken)).name()), " collateral")),
+            string(bytes.concat("r", bytes(IERC20Metadata(address(_collateralToken)).symbol()), "-c"))
+        );
+        priceFeeds[_collateralToken] = _priceFeed;
+        sortedPositions[_collateralToken].maxSize = _positionsSize;
+        emit CollateralTokenAdded(_collateralToken, raftCollateralTokens[_collateralToken], _priceFeed, _positionsSize);
     }
 
     function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral)
@@ -332,11 +336,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Position Liquidation functions ---
 
-    function liquidate(IERC20 collateralToken, address borrower)
-        external
-        override
-        onlyActivePosition(collateralToken, borrower)
-    {
+    function liquidate(IERC20 collateralToken, address borrower) external override {
         uint256 price = priceFeeds[collateralToken].fetchPrice();
         uint256 icr = getCurrentICR(collateralToken, borrower, price);
         if (icr >= MathUtils.MCR) {
@@ -708,24 +708,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     // --- Internal fee functions ---
-
-    function _addCollateralToken(IERC20 _collateralToken, IPriceFeed _priceFeed, uint256 _positionsSize) internal {
-        if (address(raftCollateralTokens[_collateralToken]) != address(0)) {
-            revert CollateralTokenAlreadyAdded();
-        }
-        if (_positionsSize == 0) {
-            revert SortedPositions.SizeCannotBeZero();
-        }
-
-        raftCollateralTokens[_collateralToken] = new ERC20Indexable(
-            address(this),
-            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(_collateralToken)).name()), " collateral")),
-            string(bytes.concat("r", bytes(IERC20Metadata(address(_collateralToken)).symbol()), "-c"))
-        );
-        priceFeeds[_collateralToken] = _priceFeed;
-        sortedPositions[_collateralToken].maxSize = _positionsSize;
-        emit CollateralTokenAdded(_collateralToken, raftCollateralTokens[_collateralToken], _priceFeed, _positionsSize);
-    }
 
     /// @dev Update the last fee operation time only if time passed >= decay interval. This prevents base rate griefing.
     function _updateLastFeeOpTime() internal {
