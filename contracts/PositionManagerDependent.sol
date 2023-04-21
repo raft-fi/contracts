@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManagerDependent} from "./Interfaces/IPositionManagerDependent.sol";
+import { IPositionManagerDependent } from "./Interfaces/IPositionManagerDependent.sol";
 
 abstract contract PositionManagerDependent is IPositionManagerDependent {
     // --- Immutable variables ---

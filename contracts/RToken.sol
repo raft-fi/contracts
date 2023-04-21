@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import {ERC20FlashMint, IERC3156FlashLender} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
-import {PositionManagerDependent} from "./PositionManagerDependent.sol";
-import {IRToken} from "./Interfaces/IRToken.sol";
-import {FeeCollector} from "./FeeCollector.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import { ERC20FlashMint, IERC3156FlashLender } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
+import { PositionManagerDependent } from "./PositionManagerDependent.sol";
+import { IRToken } from "./Interfaces/IRToken.sol";
+import { FeeCollector } from "./FeeCollector.sol";
 
 contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCollector, IRToken {
     // --- Constants ---
@@ -24,7 +24,10 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
     /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownership to @param feeRecipient.
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
     /// @param feeRecipient Address of flash mint fee recipient.
-    constructor(address positionManager, address feeRecipient)
+    constructor(
+        address positionManager,
+        address feeRecipient
+    )
         ERC20Permit("R Stablecoin")
         ERC20("R Stablecoin", "R")
         PositionManagerDependent(positionManager)

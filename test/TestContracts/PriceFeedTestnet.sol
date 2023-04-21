@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.19;
 
-import {IPriceFeed} from "../../contracts/Interfaces/IPriceFeed.sol";
-import {IPriceOracle} from "../../contracts/Oracles/Interfaces/IPriceOracle.sol";
+import { IPriceFeed } from "../../contracts/Interfaces/IPriceFeed.sol";
+import { IPriceOracle } from "../../contracts/Oracles/Interfaces/IPriceOracle.sol";
 
 /*
 * PriceFeed placeholder for testnet and development. The price is simply set manually and saved in a state
@@ -39,11 +39,11 @@ contract PriceFeedTestnet is IPriceFeed {
     }
 
     // solhint-disable-next-line no-empty-blocks
-    function setPrimaryOracle(IPriceOracle _primaryOracle) external {}
+    function setPrimaryOracle(IPriceOracle _primaryOracle) external { }
 
     // solhint-disable-next-line no-empty-blocks
-    function setSecondaryOracle(IPriceOracle _secondaryOracle) external {}
+    function setSecondaryOracle(IPriceOracle _secondaryOracle) external { }
 
     // solhint-disable-next-line no-empty-blocks
-    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external {}
+    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external { }
 }

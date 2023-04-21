@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
-import {PositionManager} from "../contracts/PositionManager.sol";
-import {IERC20Indexable} from "../contracts/Interfaces/IERC20Indexable.sol";
-import {IRToken} from "../contracts/Interfaces/IRToken.sol";
-import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
-import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
-import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
-import {TestSetup} from "./utils/TestSetup.t.sol";
+import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
+import { PositionManager } from "../contracts/PositionManager.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
+import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
+import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
+import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerClosePositionTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
@@ -43,7 +43,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraDebtAmount: 10000e18,
+            extraDebtAmount: 10_000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -53,7 +53,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraDebtAmount: 10000e18,
+            extraDebtAmount: 10_000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -101,7 +101,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraDebtAmount: 10000e18,
+            extraDebtAmount: 10_000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -111,7 +111,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraDebtAmount: 10000e18,
+            extraDebtAmount: 10_000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -147,7 +147,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraDebtAmount: 15000e18,
+            extraDebtAmount: 15_000e18,
             icr: 2e18
         });
         vm.stopPrank();
@@ -188,7 +188,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            extraDebtAmount: 15000e18,
+            extraDebtAmount: 15_000e18,
             icr: 2e18
         });
         vm.stopPrank();

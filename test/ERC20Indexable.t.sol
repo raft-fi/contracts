@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
-import {ERC20Indexable} from "../contracts/ERC20Indexable.sol";
+import { Test } from "forge-std/Test.sol";
+import { ERC20Indexable } from "../contracts/ERC20Indexable.sol";
 
 contract ERC20IndexableTest is Test {
     ERC20Indexable private token;
@@ -30,7 +30,9 @@ contract ERC20IndexableTest is Test {
         uint256 supplyDecrease,
         uint256 amountToMint,
         uint256 amountToBurn
-    ) public {
+    )
+        public
+    {
         initialSupply = bound(initialSupply, 1e18, 1e32);
         supplyDecrease = bound(supplyDecrease, 1, initialSupply / 2);
         amountToMint = bound(amountToMint, 2000, 1e30);
@@ -47,7 +49,11 @@ contract ERC20IndexableTest is Test {
         assertApproxEqAbs(token.balanceOf(USER), amountToMint - amountToBurn, 2);
     }
 
-    function testMintBurnAllWithIndexChange(uint256 initialSupply, uint256 supplyDecrease, uint256 amountToMint)
+    function testMintBurnAllWithIndexChange(
+        uint256 initialSupply,
+        uint256 supplyDecrease,
+        uint256 amountToMint
+    )
         public
     {
         initialSupply = bound(initialSupply, 1e18, 1e32);

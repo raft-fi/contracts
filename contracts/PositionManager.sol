@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
-import {MathUtils} from "./Dependencies/MathUtils.sol";
-import {IERC20Indexable} from "./Interfaces/IERC20Indexable.sol";
-import {IPositionManager} from "./Interfaces/IPositionManager.sol";
-import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
-import {ISplitLiquidationCollateral} from "./Interfaces/ISplitLiquidationCollateral.sol";
-import {ERC20Indexable} from "./ERC20Indexable.sol";
-import {FeeCollector} from "./FeeCollector.sol";
-import {RToken, IRToken} from "./RToken.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
+import { MathUtils } from "./Dependencies/MathUtils.sol";
+import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
+import { IPositionManager } from "./Interfaces/IPositionManager.sol";
+import { IPriceFeed } from "./Interfaces/IPriceFeed.sol";
+import { ISplitLiquidationCollateral } from "./Interfaces/ISplitLiquidationCollateral.sol";
+import { ERC20Indexable } from "./ERC20Indexable.sol";
+import { FeeCollector } from "./FeeCollector.sol";
+import { RToken, IRToken } from "./RToken.sol";
 
 contract PositionManager is FeeCollector, IPositionManager {
     using SafeERC20 for IERC20;
@@ -39,7 +39,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @dev (1/2) = d^720 => d = (1/2)^(1/720)
     uint256 public constant MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
 
-    uint256 public constant MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10000 * 25; // 0.25%
+    uint256 public constant MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10_000 * 25; // 0.25%
     uint256 public constant MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 100 * 2; // 2%
     uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
     uint256 public constant MAX_BORROWING_FEE = MathUtils._100_PERCENT / 100 * 5; // 5%
@@ -66,8 +66,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
-    /// @dev Checks if the collateral token has enabled, or reverts otherwise. When the condition is false, the check is
-    /// skipped.
+    /// @dev Checks if the collateral token has enabled, or reverts otherwise. When the condition is false, the check
+    /// is skipped.
     /// @param collateralToken The collateral token to check.
     /// @param condition If true, the check will be performed.
     modifier onlyEnabledCollateralTokenWhen(IERC20 collateralToken, bool condition) {
@@ -107,7 +107,10 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @dev Initializes the position manager.
     /// @param delegates The delegates to whitelist.
     /// @param newSplitLiquidationCollateral The split liquidation collateral contract.
-    constructor(address[] memory delegates, ISplitLiquidationCollateral newSplitLiquidationCollateral)
+    constructor(
+        address[] memory delegates,
+        ISplitLiquidationCollateral newSplitLiquidationCollateral
+    )
         FeeCollector(msg.sender)
     {
         rToken = new RToken(address(this), msg.sender);
@@ -185,7 +188,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external override {
+    )
+        external
+        override
+    {
         _managePosition(
             collateralToken,
             position,
@@ -205,7 +211,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external override {
+    )
+        external
+        override
+    {
         _managePosition(
             collateralToken,
             msg.sender,
@@ -284,7 +293,12 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @param debtChange The amount of R to add or remove. Must be positive.
     /// @param isDebtIncrease True if the debt is being increased, false otherwise.
     /// @param maxFeePercentage The maximum fee percentage.
-    function _adjustDebt(address position, uint256 debtChange, bool isDebtIncrease, uint256 maxFeePercentage)
+    function _adjustDebt(
+        address position,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        uint256 maxFeePercentage
+    )
         internal
     {
         if (debtChange == 0) {
@@ -318,7 +332,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 collateralChange,
         bool isCollateralIncrease,
         bool needsCollateralTransfer
-    ) internal {
+    )
+        internal
+    {
         if (collateralChange == 0) {
             return;
         }
@@ -386,7 +402,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
     }
 
-    function redeemCollateral(IERC20 collateralToken, uint256 debtAmount, uint256 maxFeePercentage)
+    function redeemCollateral(
+        IERC20 collateralToken,
+        uint256 debtAmount,
+        uint256 maxFeePercentage
+    )
         external
         override
     {
@@ -434,9 +454,13 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
     }
 
-    /// @dev Returns the current collateral ratio (ICR) of a given position. Takes the position's pending collateral and
-    /// debt rewards from redistributions into account.
-    function getCurrentICR(IERC20 collateralToken, address position, uint256 price)
+    /// @dev Returns the current collateral ratio (ICR) of a given position. Takes the position's pending collateral
+    /// and debt rewards from redistributions into account.
+    function getCurrentICR(
+        IERC20 collateralToken,
+        address position,
+        uint256 price
+    )
         public
         view
         override
@@ -469,7 +493,11 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @dev Updates the base rate from a redemption operation. Impacts on the base rate:
     /// 1. decays the base rate based on time passed since last redemption or R borrowing operation,
     /// 2. increases the base rate based on the amount redeemed, as a proportion of total supply.
-    function _updateBaseRateFromRedemption(uint256 _collateralDrawn, uint256 _price, uint256 _totalRSupply)
+    function _updateBaseRateFromRedemption(
+        uint256 _collateralDrawn,
+        uint256 _price,
+        uint256 _totalRSupply
+    )
         internal
         returns (uint256)
     {
@@ -516,7 +544,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         return _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralAmount);
     }
 
-    function _calcRedemptionFee(uint256 _redemptionRate, uint256 _collateralAmount)
+    function _calcRedemptionFee(
+        uint256 _redemptionRate,
+        uint256 _collateralAmount
+    )
         internal
         pure
         returns (uint256 redemptionFee)
@@ -578,7 +609,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Internal fee functions ---
 
-    /// @dev Update the last fee operation time only if time passed >= decay interval. This prevents base rate griefing.
+    /// @dev Update the last fee operation time only if time passed >= decay interval. This prevents base rate
+    /// griefing.
     function _updateLastFeeOpTime() internal {
         uint256 timePassed = block.timestamp - lastFeeOperationTime;
 
@@ -597,7 +629,11 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     // --- Helper functions ---
 
-    function _triggerBorrowingFee(address position, uint256 debtAmount, uint256 _maxFeePercentage)
+    function _triggerBorrowingFee(
+        address position,
+        uint256 debtAmount,
+        uint256 _maxFeePercentage
+    )
         internal
         returns (uint256 rFee)
     {

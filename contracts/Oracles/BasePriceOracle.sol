@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
-import {MathUtils} from "../Dependencies/MathUtils.sol";
-import {IWstETH} from "../Dependencies/IWstETH.sol";
-import {IPriceOracle} from "./Interfaces/IPriceOracle.sol";
+import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
+import { MathUtils } from "../Dependencies/MathUtils.sol";
+import { IWstETH } from "../Dependencies/IWstETH.sol";
+import { IPriceOracle } from "./Interfaces/IPriceOracle.sol";
 
 abstract contract BasePriceOracle is IPriceOracle {
     // --- Types ---

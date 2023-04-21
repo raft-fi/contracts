@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IStETH} from "../Dependencies/IStETH.sol";
-import {IWstETH} from "../Dependencies/IWstETH.sol";
-import {IPositionManager} from "./IPositionManager.sol";
+import { IStETH } from "../Dependencies/IStETH.sol";
+import { IWstETH } from "../Dependencies/IWstETH.sol";
+import { IPositionManager } from "./IPositionManager.sol";
 
 /// @notice Interface for the PositionManagerStETH contract.
 interface IPositionManagerStETH is IPositionManager {
@@ -31,7 +31,12 @@ interface IPositionManagerStETH is IPositionManager {
     /// @param debtChange The amount of R to add or remove.
     /// @param isDebtIncrease True if the debt is being increased, false otherwise.
     /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
-    function managePositionETH(address borrower, uint256 debtChange, bool isDebtIncrease, uint256 maxFeePercentage)
+    function managePositionETH(
+        address borrower,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        uint256 maxFeePercentage
+    )
         external
         payable;
 
@@ -47,7 +52,8 @@ interface IPositionManagerStETH is IPositionManager {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external;
+    )
+        external;
 
     /// @dev Manages the position with stETH on behalf of a given borrower.
     /// @param borrower The address of the borrower.
@@ -63,5 +69,6 @@ interface IPositionManagerStETH is IPositionManager {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external;
+    )
+        external;
 }

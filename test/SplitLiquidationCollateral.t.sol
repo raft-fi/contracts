@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
-import {Test} from "forge-std/Test.sol";
+import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
+import { Test } from "forge-std/Test.sol";
 
 contract SplitLiquidationCollateralTest is Test {
     SplitLiquidationCollateral public splitLiquidationCollateral;
@@ -12,7 +12,7 @@ contract SplitLiquidationCollateralTest is Test {
     }
 
     function testSplitRedistribution() public {
-        uint256 collateralAmount = 1_000e18;
+        uint256 collateralAmount = 1000e18;
         (, uint256 collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
         assertEq(collateralToSentToLiquidator, 30e18); // 1000 * 3%
 
@@ -22,15 +22,15 @@ contract SplitLiquidationCollateralTest is Test {
 
         collateralAmount = 100_000e18;
         (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
-        assertEq(collateralToSentToLiquidator, 1_250e18);
+        assertEq(collateralToSentToLiquidator, 1250e18);
 
         collateralAmount = 500_000e18;
         (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
-        assertApproxEqAbs(collateralToSentToLiquidator, 4_583e18, 1e18);
+        assertApproxEqAbs(collateralToSentToLiquidator, 4583e18, 1e18);
 
         collateralAmount = 1_000_000e18;
         (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
-        assertEq(collateralToSentToLiquidator, 5_000e18);
+        assertEq(collateralToSentToLiquidator, 5000e18);
 
         collateralAmount = 2_000_000e18;
         (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
@@ -39,22 +39,22 @@ contract SplitLiquidationCollateralTest is Test {
 
     function testSplitLiquidation() public {
         uint256 collateralAmount = 500e18;
-        uint256 debtAmount = 1_000e18;
+        uint256 debtAmount = 1000e18;
         uint256 price = 5e18;
         (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         assertEq(collateralToSendToProtocol, 0);
         assertEq(collateralToSentToLiquidator, 300e18); // 100% of 300e18 (collateralAmount - debtAmount / price)
 
-        collateralAmount = 1_000e18;
-        debtAmount = 3_000e18;
+        collateralAmount = 1000e18;
+        debtAmount = 3000e18;
         price = 5e18;
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         assertEq(collateralToSendToProtocol, 0);
         assertEq(collateralToSentToLiquidator, 400e18); // 100% of 400e18 (collateralAmount - debtAmount / price)
 
-        collateralAmount = 5_000e18;
+        collateralAmount = 5000e18;
         debtAmount = 10_000e18;
         price = 5e18;
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
