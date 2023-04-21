@@ -1,6 +1,5 @@
 {
   "name": "@raft-fi/contracts",
-  "description": "Foundry-based template for developing Solidity smart contracts",
   "version": "1.0.0",
   "devDependencies": {
     "husky": "^8.0.3",
