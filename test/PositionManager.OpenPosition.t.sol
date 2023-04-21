@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManagerTester} from "./TestContracts/PositionManagerTester.sol";
+import {IERC20Indexable} from "../contracts/Interfaces/IERC20Indexable.sol";
 import {IRToken} from "../contracts/Interfaces/IRToken.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
@@ -498,7 +499,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
     // Creates a new position and assigns the correct collateral and debt amount
     function testPositionCollateralDebtAmount() public {
-        uint256 collateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(address(this));
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 collateralBefore = raftCollateralToken.balanceOf(address(this));
         uint256 debtBefore = positionManager.raftDebtToken().balanceOf(address(this));
 
         assertEq(collateralBefore, 0);
@@ -517,7 +519,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 collateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 collateralAfter = raftCollateralToken.balanceOf(ALICE);
         uint256 debtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 expectedDebt = PositionManagerUtils.getAmountWithBorrowingFee(positionManager, debtAmount);
 
@@ -541,7 +543,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
         uint256 positionManagerCollateralAfter = collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerCollateralAfter, alicePositionCollateral);
     }
@@ -574,7 +577,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.prank(address(positionManager));
         rToken.mint(ALICE, 10000e18);
 
-        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
         uint256 alicePositionDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
         vm.prank(ALICE);

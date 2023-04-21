@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IERC20Indexable} from "../contracts/Interfaces/IERC20Indexable.sol";
 import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
@@ -39,6 +40,7 @@ contract PositionManagerTest is TestSetup {
             splitLiquidationCollateral
         );
         positionManager2.addCollateralToken(collateralToken, priceFeed);
+        (IERC20Indexable raftCollateralToken2,) = positionManager2.raftCollateralTokens(collateralToken);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -56,7 +58,7 @@ contract PositionManagerTest is TestSetup {
         collateralToken.approve(address(positionManager2), collateralTopUpAmount);
 
         uint256 borrowerDebtBefore = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollateralBefore = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 borrowerCollateralBefore = raftCollateralToken2.balanceOf(ALICE);
         uint256 borrowerRBalanceBefore = positionManager2.rToken().balanceOf(ALICE);
         uint256 borrowerCollateralBalanceBefore = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceBefore = positionManager2.rToken().balanceOf(BOB);
@@ -67,10 +69,10 @@ contract PositionManagerTest is TestSetup {
         uint256 delegateRBalanceAfter = positionManager2.rToken().balanceOf(BOB);
         uint256 delegateCollateralBalanceAfter = collateralToken.balanceOf(BOB);
         uint256 borrowerDebtAfter = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollateralAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 borrowerCollateralAfter = raftCollateralToken2.balanceOf(ALICE);
 
         uint256 delegateDebtAfter = positionManager2.raftDebtToken().balanceOf(BOB);
-        uint256 delegateCollateralAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(BOB);
+        uint256 delegateCollateralAfter = raftCollateralToken2.balanceOf(BOB);
 
         assertEq(borrowerRBalanceAfter, borrowerRBalanceBefore);
         assertEq(borrowerCollateralBalanceAfter, borrowerCollateralBalanceBefore);
@@ -215,8 +217,10 @@ contract PositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertEq(positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE), alicePosition.collateral);
-        assertEq(positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB), bobPosition.collateral);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+
+        assertEq(raftCollateralToken.balanceOf(ALICE), alicePosition.collateral);
+        assertEq(raftCollateralToken.balanceOf(BOB), bobPosition.collateral);
     }
 
     // Returns debt

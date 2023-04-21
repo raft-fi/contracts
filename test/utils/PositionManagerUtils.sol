@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import {MathUtils} from "../../contracts/Dependencies/MathUtils.sol";
 import {IStETH} from "../../contracts/Dependencies/IStETH.sol";
+import {IERC20Indexable} from "../../contracts/Interfaces/IERC20Indexable.sol";
 import {IPositionManager} from "../../contracts/Interfaces/IPositionManager.sol";
 import {IPositionManagerStETH} from "../../contracts/Interfaces/IPositionManagerStETH.sol";
 import {PositionManagerStETH} from "../../contracts/PositionManagerStETH.sol";
@@ -161,7 +162,7 @@ library PositionManagerUtils {
 
         if (icr > 0) {
             IERC20 raftDebtToken = positionManager.raftDebtToken();
-            IERC20 raftCollateralToken = positionManager.raftCollateralTokens(_collateralToken);
+            (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
             uint256 debt = raftDebtToken.balanceOf(borrower);
             uint256 collateral = raftCollateralToken.balanceOf(borrower);
             uint256 price = priceFeed.getPrice();
