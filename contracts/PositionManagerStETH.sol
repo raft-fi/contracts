@@ -10,28 +10,34 @@ import {ISplitLiquidationCollateral} from "./Interfaces/ISplitLiquidationCollate
 import {PositionManager} from "./PositionManager.sol";
 
 contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
+    // --- Immutable variables ---
+
     IWstETH public immutable override wstETH;
     IStETH public immutable override stETH;
 
+    // --- Constructor ---
+
     constructor(
-        IPriceFeed _priceFeed,
-        IWstETH _wstETH,
-        uint256 _positionsSize,
+        IPriceFeed priceFeed,
+        IWstETH wstETH_,
+        uint256 positionsSize,
         address[] memory delegates,
         ISplitLiquidationCollateral newSplitLiquidationCollateral
     ) PositionManager(delegates, newSplitLiquidationCollateral) {
-        wstETH = _wstETH;
-        stETH = IStETH(address(_wstETH.stETH()));
+        wstETH = wstETH_;
+        stETH = IStETH(address(wstETH_.stETH()));
 
-        addCollateralToken(_wstETH, _priceFeed, _positionsSize);
+        addCollateralToken(wstETH_, priceFeed, positionsSize);
     }
 
+    // --- Functions ---
+
     function managePositionETH(
-        uint256 _debtChange,
-        bool _isDebtIncrease,
-        address _upperHint,
-        address _lowerHint,
-        uint256 _maxFeePercentage
+        uint256 debtChange,
+        bool isDebtIncrease,
+        address upperHint,
+        address lowerHint,
+        uint256 maxFeePercentage
     ) external payable override {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
         (bool sent,) = address(wstETH).call{value: msg.value}("");
@@ -46,22 +52,22 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
             msg.sender,
             wstETHAmount,
             true,
-            _debtChange,
-            _isDebtIncrease,
-            _upperHint,
-            _lowerHint,
-            _maxFeePercentage,
+            debtChange,
+            isDebtIncrease,
+            upperHint,
+            lowerHint,
+            maxFeePercentage,
             false
         );
     }
 
     function managePositionETH(
-        address _borrower,
-        uint256 _debtChange,
-        bool _isDebtIncrease,
-        address _upperHint,
-        address _lowerHint,
-        uint256 _maxFeePercentage
+        address borrower,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        address upperHint,
+        address lowerHint,
+        uint256 maxFeePercentage
     ) external payable override {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
         (bool sent,) = address(wstETH).call{value: msg.value}("");
@@ -73,101 +79,101 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
 
         _managePosition(
             wstETH,
-            _borrower,
+            borrower,
             wstETHAmount,
             true,
-            _debtChange,
-            _isDebtIncrease,
-            _upperHint,
-            _lowerHint,
-            _maxFeePercentage,
+            debtChange,
+            isDebtIncrease,
+            upperHint,
+            lowerHint,
+            maxFeePercentage,
             false
         );
     }
 
     function managePositionStETH(
-        uint256 _collateralChange,
-        bool _isCollateralIncrease,
-        uint256 _debtChange,
-        bool _isDebtIncrease,
-        address _upperHint,
-        address _lowerHint,
-        uint256 _maxFeePercentage
+        uint256 collateralChange,
+        bool isCollateralIncrease,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        address upperHint,
+        address lowerHint,
+        uint256 maxFeePercentage
     ) external override {
-        if (_isCollateralIncrease) {
-            stETH.transferFrom(msg.sender, address(this), _collateralChange);
-            stETH.approve(address(wstETH), _collateralChange);
-            uint256 wstETHAmount = wstETH.wrap(_collateralChange);
+        if (isCollateralIncrease) {
+            stETH.transferFrom(msg.sender, address(this), collateralChange);
+            stETH.approve(address(wstETH), collateralChange);
+            uint256 wstETHAmount = wstETH.wrap(collateralChange);
             _managePosition(
                 wstETH,
                 msg.sender,
                 wstETHAmount,
-                _isCollateralIncrease,
-                _debtChange,
-                _isDebtIncrease,
-                _upperHint,
-                _lowerHint,
-                _maxFeePercentage,
+                isCollateralIncrease,
+                debtChange,
+                isDebtIncrease,
+                upperHint,
+                lowerHint,
+                maxFeePercentage,
                 false
             );
         } else {
             _managePosition(
                 wstETH,
                 msg.sender,
-                _collateralChange,
-                _isCollateralIncrease,
-                _debtChange,
-                _isDebtIncrease,
-                _upperHint,
-                _lowerHint,
-                _maxFeePercentage,
+                collateralChange,
+                isCollateralIncrease,
+                debtChange,
+                isDebtIncrease,
+                upperHint,
+                lowerHint,
+                maxFeePercentage,
                 false
             );
-            uint256 stETHAmount = wstETH.unwrap(_collateralChange);
+            uint256 stETHAmount = wstETH.unwrap(collateralChange);
             stETH.transfer(msg.sender, stETHAmount);
         }
     }
 
     function managePositionStETH(
-        address _borrower,
-        uint256 _collateralChange,
-        bool _isCollateralIncrease,
-        uint256 _debtChange,
-        bool _isDebtIncrease,
-        address _upperHint,
-        address _lowerHint,
-        uint256 _maxFeePercentage
+        address borrower,
+        uint256 collateralChange,
+        bool isCollateralIncrease,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        address upperHint,
+        address lowerHint,
+        uint256 maxFeePercentage
     ) external override {
-        if (_isCollateralIncrease) {
-            stETH.transferFrom(msg.sender, address(this), _collateralChange);
-            stETH.approve(address(wstETH), _collateralChange);
-            uint256 wstETHAmount = wstETH.wrap(_collateralChange);
+        if (isCollateralIncrease) {
+            stETH.transferFrom(msg.sender, address(this), collateralChange);
+            stETH.approve(address(wstETH), collateralChange);
+            uint256 wstETHAmount = wstETH.wrap(collateralChange);
             _managePosition(
                 wstETH,
-                _borrower,
+                borrower,
                 wstETHAmount,
-                _isCollateralIncrease,
-                _debtChange,
-                _isDebtIncrease,
-                _upperHint,
-                _lowerHint,
-                _maxFeePercentage,
+                isCollateralIncrease,
+                debtChange,
+                isDebtIncrease,
+                upperHint,
+                lowerHint,
+                maxFeePercentage,
                 false
             );
         } else {
             _managePosition(
                 wstETH,
-                _borrower,
-                _collateralChange,
-                _isCollateralIncrease,
-                _debtChange,
-                _isDebtIncrease,
-                _upperHint,
-                _lowerHint,
-                _maxFeePercentage,
+                borrower,
+                collateralChange,
+                isCollateralIncrease,
+                debtChange,
+                isDebtIncrease,
+                upperHint,
+                lowerHint,
+                maxFeePercentage,
                 false
             );
-            uint256 stETHAmount = wstETH.unwrap(_collateralChange);
+            uint256 stETHAmount = wstETH.unwrap(collateralChange);
             stETH.transfer(msg.sender, stETHAmount);
         }
     }

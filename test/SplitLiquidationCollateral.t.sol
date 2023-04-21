@@ -44,7 +44,7 @@ contract SplitLiquidationCollateralTest is Test {
         (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         assertEq(collateralToSendToProtocol, 0);
-        assertEq(collateralToSentToLiquidator, 300e18); // 100% of 300e18 (collateraAmount - debtAmount / price)
+        assertEq(collateralToSentToLiquidator, 300e18); // 100% of 300e18 (collateralAmount - debtAmount / price)
 
         collateralAmount = 1_000e18;
         debtAmount = 3_000e18;
@@ -52,16 +52,16 @@ contract SplitLiquidationCollateralTest is Test {
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         assertEq(collateralToSendToProtocol, 0);
-        assertEq(collateralToSentToLiquidator, 400e18); // 100% of 400e18 (collateraAmount - debtAmount / price)
+        assertEq(collateralToSentToLiquidator, 400e18); // 100% of 400e18 (collateralAmount - debtAmount / price)
 
         collateralAmount = 5_000e18;
         debtAmount = 10_000e18;
         price = 5e18;
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
-        // (collateraAmount - debtAmount / price) - collateralToSentToLiquidator
+        // (collateralAmount - debtAmount / price) - collateralToSentToLiquidator
         assertApproxEqAbs(collateralToSendToProtocol, 3000e18 - 2925e18, 1e18);
-        // 97,5% of 3000e18 (collateraAmount - debtAmount / price)
+        // 97.5% of 3000e18 (collateralAmount - debtAmount / price)
         assertApproxEqAbs(collateralToSentToLiquidator, 2925e18, 1e18);
 
         collateralAmount = 50_000e18;
@@ -70,7 +70,7 @@ contract SplitLiquidationCollateralTest is Test {
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         assertEq(collateralToSendToProtocol, 10_500e18); // 30_000e18 - collateralToSentToLiquidator
-        assertEq(collateralToSentToLiquidator, 19_500e18); // 65% of 30_000e18 (collateraAmount - debtAmount / price)
+        assertEq(collateralToSentToLiquidator, 19_500e18); // 65% of 30_000e18 (collateralAmount - debtAmount / price)
 
         collateralAmount = 500_000e18;
         debtAmount = 1_000_000e18;
@@ -78,7 +78,7 @@ contract SplitLiquidationCollateralTest is Test {
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         assertEq(collateralToSendToProtocol, 150_000e18); // 300_000e18 - collateralToSentToLiquidator
-        assertEq(collateralToSentToLiquidator, 150_000e18); // 50% of 50_000e18 (collateraAmount - debtAmount / price)
+        assertEq(collateralToSentToLiquidator, 150_000e18); // 50% of 50_000e18 (collateralAmount - debtAmount / price)
 
         collateralAmount = 5_000_000e18;
         debtAmount = 10_000_000e18;
@@ -86,7 +86,7 @@ contract SplitLiquidationCollateralTest is Test {
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         assertEq(collateralToSendToProtocol, 1_500_000e18); // 3_000_000e18 - collateralToSentToLiquidator
-        // 50% of 3_000_000e18 (collateraAmount - debtAmount / price)
+        // 50% of 3_000_000e18 (collateralAmount - debtAmount / price)
         assertEq(collateralToSentToLiquidator, 1_500_000e18);
     }
 }
