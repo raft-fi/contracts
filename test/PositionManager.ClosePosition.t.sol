@@ -124,6 +124,51 @@ contract PositionManagerClosePositionTest is TestSetup {
         assertEq(aliceDebtBalanceAfter, aliceRBalanceBefore - aliceDebtBefore);
     }
 
+    // Reduces position's collateral and debt to zero
+    function testCollateralNotZeroWhenDebtZeroReverts() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            extraDebtAmount: 10000e18,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        vm.startPrank(BOB);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            extraDebtAmount: 10000e18,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 alicePositionCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 bobRBalance = rToken.balanceOf(BOB);
+
+        assertGt(alicePositionCollateralBefore, 0);
+        assertGt(aliceDebtBefore, 0);
+        assertGt(bobRBalance, 0);
+
+        // To compensate borrowing fees
+        vm.prank(BOB);
+        rToken.transfer(ALICE, bobRBalance / 2);
+
+        uint256 aliceRBalanceBefore = rToken.balanceOf(ALICE);
+        assertGt(aliceRBalanceBefore, 0);
+
+        // Alice attempts to close position but leave some collateral
+        vm.prank(ALICE);
+        vm.expectRevert(IPositionManager.InvalidPosition.selector);
+        positionManager.managePosition(
+            collateralToken, alicePositionCollateralBefore / 2, false, aliceDebtBefore, false, ALICE, ALICE, 0
+        );
+    }
+
     // Succeeds when borrower's R balance is equals to his entire debt and borrowing rate = 0
     function testSuccessfulClosureBorrowingRateZero() public {
         vm.startPrank(ALICE);
