@@ -16,12 +16,28 @@ import { FeeCollector } from "./FeeCollector.sol";
 import { RToken, IRToken } from "./RToken.sol";
 
 contract PositionManager is FeeCollector, IPositionManager {
+    // --- Types ---
+
     using SafeERC20 for IERC20;
     using Fixed256x18 for uint256;
 
-    IRToken public immutable override rToken;
+    // --- Constants ---
 
+    uint256 public constant override MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
+
+    uint256 public constant override MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10_000 * 25; // 0.25%
+    uint256 public constant override MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 100 * 2; // 2%
+    uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
+    uint256 public constant override MAX_BORROWING_RATE = MathUtils._100_PERCENT / 100 * 5; // 5%
+
+    uint256 public constant override BETA = 2;
+
+    // --- Immutables ---
+
+    IRToken public immutable override rToken;
     IERC20Indexable public immutable override raftDebtToken;
+
+    // --- Variables ---
 
     mapping(IERC20 collateralToken => RaftCollateralTokenInfo tokenInfo) public override raftCollateralTokens;
 
@@ -35,32 +51,20 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     ISplitLiquidationCollateral public override splitLiquidationCollateral;
 
-    /// @notice Half-life of 12h (720 min).
-    /// @dev (1/2) = d^720 => d = (1/2)^(1/720)
-    uint256 public constant MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
-
-    uint256 public constant MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10_000 * 25; // 0.25%
-    uint256 public constant MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 100 * 2; // 2%
-    uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
-    uint256 public constant MAX_BORROWING_FEE = MathUtils._100_PERCENT / 100 * 5; // 5%
-
-    /// @dev Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
-    /// Corresponds to (1 / ALPHA) in the white paper.
-    uint256 public constant BETA = 2;
-
     uint256 public override borrowingSpread;
     uint256 public override redemptionSpread;
     uint256 public baseRate;
 
-    /// @dev The timestamp of the latest fee operation (redemption or new R issuance).
-    uint256 public lastFeeOperationTime;
+    uint256 public override lastFeeOperationTime;
 
-    uint256 private totalDebt;
+    uint256 private _totalDebt;
+
+    // --- Modifiers ---
 
     /// @dev Checks if the collateral token has been added to the position manager, or reverts otherwise.
-    /// @param _collateralToken The collateral token to check.
-    modifier collateralTokenExists(IERC20 _collateralToken) {
-        if (address(raftCollateralTokens[_collateralToken].token) == address(0)) {
+    /// @param collateralToken The collateral token to check.
+    modifier collateralTokenExists(IERC20 collateralToken) {
+        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
             revert CollateralTokenNotAdded();
         }
         _;
@@ -93,10 +97,10 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     /// @dev Checks if the max fee percentage is between the borrowing spread and 100%, or reverts otherwise. When the
     /// condition is false, the check is skipped.
-    /// @param _maxFeePercentage The max fee percentage to check.
+    /// @param maxFeePercentage The max fee percentage to check.
     /// @param condition If true, the check will be performed.
-    modifier validMaxFeePercentageWhen(uint256 _maxFeePercentage, bool condition) {
-        if (condition && (_maxFeePercentage < borrowingSpread || _maxFeePercentage > MathUtils._100_PERCENT)) {
+    modifier validMaxFeePercentageWhen(uint256 maxFeePercentage, bool condition) {
+        if (condition && (maxFeePercentage < borrowingSpread || maxFeePercentage > MathUtils._100_PERCENT)) {
             revert InvalidMaxFeePercentage();
         }
         _;
@@ -128,57 +132,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit PositionManagerDeployed(rToken, raftDebtToken, msg.sender);
     }
 
-    function setGlobalDelegateWhitelist(address delegate, bool isWhitelisted) public override onlyOwner {
-        if (delegate == address(0)) {
-            revert InvalidDelegateAddress();
-        }
-        globalDelegateWhitelist[delegate] = isWhitelisted;
-
-        emit GlobalDelegateUpdated(delegate, isWhitelisted);
-    }
-
-    function addCollateralToken(IERC20 _collateralToken, IPriceFeed _priceFeed) public override onlyOwner {
-        if (address(raftCollateralTokens[_collateralToken].token) != address(0)) {
-            revert CollateralTokenAlreadyAdded();
-        }
-
-        RaftCollateralTokenInfo memory raftCollateralTokenInfo;
-        raftCollateralTokenInfo.token = new ERC20Indexable(
-            address(this),
-            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(_collateralToken)).name()), " collateral")),
-            string(bytes.concat("r", bytes(IERC20Metadata(address(_collateralToken)).symbol()), "-c"))
-        );
-        raftCollateralTokenInfo.isEnabled = true;
-
-        raftCollateralTokens[_collateralToken] = raftCollateralTokenInfo;
-        priceFeeds[_collateralToken] = _priceFeed;
-
-        emit CollateralTokenAdded(_collateralToken, raftCollateralTokens[_collateralToken].token, _priceFeed);
-    }
-
-    function modifyCollateralToken(IERC20 collateralToken, bool isEnabled) public override onlyOwner {
-        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
-            revert CollateralTokenNotAdded();
-        }
-        bool previousIsEnabled = raftCollateralTokens[collateralToken].isEnabled;
-        raftCollateralTokens[collateralToken].isEnabled = isEnabled;
-
-        if (previousIsEnabled != isEnabled) {
-            emit CollateralTokenModified(collateralToken, raftCollateralTokens[collateralToken].token, isEnabled);
-        }
-    }
-
-    function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral)
-        public
-        override
-        onlyOwner
-    {
-        if (address(newSplitLiquidationCollateral) == address(0)) {
-            revert SplitLiquidationCollateralCannotBeZero();
-        }
-        splitLiquidationCollateral = newSplitLiquidationCollateral;
-        emit SplitLiquidationCollateralChanged(newSplitLiquidationCollateral);
-    }
+    // --- External functions ---
 
     function managePosition(
         IERC20 collateralToken,
@@ -226,6 +180,204 @@ contract PositionManager is FeeCollector, IPositionManager {
             true
         );
     }
+
+    function liquidate(IERC20 collateralToken, address position) external override {
+        uint256 price = priceFeeds[collateralToken].fetchPrice();
+        uint256 icr = MathUtils._computeCR(
+            raftCollateralTokens[collateralToken].token.balanceOf(position), raftDebtToken.balanceOf(position), price
+        );
+        if (icr >= MathUtils.MCR) {
+            revert NothingToLiquidate();
+        }
+
+        uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
+        uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
+        bool isRedistribution = icr <= MathUtils._100_PERCENT;
+
+        (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
+            splitLiquidationCollateral.split(entirePositionCollateral, entirePositionDebt, price, isRedistribution);
+
+        if (!isRedistribution) {
+            rToken.burn(msg.sender, entirePositionDebt);
+            _totalDebt -= entirePositionDebt;
+            // Collateral is sent to protocol as a fee only in case of liquidation
+            collateralToken.transfer(feeRecipient, collateralLiquidationFee);
+        }
+
+        collateralToken.transfer(msg.sender, collateralToSendToLiquidator);
+
+        _closePosition(collateralToken, position, true);
+
+        _updateDebtAndCollateralIndex(collateralToken);
+
+        emit Liquidation(
+            msg.sender,
+            position,
+            collateralToken,
+            entirePositionDebt,
+            entirePositionCollateral,
+            collateralToSendToLiquidator,
+            collateralLiquidationFee,
+            isRedistribution
+        );
+    }
+
+    function redeemCollateral(
+        IERC20 collateralToken,
+        uint256 debtAmount,
+        uint256 maxFeePercentage
+    )
+        external
+        override
+    {
+        if (maxFeePercentage < MIN_REDEMPTION_SPREAD || maxFeePercentage > MathUtils._100_PERCENT) {
+            revert MaxFeePercentageOutOfRange();
+        }
+        if (debtAmount == 0) {
+            revert AmountIsZero();
+        }
+
+        uint256 price = priceFeeds[collateralToken].fetchPrice();
+        uint256 collateralToRedeem = debtAmount.divDown(price);
+
+        // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
+        // Use the saved total R supply value, from before it was reduced by the redemption.
+        _updateBaseRateFromRedemption(collateralToRedeem, price, rToken.totalSupply());
+
+        // Calculate the redemption fee
+        uint256 redemptionFee = getRedemptionFee(collateralToRedeem);
+
+        _checkValidFee(redemptionFee, collateralToRedeem, maxFeePercentage);
+
+        // Send the redemption fee to the recipient
+        collateralToken.safeTransfer(feeRecipient, redemptionFee);
+
+        emit Redemption(debtAmount, collateralToRedeem, redemptionFee);
+
+        // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
+        rToken.burn(msg.sender, debtAmount);
+        _totalDebt -= debtAmount;
+
+        // Send collateral to account
+        collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
+
+        _updateDebtAndCollateralIndex(collateralToken);
+    }
+
+    function whitelistDelegate(address delegate) external override {
+        if (delegate == address(0)) {
+            revert InvalidDelegateAddress();
+        }
+        individualDelegateWhitelist[msg.sender][delegate] = true;
+    }
+
+    function setBorrowingSpread(uint256 newBorrowingSpread) external override onlyOwner {
+        if (newBorrowingSpread > MAX_BORROWING_SPREAD) {
+            revert BorrowingSpreadExceedsMaximum();
+        }
+        borrowingSpread = newBorrowingSpread;
+        emit BorrowingSpreadUpdated(newBorrowingSpread);
+    }
+
+    function getRedemptionFeeWithDecay(uint256 collateralAmount)
+        external
+        view
+        override
+        returns (uint256 redemptionFee)
+    {
+        redemptionFee = getRedemptionRateWithDecay().mulDown(collateralAmount);
+        if (redemptionFee >= collateralAmount) {
+            revert FeeEatsUpAllReturnedCollateral();
+        }
+    }
+
+    // --- Public functions ---
+
+    function setGlobalDelegateWhitelist(address delegate, bool isWhitelisted) public override onlyOwner {
+        if (delegate == address(0)) {
+            revert InvalidDelegateAddress();
+        }
+        globalDelegateWhitelist[delegate] = isWhitelisted;
+
+        emit GlobalDelegateUpdated(delegate, isWhitelisted);
+    }
+
+    function addCollateralToken(IERC20 collateralToken, IPriceFeed priceFeed) public override onlyOwner {
+        if (address(raftCollateralTokens[collateralToken].token) != address(0)) {
+            revert CollateralTokenAlreadyAdded();
+        }
+
+        RaftCollateralTokenInfo memory raftCollateralTokenInfo;
+        raftCollateralTokenInfo.token = new ERC20Indexable(
+            address(this),
+            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(collateralToken)).name()), " collateral")),
+            string(bytes.concat("r", bytes(IERC20Metadata(address(collateralToken)).symbol()), "-c"))
+        );
+        raftCollateralTokenInfo.isEnabled = true;
+
+        raftCollateralTokens[collateralToken] = raftCollateralTokenInfo;
+        priceFeeds[collateralToken] = priceFeed;
+
+        emit CollateralTokenAdded(collateralToken, raftCollateralTokens[collateralToken].token, priceFeed);
+    }
+
+    function modifyCollateralToken(IERC20 collateralToken, bool isEnabled) public override onlyOwner {
+        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
+            revert CollateralTokenNotAdded();
+        }
+        bool previousIsEnabled = raftCollateralTokens[collateralToken].isEnabled;
+        raftCollateralTokens[collateralToken].isEnabled = isEnabled;
+
+        if (previousIsEnabled != isEnabled) {
+            emit CollateralTokenModified(collateralToken, raftCollateralTokens[collateralToken].token, isEnabled);
+        }
+    }
+
+    function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral)
+        public
+        override
+        onlyOwner
+    {
+        if (address(newSplitLiquidationCollateral) == address(0)) {
+            revert SplitLiquidationCollateralCannotBeZero();
+        }
+        splitLiquidationCollateral = newSplitLiquidationCollateral;
+        emit SplitLiquidationCollateralChanged(newSplitLiquidationCollateral);
+    }
+
+    function setRedemptionSpread(uint256 newRedemptionSpread) public override onlyOwner {
+        if (newRedemptionSpread < MIN_REDEMPTION_SPREAD || newRedemptionSpread > MAX_REDEMPTION_SPREAD) {
+            revert RedemptionSpreadOutOfRange();
+        }
+        redemptionSpread = newRedemptionSpread;
+        emit RedemptionSpreadUpdated(newRedemptionSpread);
+    }
+
+    function getRedemptionRate() public view override returns (uint256) {
+        return _calcRedemptionRate(baseRate);
+    }
+
+    function getRedemptionRateWithDecay() public view override returns (uint256) {
+        return _calcRedemptionRate(_calcDecayedBaseRate());
+    }
+
+    function getRedemptionFee(uint256 collateralAmount) public view override returns (uint256) {
+        return getRedemptionRate().mulDown(collateralAmount);
+    }
+
+    function getBorrowingRate() public view override returns (uint256) {
+        return _calcBorrowingRate(baseRate);
+    }
+
+    function getBorrowingRateWithDecay() public view override returns (uint256) {
+        return _calcBorrowingRate(_calcDecayedBaseRate());
+    }
+
+    function getBorrowingFee(uint256 debt) public view override returns (uint256) {
+        return getBorrowingRate().mulDown(debt);
+    }
+
+    // --- Helper functions ---
 
     /// @dev Manages the position on behalf of a given borrower.
     /// @param collateralToken The token the borrower used as collateral.
@@ -278,7 +430,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             // position was closed, remove it
             _closePosition(collateralToken, position, false);
         } else {
-            checkValidPosition(collateralToken, positionDebt, positionCollateral);
+            _checkValidPosition(collateralToken, positionDebt, positionCollateral);
 
             if (newPosition) {
                 collateralTokenForPosition[position] = collateralToken;
@@ -308,10 +460,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (isDebtIncrease) {
             uint256 totalDebtChange = debtChange + _triggerBorrowingFee(position, debtChange, maxFeePercentage);
             raftDebtToken.mint(position, totalDebtChange);
-            totalDebt += totalDebtChange;
+            _totalDebt += totalDebtChange;
             rToken.mint(msg.sender, debtChange);
         } else {
-            totalDebt -= debtChange;
+            _totalDebt -= debtChange;
             raftDebtToken.burn(position, debtChange);
             rToken.burn(msg.sender, debtChange);
         }
@@ -354,104 +506,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit CollateralChanged(position, collateralChange, isCollateralIncrease);
     }
 
-    function whitelistDelegate(address delegate) external override {
-        if (delegate == address(0)) {
-            revert InvalidDelegateAddress();
-        }
-        individualDelegateWhitelist[msg.sender][delegate] = true;
-    }
-
-    // --- Position Liquidation functions ---
-
-    function liquidate(IERC20 collateralToken, address position) external override {
-        uint256 price = priceFeeds[collateralToken].fetchPrice();
-        uint256 icr = MathUtils._computeCR(
-            raftCollateralTokens[collateralToken].token.balanceOf(position), raftDebtToken.balanceOf(position), price
-        );
-        if (icr >= MathUtils.MCR) {
-            revert NothingToLiquidate();
-        }
-
-        uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
-        uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
-        bool isRedistribution = icr <= MathUtils._100_PERCENT;
-
-        (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
-            splitLiquidationCollateral.split(entirePositionCollateral, entirePositionDebt, price, isRedistribution);
-
-        if (!isRedistribution) {
-            rToken.burn(msg.sender, entirePositionDebt);
-            totalDebt -= entirePositionDebt;
-            // Collateral is sent to protocol as a fee only in case of liquidation
-            collateralToken.transfer(feeRecipient, collateralLiquidationFee);
-        }
-
-        collateralToken.transfer(msg.sender, collateralToSendToLiquidator);
-
-        _closePosition(collateralToken, position, true);
-
-        _updateDebtAndCollateralIndex(collateralToken);
-
-        emit Liquidation(
-            msg.sender,
-            position,
-            collateralToken,
-            entirePositionDebt,
-            entirePositionCollateral,
-            collateralToSendToLiquidator,
-            collateralLiquidationFee,
-            isRedistribution
-        );
-    }
-
-    function redeemCollateral(
-        IERC20 collateralToken,
-        uint256 debtAmount,
-        uint256 maxFeePercentage
-    )
-        external
-        override
-    {
-        if (maxFeePercentage < MIN_REDEMPTION_SPREAD || maxFeePercentage > MathUtils._100_PERCENT) {
-            revert MaxFeePercentageOutOfRange();
-        }
-        if (debtAmount == 0) {
-            revert AmountIsZero();
-        }
-
-        uint256 price = priceFeeds[collateralToken].fetchPrice();
-        uint256 collateralToRedeem = debtAmount.divDown(price);
-
-        // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
-        // Use the saved total R supply value, from before it was reduced by the redemption.
-        _updateBaseRateFromRedemption(collateralToRedeem, price, rToken.totalSupply());
-
-        // Calculate the redemption fee
-        uint256 redemptionFee = getRedemptionFee(collateralToRedeem);
-
-        checkValidFee(redemptionFee, collateralToRedeem, maxFeePercentage);
-
-        // Send the redemption fee to the recipient
-        collateralToken.safeTransfer(feeRecipient, redemptionFee);
-
-        emit Redemption(debtAmount, collateralToRedeem, redemptionFee);
-
-        // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
-        rToken.burn(msg.sender, debtAmount);
-        totalDebt -= debtAmount;
-
-        // Send collateral to account
-        collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
-
-        _updateDebtAndCollateralIndex(collateralToken);
-    }
-
-    // --- Helper functions ---
-
     /// @dev Updates debt and collateral indexes for a given collateral token.
     /// @param collateralToken The collateral token for which to update the indexes.
     function _updateDebtAndCollateralIndex(IERC20 collateralToken) internal {
-        raftDebtToken.setIndex(totalDebt);
+        raftDebtToken.setIndex(_totalDebt);
         raftCollateralTokens[collateralToken].token.setIndex(collateralToken.balanceOf(address(this)));
     }
 
@@ -465,15 +523,15 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit PositionClosed(position);
     }
 
-    // --- Redemption fee functions ---
+    // --- Borrowing & redemption fee helper functions ---
 
     /// @dev Updates the base rate from a redemption operation. Impacts on the base rate:
     /// 1. decays the base rate based on time passed since last redemption or R borrowing operation,
     /// 2. increases the base rate based on the amount redeemed, as a proportion of total supply.
     function _updateBaseRateFromRedemption(
-        uint256 _collateralDrawn,
-        uint256 _price,
-        uint256 _totalRSupply
+        uint256 collateralDrawn,
+        uint256 price,
+        uint256 totalDebtSupply
     )
         internal
         returns (uint256)
@@ -482,7 +540,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         /* Convert the drawn collateral back to R at face value rate (1 R:1 USD), in order to get
         * the fraction of total supply that was redeemed at face value. */
-        uint256 redeemedFraction = _collateralDrawn * _price / _totalRSupply;
+        uint256 redeemedFraction = collateralDrawn * price / totalDebtSupply;
 
         uint256 newBaseRate = decayedBaseRate + redeemedFraction / BETA;
         newBaseRate = Math.min(newBaseRate, MathUtils._100_PERCENT); // cap baseRate at a maximum of 100%
@@ -497,66 +555,12 @@ contract PositionManager is FeeCollector, IPositionManager {
         return newBaseRate;
     }
 
-    function setRedemptionSpread(uint256 redemptionSpread_) public override onlyOwner {
-        if (redemptionSpread_ < MIN_REDEMPTION_SPREAD || redemptionSpread_ > MAX_REDEMPTION_SPREAD) {
-            revert RedemptionSpreadOutOfRange();
-        }
-        redemptionSpread = redemptionSpread_;
-        emit RedemptionSpreadUpdated(redemptionSpread_);
+    function _calcRedemptionRate(uint256 baseRate_) internal view returns (uint256) {
+        return baseRate_ + redemptionSpread;
     }
 
-    function getRedemptionRate() public view override returns (uint256) {
-        return _calcRedemptionRate(baseRate);
-    }
-
-    function getRedemptionRateWithDecay() public view override returns (uint256) {
-        return _calcRedemptionRate(_calcDecayedBaseRate());
-    }
-
-    function _calcRedemptionRate(uint256 _baseRate) internal view returns (uint256) {
-        return _baseRate + redemptionSpread;
-    }
-
-    function getRedemptionFee(uint256 _collateralAmount) public view override returns (uint256) {
-        return getRedemptionRate().mulDown(_collateralAmount);
-    }
-
-    function getRedemptionFeeWithDecay(uint256 _collateralAmount)
-        external
-        view
-        override
-        returns (uint256 redemptionFee)
-    {
-        redemptionFee = getRedemptionRateWithDecay().mulDown(_collateralAmount);
-        if (redemptionFee >= _collateralAmount) {
-            revert FeeEatsUpAllReturnedCollateral();
-        }
-    }
-
-    // --- Borrowing fee functions ---
-
-    function setBorrowingSpread(uint256 _borrowingSpread) external override onlyOwner {
-        if (_borrowingSpread > MAX_BORROWING_SPREAD) {
-            revert BorrowingSpreadExceedsMaximum();
-        }
-        borrowingSpread = _borrowingSpread;
-        emit BorrowingSpreadUpdated(_borrowingSpread);
-    }
-
-    function getBorrowingRate() public view override returns (uint256) {
-        return _calcBorrowingRate(baseRate);
-    }
-
-    function getBorrowingRateWithDecay() public view override returns (uint256) {
-        return _calcBorrowingRate(_calcDecayedBaseRate());
-    }
-
-    function _calcBorrowingRate(uint256 _baseRate) internal view returns (uint256) {
-        return Math.min(borrowingSpread + _baseRate, MAX_BORROWING_FEE);
-    }
-
-    function getBorrowingFee(uint256 _rDebt) public view override returns (uint256) {
-        return getBorrowingRate().mulDown(_rDebt);
+    function _calcBorrowingRate(uint256 baseRate_) internal view returns (uint256) {
+        return Math.min(borrowingSpread + baseRate_, MAX_BORROWING_RATE);
     }
 
     /// @dev Updates the base rate based on time elapsed since the last redemption or R borrowing operation.
@@ -569,8 +573,6 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         _updateLastFeeOpTime();
     }
-
-    // --- Internal fee functions ---
 
     /// @dev Update the last fee operation time only if time passed >= decay interval. This prevents base rate
     /// griefing.
@@ -590,44 +592,44 @@ contract PositionManager is FeeCollector, IPositionManager {
         return baseRate.mulDown(decayFactor);
     }
 
-    // --- Helper functions ---
-
     function _triggerBorrowingFee(
         address position,
         uint256 debtAmount,
-        uint256 _maxFeePercentage
+        uint256 maxFeePercentage
     )
         internal
-        returns (uint256 rFee)
+        returns (uint256 borrowingFee)
     {
         _decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        rFee = getBorrowingFee(debtAmount);
+        borrowingFee = getBorrowingFee(debtAmount);
 
-        checkValidFee(rFee, debtAmount, _maxFeePercentage);
+        _checkValidFee(borrowingFee, debtAmount, maxFeePercentage);
 
-        if (rFee > 0) {
-            rToken.mint(feeRecipient, rFee);
-            emit RBorrowingFeePaid(position, rFee);
+        if (borrowingFee > 0) {
+            rToken.mint(feeRecipient, borrowingFee);
+            emit RBorrowingFeePaid(position, borrowingFee);
         }
     }
 
-    function checkValidPosition(IERC20 _collateralToken, uint256 positionDebt, uint256 positionCollateral) internal {
+    // --- Validation check helper functions ---
+
+    function _checkValidPosition(IERC20 collateralToken, uint256 positionDebt, uint256 positionCollateral) internal {
         if (positionDebt < splitLiquidationCollateral.LOW_TOTAL_DEBT()) {
             revert NetDebtBelowMinimum(positionDebt);
         }
 
         uint256 newICR =
-            MathUtils._computeCR(positionCollateral, positionDebt, priceFeeds[_collateralToken].fetchPrice());
+            MathUtils._computeCR(positionCollateral, positionDebt, priceFeeds[collateralToken].fetchPrice());
         if (newICR < MathUtils.MCR) {
             revert NewICRLowerThanMCR(newICR);
         }
     }
 
-    function checkValidFee(uint256 _fee, uint256 _amount, uint256 _maxFeePercentage) internal pure {
-        uint256 feePercentage = _fee.divDown(_amount);
+    function _checkValidFee(uint256 fee, uint256 amount, uint256 maxFeePercentage) internal pure {
+        uint256 feePercentage = fee.divDown(amount);
 
-        if (feePercentage > _maxFeePercentage) {
-            revert FeeExceedsMaxFee(_fee, _amount, _maxFeePercentage);
+        if (feePercentage > maxFeePercentage) {
+            revert FeeExceedsMaxFee(fee, amount, maxFeePercentage);
         }
     }
 }

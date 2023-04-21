@@ -283,6 +283,9 @@ interface IPositionManager is IFeeCollector {
     /// @return The max borrowing spread.
     function MAX_BORROWING_SPREAD() external view returns (uint256);
 
+    /// @return The max borrowing rate.
+    function MAX_BORROWING_RATE() external view returns (uint256);
+
     /// @return The current borrowing spread.
     function borrowingSpread() external view returns (uint256);
 
@@ -330,6 +333,13 @@ interface IPositionManager is IFeeCollector {
     /// @return The redemption fee with decay.
     function getRedemptionFeeWithDecay(uint256 collateralAmount) external view returns (uint256);
 
+    /// @return Half-life of 12h (720 min).
+    /// @dev (1/2) = d^720 => d = (1/2)^(1/720)
+    function MINUTE_DECAY_FACTOR() external view returns (uint256);
+
+    /// @return The timestamp of the latest fee operation (redemption or new R issuance).
+    function lastFeeOperationTime() external view returns (uint256);
+
     /// @dev Adds global delegate to or removes it from the whitelist.
     /// @param delegate The address of the delegate that is being added or removed.
     /// @param isWhitelisted True if the delegate should be whitelisted, false for removing it.
@@ -355,4 +365,8 @@ interface IPositionManager is IFeeCollector {
     /// @dev Whitelists a delegate.
     /// @param delegate The address of the delegate.
     function whitelistDelegate(address delegate) external;
+
+    /// @return Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a
+    /// redemption. Corresponds to (1 / ALPHA) in the white paper.
+    function BETA() external view returns (uint256);
 }
