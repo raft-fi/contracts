@@ -262,10 +262,12 @@ contract PositionManager is FeeCollector, IPositionManager {
             _removePositionFromSortedPositions(_collateralToken, _borrower, false);
         } else {
             checkValidPosition(_collateralToken, positionDebt, positionCollateral);
+
             bool newPosition = !sortedPositions[_collateralToken].nodes[_borrower].exists;
             sortedPositions[_collateralToken]._update(
                 this, _collateralToken, _borrower, getNominalICR(_collateralToken, _borrower), _upperHint, _lowerHint
             );
+
             if (newPosition) {
                 collateralTokenForBorrower[_borrower] = _collateralToken;
                 emit PositionCreated(_borrower);
@@ -290,11 +292,11 @@ contract PositionManager is FeeCollector, IPositionManager {
             uint256 debtChange = _debtChange + _triggerBorrowingFee(_borrower, _debtChange, _maxFeePercentage);
             raftDebtToken.mint(_borrower, debtChange);
             totalDebt += debtChange;
-            rToken.mint(_borrower, _debtChange);
+            rToken.mint(msg.sender, _debtChange);
         } else {
             totalDebt -= _debtChange;
             raftDebtToken.burn(_borrower, _debtChange);
-            rToken.burn(_borrower, _debtChange);
+            rToken.burn(msg.sender, _debtChange);
         }
 
         emit DebtChanged(_borrower, _debtChange, _isDebtIncrease);
@@ -326,7 +328,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         } else {
             raftCollateralTokens[_collateralToken].burn(_borrower, _collateralChange);
             if (_needsCollateralTransfer) {
-                _collateralToken.safeTransfer(_borrower, _collateralChange);
+                _collateralToken.safeTransfer(msg.sender, _collateralChange);
             }
         }
 
@@ -343,6 +345,8 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Position Liquidation functions ---
 
     function liquidate(IERC20 collateralToken, address borrower) external override {
+        uint256 gasLeftStart = gasleft();
+
         uint256 price = priceFeeds[collateralToken].fetchPrice();
         uint256 icr = getCurrentICR(collateralToken, borrower, price);
         if (icr >= MathUtils.MCR) {

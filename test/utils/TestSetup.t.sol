@@ -10,11 +10,6 @@ import {SplitLiquidationCollateral} from "../../contracts/SplitLiquidationCollat
 import {WstETHTokenMock} from "../TestContracts/WstETHTokenMock.sol";
 
 contract TestSetup is Test {
-    struct CollateralDebt {
-        uint256 collateral;
-        uint256 debt;
-    }
-
     // User accounts
     address public constant ALICE = address(1);
     address public constant BOB = address(2);

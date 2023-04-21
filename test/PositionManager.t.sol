@@ -76,9 +76,9 @@ contract PositionManagerTest is TestSetup {
         uint256 delegateDebtAfter = positionManager2.raftDebtToken().balanceOf(BOB);
         uint256 delegateCollateralAfter = positionManager2.raftCollateralTokens(collateralToken).balanceOf(BOB);
 
-        assertEq(borrowerRBalanceAfter, borrowerRBalanceBefore + debtAmount);
+        assertEq(borrowerRBalanceAfter, borrowerRBalanceBefore);
         assertEq(borrowerCollateralBalanceAfter, borrowerCollateralBalanceBefore);
-        assertEq(delegateRBalanceAfter, delegateRBalanceBefore);
+        assertEq(delegateRBalanceAfter, delegateRBalanceBefore + debtAmount);
         assertEq(delegateCollateralBalanceAfter, delegateCollateralBalanceBefore - collateralTopUpAmount);
         assertEq(borrowerDebtAfter - borrowerDebtBefore, debtAmount);
         assertEq(borrowerCollateralAfter - borrowerCollateralBefore, collateralTopUpAmount);
