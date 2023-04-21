@@ -106,8 +106,8 @@ contract OneStepLeverageTest is TestSetup {
     function checkEffectiveLeverage(address borrower, uint256 targetLeverageMultiplier) internal {
         uint256 debtAfter = positionManager.raftDebtToken().balanceOf(borrower);
         uint256 collAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(borrower);
-        uint256 collAfterExpressedInR = positionManager.priceFeeds(collateralToken).fetchPrice() * collAfter / 1e18;
-        uint256 effectiveLeverage = collAfterExpressedInR * 1e18 / (collAfterExpressedInR - debtAfter);
+        uint256 collAfterExpressedInR = positionManager.priceFeeds(collateralToken).fetchPrice().mulDown(collAfter);
+        uint256 effectiveLeverage = collAfterExpressedInR.divDown(collAfterExpressedInR - debtAfter);
         assertEq(effectiveLeverage, targetLeverageMultiplier);
     }
 }
