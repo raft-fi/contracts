@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
+import {IERC20Indexable} from "../contracts/Interfaces/IERC20Indexable.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
 import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
 import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
@@ -103,7 +104,8 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 positionCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         uint256 collateralTopUpAmount = 1 ether;
 
         // Alice adds second collateral
@@ -112,7 +114,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, 0);
         vm.stopPrank();
 
-        uint256 positionCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 positionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + collateralTopUpAmount);
     }
 

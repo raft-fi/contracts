@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Indexable} from "../contracts/Interfaces/IERC20Indexable.sol";
 import {IStETH} from "../contracts/Dependencies/IStETH.sol";
 import {IWstETH} from "../contracts/Dependencies/IWstETH.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
@@ -44,7 +45,8 @@ contract PositionManagerStETHTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS));
+        uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
         uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
         assertEq(alicePositionCollateral, alicePosition.collateral);
@@ -64,7 +66,8 @@ contract PositionManagerStETHTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS)).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS));
+        uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
         uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
 
         assertEq(alicePositionCollateral, alicePosition.collateral);
@@ -83,7 +86,9 @@ contract PositionManagerStETHTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 positionCollateralBefore = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
+
+        uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);
 
         uint256 positionManagerBalanceBefore = _collateralToken.balanceOf(address(positionManager));
@@ -96,7 +101,7 @@ contract PositionManagerStETHTest is TestSetup {
         positionManager.managePositionETH{value: collateralTopUpAmount}(0, false, 0);
         vm.stopPrank();
 
-        uint256 positionCollateralAfter = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
+        uint256 positionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + wstETHAmount);
 
         uint256 positionManagerBalanceAfter = _collateralToken.balanceOf(address(positionManager));
@@ -135,7 +140,9 @@ contract PositionManagerStETHTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 positionCollateralBefore = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
+
+        uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);
 
         uint256 positionManagerBalanceBefore = _collateralToken.balanceOf(address(positionManager));
@@ -149,7 +156,7 @@ contract PositionManagerStETHTest is TestSetup {
         positionManager.managePositionStETH(collateralTopUpAmount, true, 0, false, 0);
         vm.stopPrank();
 
-        uint256 positionCollateralAfter = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
+        uint256 positionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
         assertEq(positionCollateralAfter, positionCollateralBefore + wstETHAmount);
 
         uint256 positionManagerBalanceAfter = _collateralToken.balanceOf(address(positionManager));

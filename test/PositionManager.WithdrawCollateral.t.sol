@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IERC20Indexable} from "../contracts/Interfaces/IERC20Indexable.sol";
 import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
 import {PositionManager} from "../contracts/PositionManager.sol";
 import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
@@ -127,8 +128,9 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 bobPositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(BOB);
-        uint256 carolPositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(CAROL);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 bobPositionCollateral = raftCollateralToken.balanceOf(BOB);
+        uint256 carolPositionCollateral = raftCollateralToken.balanceOf(CAROL);
 
         // Carol withdraws exactly all her collateral
         vm.prank(CAROL);
@@ -218,7 +220,8 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
 
         // Check position is active
         assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
@@ -262,7 +265,8 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 alicePositionCollateralBefore = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 alicePositionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
 
         uint256 withdrawAmount = 1 ether;
 
@@ -271,7 +275,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         positionManager.managePosition(collateralToken, withdrawAmount, false, 0, false, 0);
 
         // Check 1 ether remaining
-        uint256 alicePositionCollateralAfter = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
+        uint256 alicePositionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
 
         assertEq(alicePositionCollateralAfter, alicePositionCollateralBefore - withdrawAmount);
     }

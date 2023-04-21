@@ -10,6 +10,16 @@ import {ISplitLiquidationCollateral} from "./ISplitLiquidationCollateral.sol";
 
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
+    // --- Types ---
+
+    /// @dev Information for a Raft indexable collateral token.
+    /// @param token The Raft indexable collateral token.
+    /// @param isEnabled Whether the token can be used as collateral or not.
+    struct RaftCollateralTokenInfo {
+        IERC20Indexable token;
+        bool isEnabled;
+    }
+
     // --- Events ---
 
     /// @dev New position manager has been token deployed.
@@ -20,9 +30,15 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev New collateral token has been added added to the system.
     /// @param collateralToken The token used as collateral.
-    /// @param raftCollateralToken The Raft indexable collateral token for a given collateral token.
+    /// @param raftCollateralToken The Raft indexable collateral token for the given collateral token.
     /// @param priceFeed The contract that provides price for the collateral token.
     event CollateralTokenAdded(IERC20 collateralToken, IERC20Indexable raftCollateralToken, IPriceFeed priceFeed);
+
+    /// @dev Collateral token has been enabled or disabled.
+    /// @param collateralToken The token used as collateral.
+    /// @param raftCollateralToken The Raft indexable collateral token for the given collateral token.
+    /// @param isEnabled True if the token is enabled, false otherwise.
+    event CollateralTokenModified(IERC20 collateralToken, IERC20Indexable raftCollateralToken, bool isEnabled);
 
     /// @dev Global delegate has been added to the whitelist or removed from it.
     /// @param delegate The address of the delegate that was whitelisted.
@@ -156,14 +172,17 @@ interface IPositionManager is IFeeCollector {
     /// @param maxFeePercentage The maximum fee percentage.
     error FeeExceedsMaxFee(uint256 fee, uint256 amount, uint256 maxFeePercentage);
 
-    /// @dev Collateral token is not added.
-    error CollateralTokenNotAdded();
-
     /// @dev Borrower uses a different collateral token already.
     error PositionCollateralTokenMismatch();
 
     /// @dev Collateral token already added.
     error CollateralTokenAlreadyAdded();
+
+    /// @dev Collateral token is not added.
+    error CollateralTokenNotAdded();
+
+    /// @dev Collateral token is not enabled.
+    error CollateralTokenDisabled();
 
     /// @dev Split liquidation collateral cannot be zero.
     error SplitLiquidationCollateralCannotBeZero();
@@ -179,10 +198,11 @@ interface IPositionManager is IFeeCollector {
     /// @dev Returns the Raft indexable collateral token for a given collateral token.
     /// @param collateralToken The token used as collateral.
     /// @return raftCollateralToken The Raft indexable collateral token.
+    /// @return isEnabled Whether the collateral token can be used as collateral or not.
     function raftCollateralTokens(IERC20 collateralToken)
         external
         view
-        returns (IERC20Indexable raftCollateralToken);
+        returns (IERC20Indexable raftCollateralToken, bool isEnabled);
 
     /// @dev Returns the collateral token that a given position used for their position.
     /// @param position The address of the borrower.
@@ -193,6 +213,11 @@ interface IPositionManager is IFeeCollector {
     /// @param collateralToken The new collateral token.
     /// @param priceFeed The price feed for the collateral token.
     function addCollateralToken(IERC20 collateralToken, IPriceFeed priceFeed) external;
+
+    /// @dev Enables or disables a collateral token. Reverts if the collateral token has not been added.
+    /// @param collateralToken The collateral token.
+    /// @param isEnabled Whether the collateral token can be used as collateral or not.
+    function modifyCollateralToken(IERC20 collateralToken, bool isEnabled) external;
 
     /// @dev Returns the price feed for a given collateral token.
     /// @param collateralToken The token used as collateral.
