@@ -56,7 +56,7 @@ contract PositionManagerLiquidationTest is TestSetup {
 
         uint256 price = priceFeed.getPrice();
 
-        uint256 icrBefore = positionManager.getCurrentICR(collateralToken, BOB, price);
+        uint256 icrBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         assertEq(icrBefore, 4e18);
 
         // Bob increases debt to 180 R, lowering his ICR to 1.11
@@ -71,7 +71,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 icrAfter = positionManager.getCurrentICR(collateralToken, BOB, price);
+        uint256 icrAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         assertEq(icrAfter, targetICR);
 
         // price drops to 1ETH:100R, reducing Bob's ICR below MCR
@@ -114,7 +114,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         priceFeed.setPrice(105e18);
         uint256 price = priceFeed.getPrice();
 
-        uint256 aliceICR = positionManager.getCurrentICR(collateralToken, ALICE, price);
+        uint256 aliceICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
         assertEq(aliceICR, 105 * MathUtils._100_PERCENT / 100);
 
         // Liquidate the position
@@ -195,7 +195,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         uint256 price = priceFeed.getPrice();
 
         // Check Bob's ICR > 110%
-        uint256 bobICR = positionManager.getCurrentICR(collateralToken, BOB, price);
+        uint256 bobICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         assertTrue(bobICR >= MathUtils.MCR);
 
         // Attempt to liquidate Bob
@@ -256,9 +256,9 @@ contract PositionManagerLiquidationTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        uint256 aliceICRBefore = positionManager.getCurrentICR(collateralToken, ALICE, price);
-        uint256 bobICRBefore = positionManager.getCurrentICR(collateralToken, BOB, price);
-        uint256 carolICRBefore = positionManager.getCurrentICR(collateralToken, CAROL, price);
+        uint256 aliceICRBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
+        uint256 bobICRBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
+        uint256 carolICRBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, CAROL, price);
 
         /* Before liquidation:
         Alice ICR: 2 * 100 / 50 = 400%
@@ -272,9 +272,9 @@ contract PositionManagerLiquidationTest is TestSetup {
 
         positionManager.liquidate(collateralToken, DAVE);
 
-        uint256 aliceICRAfter = positionManager.getCurrentICR(collateralToken, ALICE, price);
-        uint256 bobICRAfter = positionManager.getCurrentICR(collateralToken, BOB, price);
-        uint256 carolICRAfter = positionManager.getCurrentICR(collateralToken, CAROL, price);
+        uint256 aliceICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
+        uint256 bobICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
+        uint256 carolICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, CAROL, price);
 
         assertGe(aliceICRAfter, MathUtils.MCR); // TODO OVDE PADA @MIJOVIC
         assertLe(bobICRAfter, MathUtils.MCR);

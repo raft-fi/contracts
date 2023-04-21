@@ -57,7 +57,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        assertLt(positionManager.getCurrentICR(collateralToken, ALICE, price), MathUtils.MCR);
+        assertLt(PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price), MathUtils.MCR);
 
         uint256 repaymentAmount = 1e18;
 

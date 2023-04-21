@@ -23,7 +23,8 @@ contract FeeCollectorTest is TestSetup {
 
     function testUnauthorizedSetFeeRecipient() public {
         vm.prank(FEE_RECIPIENT);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+
         feeCollector.setFeeRecipient(FEE_RECIPIENT);
     }
 
