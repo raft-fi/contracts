@@ -45,6 +45,9 @@ interface IPositionManager is IFeeCollector {
     /// @dev There must be either a collateral change or a debt change.
     error NoCollateralOrDebtChange();
 
+    /// @dev There is some collateral for position that doesn't have debt.
+    error InvalidPosition();
+
     /// @dev An operation that would result in ICR < MCR is not permitted.
     /// @param newICR Resulting ICR that is bellow MCR.
     error NewICRLowerThanMCR(uint256 newICR);

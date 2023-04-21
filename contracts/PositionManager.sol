@@ -251,11 +251,17 @@ contract PositionManager is FeeCollector, IPositionManager {
             _collateralToken, _borrower, _collateralChange, _isCollateralIncrease, _needsCollateralTransfer
         );
 
-        if (raftDebtToken.balanceOf(_borrower) == 0) {
+        uint256 positionDebt = raftDebtToken.balanceOf(_borrower);
+        uint256 positionCollateral = raftCollateralTokens[_collateralToken].balanceOf(_borrower);
+
+        if (positionDebt == 0) {
+            if (positionCollateral != 0) {
+                revert InvalidPosition();
+            }
             // position was closed, remove it
             _removePositionFromSortedPositions(_collateralToken, _borrower, false);
         } else {
-            checkValidPosition(_collateralToken, _borrower);
+            checkValidPosition(_collateralToken, positionDebt, positionCollateral);
             bool newPosition = !sortedPositions[_collateralToken].nodes[_borrower].exists;
             sortedPositions[_collateralToken]._update(
                 this, _collateralToken, _borrower, getNominalICR(_collateralToken, _borrower), _upperHint, _lowerHint
@@ -743,13 +749,13 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
     }
 
-    function checkValidPosition(IERC20 _collateralToken, address position) internal {
-        uint256 positionDebt = raftDebtToken.balanceOf(position);
+    function checkValidPosition(IERC20 _collateralToken, uint256 positionDebt, uint256 positionCollateral) internal {
         if (positionDebt < splitLiquidationCollateral.LOW_TOTAL_DEBT()) {
             revert NetDebtBelowMinimum(positionDebt);
         }
 
-        uint256 newICR = getCurrentICR(_collateralToken, position, priceFeeds[_collateralToken].fetchPrice());
+        uint256 newICR =
+            MathUtils._computeCR(positionCollateral, positionDebt, priceFeeds[_collateralToken].fetchPrice());
         if (newICR < MathUtils.MCR) {
             revert NewICRLowerThanMCR(newICR);
         }
