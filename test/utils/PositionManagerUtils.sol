@@ -37,8 +37,6 @@ library PositionManagerUtils {
         IERC20 collateralToken,
         uint256 maxFeePercentage,
         uint256 extraDebtAmount,
-        address upperHint,
-        address lowerHint,
         uint256 icr,
         uint256 amount,
         ETHType ethType
@@ -51,7 +49,7 @@ library PositionManagerUtils {
             IStETH stETH = IPositionManagerStETH(address(positionManager)).stETH();
             uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
             IPositionManagerStETH(address(positionManager)).managePositionETH{value: amount}(
-                result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
+                result.debtAmount, true, maxFeePercentage
             );
             result.collateral = wstETHAmount;
         } else if (ethType == ETHType.STETH) {
@@ -59,14 +57,12 @@ library PositionManagerUtils {
             uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
             stETH.approve(address(positionManager), amount);
             IPositionManagerStETH(address(positionManager)).managePositionStETH(
-                amount, true, result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
+                amount, true, result.debtAmount, true, maxFeePercentage
             );
             result.collateral = wstETHAmount;
         } else {
             collateralToken.approve(address(positionManager), amount);
-            positionManager.managePosition(
-                collateralToken, amount, true, result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
-            );
+            positionManager.managePosition(collateralToken, amount, true, result.debtAmount, true, maxFeePercentage);
             result.collateral = amount;
         }
     }
@@ -78,16 +74,7 @@ library PositionManagerUtils {
         uint256 icr
     ) internal returns (OpenPositionResult memory result) {
         result = openPosition(
-            positionManager,
-            priceFeed,
-            collateralToken,
-            MathUtils._100_PERCENT,
-            0,
-            address(0),
-            address(0),
-            icr,
-            0,
-            ETHType.WSTETH
+            positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, 0, icr, 0, ETHType.WSTETH
         );
     }
 
@@ -98,18 +85,7 @@ library PositionManagerUtils {
         uint256 icr,
         ETHType ethType
     ) internal returns (OpenPositionResult memory result) {
-        result = openPosition(
-            positionManager,
-            priceFeed,
-            collateralToken,
-            MathUtils._100_PERCENT,
-            0,
-            address(0),
-            address(0),
-            icr,
-            0,
-            ethType
-        );
+        result = openPosition(positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, 0, icr, 0, ethType);
     }
 
     function openPosition(
@@ -125,8 +101,6 @@ library PositionManagerUtils {
             collateralToken,
             MathUtils._100_PERCENT,
             extraDebtAmount,
-            address(0),
-            address(0),
             icr,
             0,
             ETHType.WSTETH
@@ -147,8 +121,6 @@ library PositionManagerUtils {
             collateralToken,
             MathUtils._100_PERCENT,
             extraDebtAmount,
-            address(0),
-            address(0),
             icr,
             amount,
             ETHType.WSTETH
@@ -176,9 +148,7 @@ library PositionManagerUtils {
         address borrower,
         uint256 maxFeePercentage,
         uint256 debtAmount,
-        uint256 icr,
-        address upperHint,
-        address lowerHint
+        uint256 icr
     ) internal returns (WithdrawDebtResult memory result) {
         // solhint-disable reason-string
         require(
@@ -204,9 +174,7 @@ library PositionManagerUtils {
             result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, result.debtAmount);
         }
 
-        positionManager.managePosition(
-            _collateralToken, 0, false, result.debtAmount, true, upperHint, lowerHint, maxFeePercentage
-        );
+        positionManager.managePosition(_collateralToken, 0, false, result.debtAmount, true, maxFeePercentage);
     }
 
     function withdrawDebt(
@@ -217,8 +185,7 @@ library PositionManagerUtils {
         uint256 icr
     ) internal returns (WithdrawDebtResult memory result) {
         uint256 maxFee = MathUtils._100_PERCENT;
-        result =
-            withdrawDebt(positionManager, collateralToken, priceFeed, borrower, maxFee, 0, icr, address(0), address(0));
+        result = withdrawDebt(positionManager, collateralToken, priceFeed, borrower, maxFee, 0, icr);
     }
 
     function getNetBorrowingAmount(IPositionManager _positionManager, uint256 _debtWithFee)

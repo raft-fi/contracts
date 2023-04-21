@@ -11,7 +11,6 @@ import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerMultiCollateralTest is TestSetup {
-    uint256 public constant POSITIONS_SIZE = 10;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -31,11 +30,11 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         );
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralTokenSecond = new TokenMock();
         priceFeedSecond = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond);
 
         randomAddress = makeAddr("randomAddress");
 
@@ -49,19 +48,19 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         PriceFeedTestnet priceFeedThird = new PriceFeedTestnet();
 
         assertEq(address(positionManager.raftCollateralTokens(collateralTokenThird)), address(0));
-        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird);
 
         assertEq(positionManager.raftCollateralTokens(collateralTokenThird) != IERC20(address(0)), true);
     }
 
     function testCannotAddCollateralToken() public {
         vm.expectRevert(IPositionManager.CollateralTokenAlreadyAdded.selector);
-        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond);
 
         TokenMock collateralTokenThird = new TokenMock();
         PriceFeedTestnet priceFeedThird = new PriceFeedTestnet();
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
-        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird);
     }
 }

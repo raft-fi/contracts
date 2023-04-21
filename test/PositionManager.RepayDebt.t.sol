@@ -10,7 +10,6 @@ import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerRepayDebtTest is TestSetup {
-    uint256 public constant POSITIONS_SIZE = 10;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -25,7 +24,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             new address[](0),
             splitLiquidationCollateral
         );
-        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
 
@@ -69,7 +68,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
                 positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - repaymentAmount
             )
         );
-        positionManager.managePosition(collateralToken, 0, false, repaymentAmount, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 0, false, repaymentAmount, false, 0);
         vm.stopPrank();
     }
 
@@ -87,22 +86,20 @@ contract PositionManagerRepayDebtTest is TestSetup {
                 positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 2
             ),
             true,
-            ALICE,
-            ALICE,
             MathUtils._100_PERCENT
         );
         vm.stopPrank();
 
         vm.prank(ALICE);
-        positionManager.managePosition(collateralToken, 0, false, 1, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 0, false, 1, false, 0);
 
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 100e30);
-        positionManager.managePosition(collateralToken, 100e30, true, 20e25, true, BOB, BOB, MathUtils._100_PERCENT);
+        positionManager.managePosition(collateralToken, 100e30, true, 20e25, true, MathUtils._100_PERCENT);
         vm.stopPrank();
 
         vm.prank(BOB);
-        positionManager.managePosition(collateralToken, 0, false, 19e25, false, BOB, BOB, 0);
+        positionManager.managePosition(collateralToken, 0, false, 19e25, false, 0);
     }
 
     // Reverts when borrowing rate = 0% and it would leave position with net debt < minimum net debt
@@ -121,8 +118,6 @@ contract PositionManagerRepayDebtTest is TestSetup {
                 positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 1
             ),
             true,
-            ALICE,
-            ALICE,
             MathUtils._100_PERCENT
         );
 
@@ -132,7 +127,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
                 positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - 1
             )
         );
-        positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 0, false, 2, false, 0);
         vm.stopPrank();
     }
 
@@ -153,8 +148,6 @@ contract PositionManagerRepayDebtTest is TestSetup {
                 positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 1
             ),
             true,
-            ALICE,
-            ALICE,
             MathUtils._100_PERCENT
         );
         vm.stopPrank();
@@ -166,7 +159,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
                 positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - 1
             )
         );
-        positionManager.managePosition(collateralToken, 0, false, 2, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 0, false, 2, false, 0);
         vm.stopPrank();
     }
 
@@ -193,12 +186,12 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.stopPrank();
 
         vm.prank(BOB);
-        positionManager.managePosition(collateralToken, 0, false, 10e18, false, BOB, BOB, 0);
+        positionManager.managePosition(collateralToken, 0, false, 10e18, false, 0);
 
         // Carol with no active position attempts to repay R
         vm.prank(CAROL);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(collateralToken, 0, false, 10e18, false, CAROL, CAROL, 0);
+        positionManager.managePosition(collateralToken, 0, false, 10e18, false, 0);
     }
 
     // Reverts when attempted repayment is > the debt of the position
@@ -227,12 +220,12 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
         // Bob successfully repays some R
         vm.prank(BOB);
-        positionManager.managePosition(collateralToken, 0, false, 10e18, false, BOB, BOB, 0);
+        positionManager.managePosition(collateralToken, 0, false, 10e18, false, 0);
 
         // Alice attempts to repay more than her debt
         vm.prank(ALICE);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(collateralToken, 0, false, aliceDebt + 1e18, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 0, false, aliceDebt + 1e18, false, 0);
     }
 
     // Reduces R debt in position
@@ -261,7 +254,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         assertGt(aliceDebtBefore, 0);
 
         vm.prank(ALICE);
-        positionManager.managePosition(collateralToken, 0, false, aliceDebtBefore / 10, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 0, false, aliceDebtBefore / 10, false, 0);
 
         uint256 aliceDebtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
         assertGt(aliceDebtAfter, 0);
@@ -297,7 +290,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         assertGt(aliceRTokenBalanceBefore, 0);
 
         vm.prank(ALICE);
-        positionManager.managePosition(collateralToken, 0, false, aliceDebtBefore / 10, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, 0, false, aliceDebtBefore / 10, false, 0);
 
         uint256 aliceRTokenBalanceAfter = rToken.balanceOf(ALICE);
         assertEq(aliceRTokenBalanceAfter, aliceRTokenBalanceBefore - aliceDebtBefore / 10);
@@ -339,6 +332,6 @@ contract PositionManagerRepayDebtTest is TestSetup {
         // Bob tries to repay 6 R
         vm.prank(BOB);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(collateralToken, 0, false, 6e18, false, BOB, BOB, 0);
+        positionManager.managePosition(collateralToken, 0, false, 6e18, false, 0);
     }
 }

@@ -42,8 +42,6 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
         bool principalCollateralIncrease,
         bytes calldata ammData,
         uint256 minReturnOrAmountToSell,
-        address upperHint,
-        address lowerHint,
         uint256 maxFeePercentage
     ) external override {
         if (principalCollateralIncrease && principalCollateralChange > 0) {
@@ -57,8 +55,6 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
             isDebtIncrease,
             ammData,
             minReturnOrAmountToSell,
-            upperHint,
-            lowerHint,
             maxFeePercentage
         );
 
@@ -86,10 +82,8 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
             bool isDebtIncrease,
             bytes memory ammData,
             uint256 minReturnOrAmountToSell,
-            address upperHint,
-            address lowerHint,
             uint256 maxFeePercentage
-        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, address, address, uint256));
+        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256));
 
         uint256 leveragedCollateralChange = isDebtIncrease
             ? amm.swap(rToken, collateralToken, amount, minReturnOrAmountToSell, ammData)
@@ -111,15 +105,7 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
         }
 
         IPositionManager(positionManager).managePosition(
-            collateralToken,
-            user,
-            collateralChange,
-            increaseCollateral,
-            amount,
-            isDebtIncrease,
-            upperHint,
-            lowerHint,
-            maxFeePercentage
+            collateralToken, user, collateralChange, increaseCollateral, amount, isDebtIncrease, maxFeePercentage
         );
 
         if (!principalCollateralIncrease && principalCollateralChange > 0) {

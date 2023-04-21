@@ -36,8 +36,6 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
     /// @param minReturnOrAmountToSell Serves for two different purposes:
     /// - leverage increase: it is min amount of collateral token to get from swapping flash minted R.
     /// - leverage decrease: it is amount of collateral to swap that will result with enough R to repay flash mint.
-    /// @param upperHint The upper hint for the position ID.
-    /// @param lowerHint The lower hint for the position ID.
     /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
     /// @notice In case of closing position by decreasing debt to zero principalCollIncrease must be false,
     /// and principalCollChange + minReturnOrAmountToSell should be equal to total collateral balance of user.
@@ -48,8 +46,6 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
         bool principalCollIncrease,
         bytes calldata ammData,
         uint256 minReturnOrAmountToSell,
-        address upperHint,
-        address lowerHint,
         uint256 maxFeePercentage
     ) external;
 }

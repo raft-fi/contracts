@@ -5,8 +5,6 @@ import {PositionManagerTester} from "./TestContracts/PositionManagerTester.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerInternalTest is TestSetup {
-    uint256 public constant POSITIONS_SIZE = 10;
-
     PositionManagerTester public positionManager;
 
     uint40[] public decayBaseRateSeconds;
@@ -20,7 +18,7 @@ contract PositionManagerInternalTest is TestSetup {
             new address[](0),
             splitLiquidationCollateral
         );
-        positionManager.addCollateralToken(collateralToken, PRICE_FEED, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, PRICE_FEED);
 
         decayBaseRateSeconds = [
             0,

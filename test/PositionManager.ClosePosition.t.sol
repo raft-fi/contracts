@@ -10,7 +10,6 @@ import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerClosePositionTest is TestSetup {
-    uint256 public constant POSITIONS_SIZE = 10;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -25,44 +24,13 @@ contract PositionManagerClosePositionTest is TestSetup {
             new address[](0),
             splitLiquidationCollateral
         );
-        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
         collateralToken.mint(CAROL, 10e36);
-    }
-
-    // Reverts when position is the only one in the system
-    function testInvalidClosureLastPosition() public {
-        vm.startPrank(ALICE);
-        PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            extraDebtAmount: 100000e18,
-            icr: 2e18
-        });
-        vm.stopPrank();
-
-        uint256 alicePositionCollateral = positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE);
-
-        // Artificially mint to Alice so she has enough to close her position
-        vm.prank(address(positionManager));
-        rToken.mint(ALICE, 100000e18);
-
-        // Check she has more R than her position debt
-        uint256 aliceBalance = rToken.balanceOf(ALICE);
-        uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
-        assertGt(aliceBalance, aliceDebt);
-
-        // Alice attempts to close her position
-        vm.startPrank(ALICE);
-        vm.expectRevert(IPositionManager.OnlyOnePositionInSystem.selector);
-        positionManager.managePosition(
-            collateralToken, alicePositionCollateral, false, aliceDebt, false, ALICE, ALICE, 0
-        );
     }
 
     // Reduces position's collateral and debt to zero
@@ -107,7 +75,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         // Alice attempts to close position
         vm.prank(ALICE);
         positionManager.managePosition(
-            collateralToken, alicePositionCollateralBefore, false, aliceDebtBefore, false, ALICE, ALICE, 0
+            collateralToken, alicePositionCollateralBefore, false, aliceDebtBefore, false, 0
         );
 
         uint256 aliceCollateralAfter = collateralToken.balanceOf(ALICE);
@@ -165,7 +133,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         vm.prank(ALICE);
         vm.expectRevert(IPositionManager.InvalidPosition.selector);
         positionManager.managePosition(
-            collateralToken, alicePositionCollateralBefore / 2, false, aliceDebtBefore, false, ALICE, ALICE, 0
+            collateralToken, alicePositionCollateralBefore / 2, false, aliceDebtBefore, false, 0
         );
     }
 
@@ -203,9 +171,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         assertEq(bobPositionDebt, bobRBalance);
 
         vm.prank(BOB);
-        positionManager.managePosition(
-            collateralToken, bobPositionCollateral, false, bobPositionDebt, false, BOB, BOB, 0
-        );
+        positionManager.managePosition(collateralToken, bobPositionCollateral, false, bobPositionDebt, false, 0);
     }
 
     // Reverts if borrower has insufficient R balance to repay his entire debt when borrowing rate > 0%
@@ -245,8 +211,6 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         vm.prank(BOB);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(
-            collateralToken, bobPositionCollateral, false, bobPositionDebt, false, BOB, BOB, 0
-        );
+        positionManager.managePosition(collateralToken, bobPositionCollateral, false, bobPositionDebt, false, 0);
     }
 }

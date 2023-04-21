@@ -22,10 +22,7 @@ interface IPositionManager is IFeeCollector {
     /// @param collateralToken The token used as collateral.
     /// @param raftCollateralToken The Raft indexable collateral token for a given collateral token.
     /// @param priceFeed The contract that provides price for the collateral token.
-    /// @param positionSize The maximum number of positions for a given collateral token.
-    event CollateralTokenAdded(
-        IERC20 collateralToken, IERC20Indexable raftCollateralToken, IPriceFeed priceFeed, uint256 positionSize
-    );
+    event CollateralTokenAdded(IERC20 collateralToken, IERC20Indexable raftCollateralToken, IPriceFeed priceFeed);
 
     /// @dev Global delegate has been added to the whitelist or removed from it.
     /// @param delegate The address of the delegate that was whitelisted.
@@ -79,11 +76,10 @@ interface IPositionManager is IFeeCollector {
     );
 
     /// @dev Redemption has been executed.
-    /// @param attemptedAmount The amount of debt that was attempted to be redeemed.
-    /// @param actualAmount The amount of debt that was actually redeemed.
+    /// @param debtRedeemed The amount of debt that was redeemed.
     /// @param collateralSent The amount of collateral sent to the redeemer.
     /// @param fee The amount of fee paid to the fee recipient.
-    event Redemption(uint256 attemptedAmount, uint256 actualAmount, uint256 collateralSent, uint256 fee);
+    event Redemption(uint256 debtRedeemed, uint256 collateralSent, uint256 fee);
 
     /// @dev Borrowing spread has been updated.
     /// @param borrowingSpread The new borrowing spread.
@@ -115,12 +111,6 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Position is not active (either does not exist or closed).
     error PositionNotActive();
-
-    /// @dev Requested redemption amount is > user's R token balance.
-    error RedemptionAmountExceedsBalance();
-
-    /// @dev Only one position in the system.
-    error OnlyOnePositionInSystem();
 
     /// @dev Amount is zero.
     error AmountIsZero();
@@ -169,8 +159,8 @@ interface IPositionManager is IFeeCollector {
     /// @dev Collateral token is not added.
     error CollateralTokenNotAdded();
 
-    /// @dev Borrower has a different collateral token.
-    error BorrowerHasDifferentCollateralToken();
+    /// @dev Borrower uses a different collateral token already.
+    error PositionCollateralTokenMismatch();
 
     /// @dev Collateral token already added.
     error CollateralTokenAlreadyAdded();
@@ -194,16 +184,15 @@ interface IPositionManager is IFeeCollector {
         view
         returns (IERC20Indexable raftCollateralToken);
 
-    /// @dev Returns the collateral token that a given borrower used for their position.
-    /// @param borrower The address of the borrower.
+    /// @dev Returns the collateral token that a given position used for their position.
+    /// @param position The address of the borrower.
     /// @return collateralToken The collateral token of the borrower's position.
-    function collateralTokenForBorrower(address borrower) external view returns (IERC20 collateralToken);
+    function collateralTokenForPosition(address position) external view returns (IERC20 collateralToken);
 
     /// @dev Adds a new collateral token to the protocol.
     /// @param collateralToken The new collateral token.
     /// @param priceFeed The price feed for the collateral token.
-    /// @param positionsSize The maximum size of the per-collateral-token list of positions.
-    function addCollateralToken(IERC20 collateralToken, IPriceFeed priceFeed, uint256 positionsSize) external;
+    function addCollateralToken(IERC20 collateralToken, IPriceFeed priceFeed) external;
 
     /// @dev Returns the price feed for a given collateral token.
     /// @param collateralToken The token used as collateral.
@@ -217,74 +206,34 @@ interface IPositionManager is IFeeCollector {
     /// @param newSplitLiquidationCollateral New split liquidation collateral contract address.
     function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral) external;
 
-    /// @dev A doubly linked list of positions, sorted by by their collateral ratios.
-    /// @param collateralToken The token used as collateral.
-    /// @return first The ID of the first position in the list.
-    /// @return last The ID of the last position in the list.
-    /// @return maxSize The maximum size of the list.
-    /// @return size The current size of the list.
-    function sortedPositions(IERC20 collateralToken)
-        external
-        view
-        returns (address first, address last, uint256 maxSize, uint256 size);
-
-    /// @dev Returns the position node for a given position ID.
-    /// @param collateralToken The token used as collateral.
-    /// @param id The ID of the position.
-    /// @return exists True if the node exists, false otherwise.
-    /// @return previousID The ID of the previous position in the list.
-    /// @return nextID The ID of the next position in the list.
-    function sortedPositionsNodes(IERC20 collateralToken, address id)
-        external
-        view
-        returns (bool exists, address previousID, address nextID);
-
     /// @dev Liquidates the borrower if its position's ICR is lower than the minimum collateral ratio.
     /// @param collateralToken The token used as collateral.
-    /// @param borrower The address of the borrower.
-    function liquidate(IERC20 collateralToken, address borrower) external;
+    /// @param position The address of the borrower.
+    function liquidate(IERC20 collateralToken, address position) external;
 
     /// @dev Redeems the collateral token for a given debt amount. It sends @param debtAmount R to the system and
     /// redeems the corresponding amount of collateral from as many positions as are needed to fill the redemption
     /// request.
     /// @param collateralToken The token used as collateral.
     /// @param debtAmount The amount of debt to be redeemed. Must be greater than zero.
-    /// @param firstRedemptionHint The first position ID to use as a hint for the search.
-    /// @param upperPartialRedemptionHint The upper partial redemption hint.
-    /// @param lowerPartialRedemptionHint The lower partial redemption hint.
-    /// @param partialRedemptionHintNICR The NICR of the partial redemption hint.
-    /// @param maxIterations The maximum number of iterations to use for the search. If zero, it will be ignored.
     /// @param maxFee The maximum fee to pay for the redemption.
-    function redeemCollateral(
-        IERC20 collateralToken,
-        uint256 debtAmount,
-        address firstRedemptionHint,
-        address upperPartialRedemptionHint,
-        address lowerPartialRedemptionHint,
-        uint256 partialRedemptionHintNICR,
-        uint256 maxIterations,
-        uint256 maxFee
-    ) external;
+    function redeemCollateral(IERC20 collateralToken, uint256 debtAmount, uint256 maxFee) external;
 
     /// @dev Manages the position on behalf of a given borrower.
     /// @param collateralToken The token the borrower used as collateral.
-    /// @param borrower The address of the borrower.
+    /// @param position The address of the borrower.
     /// @param collateralChange The amount of collateral to add or remove.
     /// @param isCollateralIncrease True if the collateral is being increased, false otherwise.
     /// @param debtChange The amount of R to add or remove.
     /// @param isDebtIncrease True if the debt is being increased, false otherwise.
-    /// @param upperHint The upper hint for the position ID.
-    /// @param lowerHint The lower hint for the position ID.
     /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
     function managePosition(
         IERC20 collateralToken,
-        address borrower,
+        address position,
         uint256 collateralChange,
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        address upperHint,
-        address lowerHint,
         uint256 maxFeePercentage
     ) external;
 
@@ -294,8 +243,6 @@ interface IPositionManager is IFeeCollector {
     /// @param isCollateralIncrease True if the collateral is being increased, false otherwise.
     /// @param debtChange The amount of R to add or remove.
     /// @param isDebtIncrease True if the debt is being increased, false otherwise.
-    /// @param upperHint The upper hint for the position ID.
-    /// @param lowerHint The lower hint for the position ID.
     /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
     function managePosition(
         IERC20 collateralToken,
@@ -303,8 +250,6 @@ interface IPositionManager is IFeeCollector {
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        address upperHint,
-        address lowerHint,
         uint256 maxFeePercentage
     ) external;
 
@@ -369,10 +314,10 @@ interface IPositionManager is IFeeCollector {
     function globalDelegateWhitelist(address delegate) external view returns (bool isWhitelisted);
 
     /// @dev Returns if a given delegate is whitelisted for a given borrower.
-    /// @param borrower The address of the borrower.
+    /// @param position The address of the borrower.
     /// @param delegate The address of the delegate.
     /// @return isWhitelisted True if the delegate is whitelisted for a given borrower, false otherwise.
-    function individualDelegateWhitelist(address borrower, address delegate)
+    function individualDelegateWhitelist(address position, address delegate)
         external
         view
         returns (bool isWhitelisted);
@@ -383,14 +328,14 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Returns the nominal individual collateral ratio for a given borrower.
     /// @param collateralToken The token used as collateral.
-    /// @param borrower The address of the borrower.
+    /// @param position The address of the borrower.
     /// @return The nominal individual collateral ratio.
-    function getNominalICR(IERC20 collateralToken, address borrower) external view returns (uint256);
+    function getNominalICR(IERC20 collateralToken, address position) external view returns (uint256);
 
     /// @dev Returns the current individual collateral ratio for a given borrower.
     /// @param collateralToken The token used as collateral.
-    /// @param borrower The address of the borrower.
+    /// @param position The address of the borrower.
     /// @param price The price of the collateral token.
     /// @return The current individual collateral ratio.
-    function getCurrentICR(IERC20 collateralToken, address borrower, uint256 price) external view returns (uint256);
+    function getCurrentICR(IERC20 collateralToken, address position, uint256 price) external view returns (uint256);
 }

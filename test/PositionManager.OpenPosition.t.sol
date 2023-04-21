@@ -10,7 +10,6 @@ import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerOpenPositionTest is TestSetup {
-    uint256 public constant POSITIONS_SIZE = 10;
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -27,7 +26,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         );
         rToken = positionManager.rToken();
 
-        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -49,16 +48,13 @@ contract PositionManagerOpenPositionTest is TestSetup {
             collateralToken: collateralToken,
             maxFeePercentage: MathUtils._100_PERCENT,
             extraDebtAmount: aliceExtraRAmount,
-            upperHint: ALICE,
-            lowerHint: ALICE,
             icr: 0,
             amount: 100e30,
             ethType: PositionManagerUtils.ETHType.WSTETH
         });
         vm.stopPrank();
 
-        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        assertTrue(alicePositionExists);
+        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
 
         uint256 bobExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(
             positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 47789898e22
@@ -71,16 +67,13 @@ contract PositionManagerOpenPositionTest is TestSetup {
             collateralToken: collateralToken,
             maxFeePercentage: MathUtils._100_PERCENT,
             extraDebtAmount: bobExtraRAmount,
-            upperHint: BOB,
-            lowerHint: BOB,
             icr: 0,
             amount: 100e30,
             ethType: PositionManagerUtils.ETHType.WSTETH
         });
         vm.stopPrank();
 
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
-        assertTrue(bobPositionExists);
+        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
     }
 
     // Decays a non-zero base rate
@@ -499,9 +492,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             PositionManagerUtils.getOpenPositionSetupValues(positionManager, priceFeed, 0, bobICR, 0);
         collateralToken.approve(address(positionManager), amount);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, bobICR));
-        positionManager.managePosition(
-            collateralToken, amount, true, debtAmount, true, address(0), address(0), MathUtils._100_PERCENT
-        );
+        positionManager.managePosition(collateralToken, amount, true, debtAmount, true, MathUtils._100_PERCENT);
         vm.stopPrank();
     }
 
@@ -533,29 +524,6 @@ contract PositionManagerOpenPositionTest is TestSetup {
         assertGt(collateralAfter, 0);
         assertGt(debtAfter, 0);
         assertEq(debtAfter, expectedDebt);
-    }
-
-    // inserts a position to sorted positions list
-    function testPositionInsertIntoList() public {
-        (bool alicePositionExistsBefore,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        (,,, uint256 listSizeBefore) = positionManager.sortedPositions(collateralToken);
-        assertEq(alicePositionExistsBefore, false);
-        assertEq(listSizeBefore, 0);
-
-        vm.startPrank(ALICE);
-        PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            extraDebtAmount: 5000e18,
-            icr: 2e18
-        });
-        vm.stopPrank();
-
-        (bool alicePositionExistsAfter,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        (,,, uint256 listSizeAfter) = positionManager.sortedPositions(collateralToken);
-        assertEq(alicePositionExistsAfter, true);
-        assertEq(listSizeAfter, 1);
     }
 
     // Increases the position manager's collateral token balance by correct amount
@@ -600,8 +568,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        assertTrue(alicePositionExists);
+        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
 
         // To compensate borrowing fees
         vm.prank(address(positionManager));
@@ -612,18 +579,10 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
         vm.prank(ALICE);
         positionManager.managePosition(
-            collateralToken,
-            alicePositionCollateral,
-            false,
-            alicePositionDebt,
-            false,
-            address(0),
-            address(0),
-            MathUtils._100_PERCENT
+            collateralToken, alicePositionCollateral, false, alicePositionDebt, false, MathUtils._100_PERCENT
         );
 
-        (alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        assertFalse(alicePositionExists);
+        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -635,8 +594,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        assertTrue(alicePositionExists);
+        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
     }
 
     // Increases the position's R debt and user's R token balance by the correct amounts
