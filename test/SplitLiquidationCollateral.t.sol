@@ -13,27 +13,27 @@ contract SplitLiquidationCollateralTest is Test {
 
     function testSplitRedistribution() public {
         uint256 collateralAmount = 1_000e18;
-        (, uint256 collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 0, true);
+        (, uint256 collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
         assertEq(collateralToSentToLiquidator, 30e18); // 1000 * 3%
 
         collateralAmount = 10_000e18;
-        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 0, true);
+        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
         assertApproxEqAbs(collateralToSentToLiquidator, 287e18, 1e18);
 
         collateralAmount = 100_000e18;
-        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 0, true);
+        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
         assertEq(collateralToSentToLiquidator, 1_250e18);
 
         collateralAmount = 500_000e18;
-        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 0, true);
+        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
         assertApproxEqAbs(collateralToSentToLiquidator, 4_583e18, 1e18);
 
         collateralAmount = 1_000_000e18;
-        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 0, true);
+        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
         assertEq(collateralToSentToLiquidator, 5_000e18);
 
         collateralAmount = 2_000_000e18;
-        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 0, true);
+        (, collateralToSentToLiquidator) = splitLiquidationCollateral.split(collateralAmount, 0, 1e18, true);
         assertEq(collateralToSentToLiquidator, 10_000e18);
     }
 

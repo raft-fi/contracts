@@ -36,35 +36,35 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     {
         if (isRedistribution) {
             collateralToSendToProtocol = 0;
-            collateralToSentToLiquidator =
-                totalCollateral.mulDown(_calculateRedistributorRewardRate(totalCollateral)).divDown(1e18);
+            uint256 collateralValue = totalCollateral.mulDown(price);
+            uint256 rewardRate = _calculateRedistributorRewardRate(collateralValue);
+            collateralToSentToLiquidator = totalCollateral.mulDown(rewardRate);
         } else {
             uint256 matchingCollateral = totalDebt.divDown(price);
             uint256 excessCollateral = totalCollateral - matchingCollateral;
-            uint256 liquidatorReward =
-                excessCollateral.mulDown(_calculateLiquidatorRewardRate(totalDebt)).divDown(1e18);
+            uint256 liquidatorReward = excessCollateral.mulDown(_calculateLiquidatorRewardRate(totalDebt));
             collateralToSendToProtocol = excessCollateral - liquidatorReward;
             collateralToSentToLiquidator = liquidatorReward;
         }
     }
 
     // Formula from https://docs.raft.fi/how-it-works/returning/redistribution#redistributor-reward
-    function _calculateRedistributorRewardRate(uint256 totalCollateral) internal pure returns (uint256) {
-        if (totalCollateral <= LOW_TOTAL_COLLATERAL) {
+    function _calculateRedistributorRewardRate(uint256 collateralValue) internal pure returns (uint256) {
+        if (collateralValue <= LOW_TOTAL_COLLATERAL) {
             return LOW_REDISTRIBUTOR_REWARD_RATE;
         }
-        if (totalCollateral <= MEDIUM_TOTAL_COLLATERAL) {
+        if (collateralValue <= MEDIUM_TOTAL_COLLATERAL) {
             return _calculateRewardRateFormula(
-                totalCollateral,
+                collateralValue,
                 LOW_TOTAL_COLLATERAL,
                 MEDIUM_TOTAL_COLLATERAL,
                 LOW_REDISTRIBUTOR_REWARD_RATE,
                 MEDIUM_REDISTRIBUTOR_REWARD_RATE
             );
         }
-        if (totalCollateral <= HIGH_TOTAL_COLLATERAL) {
+        if (collateralValue <= HIGH_TOTAL_COLLATERAL) {
             return _calculateRewardRateFormula(
-                totalCollateral,
+                collateralValue,
                 MEDIUM_TOTAL_COLLATERAL,
                 HIGH_TOTAL_COLLATERAL,
                 MEDIUM_REDISTRIBUTOR_REWARD_RATE,
