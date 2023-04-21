@@ -83,7 +83,7 @@ contract OneStepLeverageTest is TestSetup {
             targetDebt, true, collateralAmount, true, "", minReturn, ALICE, ALICE, MathUtils._100_PERCENT
         );
 
-        uint256 collateralToSwap = targetDebt * (1e18 + 1e15) / 200e18;
+        uint256 collateralToSwap = targetDebt * (1e18 + 1e15) / price;
         uint256 principalDecrease =
             positionManager.raftCollateralTokens(collateralToken).balanceOf(ALICE) - collateralToSwap;
 
