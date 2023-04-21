@@ -143,7 +143,8 @@ contract PositionManagerTest is TestSetup {
 
     function testUnauthorizedSetBorrowingSpread() public {
         vm.prank(ALICE);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+
         positionManager.setBorrowingSpread(100);
     }
 
@@ -163,7 +164,8 @@ contract PositionManagerTest is TestSetup {
 
     function testUnauthorizedSetRedemptionSpread() public {
         vm.prank(ALICE);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+
         positionManager.setRedemptionSpread(100);
     }
 
@@ -191,7 +193,8 @@ contract PositionManagerTest is TestSetup {
 
         SplitLiquidationCollateral newSplitLiquidationCollateral = new SplitLiquidationCollateral();
         vm.prank(ALICE);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+
         positionManager.setSplitLiquidationCollateral(newSplitLiquidationCollateral);
     }
 

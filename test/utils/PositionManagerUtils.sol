@@ -236,4 +236,20 @@ library PositionManagerUtils {
     {
         return debtAmount + positionManager.getBorrowingFee(debtAmount);
     }
+
+    function getCurrentICR(
+        IPositionManager positionManager,
+        IERC20 collateralToken,
+        address position,
+        uint256 price
+    )
+        public
+        view
+        returns (uint256)
+    {
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        return MathUtils._computeCR(
+            raftCollateralToken.balanceOf(position), positionManager.raftDebtToken().balanceOf(position), price
+        );
+    }
 }

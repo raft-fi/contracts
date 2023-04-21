@@ -301,11 +301,6 @@ interface IPositionManager is IFeeCollector {
     /// @return The borrowing fee.
     function getBorrowingFee(uint256 debtAmount) external view returns (uint256);
 
-    /// @dev Returns the borrowing fee with decay for a given debt amount.
-    /// @param debtAmount The amount of debt.
-    /// @return The borrowing fee with decay.
-    function getBorrowingFeeWithDecay(uint256 debtAmount) external view returns (uint256);
-
     /// @return The min redemption spread.
     function MIN_REDEMPTION_SPREAD() external view returns (uint256);
 
@@ -324,6 +319,11 @@ interface IPositionManager is IFeeCollector {
 
     /// @return The current redemption rate with decay.
     function getRedemptionRateWithDecay() external view returns (uint256);
+
+    /// @dev Returns the redemption fee for a given collateral amount.
+    /// @param collateralAmount The amount of collateral.
+    /// @return The redemption fee.
+    function getRedemptionFee(uint256 collateralAmount) external view returns (uint256);
 
     /// @dev Returns the redemption fee with decay for a given collateral amount.
     /// @param collateralAmount The amount of collateral.
@@ -355,17 +355,4 @@ interface IPositionManager is IFeeCollector {
     /// @dev Whitelists a delegate.
     /// @param delegate The address of the delegate.
     function whitelistDelegate(address delegate) external;
-
-    /// @dev Returns the nominal individual collateral ratio for a given borrower.
-    /// @param collateralToken The token used as collateral.
-    /// @param position The address of the borrower.
-    /// @return The nominal individual collateral ratio.
-    function getNominalICR(IERC20 collateralToken, address position) external view returns (uint256);
-
-    /// @dev Returns the current individual collateral ratio for a given borrower.
-    /// @param collateralToken The token used as collateral.
-    /// @param position The address of the borrower.
-    /// @param price The price of the collateral token.
-    /// @return The current individual collateral ratio.
-    function getCurrentICR(IERC20 collateralToken, address position, uint256 price) external view returns (uint256);
 }

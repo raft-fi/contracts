@@ -33,7 +33,8 @@ contract RTokenTest is TestSetup {
         assertEq(token.feeRecipient(), FEE_RECIPIENT);
 
         vm.prank(ALICE);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+
         token.setFeeRecipient(address(1));
     }
 
@@ -46,7 +47,8 @@ contract RTokenTest is TestSetup {
 
     function testSetFlashFeePercentage() public {
         vm.prank(ALICE);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+
         token.setFlashMintFeePercentage(1);
 
         vm.expectRevert(abi.encodeWithSelector(IRToken.FlashFeePercentageTooBig.selector, 1000));
@@ -78,7 +80,7 @@ contract RTokenTest is TestSetup {
 
         vm.prank(address(token.positionManager()));
         if (amountToBurn > amountToMint) {
-            vm.expectRevert(bytes("ERC20: burn amount exceeds balance"));
+            vm.expectRevert("ERC20: burn amount exceeds balance");
         }
         token.burn(ALICE, amountToBurn);
         assertEq(token.balanceOf(ALICE), amountToBurn > amountToMint ? amountToMint : amountToMint - amountToBurn);

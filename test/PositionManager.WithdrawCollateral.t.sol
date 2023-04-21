@@ -56,7 +56,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        assertLt(positionManager.getCurrentICR(collateralToken, ALICE, price), MathUtils.MCR);
+        assertLt(PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price), MathUtils.MCR);
 
         uint256 collateralTopUpAmount = 1;
 
@@ -95,7 +95,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         // Carol with no active position attempts to withdraw
         vm.prank(CAROL);
-        vm.expectRevert(bytes("ERC20: burn amount exceeds balance"));
+        vm.expectRevert("ERC20: burn amount exceeds balance");
         positionManager.managePosition(collateralToken, 1 ether, false, 0, false, 0);
     }
 

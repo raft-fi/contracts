@@ -365,7 +365,9 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function liquidate(IERC20 collateralToken, address position) external override {
         uint256 price = priceFeeds[collateralToken].fetchPrice();
-        uint256 icr = getCurrentICR(collateralToken, position, price);
+        uint256 icr = MathUtils._computeCR(
+            raftCollateralTokens[collateralToken].token.balanceOf(position), raftDebtToken.balanceOf(position), price
+        );
         if (icr >= MathUtils.MCR) {
             revert NothingToLiquidate();
         }
@@ -425,7 +427,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _updateBaseRateFromRedemption(collateralToRedeem, price, rToken.totalSupply());
 
         // Calculate the redemption fee
-        uint256 redemptionFee = _calcRedemptionFee(getRedemptionRate(), collateralToRedeem);
+        uint256 redemptionFee = getRedemptionFee(collateralToRedeem);
 
         checkValidFee(redemptionFee, collateralToRedeem, maxFeePercentage);
 
@@ -445,31 +447,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     // --- Helper functions ---
-
-    /// @dev Returns the nominal collateral ratio (ICR) of a given position, without the price. Takes the position's
-    /// pending collateral and debt rewards from redistributions into account.
-    function getNominalICR(IERC20 collateralToken, address position) public view override returns (uint256 nicr) {
-        return MathUtils._computeNominalCR(
-            raftCollateralTokens[collateralToken].token.balanceOf(position), raftDebtToken.balanceOf(position)
-        );
-    }
-
-    /// @dev Returns the current collateral ratio (ICR) of a given position. Takes the position's pending collateral
-    /// and debt rewards from redistributions into account.
-    function getCurrentICR(
-        IERC20 collateralToken,
-        address position,
-        uint256 price
-    )
-        public
-        view
-        override
-        returns (uint256)
-    {
-        return MathUtils._computeCR(
-            raftCollateralTokens[collateralToken].token.balanceOf(position), raftDebtToken.balanceOf(position), price
-        );
-    }
 
     /// @dev Updates debt and collateral indexes for a given collateral token.
     /// @param collateralToken The collateral token for which to update the indexes.
@@ -540,19 +517,17 @@ contract PositionManager is FeeCollector, IPositionManager {
         return _baseRate + redemptionSpread;
     }
 
-    function getRedemptionFeeWithDecay(uint256 _collateralAmount) external view override returns (uint256) {
-        return _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralAmount);
+    function getRedemptionFee(uint256 _collateralAmount) public view override returns (uint256) {
+        return getRedemptionRate().mulDown(_collateralAmount);
     }
 
-    function _calcRedemptionFee(
-        uint256 _redemptionRate,
-        uint256 _collateralAmount
-    )
-        internal
-        pure
+    function getRedemptionFeeWithDecay(uint256 _collateralAmount)
+        external
+        view
+        override
         returns (uint256 redemptionFee)
     {
-        redemptionFee = _redemptionRate.mulDown(_collateralAmount);
+        redemptionFee = getRedemptionRateWithDecay().mulDown(_collateralAmount);
         if (redemptionFee >= _collateralAmount) {
             revert FeeEatsUpAllReturnedCollateral();
         }
@@ -580,20 +555,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         return Math.min(borrowingSpread + _baseRate, MAX_BORROWING_FEE);
     }
 
-    function getBorrowingFee(uint256 _rDebt) external view override returns (uint256) {
-        return _getBorrowingFee(_rDebt);
-    }
-
-    function _getBorrowingFee(uint256 _rDebt) internal view returns (uint256) {
-        return _calcBorrowingFee(getBorrowingRate(), _rDebt);
-    }
-
-    function getBorrowingFeeWithDecay(uint256 _rDebt) external view override returns (uint256) {
-        return _calcBorrowingFee(getBorrowingRateWithDecay(), _rDebt);
-    }
-
-    function _calcBorrowingFee(uint256 _borrowingRate, uint256 _rDebt) internal pure returns (uint256) {
-        return _borrowingRate.mulDown(_rDebt);
+    function getBorrowingFee(uint256 _rDebt) public view override returns (uint256) {
+        return getBorrowingRate().mulDown(_rDebt);
     }
 
     /// @dev Updates the base rate based on time elapsed since the last redemption or R borrowing operation.
@@ -638,7 +601,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         returns (uint256 rFee)
     {
         _decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        rFee = _getBorrowingFee(debtAmount);
+        rFee = getBorrowingFee(debtAmount);
 
         checkValidFee(rFee, debtAmount, _maxFeePercentage);
 
