@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ITellor} from "../../contracts/Dependencies/ITellor.sol";
+import { ITellor } from "../../contracts/Dependencies/ITellor.sol";
 
 contract MockTellor is ITellor {
     // --- Mock price data ---

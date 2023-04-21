@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IWstETH} from "../Dependencies/IWstETH.sol";
-import {ITellorPriceOracle, ITellor} from "./Interfaces/ITellorPriceOracle.sol";
-import {BasePriceOracle} from "./BasePriceOracle.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IWstETH } from "../Dependencies/IWstETH.sol";
+import { ITellorPriceOracle, ITellor } from "./Interfaces/ITellorPriceOracle.sol";
+import { BasePriceOracle } from "./BasePriceOracle.sol";
 
 contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
     // --- Constants & immutables ---

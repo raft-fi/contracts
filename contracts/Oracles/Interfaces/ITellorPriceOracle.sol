@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ITellor} from "../../Dependencies/ITellor.sol";
-import {IPriceOracle} from "./IPriceOracle.sol";
+import { ITellor } from "../../Dependencies/ITellor.sol";
+import { IPriceOracle } from "./IPriceOracle.sol";
 
 interface ITellorPriceOracle is IPriceOracle {
     // --- Types ---

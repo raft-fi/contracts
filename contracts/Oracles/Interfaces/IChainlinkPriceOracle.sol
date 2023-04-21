@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {AggregatorV3Interface} from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
-import {IPriceOracle} from "./IPriceOracle.sol";
+import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
+import { IPriceOracle } from "./IPriceOracle.sol";
 
 interface IChainlinkPriceOracle is IPriceOracle {
     // --- Types ---

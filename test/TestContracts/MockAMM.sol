@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.19;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IAMM} from "../../contracts/Interfaces/IAMM.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IAMM } from "../../contracts/Interfaces/IAMM.sol";
 
 /* Tester contract for math functions in Math.sol library. */
 
@@ -20,7 +20,12 @@ contract MockAMM is IAMM {
         token1Rate = _token1Rate;
     }
 
-    function getAmountOut(IERC20 tokenIn, IERC20 tokenOut, uint256 amountIn, bytes calldata)
+    function getAmountOut(
+        IERC20 tokenIn,
+        IERC20 tokenOut,
+        uint256 amountIn,
+        bytes calldata
+    )
         private
         view
         returns (uint256 amountOut)
@@ -29,7 +34,13 @@ contract MockAMM is IAMM {
         return amountIn * rate / 1e18;
     }
 
-    function swap(IERC20 tokenIn, IERC20 tokenOut, uint256 amountIn, uint256 minReturn, bytes calldata extraData)
+    function swap(
+        IERC20 tokenIn,
+        IERC20 tokenOut,
+        uint256 amountIn,
+        uint256 minReturn,
+        bytes calldata extraData
+    )
         external
         override
         returns (uint256 amountReceived)

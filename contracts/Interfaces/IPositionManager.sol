@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Indexable} from "./IERC20Indexable.sol";
-import {IFeeCollector} from "./IFeeCollector.sol";
-import {IPriceFeed} from "./IPriceFeed.sol";
-import {IRToken} from "./IRToken.sol";
-import {ISplitLiquidationCollateral} from "./ISplitLiquidationCollateral.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Indexable } from "./IERC20Indexable.sol";
+import { IFeeCollector } from "./IFeeCollector.sol";
+import { IPriceFeed } from "./IPriceFeed.sol";
+import { IRToken } from "./IRToken.sol";
+import { ISplitLiquidationCollateral } from "./ISplitLiquidationCollateral.sol";
 
 /// @dev Common interface for the Position Manager.
 interface IPositionManager is IFeeCollector {
@@ -260,7 +260,8 @@ interface IPositionManager is IFeeCollector {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external;
+    )
+        external;
 
     /// @dev Manages the position for the borrower (the caller).
     /// @param collateralToken The token the borrower used as collateral.
@@ -276,7 +277,8 @@ interface IPositionManager is IFeeCollector {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external;
+    )
+        external;
 
     /// @return The max borrowing spread.
     function MAX_BORROWING_SPREAD() external view returns (uint256);
@@ -342,7 +344,10 @@ interface IPositionManager is IFeeCollector {
     /// @param position The address of the borrower.
     /// @param delegate The address of the delegate.
     /// @return isWhitelisted True if the delegate is whitelisted for a given borrower, false otherwise.
-    function individualDelegateWhitelist(address position, address delegate)
+    function individualDelegateWhitelist(
+        address position,
+        address delegate
+    )
         external
         view
         returns (bool isWhitelisted);

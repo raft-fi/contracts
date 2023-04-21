@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManagerDependent} from "../contracts/Interfaces/IPositionManagerDependent.sol";
-import {RToken, IRToken} from "../contracts/RToken.sol";
-import {TestSetup} from "./utils/TestSetup.t.sol";
+import { IPositionManagerDependent } from "../contracts/Interfaces/IPositionManagerDependent.sol";
+import { RToken, IRToken } from "../contracts/RToken.sol";
+import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract RTokenTest is TestSetup {
     IRToken public token;
@@ -49,8 +49,8 @@ contract RTokenTest is TestSetup {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         token.setFlashMintFeePercentage(1);
 
-        vm.expectRevert(abi.encodeWithSelector(IRToken.FlashFeePercentageTooBig.selector, 1_000));
-        token.setFlashMintFeePercentage(1_000);
+        vm.expectRevert(abi.encodeWithSelector(IRToken.FlashFeePercentageTooBig.selector, 1000));
+        token.setFlashMintFeePercentage(1000);
 
         token.setFlashMintFeePercentage(500);
         assertEq(token.flashMintFeePercentage(), 500);

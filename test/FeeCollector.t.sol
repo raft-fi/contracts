@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IFeeCollector} from "../contracts/Interfaces/IFeeCollector.sol";
-import {FeeCollectorTester} from "./TestContracts/FeeCollectorTester.sol";
-import {TestSetup} from "./utils/TestSetup.t.sol";
+import { IFeeCollector } from "../contracts/Interfaces/IFeeCollector.sol";
+import { FeeCollectorTester } from "./TestContracts/FeeCollectorTester.sol";
+import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract FeeCollectorTest is TestSetup {
     FeeCollectorTester public feeCollector;

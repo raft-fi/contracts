@@ -14,7 +14,12 @@ interface ISplitLiquidationCollateral {
     /// @param isRedistribution True if this is a redistribution.
     /// @return collateralToSendToProtocol Amount of collateral to send to protocol.
     /// @return collateralToSentToLiquidator Amount of collateral to send to liquidator.
-    function split(uint256 collateral, uint256 debt, uint256 price, bool isRedistribution)
+    function split(
+        uint256 collateral,
+        uint256 debt,
+        uint256 price,
+        bool isRedistribution
+    )
         external
         view
         returns (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator);

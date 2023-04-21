@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IERC3156FlashBorrower} from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
-import {IERC3156FlashLender} from "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IPositionManager} from "./Interfaces/IPositionManager.sol";
-import {IRToken} from "./Interfaces/IRToken.sol";
-import {PositionManagerDependent} from "./PositionManagerDependent.sol";
-import {IOneStepLeverage} from "./Interfaces/IOneStepLeverage.sol";
-import {IAMM} from "./Interfaces/IAMM.sol";
+import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
+import { IERC3156FlashLender } from "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IPositionManager } from "./Interfaces/IPositionManager.sol";
+import { IRToken } from "./Interfaces/IRToken.sol";
+import { PositionManagerDependent } from "./PositionManagerDependent.sol";
+import { IOneStepLeverage } from "./Interfaces/IOneStepLeverage.sol";
+import { IAMM } from "./Interfaces/IAMM.sol";
 
 contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionManagerDependent {
     using SafeERC20 for IERC20;
@@ -19,7 +19,11 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
 
     uint256 public constant override MAX_LEFTOVER_R = 1e18;
 
-    constructor(IPositionManager positionManager, IAMM amm_, IERC20 collateralToken_)
+    constructor(
+        IPositionManager positionManager,
+        IAMM amm_,
+        IERC20 collateralToken_
+    )
         PositionManagerDependent(address(positionManager))
     {
         amm = amm_;
@@ -43,7 +47,10 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
         bytes calldata ammData,
         uint256 minReturnOrAmountToSell,
         uint256 maxFeePercentage
-    ) external override {
+    )
+        external
+        override
+    {
         if (principalCollateralIncrease && principalCollateralChange > 0) {
             collateralToken.safeTransferFrom(msg.sender, address(this), principalCollateralChange);
         }
@@ -62,7 +69,13 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
         rToken.flashLoan(this, address(rToken), debtChange, data);
     }
 
-    function onFlashLoan(address initiator, address, uint256 amount, uint256 fee, bytes calldata data)
+    function onFlashLoan(
+        address initiator,
+        address,
+        uint256 amount,
+        uint256 fee,
+        bytes calldata data
+    )
         external
         override
         returns (bytes32)

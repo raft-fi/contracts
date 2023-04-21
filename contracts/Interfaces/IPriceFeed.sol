@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPriceOracle} from "../Oracles/Interfaces/IPriceOracle.sol";
+import { IPriceOracle } from "../Oracles/Interfaces/IPriceOracle.sol";
 
 interface IPriceFeed {
     // --- Events ---

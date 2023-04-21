@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {AggregatorV3Interface} from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
-import {IWstETH} from "../Dependencies/IWstETH.sol";
-import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
-import {MathUtils} from "../Dependencies/MathUtils.sol";
-import {IChainlinkPriceOracle} from "./Interfaces/IChainlinkPriceOracle.sol";
-import {BasePriceOracle} from "./BasePriceOracle.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
+import { IWstETH } from "../Dependencies/IWstETH.sol";
+import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
+import { MathUtils } from "../Dependencies/MathUtils.sol";
+import { IChainlinkPriceOracle } from "./Interfaces/IChainlinkPriceOracle.sol";
+import { BasePriceOracle } from "./BasePriceOracle.sol";
 
 contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
     // --- Types ---
@@ -77,7 +77,10 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         }
     }
 
-    function _getPrevChainlinkResponse(uint80 currentRoundID, uint8 currentDecimals)
+    function _getPrevChainlinkResponse(
+        uint80 currentRoundID,
+        uint8 currentDecimals
+    )
         internal
         view
         returns (ChainlinkResponse memory prevChainlinkResponse)
@@ -115,7 +118,10 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
     * 2) Chainlink is the PriceFeed's preferred primary oracle - having two consecutive valid round responses adds
     * peace of mind when using or returning to Chainlink.
     */
-    function _chainlinkIsBroken(ChainlinkResponse memory currentResponse, ChainlinkResponse memory prevResponse)
+    function _chainlinkIsBroken(
+        ChainlinkResponse memory currentResponse,
+        ChainlinkResponse memory prevResponse
+    )
         internal
         view
         returns (bool)
@@ -131,7 +137,11 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
     function _chainlinkPriceChangeAboveMax(
         ChainlinkResponse memory currentResponse,
         ChainlinkResponse memory prevResponse
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         uint256 currentScaledPrice = _convertIntoWstETHPrice(uint256(currentResponse.answer), currentResponse.decimals);
         uint256 prevScaledPrice = _convertIntoWstETHPrice(uint256(prevResponse.answer), prevResponse.decimals);
 
