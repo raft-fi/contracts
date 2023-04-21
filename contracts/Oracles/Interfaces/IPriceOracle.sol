@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IWstETH} from "../../Dependencies/IWstETH.sol";
+import { IWstETH } from "../../Dependencies/IWstETH.sol";
 
 interface IPriceOracle {
     // --- Types ---

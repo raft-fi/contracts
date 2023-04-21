@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IStETH} from "./Dependencies/IStETH.sol";
-import {IWstETH} from "./Dependencies/IWstETH.sol";
-import {IPositionManagerStETH} from "./Interfaces/IPositionManagerStETH.sol";
-import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
-import {ISplitLiquidationCollateral} from "./Interfaces/ISplitLiquidationCollateral.sol";
-import {PositionManager} from "./PositionManager.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IStETH } from "./Dependencies/IStETH.sol";
+import { IWstETH } from "./Dependencies/IWstETH.sol";
+import { IPositionManagerStETH } from "./Interfaces/IPositionManagerStETH.sol";
+import { IPriceFeed } from "./Interfaces/IPriceFeed.sol";
+import { ISplitLiquidationCollateral } from "./Interfaces/ISplitLiquidationCollateral.sol";
+import { PositionManager } from "./PositionManager.sol";
 
 contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
     // --- Immutable variables ---
@@ -22,7 +22,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         IWstETH wstETH_,
         address[] memory delegates,
         ISplitLiquidationCollateral newSplitLiquidationCollateral
-    ) PositionManager(delegates, newSplitLiquidationCollateral) {
+    )
+        PositionManager(delegates, newSplitLiquidationCollateral)
+    {
         wstETH = wstETH_;
         stETH = IStETH(address(wstETH_.stETH()));
 
@@ -31,13 +33,17 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
 
     // --- Functions ---
 
-    function managePositionETH(uint256 debtChange, bool isDebtIncrease, uint256 maxFeePercentage)
+    function managePositionETH(
+        uint256 debtChange,
+        bool isDebtIncrease,
+        uint256 maxFeePercentage
+    )
         external
         payable
         override
     {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
-        (bool sent,) = address(wstETH).call{value: msg.value}("");
+        (bool sent,) = address(wstETH).call{ value: msg.value }("");
         if (!sent) {
             revert SendingEtherFailed();
         }
@@ -47,13 +53,18 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         _managePosition(wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, false);
     }
 
-    function managePositionETH(address borrower, uint256 debtChange, bool isDebtIncrease, uint256 maxFeePercentage)
+    function managePositionETH(
+        address borrower,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        uint256 maxFeePercentage
+    )
         external
         payable
         override
     {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
-        (bool sent,) = address(wstETH).call{value: msg.value}("");
+        (bool sent,) = address(wstETH).call{ value: msg.value }("");
         if (!sent) {
             revert SendingEtherFailed();
         }
@@ -69,7 +80,10 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external override {
+    )
+        external
+        override
+    {
         if (isCollateralIncrease) {
             stETH.transferFrom(msg.sender, address(this), collateralChange);
             stETH.approve(address(wstETH), collateralChange);
@@ -107,7 +121,10 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
-    ) external override {
+    )
+        external
+        override
+    {
         if (isCollateralIncrease) {
             stETH.transferFrom(msg.sender, address(this), collateralChange);
             stETH.approve(address(wstETH), collateralChange);

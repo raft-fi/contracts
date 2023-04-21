@@ -5,9 +5,14 @@
   via-ir = true
 
 [fmt]
+  bracket_spacing = true
+  int_types = "long"
   line_length = 119
+  multiline_func_header = "all"
+  number_underscore = "thousands"
+  quote_style = "double"
   tab_width = 4
-  wrap_comments = false
+  wrap_comments = true
 
 [rpc_endpoints]
   mainnet = "${MAINNET_RPC_URL}"

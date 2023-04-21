@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IERC3156FlashBorrower} from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IPositionManagerDependent} from "./IPositionManagerDependent.sol";
-import {IAMM} from "./IAMM.sol";
+import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
+import { IAMM } from "./IAMM.sol";
 
 /// @dev Interface that OneStepLeverage needs to implement
 interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
@@ -47,5 +47,6 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
         bytes calldata ammData,
         uint256 minReturnOrAmountToSell,
         uint256 maxFeePercentage
-    ) external;
+    )
+        external;
 }

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Indexable} from "../contracts/Interfaces/IERC20Indexable.sol";
-import {IStETH} from "../contracts/Dependencies/IStETH.sol";
-import {IWstETH} from "../contracts/Dependencies/IWstETH.sol";
-import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
-import {IPositionManagerStETH, PositionManagerStETH} from "../contracts/PositionManagerStETH.sol";
-import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
-import {TestSetup} from "./utils/TestSetup.t.sol";
-import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
-import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
+import { IStETH } from "../contracts/Dependencies/IStETH.sol";
+import { IWstETH } from "../contracts/Dependencies/IWstETH.sol";
+import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
+import { IPositionManagerStETH, PositionManagerStETH } from "../contracts/PositionManagerStETH.sol";
+import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
+import { TestSetup } from "./utils/TestSetup.t.sol";
+import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
+import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
 
 contract PositionManagerStETHTest is TestSetup {
     address public constant WSTETH_ADDRESS = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -98,7 +98,7 @@ contract PositionManagerStETHTest is TestSetup {
 
         vm.startPrank(ALICE);
         uint256 wstETHAmount = stETH.getSharesByPooledEth(collateralTopUpAmount);
-        positionManager.managePositionETH{value: collateralTopUpAmount}(0, false, 0);
+        positionManager.managePositionETH{ value: collateralTopUpAmount }(0, false, 0);
         vm.stopPrank();
 
         uint256 positionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
@@ -121,7 +121,7 @@ contract PositionManagerStETHTest is TestSetup {
 
         vm.startPrank(ALICE);
         vm.expectRevert(IPositionManagerStETH.SendingEtherFailed.selector);
-        positionManager.managePositionETH{value: 0}(0, false, 0);
+        positionManager.managePositionETH{ value: 0 }(0, false, 0);
         vm.stopPrank();
     }
 
@@ -191,7 +191,7 @@ contract PositionManagerStETHTest is TestSetup {
 
     function _depositETH(address _account, uint256 _amount) private {
         vm.startPrank(_account);
-        IStETH(address(stETH)).submit{value: _amount}(ALICE);
+        IStETH(address(stETH)).submit{ value: _amount }(ALICE);
         vm.stopPrank();
     }
 }

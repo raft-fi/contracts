@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.19;
 
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
-import {MathUtils} from "./Dependencies/MathUtils.sol";
-import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
-import {IPriceOracle} from "./Oracles/Interfaces/IPriceOracle.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
+import { MathUtils } from "./Dependencies/MathUtils.sol";
+import { IPriceFeed } from "./Interfaces/IPriceFeed.sol";
+import { IPriceOracle } from "./Oracles/Interfaces/IPriceOracle.sol";
 
 contract PriceFeed is IPriceFeed, Ownable2Step {
     // --- Types ---
@@ -63,8 +63,8 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             return _storePrice(secondaryOracleResponse.price);
         }
 
-        // If primary oracle price has changed by > 50% between two consecutive rounds, compare it to secondary oracle's
-        // price
+        // If primary oracle price has changed by > 50% between two consecutive rounds, compare it to secondary
+        // oracle's price
         if (primaryOracleResponse.priceChangeAboveMax) {
             IPriceOracle.PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
             // If primary oracle is broken or frozen, both oracles are untrusted, and return last good price
@@ -92,7 +92,10 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
     // --- Helper functions ---
 
-    function _bothOraclesSimilarPrice(uint256 primaryOraclePrice, uint256 secondaryOraclePrice)
+    function _bothOraclesSimilarPrice(
+        uint256 primaryOraclePrice,
+        uint256 secondaryOraclePrice
+    )
         internal
         view
         returns (bool)
@@ -114,7 +117,10 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     //      If both oracles' prices are above the last good price, return the lower one.
     //      If both oracles' prices are below the last good price, return the higher one.
     //      Otherwise, return the last good price.
-    function _getPriceWithLowerChange(uint256 primaryOraclePrice, uint256 secondaryOraclePrice)
+    function _getPriceWithLowerChange(
+        uint256 primaryOraclePrice,
+        uint256 secondaryOraclePrice
+    )
         internal
         view
         returns (uint256)

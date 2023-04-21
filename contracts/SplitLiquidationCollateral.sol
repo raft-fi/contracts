@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
-import {ISplitLiquidationCollateral} from "./Interfaces/ISplitLiquidationCollateral.sol";
+import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
+import { ISplitLiquidationCollateral } from "./Interfaces/ISplitLiquidationCollateral.sol";
 
 contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     // --- Types ---
@@ -11,7 +11,7 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
 
     // --- Constants ---
 
-    uint256 private constant LOW_TOTAL_COLLATERAL = 3_000e18;
+    uint256 private constant LOW_TOTAL_COLLATERAL = 3000e18;
     uint256 private constant MEDIUM_TOTAL_COLLATERAL = 100_000e18;
     uint256 private constant HIGH_TOTAL_COLLATERAL = 1_000_000e18;
 
@@ -23,13 +23,18 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     uint256 private constant MEDIUM_LIQUIDATOR_REWARD_RATE = 65e16;
     uint256 private constant HIGH_LIQUIDATOR_REWARD_RATE = 50e16;
 
-    uint256 public constant override LOW_TOTAL_DEBT = 3_000e18;
+    uint256 public constant override LOW_TOTAL_DEBT = 3000e18;
     uint256 private constant MEDIUM_TOTAL_DEBT = 100_000e18;
     uint256 private constant HIGH_TOTAL_DEBT = 1_000_000e18;
 
     // --- Functions ---
 
-    function split(uint256 totalCollateral, uint256 totalDebt, uint256 price, bool isRedistribution)
+    function split(
+        uint256 totalCollateral,
+        uint256 totalDebt,
+        uint256 price,
+        bool isRedistribution
+    )
         external
         pure
         returns (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator)
@@ -102,7 +107,11 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
         uint256 amountLowerBound,
         uint256 rewardRateUpperBound,
         uint256 rewardRateLowerBound
-    ) internal pure returns (uint256) {
+    )
+        internal
+        pure
+        returns (uint256)
+    {
         return rewardRateUpperBound
             - (rewardRateUpperBound - rewardRateLowerBound).mulDown(amount - amountUpperBound).divDown(
                 amountLowerBound - amountUpperBound

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IWstETH} from "../../contracts/Dependencies/IWstETH.sol";
+import { ERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IWstETH } from "../../contracts/Dependencies/IWstETH.sol";
 
 // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.3.0/contracts/mocks/ERC20Mock.sol
 // mock class using ERC20
@@ -20,10 +20,10 @@ contract WstETHTokenMock is ERC20("Wrapped liquid staked Ether 2.0", "wstETH"), 
     }
 
     // solhint-disable-next-line no-empty-blocks
-    function wrap(uint256 _stETHAmount) external returns (uint256) {}
+    function wrap(uint256 _stETHAmount) external returns (uint256) { }
 
     // solhint-disable-next-line no-empty-blocks
-    function unwrap(uint256 _wstETHAmount) external returns (uint256) {}
+    function unwrap(uint256 _wstETHAmount) external returns (uint256) { }
 
     function getWstETHByStETH(uint256 _stETHAmount) external pure returns (uint256) {
         return _stETHAmount;

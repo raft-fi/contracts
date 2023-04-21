@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
-import {IRToken} from "../contracts/Interfaces/IRToken.sol";
-import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
-import {PositionManagerTester} from "./TestContracts/PositionManagerTester.sol";
-import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
-import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
-import {TestSetup} from "./utils/TestSetup.t.sol";
+import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
+import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
+import { PositionManagerTester } from "./TestContracts/PositionManagerTester.sol";
+import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
+import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerWithdrawRTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
@@ -293,7 +293,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 3.754%
-        maxFee = 3754 * MathUtils._100_PERCENT / 100000;
+        maxFee = 3754 * MathUtils._100_PERCENT / 100_000;
         vm.prank(CAROL);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
         positionManager.managePosition(collateralToken, 0, false, 1e18, true, maxFee);
@@ -390,7 +390,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Attempt with max fee = 37.659%
         vm.prank(DAVE);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, 37659 * MathUtils._100_PERCENT / 100000);
+        positionManager.managePosition(
+            collateralToken, 0, false, 1e18, true, 37_659 * MathUtils._100_PERCENT / 100_000
+        );
 
         // Attempt with max fee = 100%
         vm.prank(EVE);
@@ -1018,7 +1020,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 
-        uint256 withdrawAmount = 10000e18;
+        uint256 withdrawAmount = 10_000e18;
 
         vm.prank(ALICE);
         positionManager.managePosition(collateralToken, 0, false, withdrawAmount, true, MathUtils._100_PERCENT);

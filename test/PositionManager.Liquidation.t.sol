@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPositionManager} from "../contracts/Interfaces/IPositionManager.sol";
-import {IRToken} from "../contracts/Interfaces/IRToken.sol";
-import {MathUtils} from "../contracts/Dependencies/MathUtils.sol";
-import {PositionManager} from "../contracts/PositionManager.sol";
-import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollateral.sol";
-import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
-import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
-import {TestSetup} from "./utils/TestSetup.t.sol";
+import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
+import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
+import { PositionManager } from "../contracts/PositionManager.sol";
+import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
+import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
+import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
     PriceFeedTestnet public priceFeed;
@@ -60,7 +60,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertEq(icrBefore, 4e18);
 
         // Bob increases debt to 180 R, lowering his ICR to 1.11
-        uint256 targetICR = 1111111111111111111;
+        uint256 targetICR = 1_111_111_111_111_111_111;
         vm.startPrank(BOB);
         PositionManagerUtils.withdrawDebt({
             positionManager: positionManager,
