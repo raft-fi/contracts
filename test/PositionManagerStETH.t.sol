@@ -14,8 +14,6 @@ import {PriceFeedTestnet} from "./TestContracts/PriceFeedTestnet.sol";
 contract PositionManagerStETHTest is TestSetup {
     address public constant WSTETH_ADDRESS = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
 
-    uint256 public constant POSITIONS_SIZE = 10;
-
     PriceFeedTestnet public priceFeed;
     PositionManagerStETH public positionManager;
     IStETH public stETH;
@@ -29,7 +27,6 @@ contract PositionManagerStETHTest is TestSetup {
         positionManager = new PositionManagerStETH(
             priceFeed,
             IWstETH(WSTETH_ADDRESS),
-            POSITIONS_SIZE,
             new address[](0),
             splitLiquidationCollateralNew
         );
@@ -96,7 +93,7 @@ contract PositionManagerStETHTest is TestSetup {
 
         vm.startPrank(ALICE);
         uint256 wstETHAmount = stETH.getSharesByPooledEth(collateralTopUpAmount);
-        positionManager.managePositionETH{value: collateralTopUpAmount}(0, false, ALICE, ALICE, 0);
+        positionManager.managePositionETH{value: collateralTopUpAmount}(0, false, 0);
         vm.stopPrank();
 
         uint256 positionCollateralAfter = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
@@ -119,7 +116,7 @@ contract PositionManagerStETHTest is TestSetup {
 
         vm.startPrank(ALICE);
         vm.expectRevert(IPositionManagerStETH.SendingEtherFailed.selector);
-        positionManager.managePositionETH{value: 0}(0, false, ALICE, ALICE, 0);
+        positionManager.managePositionETH{value: 0}(0, false, 0);
         vm.stopPrank();
     }
 
@@ -149,7 +146,7 @@ contract PositionManagerStETHTest is TestSetup {
         vm.startPrank(ALICE);
         uint256 wstETHAmount = stETH.getSharesByPooledEth(collateralTopUpAmount);
         stETH.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePositionStETH(collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePositionStETH(collateralTopUpAmount, true, 0, false, 0);
         vm.stopPrank();
 
         uint256 positionCollateralAfter = positionManager.raftCollateralTokens(_collateralToken).balanceOf(ALICE);
@@ -179,7 +176,7 @@ contract PositionManagerStETHTest is TestSetup {
 
         // Alice withdraws 1 wstETH
         vm.prank(ALICE);
-        positionManager.managePositionStETH(withdrawAmount, false, 0, false, ALICE, ALICE, 0);
+        positionManager.managePositionStETH(withdrawAmount, false, 0, false, 0);
 
         uint256 aliceBalanceAfter = stETH.balanceOf(ALICE);
         assertApproxEqAbs(aliceBalanceAfter, aliceBalanceBefore + stETHAmount, 1);

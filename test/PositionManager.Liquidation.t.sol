@@ -11,8 +11,6 @@ import {PositionManagerUtils} from "./utils/PositionManagerUtils.sol";
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
-    uint256 public constant POSITIONS_SIZE = 10;
-
     PriceFeedTestnet public priceFeed;
     IPositionManager public positionManager;
     IRToken public rToken;
@@ -25,7 +23,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             new address[](0),
             splitLiquidationCollateral
         );
-        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
 
@@ -83,8 +81,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         positionManager.liquidate(collateralToken, BOB);
 
         // Bob's position is closed
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
-        assertFalse(bobPositionExists);
+        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
     }
 
     // Liquidates undercollateralized position if there are two positions in the system
@@ -123,11 +120,8 @@ contract PositionManagerLiquidationTest is TestSetup {
         // Liquidate the position
         positionManager.liquidate(collateralToken, ALICE);
 
-        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        assertFalse(alicePositionExists);
-
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
-        assertTrue(bobPositionExists);
+        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
     }
 
     // Reverts if position is non-existent or has been closed
@@ -150,8 +144,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        (bool carolPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
-        assertFalse(carolPositionExists);
+        assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(collateralToken, CAROL);
@@ -165,8 +158,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        (bool carolPositionExistsBeforeLiquidation,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
-        assertTrue(carolPositionExistsBeforeLiquidation);
+        assertGt(positionManager.raftDebtToken().balanceOf(CAROL), 0);
 
         // Price drops, Carol ICR falls below MCR
         priceFeed.setPrice(100e18);
@@ -174,8 +166,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         // Carol liquidated, and her position is closed
         positionManager.liquidate(collateralToken, CAROL);
 
-        (bool carolPositionExistsAfterLiquidation,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
-        assertFalse(carolPositionExistsAfterLiquidation);
+        assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(collateralToken, CAROL);
@@ -201,7 +192,6 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        (,,, uint256 listSizeBefore) = positionManager.sortedPositions(collateralToken);
         uint256 price = priceFeed.getPrice();
 
         // Check Bob's ICR > 110%
@@ -213,13 +203,8 @@ contract PositionManagerLiquidationTest is TestSetup {
         positionManager.liquidate(collateralToken, BOB);
 
         // Check Bob active, check Alice active
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
-        assertTrue(bobPositionExists);
-        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, ALICE);
-        assertTrue(alicePositionExists);
-
-        (,,, uint256 listSizeAfter) = positionManager.sortedPositions(collateralToken);
-        assertEq(listSizeBefore, listSizeAfter);
+        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
     }
 
     // Liquidates based on entire collateral/debt (including pending rewards), not raw collateral/debt

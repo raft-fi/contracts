@@ -10,8 +10,6 @@ import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollatera
 import {TestSetup} from "./utils/TestSetup.t.sol";
 
 contract PositionManagerTest is TestSetup {
-    uint256 public constant POSITIONS_SIZE = 10;
-
     PriceFeedTestnet public priceFeed;
     IPositionManager public positionManager;
 
@@ -24,7 +22,7 @@ contract PositionManagerTest is TestSetup {
             new address[](0),
             splitLiquidationCollateral
         );
-        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -40,7 +38,7 @@ contract PositionManagerTest is TestSetup {
             globalDelegates,
             splitLiquidationCollateral
         );
-        positionManager2.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager2.addCollateralToken(collateralToken, priceFeed);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -63,9 +61,7 @@ contract PositionManagerTest is TestSetup {
         uint256 borrowerCollateralBalanceBefore = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceBefore = positionManager2.rToken().balanceOf(BOB);
         uint256 delegateCollateralBalanceBefore = collateralToken.balanceOf(BOB);
-        positionManager2.managePosition(
-            collateralToken, ALICE, collateralTopUpAmount, true, debtAmount, true, ALICE, ALICE, 0
-        );
+        positionManager2.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, debtAmount, true, 0);
         uint256 borrowerRBalanceAfter = positionManager2.rToken().balanceOf(ALICE);
         uint256 borrowerCollateralBalanceAfter = collateralToken.balanceOf(ALICE);
         uint256 delegateRBalanceAfter = positionManager2.rToken().balanceOf(BOB);
@@ -102,7 +98,7 @@ contract PositionManagerTest is TestSetup {
         uint256 collateralTopUpAmount = 1 ether;
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0);
     }
 
     function testNonDelegateCannotManagePosition() public {
@@ -111,7 +107,7 @@ contract PositionManagerTest is TestSetup {
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
 
         vm.expectRevert(IPositionManager.DelegateNotWhitelisted.selector);
-        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0);
     }
 
     function testIndividualDelegateCannotManageOtherPositions() public {
@@ -133,7 +129,7 @@ contract PositionManagerTest is TestSetup {
 
         vm.prank(BOB);
         vm.expectRevert(IPositionManager.DelegateNotWhitelisted.selector);
-        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, ALICE, ALICE, 0);
+        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0);
     }
 
     // --- Borrowing Spread ---

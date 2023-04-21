@@ -14,7 +14,6 @@ import {SplitLiquidationCollateral} from "../contracts/SplitLiquidationCollatera
 contract OneStepLeverageTest is TestSetup {
     using Fixed256x18 for uint256;
 
-    uint256 public constant POSITIONS_SIZE = 10;
     uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
 
     PriceFeedTestnet public priceFeed;
@@ -30,7 +29,7 @@ contract OneStepLeverageTest is TestSetup {
             new address[](0),
             new SplitLiquidationCollateral()
         );
-        positionManager.addCollateralToken(collateralToken, priceFeed, POSITIONS_SIZE);
+        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);
         oneStepLeverage = new OneStepLeverage(positionManager, mockAmm, collateralToken);
@@ -64,7 +63,7 @@ contract OneStepLeverageTest is TestSetup {
         vm.startPrank(ALICE);
         collateralToken.approve(address(oneStepLeverage), collateralAmount);
         oneStepLeverage.manageLeveragedPosition(
-            targetDebt, true, collateralAmount, true, "", minReturn, ALICE, ALICE, MathUtils._100_PERCENT
+            targetDebt, true, collateralAmount, true, "", minReturn, MathUtils._100_PERCENT
         );
 
         checkEffectiveLeverage(ALICE, leverageMultiplier);
@@ -80,7 +79,7 @@ contract OneStepLeverageTest is TestSetup {
         vm.startPrank(ALICE);
         collateralToken.approve(address(oneStepLeverage), collateralAmount);
         oneStepLeverage.manageLeveragedPosition(
-            targetDebt, true, collateralAmount, true, "", minReturn, ALICE, ALICE, MathUtils._100_PERCENT
+            targetDebt, true, collateralAmount, true, "", minReturn, MathUtils._100_PERCENT
         );
 
         uint256 collateralToSwap = targetDebt * (1e18 + 1e15) / price;
@@ -94,8 +93,6 @@ contract OneStepLeverageTest is TestSetup {
             false,
             "",
             collateralToSwap,
-            ALICE,
-            ALICE,
             MathUtils._100_PERCENT
         );
 

@@ -20,25 +20,22 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
     constructor(
         IPriceFeed priceFeed,
         IWstETH wstETH_,
-        uint256 positionsSize,
         address[] memory delegates,
         ISplitLiquidationCollateral newSplitLiquidationCollateral
     ) PositionManager(delegates, newSplitLiquidationCollateral) {
         wstETH = wstETH_;
         stETH = IStETH(address(wstETH_.stETH()));
 
-        addCollateralToken(wstETH_, priceFeed, positionsSize);
+        addCollateralToken(wstETH_, priceFeed);
     }
 
     // --- Functions ---
 
-    function managePositionETH(
-        uint256 debtChange,
-        bool isDebtIncrease,
-        address upperHint,
-        address lowerHint,
-        uint256 maxFeePercentage
-    ) external payable override {
+    function managePositionETH(uint256 debtChange, bool isDebtIncrease, uint256 maxFeePercentage)
+        external
+        payable
+        override
+    {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
         (bool sent,) = address(wstETH).call{value: msg.value}("");
         if (!sent) {
@@ -47,28 +44,14 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         uint256 wstETHBalanceAfter = wstETH.balanceOf(address(this));
         uint256 wstETHAmount = wstETHBalanceAfter - wstETHBalanceBefore;
 
-        _managePosition(
-            wstETH,
-            msg.sender,
-            wstETHAmount,
-            true,
-            debtChange,
-            isDebtIncrease,
-            upperHint,
-            lowerHint,
-            maxFeePercentage,
-            false
-        );
+        _managePosition(wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, false);
     }
 
-    function managePositionETH(
-        address borrower,
-        uint256 debtChange,
-        bool isDebtIncrease,
-        address upperHint,
-        address lowerHint,
-        uint256 maxFeePercentage
-    ) external payable override {
+    function managePositionETH(address borrower, uint256 debtChange, bool isDebtIncrease, uint256 maxFeePercentage)
+        external
+        payable
+        override
+    {
         uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
         (bool sent,) = address(wstETH).call{value: msg.value}("");
         if (!sent) {
@@ -77,18 +60,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         uint256 wstETHBalanceAfter = wstETH.balanceOf(address(this));
         uint256 wstETHAmount = wstETHBalanceAfter - wstETHBalanceBefore;
 
-        _managePosition(
-            wstETH,
-            borrower,
-            wstETHAmount,
-            true,
-            debtChange,
-            isDebtIncrease,
-            upperHint,
-            lowerHint,
-            maxFeePercentage,
-            false
-        );
+        _managePosition(wstETH, borrower, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, false);
     }
 
     function managePositionStETH(
@@ -96,8 +68,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        address upperHint,
-        address lowerHint,
         uint256 maxFeePercentage
     ) external override {
         if (isCollateralIncrease) {
@@ -111,8 +81,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 isCollateralIncrease,
                 debtChange,
                 isDebtIncrease,
-                upperHint,
-                lowerHint,
                 maxFeePercentage,
                 false
             );
@@ -124,8 +92,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 isCollateralIncrease,
                 debtChange,
                 isDebtIncrease,
-                upperHint,
-                lowerHint,
                 maxFeePercentage,
                 false
             );
@@ -140,8 +106,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        address upperHint,
-        address lowerHint,
         uint256 maxFeePercentage
     ) external override {
         if (isCollateralIncrease) {
@@ -155,8 +119,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 isCollateralIncrease,
                 debtChange,
                 isDebtIncrease,
-                upperHint,
-                lowerHint,
                 maxFeePercentage,
                 false
             );
@@ -168,8 +130,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
                 isCollateralIncrease,
                 debtChange,
                 isDebtIncrease,
-                upperHint,
-                lowerHint,
                 maxFeePercentage,
                 false
             );
