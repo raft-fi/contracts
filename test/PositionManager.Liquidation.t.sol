@@ -153,7 +153,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         (bool carolPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
         assertFalse(carolPositionExists);
 
-        vm.expectRevert(IPositionManager.PositionNotActive.selector);
+        vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(collateralToken, CAROL);
 
         vm.startPrank(CAROL);
@@ -177,7 +177,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         (bool carolPositionExistsAfterLiquidation,,) = positionManager.sortedPositionsNodes(collateralToken, CAROL);
         assertFalse(carolPositionExistsAfterLiquidation);
 
-        vm.expectRevert(IPositionManager.PositionNotActive.selector);
+        vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(collateralToken, CAROL);
     }
 

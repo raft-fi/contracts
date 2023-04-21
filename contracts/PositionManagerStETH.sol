@@ -23,7 +23,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         wstETH = _wstETH;
         stETH = IStETH(address(_wstETH.stETH()));
 
-        _addCollateralToken(_wstETH, _priceFeed, _positionsSize);
+        addCollateralToken(_wstETH, _priceFeed, _positionsSize);
     }
 
     function managePositionETH(

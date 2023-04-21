@@ -18,9 +18,6 @@ interface IPositionManager is IFeeCollector {
     /// @dev Max fee percentage must be between 0.5% and 100%.
     error MaxFeePercentageOutOfRange();
 
-    /// @dev Position is not active (either does not exist or closed).
-    error PositionNotActive();
-
     /// @dev Requested redemption amount is > user's R token balance.
     error RedemptionAmountExceedsBalance();
 
