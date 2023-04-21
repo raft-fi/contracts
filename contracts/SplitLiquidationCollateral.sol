@@ -5,15 +5,19 @@ import {Fixed256x18} from "@tempusfinance/tempus-utils/contracts/math/Fixed256x1
 import {ISplitLiquidationCollateral} from "./Interfaces/ISplitLiquidationCollateral.sol";
 
 contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
+    // --- Types ---
+
     using Fixed256x18 for uint256;
+
+    // --- Constants ---
 
     uint256 private constant LOW_TOTAL_COLLATERAL = 3_000e18;
     uint256 private constant MEDIUM_TOTAL_COLLATERAL = 100_000e18;
     uint256 private constant HIGH_TOTAL_COLLATERAL = 1_000_000e18;
 
-    uint256 private constant LOW_REDISTRUBTOR_REWARD_RATE = 300e14;
-    uint256 private constant MEDIUM_REDISTRUBTOR_REWARD_RATE = 125e14;
-    uint256 private constant HIGH_REDISTRUBTOR_REWARD_RATE = 50e14;
+    uint256 private constant LOW_REDISTRIBUTOR_REWARD_RATE = 300e14;
+    uint256 private constant MEDIUM_REDISTRIBUTOR_REWARD_RATE = 125e14;
+    uint256 private constant HIGH_REDISTRIBUTOR_REWARD_RATE = 50e14;
 
     uint256 private constant LOW_LIQUIDATOR_REWARD_RATE = 1e18;
     uint256 private constant MEDIUM_LIQUIDATOR_REWARD_RATE = 65e16;
@@ -22,6 +26,8 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     uint256 public constant override LOW_TOTAL_DEBT = 3_000e18;
     uint256 private constant MEDIUM_TOTAL_DEBT = 100_000e18;
     uint256 private constant HIGH_TOTAL_DEBT = 1_000_000e18;
+
+    // --- Functions ---
 
     function split(uint256 totalCollateral, uint256 totalDebt, uint256 price, bool isRedistribution)
         external
@@ -45,15 +51,15 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     // Formula from https://docs.raft.fi/how-it-works/returning/redistribution#redistributor-reward
     function _calculateRedistributorRewardRate(uint256 totalCollateral) internal pure returns (uint256) {
         if (totalCollateral <= LOW_TOTAL_COLLATERAL) {
-            return LOW_REDISTRUBTOR_REWARD_RATE;
+            return LOW_REDISTRIBUTOR_REWARD_RATE;
         }
         if (totalCollateral <= MEDIUM_TOTAL_COLLATERAL) {
             return _calculateRewardRateFormula(
                 totalCollateral,
                 LOW_TOTAL_COLLATERAL,
                 MEDIUM_TOTAL_COLLATERAL,
-                LOW_REDISTRUBTOR_REWARD_RATE,
-                MEDIUM_REDISTRUBTOR_REWARD_RATE
+                LOW_REDISTRIBUTOR_REWARD_RATE,
+                MEDIUM_REDISTRIBUTOR_REWARD_RATE
             );
         }
         if (totalCollateral <= HIGH_TOTAL_COLLATERAL) {
@@ -61,11 +67,11 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
                 totalCollateral,
                 MEDIUM_TOTAL_COLLATERAL,
                 HIGH_TOTAL_COLLATERAL,
-                MEDIUM_REDISTRUBTOR_REWARD_RATE,
-                HIGH_REDISTRUBTOR_REWARD_RATE
+                MEDIUM_REDISTRIBUTOR_REWARD_RATE,
+                HIGH_REDISTRIBUTOR_REWARD_RATE
             );
         }
-        return HIGH_REDISTRUBTOR_REWARD_RATE;
+        return HIGH_REDISTRIBUTOR_REWARD_RATE;
     }
 
     // Formula from https://docs.raft.fi/how-it-works/returning/liquidation#liquidator-reward
@@ -92,14 +98,14 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
 
     function _calculateRewardRateFormula(
         uint256 amount,
-        uint256 amountlUpperBound,
+        uint256 amountUpperBound,
         uint256 amountLowerBound,
         uint256 rewardRateUpperBound,
         uint256 rewardRateLowerBound
     ) internal pure returns (uint256) {
         return rewardRateUpperBound
-            - (rewardRateUpperBound - rewardRateLowerBound).mulDown(amount - amountlUpperBound).divDown(
-                amountLowerBound - amountlUpperBound
+            - (rewardRateUpperBound - rewardRateLowerBound).mulDown(amount - amountUpperBound).divDown(
+                amountLowerBound - amountUpperBound
             );
     }
 }

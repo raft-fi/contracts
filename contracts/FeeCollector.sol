@@ -5,16 +5,22 @@ import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {IFeeCollector} from "./Interfaces/IFeeCollector.sol";
 
 abstract contract FeeCollector is Ownable2Step, IFeeCollector {
+    // --- Variables ---
+
     address public override feeRecipient;
 
-    /// @param _feeRecipient Address of the fee recipient to initialize contract with.
-    constructor(address _feeRecipient) {
-        if (_feeRecipient == address(0)) {
+    // --- Constructor ---
+
+    /// @param feeRecipient_ Address of the fee recipient to initialize contract with.
+    constructor(address feeRecipient_) {
+        if (feeRecipient_ == address(0)) {
             revert InvalidFeeRecipient();
         }
 
-        feeRecipient = _feeRecipient;
+        feeRecipient = feeRecipient_;
     }
+
+    // --- Functions ---
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
         if (newFeeRecipient == address(0)) {

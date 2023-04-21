@@ -8,11 +8,19 @@ import {IERC20Indexable} from "./Interfaces/IERC20Indexable.sol";
 import {PositionManagerDependent} from "./PositionManagerDependent.sol";
 
 contract ERC20Indexable is IERC20Indexable, ERC20, PositionManagerDependent {
+    // --- Types ---
+
     using Fixed256x18 for uint256;
+
+    // --- Constants ---
 
     uint256 public constant override INDEX_PRECISION = Fixed256x18.ONE;
 
+    // --- Variables ---
+
     uint256 public override currentIndex;
+
+    // --- Constructor ---
 
     constructor(address positionManager, string memory name, string memory symbol)
         ERC20(name, symbol)
@@ -21,6 +29,8 @@ contract ERC20Indexable is IERC20Indexable, ERC20, PositionManagerDependent {
         currentIndex = INDEX_PRECISION;
         emit ERC20IndexableDeployed(positionManager);
     }
+
+    // --- Functions ---
 
     function mint(address to, uint256 amount) external override onlyPositionManager {
         _mint(to, amount.divUp(currentIndex));

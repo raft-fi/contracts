@@ -50,16 +50,16 @@ interface IPriceFeed {
     function priceDifferenceBetweenOracles() external returns (uint256);
 
     /// @dev Set primary oracle address.
-    /// @param primaryOracle Primary oracle address.
-    function setPrimaryOracle(IPriceOracle primaryOracle) external;
+    /// @param newPrimaryOracle Primary oracle address.
+    function setPrimaryOracle(IPriceOracle newPrimaryOracle) external;
 
     /// @dev Set secondary oracle address.
-    /// @param secondaryOracle Secondary oracle address.
-    function setSecondaryOracle(IPriceOracle secondaryOracle) external;
+    /// @param newSecondaryOracle Secondary oracle address.
+    function setSecondaryOracle(IPriceOracle newSecondaryOracle) external;
 
     /// @dev Set the maximum relative price difference between two oracle responses.
-    /// @param priceDifferenceBetweenOracles The maximum relative price difference between two oracle responses.
-    function setPriceDifferenceBetweenOracles(uint256 priceDifferenceBetweenOracles) external;
+    /// @param newPriceDifferenceBetweenOracles The maximum relative price difference between two oracle responses.
+    function setPriceDifferenceBetweenOracles(uint256 newPriceDifferenceBetweenOracles) external;
 
     /// @dev Returns the latest price obtained from the Oracle. Called by Raft functions that require a current price.
     ///

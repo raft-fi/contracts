@@ -10,7 +10,16 @@ import {IPriceFeed} from "./Interfaces/IPriceFeed.sol";
 import {IPriceOracle} from "./Oracles/Interfaces/IPriceOracle.sol";
 
 contract PriceFeed is IPriceFeed, Ownable2Step {
+    // --- Types ---
+
     using Fixed256x18 for uint256;
+
+    // --- Constants ---
+
+    uint256 private constant MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e15; // 0.1%
+    uint256 private constant MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e17; // 10%
+
+    // --- Variables ---
 
     IPriceOracle public override primaryOracle;
     IPriceOracle public override secondaryOracle;
@@ -19,27 +28,26 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
     uint256 public override priceDifferenceBetweenOracles;
 
-    uint256 private constant MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e15; // 0.1%
-    uint256 private constant MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 1e17; // 10%
+    // --- Constructor ---
 
-    constructor(IPriceOracle _primaryOracle, IPriceOracle _secondaryOracle, uint256 _priceDifferenceBetweenOracles) {
-        _setPrimaryOracle(_primaryOracle);
-        _setSecondaryOracle(_secondaryOracle);
-        _setPriceDifferenceBetweenOracle(_priceDifferenceBetweenOracles);
+    constructor(IPriceOracle primaryOracle_, IPriceOracle secondaryOracle_, uint256 priceDifferenceBetweenOracles_) {
+        _setPrimaryOracle(primaryOracle_);
+        _setSecondaryOracle(secondaryOracle_);
+        _setPriceDifferenceBetweenOracle(priceDifferenceBetweenOracles_);
     }
 
     // --- Functions ---
 
-    function setPrimaryOracle(IPriceOracle _primaryOracle) external override onlyOwner {
-        _setPrimaryOracle(_primaryOracle);
+    function setPrimaryOracle(IPriceOracle newPrimaryOracle) external override onlyOwner {
+        _setPrimaryOracle(newPrimaryOracle);
     }
 
-    function setSecondaryOracle(IPriceOracle _secondaryOracle) external override onlyOwner {
-        _setSecondaryOracle(_secondaryOracle);
+    function setSecondaryOracle(IPriceOracle newSecondaryOracle) external override onlyOwner {
+        _setSecondaryOracle(newSecondaryOracle);
     }
 
-    function setPriceDifferenceBetweenOracles(uint256 _priceDifferenceBetweenOracles) external override onlyOwner {
-        _setPriceDifferenceBetweenOracle(_priceDifferenceBetweenOracles);
+    function setPriceDifferenceBetweenOracles(uint256 newPriceDifferenceBetweenOracles) external override onlyOwner {
+        _setPriceDifferenceBetweenOracle(newPriceDifferenceBetweenOracles);
     }
 
     function fetchPrice() external override returns (uint256 price) {
@@ -84,15 +92,15 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
 
     // --- Helper functions ---
 
-    function _bothOraclesSimilarPrice(uint256 _primaryOraclePrice, uint256 _secondaryOraclePrice)
+    function _bothOraclesSimilarPrice(uint256 primaryOraclePrice, uint256 secondaryOraclePrice)
         internal
         view
         returns (bool)
     {
         // Get the relative price difference between the oracles. Use the lower price as the denominator, i.e. the
         // reference for the calculation.
-        uint256 minPrice = Math.min(_primaryOraclePrice, _secondaryOraclePrice);
-        uint256 maxPrice = Math.max(_primaryOraclePrice, _secondaryOraclePrice);
+        uint256 minPrice = Math.min(primaryOraclePrice, secondaryOraclePrice);
+        uint256 maxPrice = Math.max(primaryOraclePrice, secondaryOraclePrice);
         uint256 percentPriceDifference = (maxPrice - minPrice).divDown(minPrice);
 
         /*
@@ -106,65 +114,65 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
     //      If both oracles' prices are above the last good price, return the lower one.
     //      If both oracles' prices are below the last good price, return the higher one.
     //      Otherwise, return the last good price.
-    function _getPriceWithLowerChange(uint256 _primaryOraclePrice, uint256 _secondaryOraclePrice)
+    function _getPriceWithLowerChange(uint256 primaryOraclePrice, uint256 secondaryOraclePrice)
         internal
         view
         returns (uint256)
     {
-        if (_primaryOraclePrice > lastGoodPrice && _secondaryOraclePrice > lastGoodPrice) {
-            return Math.min(_primaryOraclePrice, _secondaryOraclePrice);
+        if (primaryOraclePrice > lastGoodPrice && secondaryOraclePrice > lastGoodPrice) {
+            return Math.min(primaryOraclePrice, secondaryOraclePrice);
         }
-        if (_primaryOraclePrice < lastGoodPrice && _secondaryOraclePrice < lastGoodPrice) {
-            return Math.max(_primaryOraclePrice, _secondaryOraclePrice);
+        if (primaryOraclePrice < lastGoodPrice && secondaryOraclePrice < lastGoodPrice) {
+            return Math.max(primaryOraclePrice, secondaryOraclePrice);
         }
         return lastGoodPrice;
     }
 
-    function _setPrimaryOracle(IPriceOracle _primaryOracle) internal {
-        if (address(_primaryOracle) == address(0)) {
+    function _setPrimaryOracle(IPriceOracle newPrimaryOracle) internal {
+        if (address(newPrimaryOracle) == address(0)) {
             revert InvalidPrimaryOracle();
         }
 
-        IPriceOracle.PriceOracleResponse memory primaryOracleResponse = _primaryOracle.getPriceOracleResponse();
+        IPriceOracle.PriceOracleResponse memory primaryOracleResponse = newPrimaryOracle.getPriceOracleResponse();
 
         if (primaryOracleResponse.isBrokenOrFrozen || primaryOracleResponse.priceChangeAboveMax) {
             revert PrimaryOracleBrokenOrFrozenOrBadResult();
         }
 
-        primaryOracle = _primaryOracle;
+        primaryOracle = newPrimaryOracle;
 
         // Get an initial price from primary oracle to serve as first reference for lastGoodPrice
         _storePrice(primaryOracleResponse.price);
 
-        emit PrimaryOracleUpdated(_primaryOracle);
+        emit PrimaryOracleUpdated(newPrimaryOracle);
     }
 
-    function _setSecondaryOracle(IPriceOracle _secondaryOracle) internal {
-        if (address(_secondaryOracle) == address(0)) {
+    function _setSecondaryOracle(IPriceOracle newSecondaryOracle) internal {
+        if (address(newSecondaryOracle) == address(0)) {
             revert InvalidSecondaryOracle();
         }
 
-        secondaryOracle = _secondaryOracle;
+        secondaryOracle = newSecondaryOracle;
 
-        emit SecondaryOracleUpdated(_secondaryOracle);
+        emit SecondaryOracleUpdated(newSecondaryOracle);
     }
 
-    function _setPriceDifferenceBetweenOracle(uint256 _priceDifferenceBetweenOracles) internal {
+    function _setPriceDifferenceBetweenOracle(uint256 newPriceDifferenceBetweenOracles) internal {
         if (
-            _priceDifferenceBetweenOracles < MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES
-                || _priceDifferenceBetweenOracles > MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES
+            newPriceDifferenceBetweenOracles < MIN_PRICE_DIFFERENCE_BETWEEN_ORACLES
+                || newPriceDifferenceBetweenOracles > MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES
         ) {
             revert InvalidPriceDifferenceBetweenOracles();
         }
 
-        priceDifferenceBetweenOracles = _priceDifferenceBetweenOracles;
+        priceDifferenceBetweenOracles = newPriceDifferenceBetweenOracles;
 
-        emit PriceDifferenceBetweenOraclesUpdated(_priceDifferenceBetweenOracles);
+        emit PriceDifferenceBetweenOraclesUpdated(newPriceDifferenceBetweenOracles);
     }
 
-    function _storePrice(uint256 _currentPrice) internal returns (uint256) {
-        lastGoodPrice = _currentPrice;
-        emit LastGoodPriceUpdated(_currentPrice);
-        return _currentPrice;
+    function _storePrice(uint256 currentPrice) internal returns (uint256) {
+        lastGoodPrice = currentPrice;
+        emit LastGoodPriceUpdated(currentPrice);
+        return currentPrice;
     }
 }

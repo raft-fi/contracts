@@ -10,10 +10,16 @@ import {IRToken} from "./Interfaces/IRToken.sol";
 import {FeeCollector} from "./FeeCollector.sol";
 
 contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCollector, IRToken {
+    // --- Constants ---
+
     uint256 public constant override PERCENTAGE_BASE = 10_000;
     uint256 public constant override MAX_FLASH_MINT_FEE_PERCENTAGE = 500;
 
+    // --- Variables ---
+
     uint256 public override flashMintFeePercentage;
+
+    // --- Constructor ---
 
     /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownership to @param feeRecipient.
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
@@ -30,6 +36,8 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
 
         emit RDeployed(positionManager, feeRecipient);
     }
+
+    // --- Functions ---
 
     function mint(address to, uint256 amount) external override onlyPositionManager {
         _mint(to, amount);

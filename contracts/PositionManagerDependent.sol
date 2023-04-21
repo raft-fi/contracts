@@ -4,7 +4,11 @@ pragma solidity 0.8.19;
 import {IPositionManagerDependent} from "./Interfaces/IPositionManagerDependent.sol";
 
 abstract contract PositionManagerDependent is IPositionManagerDependent {
+    // --- Immutable variables ---
+
     address public immutable override positionManager;
+
+    // --- Modifiers ---
 
     modifier onlyPositionManager() {
         if (msg.sender != positionManager) {
@@ -13,7 +17,9 @@ abstract contract PositionManagerDependent is IPositionManagerDependent {
         _;
     }
 
-    constructor(address _positionManager) {
-        positionManager = _positionManager;
+    // --- Constructor ---
+
+    constructor(address positionManager_) {
+        positionManager = positionManager_;
     }
 }
