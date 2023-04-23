@@ -344,13 +344,7 @@ interface IPositionManager is IFeeCollector {
     /// @param position The address of the borrower.
     /// @param delegate The address of the delegate.
     /// @return isWhitelisted True if the delegate is whitelisted for a given borrower, false otherwise.
-    function individualDelegateWhitelist(
-        address position,
-        address delegate
-    )
-        external
-        view
-        returns (bool isWhitelisted);
+    function isDelegateWhitelisted(address position, address delegate) external view returns (bool isWhitelisted);
 
     /// @dev Whitelists a delegate.
     /// @param delegate The address of the delegate.

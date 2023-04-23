@@ -45,8 +45,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     mapping(address position => IERC20 collateralToken) public override collateralTokenForPosition;
 
-    mapping(address position => mapping(address delegate => bool isWhitelisted)) public override
-        individualDelegateWhitelist;
+    mapping(address position => mapping(address delegate => bool isWhitelisted)) public override isDelegateWhitelisted;
 
     ISplitLiquidationCollateral public override splitLiquidationCollateral;
 
@@ -258,7 +257,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (delegate == address(0)) {
             revert InvalidDelegateAddress();
         }
-        individualDelegateWhitelist[msg.sender][delegate] = true;
+        isDelegateWhitelisted[msg.sender][delegate] = whitelisted;
     }
 
     function setBorrowingSpread(uint256 newBorrowingSpread) external override onlyOwner {
@@ -386,7 +385,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         onlyDepositedCollateralTokenOrNew(position, collateralToken)
         onlyEnabledCollateralTokenWhen(collateralToken, isDebtIncrease && debtChange > 0)
     {
-        if (position != msg.sender && !individualDelegateWhitelist[position][msg.sender]) {
+        if (position != msg.sender && !isDelegateWhitelisted[position][msg.sender]) {
             revert DelegateNotWhitelisted();
         }
         if (collateralChange == 0 && debtChange == 0) {

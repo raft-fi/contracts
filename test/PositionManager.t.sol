@@ -30,7 +30,7 @@ contract PositionManagerTest is TestSetup {
 
     // --- Delegates ---
 
-    function testIndividualDelegates() public {
+    function testDelegateWhitelist() public {
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
@@ -42,11 +42,15 @@ contract PositionManagerTest is TestSetup {
 
         vm.prank(ALICE);
         positionManager.whitelistDelegate(BOB, true);
-
+        assertTrue(positionManager.isDelegateWhitelisted(ALICE, BOB));
         uint256 collateralTopUpAmount = 1 ether;
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
         positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0);
+        vm.stopPrank();
+        vm.prank(ALICE);
+        positionManager.whitelistDelegate(BOB, false);
+        assertFalse(positionManager.isDelegateWhitelisted(ALICE, BOB));
     }
 
     function testNonDelegateCannotManagePosition() public {
