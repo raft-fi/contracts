@@ -51,7 +51,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     uint256 public override borrowingSpread;
     uint256 public override redemptionSpread;
-    uint256 public baseRate;
+    uint256 public override baseRate;
 
     uint256 public override lastFeeOperationTime;
 
