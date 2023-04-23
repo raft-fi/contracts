@@ -13,11 +13,8 @@ for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
     // solhint-disable no-empty-blocks
-    constructor(
-        address[] memory delegates,
-        ISplitLiquidationCollateral newSplitLiquidationCollateral
-    )
-        PositionManager(delegates, newSplitLiquidationCollateral)
+    constructor(ISplitLiquidationCollateral newSplitLiquidationCollateral)
+        PositionManager(newSplitLiquidationCollateral)
     { }
     // solhint-enable no-empty-blocks
 

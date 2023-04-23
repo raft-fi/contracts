@@ -29,14 +29,12 @@ contract OneStepLeverageTest is TestSetup {
         priceFeed = new PriceFeedTestnet();
 
         positionManager = new PositionManager(
-            new address[](0),
             new SplitLiquidationCollateral()
         );
         positionManager.addCollateralToken(collateralToken, priceFeed);
 
         IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);
         oneStepLeverage = new OneStepLeverage(positionManager, mockAmm, collateralToken);
-        positionManager.setGlobalDelegateWhitelist(address(oneStepLeverage), true);
 
         collateralToken.mint(address(oneStepLeverage.amm()), 10e36);
         collateralToken.mint(ALICE, 10e36);
@@ -44,6 +42,9 @@ contract OneStepLeverageTest is TestSetup {
         positionManager.rToken().mint(address(this), 1_000_000_000e18);
         positionManager.rToken().mint(address(oneStepLeverage.amm()), 10e36);
         vm.stopPrank();
+
+        vm.prank(ALICE);
+        positionManager.whitelistDelegate(address(oneStepLeverage), true);
 
         collateralToken.mint(BOB, 10e36);
         vm.startPrank(BOB);

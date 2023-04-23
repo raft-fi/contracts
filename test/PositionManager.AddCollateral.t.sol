@@ -22,7 +22,6 @@ contract PositionManagerAddCollateralTest is TestSetup {
         priceFeed = new PriceFeedTestnet();
         splitLiquidationCollateral = new SplitLiquidationCollateral();
         positionManager = new PositionManager(
-            new address[](0),
             splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, priceFeed);

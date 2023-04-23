@@ -20,7 +20,6 @@ contract PositionManagerLiquidationTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManager(
-            new address[](0),
             splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, priceFeed);

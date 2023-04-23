@@ -340,16 +340,6 @@ interface IPositionManager is IFeeCollector {
     /// @return The timestamp of the latest fee operation (redemption or new R issuance).
     function lastFeeOperationTime() external view returns (uint256);
 
-    /// @dev Adds global delegate to or removes it from the whitelist.
-    /// @param delegate The address of the delegate that is being added or removed.
-    /// @param isWhitelisted True if the delegate should be whitelisted, false for removing it.
-    function setGlobalDelegateWhitelist(address delegate, bool isWhitelisted) external;
-
-    /// @dev Returns if a given delegate is whitelisted globally.
-    /// @param delegate The address of the delegate.
-    /// @return isWhitelisted True if the delegate is whitelisted globally, false otherwise.
-    function globalDelegateWhitelist(address delegate) external view returns (bool isWhitelisted);
-
     /// @dev Returns if a given delegate is whitelisted for a given borrower.
     /// @param position The address of the borrower.
     /// @param delegate The address of the delegate.
@@ -364,7 +354,8 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Whitelists a delegate.
     /// @param delegate The address of the delegate.
-    function whitelistDelegate(address delegate) external;
+    /// @param whitelisted True if delegate is being whitelisted, false otherwise.
+    function whitelistDelegate(address delegate, bool whitelisted) external;
 
     /// @return Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a
     /// redemption. Corresponds to (1 / ALPHA) in the white paper.
