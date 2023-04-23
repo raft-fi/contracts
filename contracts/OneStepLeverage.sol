@@ -20,12 +20,18 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
     uint256 public constant override MAX_LEFTOVER_R = 1e18;
 
     constructor(
-        IPositionManager positionManager,
+        IPositionManager positionManager_,
         IAMM amm_,
         IERC20 collateralToken_
     )
-        PositionManagerDependent(address(positionManager))
+        PositionManagerDependent(address(positionManager_))
     {
+        if (address(amm_) == address(0)) {
+            revert AmmCannotBeZero();
+        }
+        if (address(collateralToken_) == address(0)) {
+            revert CollateralTokenCannotBeZero();
+        }
         amm = amm_;
         collateralToken = collateralToken_;
 
@@ -33,10 +39,10 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
         // Approved contracts are known, so this should be considered as safe.
 
         // No need to use safeApprove, IRToken is known token and is safe.
-        positionManager.rToken().approve(address(amm), type(uint256).max);
-        positionManager.rToken().approve(address(positionManager.rToken()), type(uint256).max);
+        positionManager_.rToken().approve(address(amm), type(uint256).max);
+        positionManager_.rToken().approve(address(positionManager_.rToken()), type(uint256).max);
         collateralToken_.safeApprove(address(amm), type(uint256).max);
-        collateralToken_.safeApprove(address(positionManager), type(uint256).max);
+        collateralToken_.safeApprove(address(positionManager_), type(uint256).max);
     }
 
     function manageLeveragedPosition(

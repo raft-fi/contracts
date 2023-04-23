@@ -24,6 +24,10 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
     )
         PositionManager(newSplitLiquidationCollateral)
     {
+        if (address(wstETH_) == address(0)) {
+            revert WstETHAddressCannotBeZero();
+        }
+
         wstETH = wstETH_;
         stETH = IStETH(address(wstETH_.stETH()));
 

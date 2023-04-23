@@ -9,6 +9,9 @@ import { IPositionManager } from "./IPositionManager.sol";
 interface IPositionManagerStETH is IPositionManager {
     // --- Errors ---
 
+    /// @dev Invalid wstETH address.
+    error WstETHAddressCannotBeZero();
+
     /// @dev Sending ether has failed.
     error SendingEtherFailed();
 

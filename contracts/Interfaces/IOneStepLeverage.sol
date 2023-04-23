@@ -8,11 +8,21 @@ import { IAMM } from "./IAMM.sol";
 
 /// @dev Interface that OneStepLeverage needs to implement
 interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
+    // --- Errors ---
+
+    /// @dev AMM cannot be zero address.
+    error AmmCannotBeZero();
+
+    /// @dev Collateral token cannot be zero address.
+    error CollateralTokenCannotBeZero();
+
     /// @dev One step leverage supports only R token flash mints.
     error UnsupportedToken();
 
     /// @dev Flash mint initiator is not One Step Leverage contract.
     error InvalidInitiator();
+
+    // --- Functions ---
 
     /// @dev Maximum amount of R tokens to be leftover as dust after managing leveraged position call.
     /// In particular some dust can be left after decreasing leverage because swap is done from collateral to R.

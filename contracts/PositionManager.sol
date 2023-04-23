@@ -283,6 +283,12 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Public functions ---
 
     function addCollateralToken(IERC20 collateralToken, IPriceFeed priceFeed) public override onlyOwner {
+        if (address(collateralToken) == address(0)) {
+            revert CollateralTokenAddressCannotBeZero();
+        }
+        if (address(priceFeed) == address(0)) {
+            revert PriceFeedAddressCannotBeZero();
+        }
         if (address(raftCollateralTokens[collateralToken].token) != address(0)) {
             revert CollateralTokenAlreadyAdded();
         }

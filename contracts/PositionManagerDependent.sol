@@ -20,6 +20,9 @@ abstract contract PositionManagerDependent is IPositionManagerDependent {
     // --- Constructor ---
 
     constructor(address positionManager_) {
+        if (positionManager_ == address(0)) {
+            revert PositionManagerCannotBeZero();
+        }
         positionManager = positionManager_;
     }
 }

@@ -33,6 +33,15 @@ contract PositionManagerStETHTest is TestSetup {
         stETH = positionManager.stETH();
     }
 
+    function testCannotCreatePositionManagerStETH() public {
+        vm.expectRevert(IPositionManagerStETH.WstETHAddressCannotBeZero.selector);
+        new PositionManagerStETH(
+            priceFeed,
+            IWstETH(address(0)),
+            splitLiquidationCollateralNew
+        );
+    }
+
     function testGetPositionETH() public {
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPositionStETH({
