@@ -46,7 +46,9 @@ contract ERC20Indexable is IERC20Indexable, ERC20, PositionManagerDependent {
 
     function setIndex(uint256 backingAmount) external override onlyPositionManager {
         uint256 supply = ERC20.totalSupply();
-        currentIndex = (backingAmount == 0 && supply == 0) ? INDEX_PRECISION : backingAmount.divUp(supply);
+        uint256 newIndex = (backingAmount == 0 && supply == 0) ? INDEX_PRECISION : backingAmount.divUp(supply);
+        currentIndex = newIndex;
+        emit IndexUpdated(newIndex);
     }
 
     function totalSupply() public view virtual override(IERC20, ERC20) returns (uint256) {

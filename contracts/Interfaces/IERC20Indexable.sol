@@ -11,6 +11,10 @@ interface IERC20Indexable is IERC20, IPositionManagerDependent {
     /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
     event ERC20IndexableDeployed(address positionManager);
 
+    /// @dev New index has been set.
+    /// @param newIndex Value of the new index.
+    event IndexUpdated(uint256 newIndex);
+
     // --- Errors ---
 
     /// @dev Unsupported action for ERC20Indexable contract.
