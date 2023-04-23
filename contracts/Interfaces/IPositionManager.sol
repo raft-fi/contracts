@@ -40,11 +40,6 @@ interface IPositionManager is IFeeCollector {
     /// @param isEnabled True if the token is enabled, false otherwise.
     event CollateralTokenModified(IERC20 collateralToken, IERC20Indexable raftCollateralToken, bool isEnabled);
 
-    /// @dev Global delegate has been added to the whitelist or removed from it.
-    /// @param delegate The address of the delegate that was whitelisted.
-    /// @param isWhitelisted True if it is added to whitelist, false otherwise.
-    event GlobalDelegateUpdated(address delegate, bool isWhitelisted);
-
     /// @dev New position has been created.
     /// @param position The address of the user opening new position.
     event PositionCreated(address indexed position);
@@ -125,17 +120,11 @@ interface IPositionManager is IFeeCollector {
     /// @dev Max fee percentage must be between 0.5% and 100%.
     error MaxFeePercentageOutOfRange();
 
-    /// @dev Position is not active (either does not exist or closed).
-    error PositionNotActive();
-
     /// @dev Amount is zero.
     error AmountIsZero();
 
     /// @dev Nothing to liquidate.
     error NothingToLiquidate();
-
-    /// @dev Unable to redeem any amount.
-    error UnableToRedeemAnyAmount();
 
     /// @dev Fee would eat up all returned collateral.
     error FeeEatsUpAllReturnedCollateral();

@@ -307,10 +307,15 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit CollateralTokenAdded(collateralToken, raftCollateralTokens[collateralToken].token, priceFeed);
     }
 
-    function modifyCollateralToken(IERC20 collateralToken, bool isEnabled) public override onlyOwner {
-        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
-            revert CollateralTokenNotAdded();
-        }
+    function modifyCollateralToken(
+        IERC20 collateralToken,
+        bool isEnabled
+    )
+        public
+        override
+        onlyOwner
+        collateralTokenExists(collateralToken)
+    {
         bool previousIsEnabled = raftCollateralTokens[collateralToken].isEnabled;
         raftCollateralTokens[collateralToken].isEnabled = isEnabled;
 
