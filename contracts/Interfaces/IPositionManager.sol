@@ -319,6 +319,9 @@ interface IPositionManager is IFeeCollector {
     /// @return The current redemption spread.
     function redemptionSpread() external view returns (uint256);
 
+    /// @return The base rate.
+    function baseRate() external view returns (uint256);
+
     /// @dev Sets the new redemption spread.
     /// @param redemptionSpread New redemption spread to be used.
     function setRedemptionSpread(uint256 redemptionSpread) external;
