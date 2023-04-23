@@ -20,7 +20,6 @@ contract PositionManagerTest is TestSetup {
         priceFeed = new PriceFeedTestnet();
         priceFeed.setPrice(1e18);
         positionManager = new PositionManager(
-            new address[](0),
             splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, priceFeed);
@@ -30,59 +29,6 @@ contract PositionManagerTest is TestSetup {
     }
 
     // --- Delegates ---
-
-    function testGlobalDelegates() public {
-        address[] memory globalDelegates = new address[](1);
-        globalDelegates[0] = address(BOB);
-        collateralToken.mint(ALICE, 10 ether);
-        PositionManager positionManager2 = new PositionManager(
-            globalDelegates,
-            splitLiquidationCollateral
-        );
-        positionManager2.addCollateralToken(collateralToken, priceFeed);
-        (IERC20Indexable raftCollateralToken2,) = positionManager2.raftCollateralTokens(collateralToken);
-
-        vm.startPrank(ALICE);
-        PositionManagerUtils.openPosition({
-            positionManager: positionManager2,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            icr: 2e18
-        });
-        vm.stopPrank();
-
-        uint256 collateralTopUpAmount = 1 ether;
-        uint256 debtAmount = collateralTopUpAmount / 10;
-
-        vm.startPrank(BOB);
-        collateralToken.approve(address(positionManager2), collateralTopUpAmount);
-
-        uint256 borrowerDebtBefore = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollateralBefore = raftCollateralToken2.balanceOf(ALICE);
-        uint256 borrowerRBalanceBefore = positionManager2.rToken().balanceOf(ALICE);
-        uint256 borrowerCollateralBalanceBefore = collateralToken.balanceOf(ALICE);
-        uint256 delegateRBalanceBefore = positionManager2.rToken().balanceOf(BOB);
-        uint256 delegateCollateralBalanceBefore = collateralToken.balanceOf(BOB);
-        positionManager2.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, debtAmount, true, 0);
-        uint256 borrowerRBalanceAfter = positionManager2.rToken().balanceOf(ALICE);
-        uint256 borrowerCollateralBalanceAfter = collateralToken.balanceOf(ALICE);
-        uint256 delegateRBalanceAfter = positionManager2.rToken().balanceOf(BOB);
-        uint256 delegateCollateralBalanceAfter = collateralToken.balanceOf(BOB);
-        uint256 borrowerDebtAfter = positionManager2.raftDebtToken().balanceOf(ALICE);
-        uint256 borrowerCollateralAfter = raftCollateralToken2.balanceOf(ALICE);
-
-        uint256 delegateDebtAfter = positionManager2.raftDebtToken().balanceOf(BOB);
-        uint256 delegateCollateralAfter = raftCollateralToken2.balanceOf(BOB);
-
-        assertEq(borrowerRBalanceAfter, borrowerRBalanceBefore);
-        assertEq(borrowerCollateralBalanceAfter, borrowerCollateralBalanceBefore);
-        assertEq(delegateRBalanceAfter, delegateRBalanceBefore + debtAmount);
-        assertEq(delegateCollateralBalanceAfter, delegateCollateralBalanceBefore - collateralTopUpAmount);
-        assertEq(borrowerDebtAfter - borrowerDebtBefore, debtAmount);
-        assertEq(borrowerCollateralAfter - borrowerCollateralBefore, collateralTopUpAmount);
-        assertEq(delegateDebtAfter, 0);
-        assertEq(delegateCollateralAfter, 0);
-    }
 
     function testIndividualDelegates() public {
         vm.startPrank(ALICE);
@@ -95,7 +41,7 @@ contract PositionManagerTest is TestSetup {
         vm.stopPrank();
 
         vm.prank(ALICE);
-        positionManager.whitelistDelegate(BOB);
+        positionManager.whitelistDelegate(BOB, true);
 
         uint256 collateralTopUpAmount = 1 ether;
         vm.startPrank(BOB);
@@ -123,7 +69,7 @@ contract PositionManagerTest is TestSetup {
         vm.stopPrank();
 
         vm.prank(CAROL);
-        positionManager.whitelistDelegate(BOB);
+        positionManager.whitelistDelegate(BOB, true);
 
         uint256 collateralTopUpAmount = 1 ether;
         vm.prank(ALICE);

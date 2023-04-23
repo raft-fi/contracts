@@ -45,7 +45,6 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     mapping(address position => IERC20 collateralToken) public override collateralTokenForPosition;
 
-    mapping(address delegate => bool isWhitelisted) public override globalDelegateWhitelist;
     mapping(address position => mapping(address delegate => bool isWhitelisted)) public override
         individualDelegateWhitelist;
 
@@ -109,14 +108,8 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Constructor ---
 
     /// @dev Initializes the position manager.
-    /// @param delegates The delegates to whitelist.
     /// @param newSplitLiquidationCollateral The split liquidation collateral contract.
-    constructor(
-        address[] memory delegates,
-        ISplitLiquidationCollateral newSplitLiquidationCollateral
-    )
-        FeeCollector(msg.sender)
-    {
+    constructor(ISplitLiquidationCollateral newSplitLiquidationCollateral) FeeCollector(msg.sender) {
         rToken = new RToken(address(this), msg.sender);
         raftDebtToken = new ERC20Indexable(
             address(this),
@@ -125,9 +118,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
         setRedemptionSpread(MathUtils._100_PERCENT / 100);
         setSplitLiquidationCollateral(newSplitLiquidationCollateral);
-        for (uint256 i = 0; i < delegates.length; ++i) {
-            setGlobalDelegateWhitelist(delegates[i], true);
-        }
 
         emit PositionManagerDeployed(rToken, raftDebtToken, msg.sender);
     }
@@ -264,7 +254,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _updateDebtAndCollateralIndex(collateralToken);
     }
 
-    function whitelistDelegate(address delegate) external override {
+    function whitelistDelegate(address delegate, bool whitelisted) external override {
         if (delegate == address(0)) {
             revert InvalidDelegateAddress();
         }
@@ -292,15 +282,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     // --- Public functions ---
-
-    function setGlobalDelegateWhitelist(address delegate, bool isWhitelisted) public override onlyOwner {
-        if (delegate == address(0)) {
-            revert InvalidDelegateAddress();
-        }
-        globalDelegateWhitelist[delegate] = isWhitelisted;
-
-        emit GlobalDelegateUpdated(delegate, isWhitelisted);
-    }
 
     function addCollateralToken(IERC20 collateralToken, IPriceFeed priceFeed) public override onlyOwner {
         if (address(raftCollateralTokens[collateralToken].token) != address(0)) {
@@ -405,10 +386,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         onlyDepositedCollateralTokenOrNew(position, collateralToken)
         onlyEnabledCollateralTokenWhen(collateralToken, isDebtIncrease && debtChange > 0)
     {
-        if (
-            position != msg.sender && !globalDelegateWhitelist[msg.sender]
-                && !individualDelegateWhitelist[position][msg.sender]
-        ) {
+        if (position != msg.sender && !individualDelegateWhitelist[position][msg.sender]) {
             revert DelegateNotWhitelisted();
         }
         if (collateralChange == 0 && debtChange == 0) {

@@ -28,7 +28,6 @@ contract PositionManagerStETHTest is TestSetup {
         positionManager = new PositionManagerStETH(
             priceFeed,
             IWstETH(WSTETH_ADDRESS),
-            new address[](0),
             splitLiquidationCollateralNew
         );
         stETH = positionManager.stETH();

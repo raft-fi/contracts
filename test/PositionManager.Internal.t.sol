@@ -15,7 +15,6 @@ contract PositionManagerInternalTest is TestSetup {
         super.setUp();
 
         positionManager = new PositionManagerTester(
-            new address[](0),
             splitLiquidationCollateral
         );
         positionManager.addCollateralToken(collateralToken, PRICE_FEED);

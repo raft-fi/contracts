@@ -22,7 +22,6 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         positionManager = new PositionManagerTester(
-            new address[](0),
             splitLiquidationCollateral
         );
         rToken = positionManager.rToken();

@@ -26,7 +26,6 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         super.setUp();
 
         positionManager = new PositionManager(
-            new address[](0),
             splitLiquidationCollateral
         );
 
