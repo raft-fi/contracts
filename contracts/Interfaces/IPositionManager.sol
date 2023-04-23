@@ -175,6 +175,12 @@ interface IPositionManager is IFeeCollector {
     /// @dev Borrower uses a different collateral token already.
     error PositionCollateralTokenMismatch();
 
+    /// @dev Collateral token address cannot be zero.
+    error CollateralTokenAddressCannotBeZero();
+
+    /// @dev Price feed address cannot be zero.
+    error PriceFeedAddressCannotBeZero();
+
     /// @dev Collateral token already added.
     error CollateralTokenAlreadyAdded();
 

@@ -21,23 +21,23 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
 
     // --- Constructor ---
 
-    /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownership to @param feeRecipient.
-    /// @param positionManager Address of the PositionManager contract that is authorized to mint and burn new tokens.
-    /// @param feeRecipient Address of flash mint fee recipient.
+    /// @dev Deploys new R token. Sets flash mint fee percentage to 0. Transfers ownership to @param feeRecipient_.
+    /// @param positionManager_ Address of the PositionManager contract that is authorized to mint and burn new tokens.
+    /// @param feeRecipient_ Address of flash mint fee recipient.
     constructor(
-        address positionManager,
-        address feeRecipient
+        address positionManager_,
+        address feeRecipient_
     )
         ERC20Permit("R Stablecoin")
         ERC20("R Stablecoin", "R")
-        PositionManagerDependent(positionManager)
-        FeeCollector(feeRecipient)
+        PositionManagerDependent(positionManager_)
+        FeeCollector(feeRecipient_)
     {
         flashMintFeePercentage = 0;
 
-        transferOwnership(feeRecipient);
+        transferOwnership(feeRecipient_);
 
-        emit RDeployed(positionManager, feeRecipient);
+        emit RDeployed(positionManager_, feeRecipient_);
     }
 
     // --- Functions ---

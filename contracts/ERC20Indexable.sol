@@ -23,15 +23,15 @@ contract ERC20Indexable is IERC20Indexable, ERC20, PositionManagerDependent {
     // --- Constructor ---
 
     constructor(
-        address positionManager,
-        string memory name,
-        string memory symbol
+        address positionManager_,
+        string memory name_,
+        string memory symbol_
     )
-        ERC20(name, symbol)
-        PositionManagerDependent(positionManager)
+        ERC20(name_, symbol_)
+        PositionManagerDependent(positionManager_)
     {
         currentIndex = INDEX_PRECISION;
-        emit ERC20IndexableDeployed(positionManager);
+        emit ERC20IndexableDeployed(positionManager_);
     }
 
     // --- Functions ---

@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
+import { IPriceFeed } from "../contracts/Interfaces/IPriceFeed.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
@@ -61,6 +62,12 @@ contract PositionManagerMultiCollateralTest is TestSetup {
     }
 
     function testCannotAddCollateralToken() public {
+        vm.expectRevert(IPositionManager.CollateralTokenAddressCannotBeZero.selector);
+        positionManager.addCollateralToken(IERC20(address(0)), priceFeedSecond);
+
+        vm.expectRevert(IPositionManager.PriceFeedAddressCannotBeZero.selector);
+        positionManager.addCollateralToken(collateralTokenSecond, IPriceFeed(address(0)));
+
         vm.expectRevert(IPositionManager.CollateralTokenAlreadyAdded.selector);
         positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond);
 

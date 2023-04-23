@@ -5,7 +5,9 @@ import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256
 import { OneStepLeverage } from "../contracts/OneStepLeverage.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { IAMM } from "../contracts/Interfaces/IAMM.sol";
+import { IOneStepLeverage } from "../contracts/Interfaces/IOneStepLeverage.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
+import { IPositionManagerDependent } from "../contracts/Interfaces/IPositionManagerDependent.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 import { MockAMM } from "./TestContracts/MockAMM.sol";
@@ -55,6 +57,19 @@ contract OneStepLeverageTest is TestSetup {
             icr: 2e18
         });
         vm.stopPrank();
+    }
+
+    function testCannotCreateOneStepLeverage() public {
+        IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);
+
+        vm.expectRevert(IPositionManagerDependent.PositionManagerCannotBeZero.selector);
+        new OneStepLeverage(IPositionManager(address(0)), mockAmm, collateralToken);
+
+        vm.expectRevert(IOneStepLeverage.AmmCannotBeZero.selector);
+        new OneStepLeverage(positionManager, IAMM(address(0)), collateralToken);
+
+        vm.expectRevert(IOneStepLeverage.CollateralTokenCannotBeZero.selector);
+        new OneStepLeverage(positionManager, mockAmm, IERC20Indexable(address(0)));
     }
 
     function testOpenLeveragedPosition() public {
