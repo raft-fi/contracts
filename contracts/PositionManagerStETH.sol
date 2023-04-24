@@ -57,7 +57,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
     }
 
     function managePositionETH(
-        address borrower,
+        address position,
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
@@ -74,7 +74,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         uint256 wstETHBalanceAfter = wstETH.balanceOf(address(this));
         uint256 wstETHAmount = wstETHBalanceAfter - wstETHBalanceBefore;
 
-        _managePosition(wstETH, borrower, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, false);
+        _managePosition(wstETH, position, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, false);
     }
 
     function managePositionStETH(
@@ -118,7 +118,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
     }
 
     function managePositionStETH(
-        address borrower,
+        address position,
         uint256 collateralChange,
         bool isCollateralIncrease,
         uint256 debtChange,
@@ -134,7 +134,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
             uint256 wstETHAmount = wstETH.wrap(collateralChange);
             _managePosition(
                 wstETH,
-                borrower,
+                position,
                 wstETHAmount,
                 isCollateralIncrease,
                 debtChange,
@@ -145,7 +145,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManager {
         } else {
             _managePosition(
                 wstETH,
-                borrower,
+                position,
                 collateralChange,
                 isCollateralIncrease,
                 debtChange,
