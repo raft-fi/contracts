@@ -79,4 +79,84 @@ contract PositionManagerRedemptionTest is TestSetup {
         assertApproxEqAbs(raftCollateralToken.balanceOf(ALICE), collateralAmount - collateralToRemoveFromPool, 1e5);
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), rToMint - rToRedeem);
     }
+
+    function testRedeemCollateralWhenMultipleActivePositions() public {
+        uint256 rToRedeem = 100_000e18;
+
+        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+
+        uint256 initialCR_A = 1.5e18;
+        uint256 rToMint_A = 400_000e18;
+        uint256 collateralAmount_A = rToMint_A.divUp(DEFAULT_PRICE).mulUp(initialCR_A);
+        vm.startPrank(ALICE);
+        collateralToken.approve(address(positionManager), collateralAmount_A);
+        positionManager.managePosition(
+            collateralToken,
+            collateralAmount_A,
+            true, // collateral increase
+            rToMint_A,
+            true, // debt increase
+            1e17
+        );
+        rToken.transfer(BOB, rToRedeem);
+        vm.stopPrank();
+
+        uint256 initialCR_C = 1.7e18;
+        uint256 rToMint_C = 123_000e18;
+        uint256 collateralAmount_C = rToMint_C.divUp(DEFAULT_PRICE).mulUp(initialCR_C);
+        vm.startPrank(CAROL);
+        collateralToken.approve(address(positionManager), collateralAmount_C);
+        positionManager.managePosition(
+            collateralToken,
+            collateralAmount_C,
+            true, // collateral increase
+            rToMint_C,
+            true, // debt increase
+            1e17
+        );
+        vm.stopPrank();
+
+        uint256 bobCollateralTokenBalanceBefore = collateralToken.balanceOf(BOB);
+        uint256 feeRecipientBalanceBefore = collateralToken.balanceOf(address(positionManager.feeRecipient()));
+        uint256 collateralToRemoveFromPool = rToRedeem.divDown(DEFAULT_PRICE);
+        uint256 collateralToRedeem = 447_198_852_772_466_539_500;
+        uint256 collateralFee = collateralToRemoveFromPool - collateralToRedeem;
+
+        vm.startPrank(BOB);
+        positionManager.redeemCollateral(collateralToken, rToRedeem, 1e18);
+        vm.stopPrank();
+
+        uint256 redeemedAmount = collateralToken.balanceOf(BOB) - bobCollateralTokenBalanceBefore;
+        assertEq(redeemedAmount, collateralToRedeem);
+        uint256 feeRecipientBalanceAfter = collateralToken.balanceOf(address(positionManager.feeRecipient()));
+        assertEq(feeRecipientBalanceAfter - feeRecipientBalanceBefore, collateralFee);
+        assertEq(
+            collateralToken.balanceOf(address(positionManager)),
+            collateralAmount_A + collateralAmount_C - collateralToRemoveFromPool
+        );
+
+        assertApproxEqAbs(
+            raftCollateralToken.balanceOf(ALICE),
+            collateralAmount_A
+                - collateralToRemoveFromPool * collateralAmount_A / (collateralAmount_A + collateralAmount_C),
+            1e5
+        );
+        assertApproxEqAbs(
+            positionManager.raftDebtToken().balanceOf(ALICE),
+            rToMint_A - rToRedeem * rToMint_A / (rToMint_A + rToMint_C),
+            1e5
+        );
+
+        assertApproxEqAbs(
+            raftCollateralToken.balanceOf(CAROL),
+            collateralAmount_C
+                - collateralToRemoveFromPool * collateralAmount_C / (collateralAmount_A + collateralAmount_C),
+            1e5
+        );
+        assertApproxEqAbs(
+            positionManager.raftDebtToken().balanceOf(CAROL),
+            rToMint_C - rToRedeem * rToMint_C / (rToMint_A + rToMint_C),
+            1e5
+        );
+    }
 }
