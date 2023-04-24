@@ -248,8 +248,8 @@ interface IPositionManager is IFeeCollector {
     /// request.
     /// @param collateralToken The token used as collateral.
     /// @param debtAmount The amount of debt to be redeemed. Must be greater than zero.
-    /// @param maxFee The maximum fee to pay for the redemption.
-    function redeemCollateral(IERC20 collateralToken, uint256 debtAmount, uint256 maxFee) external;
+    /// @param maxFeePercentage The maximum fee percentage to pay for the redemption.
+    function redeemCollateral(IERC20 collateralToken, uint256 debtAmount, uint256 maxFeePercentage) external;
 
     /// @dev Manages the position on behalf of a given borrower.
     /// @param collateralToken The token the borrower used as collateral.
@@ -297,8 +297,8 @@ interface IPositionManager is IFeeCollector {
     function borrowingSpread() external view returns (uint256);
 
     /// @dev Sets the new borrowing spread.
-    /// @param _borrowingSpread New borrowing spread to be used.
-    function setBorrowingSpread(uint256 _borrowingSpread) external;
+    /// @param newBorrowingSpread New borrowing spread to be used.
+    function setBorrowingSpread(uint256 newBorrowingSpread) external;
 
     /// @return The current borrowing rate.
     function getBorrowingRate() external view returns (uint256);
@@ -324,8 +324,8 @@ interface IPositionManager is IFeeCollector {
     function baseRate() external view returns (uint256);
 
     /// @dev Sets the new redemption spread.
-    /// @param redemptionSpread New redemption spread to be used.
-    function setRedemptionSpread(uint256 redemptionSpread) external;
+    /// @param newRedemptionSpread New redemption spread to be used.
+    function setRedemptionSpread(uint256 newRedemptionSpread) external;
 
     /// @return The current redemption rate.
     function getRedemptionRate() external view returns (uint256);
