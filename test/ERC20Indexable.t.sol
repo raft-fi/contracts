@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import { Test } from "forge-std/Test.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { ERC20Indexable } from "../contracts/ERC20Indexable.sol";
 
 contract ERC20IndexableTest is Test {
@@ -71,5 +72,25 @@ contract ERC20IndexableTest is Test {
         token.burn(USER, token.balanceOf(USER));
 
         assertEq(token.balanceOf(USER), 0);
+    }
+
+    function testUnsupportedActions() public {
+        vm.expectRevert(IERC20Indexable.NotSupported.selector);
+        token.transfer(USER, 1);
+
+        vm.expectRevert(IERC20Indexable.NotSupported.selector);
+        token.allowance(USER, POS_MANAGER);
+
+        vm.expectRevert(IERC20Indexable.NotSupported.selector);
+        token.approve(POS_MANAGER, 1);
+
+        vm.expectRevert(IERC20Indexable.NotSupported.selector);
+        token.transferFrom(POS_MANAGER, USER, 1);
+
+        vm.expectRevert(IERC20Indexable.NotSupported.selector);
+        token.increaseAllowance(POS_MANAGER, 1);
+
+        vm.expectRevert(IERC20Indexable.NotSupported.selector);
+        token.decreaseAllowance(POS_MANAGER, 1);
     }
 }
