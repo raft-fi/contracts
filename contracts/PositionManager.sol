@@ -369,8 +369,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         return _calcBorrowingRate(_calcDecayedBaseRate());
     }
 
-    function getBorrowingFee(uint256 debt) public view override returns (uint256) {
-        return getBorrowingRate().mulDown(debt);
+    function getBorrowingFee(uint256 debtAmount) public view override returns (uint256) {
+        return getBorrowingRate().mulDown(debtAmount);
     }
 
     // --- Helper functions ---
