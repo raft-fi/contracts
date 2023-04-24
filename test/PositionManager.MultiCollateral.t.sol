@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IPriceFeed } from "../contracts/Interfaces/IPriceFeed.sol";
@@ -13,6 +14,10 @@ import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerMultiCollateralTest is TestSetup {
+    // --- Types ---
+
+    using Fixed256x18 for uint256;
+
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
@@ -76,6 +81,214 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
         positionManager.addCollateralToken(collateralTokenThird, priceFeedThird);
+    }
+
+    function testDepositTwoDifferentCollateralsWtihTwoDifferentUsers() public {
+        // Alice add collateral with first collateral token
+        vm.startPrank(ALICE);
+        PositionManagerUtils.OpenPositionResult memory resultAlice = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceBeforeAlice = collateralToken.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceBeforeAlice, resultAlice.collateral);
+
+        uint256 collateralTopUpAmount = 1 ether;
+
+        vm.startPrank(ALICE);
+        collateralToken.approve(address(positionManager), collateralTopUpAmount);
+        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, 0);
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceAfterAlice = collateralToken.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceAfterAlice, positionManagerBalanceBeforeAlice + collateralTopUpAmount);
+
+        // Bob add collateral with second collateral token
+        collateralTokenSecond.mint(BOB, 10e36);
+
+        vm.startPrank(BOB);
+        PositionManagerUtils.OpenPositionResult memory resultBob = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeedSecond,
+            collateralToken: collateralTokenSecond,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceBeforeBob = collateralTokenSecond.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceBeforeBob, resultBob.collateral);
+
+        vm.startPrank(BOB);
+        collateralTokenSecond.approve(address(positionManager), collateralTopUpAmount);
+        positionManager.managePosition(collateralTokenSecond, collateralTopUpAmount, true, 0, false, 0);
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceAfterBob = collateralTokenSecond.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceAfterBob, positionManagerBalanceBeforeBob + collateralTopUpAmount);
+    }
+
+    function testDepositTwoDifferentCollateralsWtihSameUserAfterClosePositionWithFirst() public {
+        // Alice add collateral with first collateral token
+        vm.startPrank(ALICE);
+        PositionManagerUtils.OpenPositionResult memory resultAlice = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceBeforeAlice = collateralToken.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceBeforeAlice, resultAlice.collateral);
+
+        // Alice close position with first collateral token
+        vm.startPrank(ALICE);
+        positionManager.managePosition(
+            collateralToken, resultAlice.collateral, false, resultAlice.debtAmount, false, 0
+        );
+        vm.stopPrank();
+
+        // Alice add collateral with second collateral token
+        collateralTokenSecond.mint(ALICE, 10e36);
+        vm.startPrank(ALICE);
+        PositionManagerUtils.OpenPositionResult memory resultAliceSecondCollateral = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeedSecond,
+            collateralToken: collateralTokenSecond,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceBeforeAliceSecondCollateral =
+            collateralTokenSecond.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceBeforeAliceSecondCollateral, resultAliceSecondCollateral.collateral);
+    }
+
+    function testCannotDepositTwoDifferentCollateralsWtihSameUser() public {
+        // Alice add collateral with first collateral token
+        vm.startPrank(ALICE);
+        PositionManagerUtils.OpenPositionResult memory resultAlice = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceBeforeAlice = collateralToken.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceBeforeAlice, resultAlice.collateral);
+
+        uint256 collateralTopUpAmount = 1 ether;
+
+        vm.startPrank(ALICE);
+        collateralToken.approve(address(positionManager), collateralTopUpAmount);
+        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, 0);
+        vm.stopPrank();
+
+        uint256 positionManagerBalanceAfterAlice = collateralToken.balanceOf(address(positionManager));
+        assertEq(positionManagerBalanceAfterAlice, positionManagerBalanceBeforeAlice + collateralTopUpAmount);
+
+        // Allice trying to add collateral with second collateral token
+        collateralTokenSecond.mint(ALICE, 10e36);
+        vm.startPrank(ALICE);
+        vm.expectRevert(IPositionManager.PositionCollateralTokenMismatch.selector);
+        positionManager.managePosition(collateralTokenSecond, collateralTopUpAmount, true, 0, false, 0);
+        vm.stopPrank();
+    }
+
+    function testLiquidation() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 20e18
+        });
+        vm.stopPrank();
+
+        vm.startPrank(BOB);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 4e18
+        });
+        vm.stopPrank();
+
+        collateralTokenSecond.mint(CAROL, 10e36);
+        vm.startPrank(CAROL);
+        PositionManagerUtils.OpenPositionResult memory resultCarol = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeedSecond,
+            collateralToken: collateralTokenSecond,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        collateralTokenSecond.mint(DAVE, 10e36);
+        vm.startPrank(DAVE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeedSecond,
+            collateralToken: collateralTokenSecond,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        uint256 price = priceFeed.getPrice();
+
+        uint256 icrBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
+        assertEq(icrBefore, 4e18);
+
+        // Bob increases debt to 180 R, lowering his ICR to 1.11
+        uint256 targetICR = 1_111_111_111_111_111_111;
+        vm.startPrank(BOB);
+        PositionManagerUtils.withdrawDebt({
+            positionManager: positionManager,
+            collateralToken: collateralToken,
+            priceFeed: priceFeed,
+            position: BOB,
+            icr: targetICR
+        });
+        vm.stopPrank();
+
+        uint256 icrAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
+        assertEq(icrAfter, targetICR);
+
+        // price drops to 1ETH:100R, reducing Bob's ICR below MCR
+        priceFeed.setPrice(100e18);
+
+        // liquidate Bob's position
+        positionManager.liquidate(collateralToken, BOB);
+
+        priceFeedSecond.setPrice(100e18);
+
+        // Bob's position is closed
+        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        assertEq(
+            positionManager.raftDebtToken().balanceOf(CAROL),
+            resultCarol.debtAmount.mulDown(positionManager.raftDebtToken().currentIndex())
+        );
+
+        // liquidate Carol's position
+        positionManager.liquidate(collateralTokenSecond, CAROL);
+
+        // Carol's position is closed
+        assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
+
+        // Check that position is correclty closed and open with new collateral token
+        vm.startPrank(CAROL);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 2e18
+        });
+        vm.stopPrank();
     }
 
     function testDisabledCollateralToken() public {
