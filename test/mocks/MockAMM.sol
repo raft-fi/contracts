@@ -14,10 +14,14 @@ contract MockAMM is IAMM {
     IERC20 public immutable token2;
     uint256 public token1Rate; // expressed in token2
 
-    constructor(IERC20 _token1, IERC20 _token2, uint256 _token1Rate) {
-        token1 = _token1;
-        token2 = _token2;
-        token1Rate = _token1Rate;
+    constructor(IERC20 token1_, IERC20 token2_, uint256 token1Rate_) {
+        token1 = token1_;
+        token2 = token2_;
+        token1Rate = token1Rate_;
+    }
+
+    function setRate(uint256 token1Rate_) external {
+        token1Rate = token1Rate_;
     }
 
     function getAmountOut(
