@@ -165,7 +165,7 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         IERC20 _collateralToken,
         PriceFeedTestnet priceFeed,
-        address borrower,
+        address position,
         uint256 maxFeePercentage,
         uint256 debtAmount,
         uint256 icr
@@ -185,8 +185,8 @@ library PositionManagerUtils {
         if (icr > 0) {
             IERC20 raftDebtToken = positionManager.raftDebtToken();
             (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
-            uint256 debt = raftDebtToken.balanceOf(borrower);
-            uint256 collateral = raftCollateralToken.balanceOf(borrower);
+            uint256 debt = raftDebtToken.balanceOf(position);
+            uint256 collateral = raftCollateralToken.balanceOf(position);
             uint256 price = priceFeed.getPrice();
             uint256 targetDebt = collateral * price / icr;
             // solhint-disable-next-line reason-string
@@ -204,14 +204,14 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         IERC20 collateralToken,
         PriceFeedTestnet priceFeed,
-        address borrower,
+        address position,
         uint256 icr
     )
         internal
         returns (WithdrawDebtResult memory result)
     {
         uint256 maxFee = MathUtils._100_PERCENT;
-        result = withdrawDebt(positionManager, collateralToken, priceFeed, borrower, maxFee, 0, icr);
+        result = withdrawDebt(positionManager, collateralToken, priceFeed, position, maxFee, 0, icr);
     }
 
     function getNetBorrowingAmount(

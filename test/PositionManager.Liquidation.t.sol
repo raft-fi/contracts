@@ -65,7 +65,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             collateralToken: collateralToken,
             priceFeed: priceFeed,
-            borrower: BOB,
+            position: BOB,
             icr: targetICR
         });
         vm.stopPrank();
