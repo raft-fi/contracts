@@ -18,6 +18,10 @@ interface IRToken is IERC20, IERC20Permit, IERC3156FlashLender, IFeeCollector, I
     /// @param flashMintFeeRecipient Address of flash mint fee recipient.
     event RDeployed(address positionManager, address flashMintFeeRecipient);
 
+    /// @dev The Flash Mint Fee Percentage has been changed.
+    /// @param flashMintFeePercentage The new Flash Mint Fee Percentage value.
+    event FlashMintFeePercentageChanged(uint256 flashMintFeePercentage);
+
     /// --- Errors ---
 
     /// @dev Proposed flash mint fee percentage is too big.

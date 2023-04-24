@@ -54,7 +54,9 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
         if (feePercentage > MAX_FLASH_MINT_FEE_PERCENTAGE) {
             revert FlashFeePercentageTooBig(feePercentage);
         }
+
         flashMintFeePercentage = feePercentage;
+        emit FlashMintFeePercentageChanged(flashMintFeePercentage);
     }
 
     /// @dev Inherited from ERC20FlashMint. Defines maximum size of the flash mint.

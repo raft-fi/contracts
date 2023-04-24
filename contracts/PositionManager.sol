@@ -189,6 +189,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (!isRedistribution) {
             rToken.burn(msg.sender, entirePositionDebt);
             _totalDebt -= entirePositionDebt;
+            emit TotalDebtChanged(_totalDebt);
+
             // Collateral is sent to protocol as a fee only in case of liquidation
             collateralToken.transfer(feeRecipient, collateralLiquidationFee);
         }
@@ -246,6 +248,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
         rToken.burn(msg.sender, debtAmount);
         _totalDebt -= debtAmount;
+        emit TotalDebtChanged(_totalDebt);
 
         // Send collateral to account
         collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
@@ -258,6 +261,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             revert InvalidDelegateAddress();
         }
         isDelegateWhitelisted[msg.sender][delegate] = whitelisted;
+
+        emit DelegateWhitelisted(msg.sender, delegate, whitelisted);
     }
 
     function setBorrowingSpread(uint256 newBorrowingSpread) external override onlyOwner {
@@ -422,7 +427,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
             if (newPosition) {
                 collateralTokenForPosition[position] = collateralToken;
-                emit PositionCreated(position);
+                emit PositionCreated(position, collateralToken);
             }
         }
     }
@@ -457,6 +462,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         emit DebtChanged(position, debtChange, isDebtIncrease);
+        emit TotalDebtChanged(_totalDebt);
     }
 
     /// @dev Adjusts the collateral of a given borrower by burning or minting the corresponding amount of Raft
@@ -508,7 +514,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             raftDebtToken.burn(position, type(uint256).max);
             raftCollateralTokens[collateralToken].token.burn(position, type(uint256).max);
         }
-        emit PositionClosed(position);
+        emit PositionClosed(position, collateralToken);
     }
 
     // --- Borrowing & redemption fee helper functions ---

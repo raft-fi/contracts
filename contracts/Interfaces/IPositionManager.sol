@@ -40,13 +40,21 @@ interface IPositionManager is IFeeCollector {
     /// @param isEnabled True if the token is enabled, false otherwise.
     event CollateralTokenModified(IERC20 collateralToken, IERC20Indexable raftCollateralToken, bool isEnabled);
 
+    /// @dev A delegate has been whitelisted for a certain position.
+    /// @param position The position for which the delegate was whitelisted.
+    /// @param delegate The delegate which was whitelisted.
+    /// @param whitelisted Specifies whether the delegate whitelisting has been enabled (true) or disabled (false).
+    event DelegateWhitelisted(address indexed position, address indexed delegate, bool whitelisted);
+
     /// @dev New position has been created.
     /// @param position The address of the user opening new position.
-    event PositionCreated(address indexed position);
+    /// @param collateralToken The token used as collateral for the created position.
+    event PositionCreated(address indexed position, IERC20 indexed collateralToken);
 
     /// @dev The position has been closed by either repayment, liquidation, or redemption.
     /// @param position The address of the user whose position is closed.
-    event PositionClosed(address indexed position);
+    /// @param collateralToken The token used as collateral for the closed position.
+    event PositionClosed(address indexed position, IERC20 indexed collateralToken);
 
     /// @dev Collateral amount for the position has been changed.
     /// @param position The address of the user that has opened the position.
@@ -59,6 +67,10 @@ interface IPositionManager is IFeeCollector {
     /// @param debtAmount The amount of debt added or removed.
     /// @param isDebtIncrease Whether the debt is added to the position or removed from it.
     event DebtChanged(address indexed position, uint256 debtAmount, bool isDebtIncrease);
+
+    /// @dev Total debt in the system has been changed.
+    /// @param totalDebt The new total debt in the system.
+    event TotalDebtChanged(uint256 totalDebt);
 
     /// @dev Borrowing fee has been paid. Emitted only if the actual fee was paid - doesn't happen with no fees are
     /// paid.
