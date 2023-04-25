@@ -83,6 +83,41 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
     }
 
+    function testCannotRedistributeLastDebt() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 20e18
+        });
+        vm.stopPrank();
+
+        uint256 price = priceFeed.getPrice();
+
+        // Bob increases debt to 180 R, lowering his ICR to 1.11
+        uint256 targetICR = 1_111_111_111_111_111_111;
+        vm.startPrank(ALICE);
+        PositionManagerUtils.withdrawDebt({
+            positionManager: positionManager,
+            collateralToken: collateralToken,
+            priceFeed: priceFeed,
+            position: ALICE,
+            icr: targetICR
+        });
+        vm.stopPrank();
+
+        uint256 icrAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
+        assertEq(icrAfter, targetICR);
+
+        // price drops to 1ETH:100R, reducing Bob's ICR below MCR
+        priceFeed.setPrice(100e18);
+
+        // liquidate position
+        vm.expectRevert(IPositionManager.CannotRedistributeLastDebt.selector);
+        positionManager.liquidate(collateralToken, ALICE);
+    }
+
     // Liquidates undercollateralized position if there are two positions in the system
     function testSuccessfulLiquidationTwoPositionsSystem() public {
         vm.prank(address(positionManager));

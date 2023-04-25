@@ -182,6 +182,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
         uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
+        if (isRedistribution) {
+            if (entirePositionDebt == raftDebtToken.totalSupply()) {
+                revert CannotRedistributeLastDebt();
+            }
+        }
 
         (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
             splitLiquidationCollateral.split(entirePositionCollateral, entirePositionDebt, price, isRedistribution);
