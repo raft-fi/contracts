@@ -142,8 +142,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             isCollateralIncrease,
             debtChange,
             isDebtIncrease,
-            maxFeePercentage,
-            true
+            maxFeePercentage
         );
     }
 
@@ -165,8 +164,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             isCollateralIncrease,
             debtChange,
             isDebtIncrease,
-            maxFeePercentage,
-            true
+            maxFeePercentage
         );
     }
 
@@ -182,10 +180,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
         uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
-        if (isRedistribution) {
-            if (entirePositionDebt == raftDebtToken.totalSupply()) {
-                revert CannotRedistributeLastDebt();
-            }
+        if (isRedistribution && entirePositionDebt == raftDebtToken.totalSupply()) {
+            revert CannotRedistributeLastDebt();
         }
 
         (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
@@ -388,8 +384,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @param debtChange The amount of R to add or remove.
     /// @param isDebtIncrease True if the debt is being increased, false otherwise.
     /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
-    /// @param needsCollateralTransfer If collateral transfer is needed in case of collateral increase.
-    /// It is used if the collateral is already transferred elsewhere, for example in whitelisted delegate.
     function _managePosition(
         IERC20 collateralToken,
         address position,
@@ -397,8 +391,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        uint256 maxFeePercentage,
-        bool needsCollateralTransfer
+        uint256 maxFeePercentage
     )
         internal
         collateralTokenExists(collateralToken)
@@ -416,7 +409,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         bool newPosition = (raftDebtToken.balanceOf(position) == 0);
 
         _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
-        _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease, needsCollateralTransfer);
+        _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease);
 
         uint256 positionDebt = raftDebtToken.balanceOf(position);
         uint256 positionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
@@ -476,13 +469,11 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @param position The address of the borrower.
     /// @param collateralChange The amount of collateral to add or remove. Must be positive.
     /// @param isCollateralIncrease True if the collateral is being increased, false otherwise.
-    /// @param needsCollateralTransfer True if the collateral token needs to be transferred, false otherwise.
     function _adjustCollateral(
         IERC20 collateralToken,
         address position,
         uint256 collateralChange,
-        bool isCollateralIncrease,
-        bool needsCollateralTransfer
+        bool isCollateralIncrease
     )
         internal
     {
@@ -492,14 +483,10 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (isCollateralIncrease) {
             raftCollateralTokens[collateralToken].token.mint(position, collateralChange);
-            if (needsCollateralTransfer) {
-                collateralToken.safeTransferFrom(msg.sender, address(this), collateralChange);
-            }
+            collateralToken.safeTransferFrom(msg.sender, address(this), collateralChange);
         } else {
             raftCollateralTokens[collateralToken].token.burn(position, collateralChange);
-            if (needsCollateralTransfer) {
-                collateralToken.safeTransfer(msg.sender, collateralChange);
-            }
+            collateralToken.safeTransfer(msg.sender, collateralChange);
         }
 
         emit CollateralChanged(position, collateralChange, isCollateralIncrease);

@@ -49,8 +49,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             maxFeePercentage: MathUtils._100_PERCENT,
             extraDebtAmount: aliceExtraRAmount,
             icr: 0,
-            amount: 100e30,
-            ethType: PositionManagerUtils.ETHType.WSTETH
+            amount: 100e30
         });
         vm.stopPrank();
 
@@ -68,8 +67,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             maxFeePercentage: MathUtils._100_PERCENT,
             extraDebtAmount: bobExtraRAmount,
             icr: 0,
-            amount: 100e30,
-            ethType: PositionManagerUtils.ETHType.WSTETH
+            amount: 100e30
         });
         vm.stopPrank();
 
