@@ -16,8 +16,7 @@ library PositionManagerUtils {
 
     enum ETHType {
         ETH,
-        STETH,
-        WSTETH
+        STETH
     }
 
     struct OpenPositionResult {
@@ -39,8 +38,7 @@ library PositionManagerUtils {
         uint256 maxFeePercentage,
         uint256 extraDebtAmount,
         uint256 icr,
-        uint256 amount,
-        ETHType ethType
+        uint256 amount
     )
         internal
         returns (OpenPositionResult memory result)
@@ -49,26 +47,9 @@ library PositionManagerUtils {
         (result.debtAmount, result.totalDebt, amount) =
             getOpenPositionSetupValues(positionManager, priceFeed, extraDebtAmount, icr, amount);
 
-        if (ethType == ETHType.ETH) {
-            IStETH stETH = IPositionManagerStETH(address(positionManager)).stETH();
-            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
-            IPositionManagerStETH(address(positionManager)).managePositionETH{ value: amount }(
-                result.debtAmount, true, maxFeePercentage
-            );
-            result.collateral = wstETHAmount;
-        } else if (ethType == ETHType.STETH) {
-            IStETH stETH = IPositionManagerStETH(address(positionManager)).stETH();
-            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
-            stETH.approve(address(positionManager), amount);
-            IPositionManagerStETH(address(positionManager)).managePositionStETH(
-                amount, true, result.debtAmount, true, maxFeePercentage
-            );
-            result.collateral = wstETHAmount;
-        } else {
-            collateralToken.approve(address(positionManager), amount);
-            positionManager.managePosition(collateralToken, amount, true, result.debtAmount, true, maxFeePercentage);
-            result.collateral = amount;
-        }
+        collateralToken.approve(address(positionManager), amount);
+        positionManager.managePosition(collateralToken, amount, true, result.debtAmount, true, maxFeePercentage);
+        result.collateral = amount;
     }
 
     function openPosition(
@@ -80,22 +61,37 @@ library PositionManagerUtils {
         internal
         returns (OpenPositionResult memory result)
     {
-        result = openPosition(
-            positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, 0, icr, 0, ETHType.WSTETH
-        );
+        result = openPosition(positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, 0, icr, 0);
     }
 
     function openPositionStETH(
-        IPositionManager positionManager,
+        IPositionManagerStETH positionManagerStETH,
         PriceFeedTestnet priceFeed,
-        IERC20 collateralToken,
         uint256 icr,
         ETHType ethType
     )
         internal
         returns (OpenPositionResult memory result)
     {
-        result = openPosition(positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, 0, icr, 0, ethType);
+        result.icr = icr;
+        uint256 amount;
+        (result.debtAmount, result.totalDebt, amount) =
+            getOpenPositionSetupValues(IPositionManager(positionManagerStETH.positionManager()), priceFeed, 0, icr, 0);
+
+        if (ethType == ETHType.ETH) {
+            IStETH stETH = positionManagerStETH.stETH();
+            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
+            positionManagerStETH.managePositionETH{ value: amount }(result.debtAmount, true, MathUtils._100_PERCENT);
+            result.collateral = wstETHAmount;
+        } else {
+            IStETH stETH = positionManagerStETH.stETH();
+            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
+            stETH.approve(address(positionManagerStETH), amount);
+            positionManagerStETH.managePositionStETH(amount, true, result.debtAmount, true, MathUtils._100_PERCENT);
+            result.collateral = wstETHAmount;
+        }
+
+        return result;
     }
 
     function openPosition(
@@ -108,16 +104,8 @@ library PositionManagerUtils {
         internal
         returns (OpenPositionResult memory result)
     {
-        result = openPosition(
-            positionManager,
-            priceFeed,
-            collateralToken,
-            MathUtils._100_PERCENT,
-            extraDebtAmount,
-            icr,
-            0,
-            ETHType.WSTETH
-        );
+        result =
+            openPosition(positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, extraDebtAmount, icr, 0);
     }
 
     function openPosition(
@@ -132,14 +120,7 @@ library PositionManagerUtils {
         returns (OpenPositionResult memory result)
     {
         result = openPosition(
-            positionManager,
-            priceFeed,
-            collateralToken,
-            MathUtils._100_PERCENT,
-            extraDebtAmount,
-            icr,
-            amount,
-            ETHType.WSTETH
+            positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, extraDebtAmount, icr, amount
         );
     }
 
