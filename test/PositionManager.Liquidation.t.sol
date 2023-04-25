@@ -247,7 +247,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         rToken.mint(address(this), 1_000_000e18);
 
         vm.startPrank(ALICE);
-        PositionManagerUtils.openPosition({
+        PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
@@ -257,7 +257,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(BOB);
-        PositionManagerUtils.openPosition({
+        PositionManagerUtils.OpenPositionResult memory bobPosition = PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
@@ -267,7 +267,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(CAROL);
-        PositionManagerUtils.openPosition({
+        PositionManagerUtils.OpenPositionResult memory carolPosition = PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
@@ -310,16 +310,14 @@ contract PositionManagerLiquidationTest is TestSetup {
         uint256 bobICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         uint256 carolICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, CAROL, price);
 
-        assertGe(aliceICRAfter, MathUtils.MCR); // TODO OVDE PADA @MIJOVIC
+        assertGe(aliceICRAfter, MathUtils.MCR);
         assertLe(bobICRAfter, MathUtils.MCR);
         assertLe(carolICRAfter, MathUtils.MCR);
 
-        /*
-
-        // Though Bob's true ICR (including pending rewards) is below the MCR,
-        //      check that Bob's raw collateral and debt has not changed, and that his "raw" ICR is above the MCR
-       uint256 bobDebt = positionManager.raftDebtToken().balanceOf(BOB);
-        uint256 bobPositionCollateral = positionManager.raftCollateralToken().balanceOf(BOB);
+        // Though Bob's true ICR (including pending rewards) is below the MCR, check that Bob's raw collateral and debt
+        // has not changed, and that his "raw" ICR is above the MCR
+        uint256 bobDebt = positionManager.raftDebtToken().balanceOf(BOB);
+        uint256 bobPositionCollateral = collateralToken.balanceOf(BOB);
 
         uint256 bobRawICR = bobPositionCollateral * price / bobDebt;
         assertGe(bobRawICR, MathUtils.MCR);
@@ -333,33 +331,15 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        // Check list size
-        (,,, uint256 listSizeBefore) = positionManager.sortedPositions();
-        assertEq(listSizeBefore, 4);
-
         // Liquidate Alice unsuccessfully and Bob and Carol successfully
-        vm.expectRevert(NothingToLiquidate.selector);
-        positionManager.liquidate(ALICE);
-        positionManager.liquidate(BOB);
-        positionManager.liquidate(CAROL);
-
-        // Check list size reduced to 2
-        (,,, uint256 listSizeAfter) = positionManager.sortedPositions();
-        assertEq(listSizeAfter, 2);
-
-        //Check Alice stays active, Carol gets liquidated, and Bob gets liquidated
-        //  (because his pending rewards bring his ICR < MCR)
-        (bool alicePositionExists,,) = positionManager.sortedPositionsNodes(ALICE);
-        assertTrue(alicePositionExists);
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(BOB);
-        (bool bobPositionExists,,) = positionManager.sortedPositionsNodes(collateralToken, BOB);
-        assertFalse(bobPositionExists);
-        (bool carolPositionExists,,) = positionManager.sortedPositionsNodes(CAROL);
-        assertFalse(carolPositionExists);
+        vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
+        positionManager.liquidate(collateralToken, ALICE);
+        positionManager.liquidate(collateralToken, BOB);
+        positionManager.liquidate(collateralToken, CAROL);
 
         // Confirm token balances have not changed
         assertEq(rToken.balanceOf(ALICE), alicePosition.debtAmount);
         assertEq(rToken.balanceOf(BOB), bobPosition.debtAmount);
-        assertEq(rToken.balanceOf(CAROL), carolPosition.debtAmount); */
+        assertEq(rToken.balanceOf(CAROL), carolPosition.debtAmount);
     }
 }
