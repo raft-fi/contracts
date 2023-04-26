@@ -57,13 +57,13 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         assertLt(PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price), MathUtils.MCR);
 
-        uint256 collateralTopUpAmount = 1;
+        uint256 collateralWithdrawAmount = 1;
 
-        vm.startPrank(ALICE);
-        collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils._100_PERCENT));
-        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, 0);
-        vm.stopPrank();
+        vm.prank(ALICE);
+        vm.expectRevert(
+            abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils._100_PERCENT - 1)
+        );
+        positionManager.managePosition(collateralToken, collateralWithdrawAmount, false, 0, false, 0);
     }
 
     // Reverts when calling address does not have active position
