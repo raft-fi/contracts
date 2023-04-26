@@ -10,7 +10,7 @@ import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
-contract PositionManagerLiquidationTest is TestSetup {
+contract PositionManagerRedistributionTest is TestSetup {
     PriceFeedTestnet public priceFeed;
     IPositionManager public positionManager;
     IRToken public rToken;
@@ -33,11 +33,8 @@ contract PositionManagerLiquidationTest is TestSetup {
         collateralToken.mint(EVE, 10e36);
     }
 
-    // Closes a position that has 100% < ICR < 110% (MCR)
-    function testSuccessfulPositionLiquidation() public {
-        vm.prank(address(positionManager));
-        rToken.mint(address(this), 1_000_000e18);
-
+    // Closes a position that has ICR < 100%
+    function testSuccessfulPositionRedistributionICRLessThan100Percent() public {
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
@@ -52,14 +49,14 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 2e18
+            icr: 4e18
         });
         vm.stopPrank();
 
         uint256 price = priceFeed.getPrice();
 
         uint256 icrBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
-        assertEq(icrBefore, 2e18);
+        assertEq(icrBefore, 4e18);
 
         // Bob increases debt to 180 R, lowering his ICR to 1.11
         uint256 targetICR = 1_111_111_111_111_111_111;
@@ -76,8 +73,8 @@ contract PositionManagerLiquidationTest is TestSetup {
         uint256 icrAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         assertEq(icrAfter, targetICR);
 
-        // price drops to 1ETH:198R, reducing Bob's ICR between 100% and 110%
-        priceFeed.setPrice(198e18);
+        // price drops to 1ETH:100R, reducing Bob's ICR below MCR
+        priceFeed.setPrice(100e18);
 
         // liquidate position
         positionManager.liquidate(collateralToken, BOB);
@@ -86,24 +83,69 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
     }
 
-    function testLiquidateLastDebt() public {
-        vm.prank(address(positionManager));
-        rToken.mint(address(this), 1_000_000e18);
-
+    // Closes a position that has ICR = 100%
+    function testSuccessfulPositionRedistributionICREqualTo100Percent() public {
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 2e18
+            icr: 20e18
         });
         vm.stopPrank();
 
-        priceFeed.setPrice(105e18);
+        vm.startPrank(BOB);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 4e18
+        });
+        vm.stopPrank();
+
+        // price drops to 1ETH:50R, reducing Bob's ICR = 100%
+        priceFeed.setPrice(50e18);
         uint256 price = priceFeed.getPrice();
 
-        uint256 aliceICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
-        assertEq(aliceICR, 105 * MathUtils._100_PERCENT / 100);
+        uint256 bobICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
+        assertEq(bobICR, 1e18);
+
+        // liquidate position
+        positionManager.liquidate(collateralToken, BOB);
+
+        // Bob's position is closed
+        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
+    }
+
+    function testRedistributeLastDebt() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 20e18
+        });
+        vm.stopPrank();
+
+        uint256 price = priceFeed.getPrice();
+
+        // Bob increases debt to 180 R, lowering his ICR to 1.11
+        uint256 targetICR = 1_111_111_111_111_111_111;
+        vm.startPrank(ALICE);
+        PositionManagerUtils.withdrawDebt({
+            positionManager: positionManager,
+            collateralToken: collateralToken,
+            priceFeed: priceFeed,
+            position: ALICE,
+            icr: targetICR
+        });
+        vm.stopPrank();
+
+        uint256 icrAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
+        assertEq(icrAfter, targetICR);
+
+        // price drops to 1ETH:100R, reducing Bob's ICR below MCR
+        priceFeed.setPrice(100e18);
 
         // liquidate position
         vm.expectRevert(IPositionManager.CannotLiquidateLastPosition.selector);
@@ -111,7 +153,7 @@ contract PositionManagerLiquidationTest is TestSetup {
     }
 
     // Liquidates undercollateralized position if there are two positions in the system
-    function testSuccessfulLiquidationTwoPositionsSystem() public {
+    function testSuccessfulRedistributionTwoPositionsSystem() public {
         vm.prank(address(positionManager));
         rToken.mint(address(this), 1_000_000e18);
 
@@ -137,11 +179,11 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.stopPrank();
 
         // Set ETH:USD price to 105
-        priceFeed.setPrice(105e18);
+        priceFeed.setPrice(90e18);
         uint256 price = priceFeed.getPrice();
 
         uint256 aliceICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
-        assertEq(aliceICR, 105 * MathUtils._100_PERCENT / 100);
+        assertEq(aliceICR, 90 * MathUtils._100_PERCENT / 100);
 
         // Liquidate the position
         positionManager.liquidate(collateralToken, ALICE);
@@ -152,9 +194,6 @@ contract PositionManagerLiquidationTest is TestSetup {
 
     // Reverts if position is non-existent or has been closed
     function testLiquidateNonExistentPosition() public {
-        vm.prank(address(positionManager));
-        rToken.mint(address(this), 1_000_000e18);
-
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
@@ -190,7 +229,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         assertGt(positionManager.raftDebtToken().balanceOf(CAROL), 0);
 
         // Price drops, Carol ICR falls below MCR
-        priceFeed.setPrice(105e18);
+        priceFeed.setPrice(100e18);
 
         // Carol liquidated, and her position is closed
         positionManager.liquidate(collateralToken, CAROL);
@@ -201,74 +240,105 @@ contract PositionManagerLiquidationTest is TestSetup {
         positionManager.liquidate(collateralToken, CAROL);
     }
 
-    // Does nothing if position has > 110% ICR
-    function testInvalidLiquidationICRGreaterThan110Percent() public {
+    // Liquidates based on entire collateral/debt (including pending rewards), not raw collateral/debt
+    function testEntireCollateralDebtRedistribution() public {
+        vm.prank(address(positionManager));
+        rToken.mint(address(this), 1_000_000e18);
+
         vm.startPrank(ALICE);
-        PositionManagerUtils.openPosition({
+        PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 3e18
+            extraDebtAmount: 100e18,
+            icr: 8e18
         });
         vm.stopPrank();
 
         vm.startPrank(BOB);
+        PositionManagerUtils.OpenPositionResult memory bobPosition = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            extraDebtAmount: 100e18,
+            icr: 2.21e18
+        });
+        vm.stopPrank();
+
+        vm.startPrank(CAROL);
+        PositionManagerUtils.OpenPositionResult memory carolPosition = PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            extraDebtAmount: 100e18,
+            icr: 2e18
+        });
+        vm.stopPrank();
+
+        // Dave opens with 60 R, 0.6 ETH
+        vm.startPrank(DAVE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
-            icr: 3e18
+            icr: 2e18
         });
         vm.stopPrank();
 
-        uint256 price = priceFeed.getPrice();
-
-        // Check Bob's ICR > 110%
-        uint256 bobICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
-        assertTrue(bobICR > MathUtils.MCR);
-
-        // Attempt to liquidate Bob
-        vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
-        positionManager.liquidate(collateralToken, BOB);
-
-        // Check Bob active, check Alice active
-        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
-        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
-    }
-
-    function testInvalidLiquidationICREqualTo110Percent() public {
-        vm.startPrank(ALICE);
-        PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            icr: 22e17
-        });
-        vm.stopPrank();
-
-        vm.startPrank(BOB);
-        PositionManagerUtils.openPosition({
-            positionManager: positionManager,
-            priceFeed: priceFeed,
-            collateralToken: collateralToken,
-            icr: 22e17
-        });
-        vm.stopPrank();
-
-        // Set ETH:USD price to 100
+        // Price drops
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        // Check Bob's ICR == 110%
-        uint256 bobICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
-        assertTrue(bobICR == MathUtils.MCR);
+        uint256 aliceICRBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
+        uint256 bobICRBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
+        uint256 carolICRBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, CAROL, price);
 
-        // Attempt to liquidate Bob
+        /* Before redistribution:
+        Alice ICR: 2 * 100 / 50 = 400%
+        Bob ICR: 1 * 100 / 90.5 = 110.5%
+        Carol ICR: 1 * 100 / 100 = 100%
+
+        Therefore Alice and Bob above the MCR, Carol is below */
+        assertGe(aliceICRBefore, MathUtils.MCR);
+        assertGe(bobICRBefore, MathUtils.MCR);
+        assertLe(carolICRBefore, MathUtils.MCR);
+
+        positionManager.liquidate(collateralToken, DAVE);
+
+        uint256 aliceICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
+        uint256 bobICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
+        uint256 carolICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, CAROL, price);
+
+        assertGe(aliceICRAfter, MathUtils.MCR);
+        assertLe(bobICRAfter, MathUtils.MCR);
+        assertLe(carolICRAfter, MathUtils.MCR);
+
+        // Though Bob's true ICR (including pending rewards) is below the MCR, check that Bob's raw collateral and debt
+        // has not changed, and that his "raw" ICR is above the MCR
+        uint256 bobDebt = positionManager.raftDebtToken().balanceOf(BOB);
+        uint256 bobPositionCollateral = collateralToken.balanceOf(BOB);
+
+        uint256 bobRawICR = bobPositionCollateral * price / bobDebt;
+        assertGe(bobRawICR, MathUtils.MCR);
+
+        vm.startPrank(EVE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            icr: 20e18
+        });
+        vm.stopPrank();
+
+        // Liquidate Alice unsuccessfully and Bob and Carol successfully
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
+        positionManager.liquidate(collateralToken, ALICE);
         positionManager.liquidate(collateralToken, BOB);
+        positionManager.liquidate(collateralToken, CAROL);
 
-        // Check Bob active, check Alice active
-        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
-        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        // Confirm token balances have not changed
+        assertEq(rToken.balanceOf(ALICE), alicePosition.debtAmount);
+        assertEq(rToken.balanceOf(BOB), bobPosition.debtAmount);
+        assertEq(rToken.balanceOf(CAROL), carolPosition.debtAmount);
     }
 }

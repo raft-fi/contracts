@@ -138,8 +138,8 @@ interface IPositionManager is IFeeCollector {
     /// @dev Nothing to liquidate.
     error NothingToLiquidate();
 
-    /// @dev Cannot redistribute last debt.
-    error CannotRedistributeLastDebt();
+    /// @dev Cannot liquidate last position.
+    error CannotLiquidateLastPosition();
 
     /// @dev Fee would eat up all returned collateral.
     error FeeEatsUpAllReturnedCollateral();
