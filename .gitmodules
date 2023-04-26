@@ -13,3 +13,7 @@
 	path = lib/chainlink
 	url = https://github.com/smartcontractkit/chainlink
 	branch = v1.13.1
+[submodule "lib/redstone-oracles-monorepo"]
+	path = lib/redstone-oracles-monorepo
+	url = https://github.com/redstone-finance/redstone-oracles-monorepo
+	branch = v0.0.7
