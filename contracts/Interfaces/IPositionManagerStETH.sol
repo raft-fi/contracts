@@ -2,26 +2,11 @@
 pragma solidity 0.8.19;
 
 import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
-import { IStETH } from "../Dependencies/IStETH.sol";
-import { IWstETH } from "../Dependencies/IWstETH.sol";
+import { IWstETHWrapper } from "./IWstETHWrapper.sol";
 
 /// @notice Interface for the PositionManagerStETH contract.
-interface IPositionManagerStETH is IPositionManagerDependent {
-    // --- Errors ---
-
-    /// @dev Invalid wstETH address.
-    error WstETHAddressCannotBeZero();
-
-    /// @dev Sending ether has failed.
-    error SendingEtherFailed();
-
+interface IPositionManagerStETH is IPositionManagerDependent, IWstETHWrapper {
     // --- Functions ---
-
-    /// @dev Returns wstETH token.
-    function wstETH() external returns (IWstETH);
-
-    /// @dev Returns stETH token.
-    function stETH() external returns (IStETH);
 
     /// @dev Manages the position with ether for the position (the caller).
     /// @param debtChange The amount of R to add or remove.

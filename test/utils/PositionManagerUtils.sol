@@ -7,7 +7,6 @@ import { MathUtils } from "../../contracts/Dependencies/MathUtils.sol";
 import { IStETH } from "../../contracts/Dependencies/IStETH.sol";
 import { IERC20Indexable } from "../../contracts/Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.sol";
-import { IPositionManagerStETH } from "../../contracts/Interfaces/IPositionManagerStETH.sol";
 import { PositionManagerStETH } from "../../contracts/PositionManagerStETH.sol";
 import { PriceFeedTestnet } from "../mocks/PriceFeedTestnet.sol";
 
@@ -65,7 +64,7 @@ library PositionManagerUtils {
     }
 
     function openPositionStETH(
-        IPositionManagerStETH positionManagerStETH,
+        PositionManagerStETH positionManagerStETH,
         PriceFeedTestnet priceFeed,
         uint256 icr,
         ETHType ethType
