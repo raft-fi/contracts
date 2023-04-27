@@ -5,7 +5,7 @@ import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
-import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 

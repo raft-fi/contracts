@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import { IFeeCollector } from "../contracts/Interfaces/IFeeCollector.sol";
-import { FeeCollectorTester } from "./TestContracts/FeeCollectorTester.sol";
+import { FeeCollectorTester } from "./mocks/FeeCollectorTester.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract FeeCollectorTest is TestSetup {

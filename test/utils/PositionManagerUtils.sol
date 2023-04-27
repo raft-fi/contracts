@@ -9,7 +9,7 @@ import { IERC20Indexable } from "../../contracts/Interfaces/IERC20Indexable.sol"
 import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.sol";
 import { IPositionManagerStETH } from "../../contracts/Interfaces/IPositionManagerStETH.sol";
 import { PositionManagerStETH } from "../../contracts/PositionManagerStETH.sol";
-import { PriceFeedTestnet } from "../TestContracts/PriceFeedTestnet.sol";
+import { PriceFeedTestnet } from "../mocks/PriceFeedTestnet.sol";
 
 library PositionManagerUtils {
     using Fixed256x18 for uint256;
