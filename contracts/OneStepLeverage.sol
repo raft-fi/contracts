@@ -61,6 +61,30 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
             collateralToken.safeTransferFrom(msg.sender, address(this), principalCollateralChange);
         }
 
+        _manageLeveragedPosition(
+            debtChange,
+            isDebtIncrease,
+            principalCollateralChange,
+            principalCollateralIncrease,
+            ammData,
+            minReturnOrAmountToSell,
+            maxFeePercentage,
+            true
+        );
+    }
+
+    function _manageLeveragedPosition(
+        uint256 debtChange,
+        bool isDebtIncrease,
+        uint256 principalCollateralChange,
+        bool principalCollateralIncrease,
+        bytes calldata ammData,
+        uint256 minReturnOrAmountToSell,
+        uint256 maxFeePercentage,
+        bool releasePrincipals
+    )
+        internal
+    {
         bytes memory data = abi.encode(
             msg.sender,
             principalCollateralChange,
@@ -68,7 +92,8 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
             isDebtIncrease,
             ammData,
             minReturnOrAmountToSell,
-            maxFeePercentage
+            maxFeePercentage,
+            releasePrincipals
         );
 
         IRToken rToken = IPositionManager(positionManager).rToken();
@@ -101,8 +126,9 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
             bool isDebtIncrease,
             bytes memory ammData,
             uint256 minReturnOrAmountToSell,
-            uint256 maxFeePercentage
-        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256));
+            uint256 maxFeePercentage,
+            bool releasePrincipals
+        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256, bool));
 
         uint256 leveragedCollateralChange = isDebtIncrease
             ? amm.swap(rToken, collateralToken, amount, minReturnOrAmountToSell, ammData)
@@ -127,7 +153,7 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
             collateralToken, user, collateralChange, increaseCollateral, amount, isDebtIncrease, maxFeePercentage
         );
 
-        if (!principalCollateralIncrease && principalCollateralChange > 0) {
+        if (releasePrincipals && !principalCollateralIncrease && principalCollateralChange > 0) {
             collateralToken.safeTransfer(user, principalCollateralChange);
         }
         if (!isDebtIncrease) {

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
+import { IWstETHWrapper } from "../contracts/Interfaces/IWstETHWrapper.sol";
 import { IStETH } from "../contracts/Dependencies/IStETH.sol";
 import { IWstETH } from "../contracts/Dependencies/IWstETH.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
@@ -43,7 +44,7 @@ contract PositionManagerStETHTest is TestSetup {
     }
 
     function testCannotCreatePositionManagerStETH() public {
-        vm.expectRevert(IPositionManagerStETH.WstETHAddressCannotBeZero.selector);
+        vm.expectRevert(IWstETHWrapper.WstETHAddressCannotBeZero.selector);
         new PositionManagerStETH(
             address(positionManager),
             IWstETH(address(0))
@@ -132,7 +133,7 @@ contract PositionManagerStETHTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(ALICE);
-        vm.expectRevert(IPositionManagerStETH.SendingEtherFailed.selector);
+        vm.expectRevert(IWstETHWrapper.SendingEtherFailed.selector);
         positionManagerStETH.managePositionETH{ value: 0 }(0, false, 0);
         vm.stopPrank();
     }
