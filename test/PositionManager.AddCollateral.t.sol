@@ -6,7 +6,7 @@ import { PositionManager } from "../contracts/PositionManager.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
-import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 

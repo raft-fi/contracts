@@ -4,8 +4,8 @@ pragma solidity 0.8.19;
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
-import { PositionManagerTester } from "./TestContracts/PositionManagerTester.sol";
-import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PositionManagerTester } from "./mocks/PositionManagerTester.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 

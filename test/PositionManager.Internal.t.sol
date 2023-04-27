@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import { PositionManagerTester } from "./TestContracts/PositionManagerTester.sol";
+import { PositionManagerTester } from "./mocks/PositionManagerTester.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerInternalTest is TestSetup {

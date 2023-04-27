@@ -10,9 +10,9 @@ import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IPositionManagerDependent } from "../contracts/Interfaces/IPositionManagerDependent.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
-import { MockAMM } from "./TestContracts/MockAMM.sol";
+import { MockAMM } from "./mocks/MockAMM.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
-import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 

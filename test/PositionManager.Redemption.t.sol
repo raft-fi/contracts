@@ -5,7 +5,7 @@ import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
-import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerRedemptionTest is TestSetup {

@@ -7,7 +7,7 @@ import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.so
 import { IPriceFeed } from "../../contracts/Interfaces/IPriceFeed.sol";
 import { ISplitLiquidationCollateral } from "../../contracts/Interfaces/ISplitLiquidationCollateral.sol";
 import { SplitLiquidationCollateral } from "../../contracts/SplitLiquidationCollateral.sol";
-import { WstETHTokenMock } from "../TestContracts/WstETHTokenMock.sol";
+import { WstETHTokenMock } from "../mocks/WstETHTokenMock.sol";
 
 contract TestSetup is Test {
     // User accounts

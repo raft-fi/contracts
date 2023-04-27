@@ -5,9 +5,9 @@ import { IPriceOracle } from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
 import { ChainlinkPriceOracle } from "../contracts/Oracles/ChainlinkPriceOracle.sol";
 import { TellorPriceOracle } from "../contracts/Oracles/TellorPriceOracle.sol";
 import { PriceFeed, IPriceFeed } from "../contracts/PriceFeed.sol";
-import { MockChainlink } from "./TestContracts/MockChainlink.sol";
-import { MockTellor } from "./TestContracts/MockTellor.sol";
-import { PriceFeedTester } from "./TestContracts/PriceFeedTester.sol";
+import { MockChainlink } from "./mocks/MockChainlink.sol";
+import { MockTellor } from "./mocks/MockTellor.sol";
+import { PriceFeedTester } from "./mocks/PriceFeedTester.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PriceFeedTest is TestSetup {

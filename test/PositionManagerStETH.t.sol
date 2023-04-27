@@ -11,7 +11,7 @@ import { IPositionManagerStETH, PositionManagerStETH } from "../contracts/Positi
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
-import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 
 contract PositionManagerStETHTest is TestSetup {
     address public constant WSTETH_ADDRESS = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;

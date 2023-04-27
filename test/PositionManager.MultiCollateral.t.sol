@@ -8,8 +8,8 @@ import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IPriceFeed } from "../contracts/Interfaces/IPriceFeed.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
-import { PriceFeedTestnet } from "./TestContracts/PriceFeedTestnet.sol";
-import { TokenMock } from "./TestContracts/TokenMock.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
+import { TokenMock } from "./mocks/TokenMock.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
