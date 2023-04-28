@@ -62,8 +62,8 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
     /// @dev Increases or decreases leverage for a position.
     /// @param debtChange Debt being added or removed.
     /// @param isDebtIncrease True if increasing debt/leverage.
-    /// @param principalCollChange Principal collateral change (collateral added/removed from/to user wallet).
-    /// @param principalCollIncrease True if principal collateral is added.
+    /// @param principalCollateralChange Principal collateral change (collateral added/removed from/to user wallet).
+    /// @param principalCollateralIncrease True if principal collateral is added.
     /// @param ammData Additional data to pass to swap method in amm.
     /// @param minReturnOrAmountToSell Serves for two different purposes:
     /// - leverage increase: it is min amount of collateral token to get from swapping flash minted R.
@@ -74,8 +74,8 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
     function manageLeveragedPosition(
         uint256 debtChange,
         bool isDebtIncrease,
-        uint256 principalCollChange,
-        bool principalCollIncrease,
+        uint256 principalCollateralChange,
+        bool principalCollateralIncrease,
         bytes calldata ammData,
         uint256 minReturnOrAmountToSell,
         uint256 maxFeePercentage
