@@ -85,6 +85,10 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
     )
         internal
     {
+        if (debtChange == 0) {
+            revert ZeroDebtChange();
+        }
+
         bytes memory data = abi.encode(
             msg.sender,
             principalCollateralChange,

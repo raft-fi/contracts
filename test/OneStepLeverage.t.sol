@@ -72,6 +72,16 @@ contract OneStepLeverageTest is TestSetup {
         new OneStepLeverage(positionManager, mockAmm, IERC20Indexable(address(0)));
     }
 
+    function testCannotProvideZeroDebtChange() public {
+        uint256 collateralAmount = 420e18;
+
+        vm.startPrank(ALICE);
+        collateralToken.approve(address(oneStepLeverage), collateralAmount);
+
+        vm.expectRevert(IOneStepLeverage.ZeroDebtChange.selector);
+        oneStepLeverage.manageLeveragedPosition(0, true, collateralAmount, true, "", 1, MathUtils._100_PERCENT);
+    }
+
     function testOpenLeveragedPosition() public {
         uint256 collateralAmount = 420e18;
         uint256 leverageMultiplier = 9e18;
