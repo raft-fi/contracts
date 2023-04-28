@@ -22,6 +22,9 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
     /// @dev Flash mint initiator is not One Step Leverage contract.
     error InvalidInitiator();
 
+    /// @dev The provided debtChange cannot be zero.
+    error ZeroDebtChange();
+
     // --- Functions ---
 
     /// @dev Maximum amount of R tokens to be leftover as dust after managing leveraged position call.
