@@ -25,6 +25,25 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
     /// @dev The provided debtChange cannot be zero.
     error ZeroDebtChange();
 
+    // --- Events ---
+
+    /// @dev Emitted on leveraged position adjustment.
+    /// @param position The adjusted position.
+    /// @param principalCollateralChange Principal collateral change (collateral added/removed from/to user wallet).
+    /// @param principalCollateralIncrease True if principal collateral is added.
+    /// @param debtChange The amount of debt added/removed from the position to facilitate the leverage adjustment.
+    /// @param isDebtIncrease True if increasing debt/leverage.
+    /// @param leveragedCollateralChange The amount of collateral added/removed from position as a result of the
+    /// leverage adjustment.
+    event LeveragedPositionAdjusted(
+        address indexed position,
+        uint256 principalCollateralChange,
+        bool principalCollateralIncrease,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        uint256 leveragedCollateralChange
+    );
+
     // --- Functions ---
 
     /// @dev Maximum amount of R tokens to be leftover as dust after managing leveraged position call.

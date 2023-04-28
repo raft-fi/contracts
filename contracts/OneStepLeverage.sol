@@ -169,6 +169,14 @@ contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionMan
             }
         }
 
+        emit LeveragedPositionAdjusted(
+            user,
+            principalCollateralChange,
+            principalCollateralIncrease,
+            amount,
+            isDebtIncrease,
+            leveragedCollateralChange
+        );
         return keccak256("ERC3156FlashBorrower.onFlashLoan");
     }
 }
