@@ -49,7 +49,7 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
             uint256 excessCollateral = totalCollateral - matchingCollateral;
             uint256 liquidatorReward = excessCollateral.mulDown(_calculateLiquidatorRewardRate(totalDebt));
             collateralToSendToProtocol = excessCollateral - liquidatorReward;
-            collateralToSentToLiquidator = liquidatorReward;
+            collateralToSentToLiquidator = liquidatorReward + matchingCollateral;
         }
     }
 
