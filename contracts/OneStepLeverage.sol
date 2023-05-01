@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
-import { IERC3156FlashLender } from "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
@@ -11,7 +10,7 @@ import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 import { IOneStepLeverage } from "./Interfaces/IOneStepLeverage.sol";
 import { IAMM } from "./Interfaces/IAMM.sol";
 
-contract OneStepLeverage is IERC3156FlashBorrower, IOneStepLeverage, PositionManagerDependent {
+contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
     using SafeERC20 for IERC20;
 
     IAMM public immutable override amm;
