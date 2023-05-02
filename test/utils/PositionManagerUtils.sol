@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
+import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { MathUtils } from "../../contracts/Dependencies/MathUtils.sol";
 import { IStETH } from "../../contracts/Dependencies/IStETH.sol";
 import { IERC20Indexable } from "../../contracts/Interfaces/IERC20Indexable.sol";
@@ -34,6 +35,7 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
+        address position,
         uint256 maxFeePercentage,
         uint256 extraDebtAmount,
         uint256 icr,
@@ -47,7 +49,10 @@ library PositionManagerUtils {
             getOpenPositionSetupValues(positionManager, priceFeed, extraDebtAmount, icr, amount);
 
         collateralToken.approve(address(positionManager), amount);
-        positionManager.managePosition(collateralToken, amount, true, result.debtAmount, true, maxFeePercentage);
+        ERC20PermitSignature memory emptySignature;
+        positionManager.managePosition(
+            collateralToken, position, amount, true, result.debtAmount, true, maxFeePercentage, emptySignature
+        );
         result.collateral = amount;
     }
 
@@ -55,12 +60,13 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
+        address position,
         uint256 icr
     )
         internal
         returns (OpenPositionResult memory result)
     {
-        result = openPosition(positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, 0, icr, 0);
+        result = openPosition(positionManager, priceFeed, collateralToken, position, MathUtils._100_PERCENT, 0, icr, 0);
     }
 
     function openPositionStETH(
@@ -97,20 +103,23 @@ library PositionManagerUtils {
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
+        address position,
         uint256 extraDebtAmount,
         uint256 icr
     )
         internal
         returns (OpenPositionResult memory result)
     {
-        result =
-            openPosition(positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, extraDebtAmount, icr, 0);
+        result = openPosition(
+            positionManager, priceFeed, collateralToken, position, MathUtils._100_PERCENT, extraDebtAmount, icr, 0
+        );
     }
 
     function openPosition(
         IPositionManager positionManager,
         PriceFeedTestnet priceFeed,
         IERC20 collateralToken,
+        address position,
         uint256 extraDebtAmount,
         uint256 icr,
         uint256 amount
@@ -119,7 +128,7 @@ library PositionManagerUtils {
         returns (OpenPositionResult memory result)
     {
         result = openPosition(
-            positionManager, priceFeed, collateralToken, MathUtils._100_PERCENT, extraDebtAmount, icr, amount
+            positionManager, priceFeed, collateralToken, position, MathUtils._100_PERCENT, extraDebtAmount, icr, amount
         );
     }
 
@@ -177,7 +186,10 @@ library PositionManagerUtils {
             result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, result.debtAmount);
         }
 
-        positionManager.managePosition(_collateralToken, 0, false, result.debtAmount, true, maxFeePercentage);
+        ERC20PermitSignature memory emptySignature;
+        positionManager.managePosition(
+            _collateralToken, position, 0, false, result.debtAmount, true, maxFeePercentage, emptySignature
+        );
     }
 
     function withdrawDebt(

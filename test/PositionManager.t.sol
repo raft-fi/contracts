@@ -36,6 +36,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -46,7 +47,9 @@ contract PositionManagerTest is TestSetup {
         uint256 collateralTopUpAmount = 1 ether;
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0);
+        positionManager.managePosition(
+            collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0, emptySignature
+        );
         vm.stopPrank();
         vm.prank(ALICE);
         positionManager.whitelistDelegate(BOB, false);
@@ -59,7 +62,9 @@ contract PositionManagerTest is TestSetup {
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
 
         vm.expectRevert(IPositionManager.DelegateNotWhitelisted.selector);
-        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0);
+        positionManager.managePosition(
+            collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0, emptySignature
+        );
     }
 
     function testIndividualDelegateCannotManageOtherPositions() public {
@@ -68,6 +73,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -81,7 +87,9 @@ contract PositionManagerTest is TestSetup {
 
         vm.prank(BOB);
         vm.expectRevert(IPositionManager.DelegateNotWhitelisted.selector);
-        positionManager.managePosition(collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0);
+        positionManager.managePosition(
+            collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0, emptySignature
+        );
     }
 
     // --- Borrowing Spread ---
@@ -157,6 +165,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();
@@ -166,6 +175,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();
@@ -183,6 +193,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();
@@ -192,6 +203,7 @@ contract PositionManagerTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 150 * MathUtils._100_PERCENT / 100
         });
         vm.stopPrank();

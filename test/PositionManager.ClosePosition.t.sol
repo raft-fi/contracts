@@ -42,6 +42,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 10_000e18,
             icr: 2e18
         });
@@ -52,6 +53,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 10_000e18,
             icr: 2e18
         });
@@ -76,7 +78,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         // Alice attempts to close position
         vm.prank(ALICE);
         positionManager.managePosition(
-            collateralToken, alicePositionCollateralBefore, false, aliceDebtBefore, false, 0
+            collateralToken, ALICE, alicePositionCollateralBefore, false, aliceDebtBefore, false, 0, emptySignature
         );
 
         uint256 aliceCollateralAfter = collateralToken.balanceOf(ALICE);
@@ -100,6 +102,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 10_000e18,
             icr: 2e18
         });
@@ -110,6 +113,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 10_000e18,
             icr: 2e18
         });
@@ -135,7 +139,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         vm.prank(ALICE);
         vm.expectRevert(IPositionManager.InvalidPosition.selector);
         positionManager.managePosition(
-            collateralToken, alicePositionCollateralBefore / 2, false, aliceDebtBefore, false, 0
+            collateralToken, ALICE, alicePositionCollateralBefore / 2, false, aliceDebtBefore, false, 0, emptySignature
         );
     }
 
@@ -146,6 +150,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 15_000e18,
             icr: 2e18
         });
@@ -156,6 +161,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -175,7 +181,9 @@ contract PositionManagerClosePositionTest is TestSetup {
         assertEq(bobPositionDebt, bobRBalance);
 
         vm.prank(BOB);
-        positionManager.managePosition(collateralToken, bobPositionCollateral, false, bobPositionDebt, false, 0);
+        positionManager.managePosition(
+            collateralToken, BOB, bobPositionCollateral, false, bobPositionDebt, false, 0, emptySignature
+        );
     }
 
     // Reverts if borrower has insufficient R balance to repay his entire debt when borrowing rate > 0%
@@ -187,6 +195,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 15_000e18,
             icr: 2e18
         });
@@ -197,6 +206,7 @@ contract PositionManagerClosePositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -217,6 +227,8 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         vm.prank(BOB);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(collateralToken, bobPositionCollateral, false, bobPositionDebt, false, 0);
+        positionManager.managePosition(
+            collateralToken, BOB, bobPositionCollateral, false, bobPositionDebt, false, 0, emptySignature
+        );
     }
 }

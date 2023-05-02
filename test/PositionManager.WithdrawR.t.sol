@@ -42,6 +42,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -51,6 +52,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 10e18
         });
         vm.stopPrank();
@@ -60,13 +62,16 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             icr: MathUtils.MCR
         });
         vm.stopPrank();
 
         vm.prank(CAROL);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
-        positionManager.managePosition(collateralToken, 0, false, 1, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, CAROL, 0, false, 1, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Price drops
         priceFeed.setPrice(100e18);
@@ -80,7 +85,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.expectRevert(
             abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils._100_PERCENT - 1)
         );
-        positionManager.managePosition(collateralToken, 0, false, withdrawalAmount, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, ALICE, 0, false, withdrawalAmount, true, MathUtils._100_PERCENT, emptySignature
+        );
     }
 
     // Decays a non-zero base rate
@@ -90,6 +97,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             icr: 10e18
         });
         vm.stopPrank();
@@ -99,6 +107,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 20e18,
             icr: 2e18
         });
@@ -109,6 +118,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 20e18,
             icr: 2e18
         });
@@ -119,6 +129,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 20e18,
             icr: 2e18
         });
@@ -129,6 +140,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 20e18,
             icr: 2e18
         });
@@ -145,7 +157,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Dave withdraws R
         vm.prank(DAVE);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, DAVE, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Check base rate has decreased
         uint256 baseRate2 = positionManager.baseRate();
@@ -155,7 +169,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Eve withdraws R
         vm.prank(EVE);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, EVE, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         uint256 baseRate3 = positionManager.baseRate();
         assertLt(baseRate3, baseRate2);
@@ -168,6 +184,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 10e18,
             icr: 2e18
         });
@@ -178,6 +195,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 20e18,
             icr: 2e18
         });
@@ -188,6 +206,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -198,12 +217,15 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
 
         vm.expectRevert(IPositionManager.InvalidMaxFeePercentage.selector);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT + 1);
+        positionManager.managePosition(
+            collateralToken, DAVE, 0, false, 1e18, true, MathUtils._100_PERCENT + 1, emptySignature
+        );
     }
 
     // Reverts if fee exceeds max fee percentage
@@ -213,6 +235,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 60e18,
             icr: 2e18
         });
@@ -223,6 +246,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 60e18,
             icr: 2e18
         });
@@ -233,6 +257,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 70e18,
             icr: 2e18
         });
@@ -243,6 +268,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 80e18,
             icr: 2e18
         });
@@ -253,6 +279,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 180e18,
             icr: 2e18
         });
@@ -277,7 +304,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 maxFee = 5 * MathUtils._100_PERCENT / 100 - 1;
         vm.prank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.15e18, 3e18, maxFee));
-        positionManager.managePosition(collateralToken, 0, false, 3e18, true, maxFee);
+        positionManager.managePosition(collateralToken, ALICE, 0, false, 3e18, true, maxFee, emptySignature);
 
         baseRate = positionManager.baseRate();
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
@@ -286,7 +313,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         maxFee = MathUtils._100_PERCENT / 100;
         vm.prank(BOB);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, maxFee);
+        positionManager.managePosition(collateralToken, BOB, 0, false, 1e18, true, maxFee, emptySignature);
 
         baseRate = positionManager.baseRate();
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
@@ -295,7 +322,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         maxFee = 3754 * MathUtils._100_PERCENT / 100_000;
         vm.prank(CAROL);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, maxFee);
+        positionManager.managePosition(collateralToken, CAROL, 0, false, 1e18, true, maxFee, emptySignature);
 
         baseRate = positionManager.baseRate();
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
@@ -304,7 +331,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         maxFee = 5 * MathUtils._100_PERCENT / 1000;
         vm.prank(DAVE);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, maxFee);
+        positionManager.managePosition(collateralToken, DAVE, 0, false, 1e18, true, maxFee, emptySignature);
     }
 
     // Succeeds when fee is less than max fee percentage
@@ -314,6 +341,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 60e18,
             icr: 2e18
         });
@@ -324,6 +352,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 60e18,
             icr: 2e18
         });
@@ -334,6 +363,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 70e18,
             icr: 2e18
         });
@@ -344,6 +374,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 80e18,
             icr: 2e18
         });
@@ -354,6 +385,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 180e18,
             icr: 2e18
         });
@@ -368,21 +400,27 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Attempt with max fee > 5%
         vm.prank(ALICE);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, 5 * MathUtils._100_PERCENT / 100 + 1);
+        positionManager.managePosition(
+            collateralToken, ALICE, 0, false, 1e18, true, 5 * MathUtils._100_PERCENT / 100 + 1, emptySignature
+        );
 
         baseRate = positionManager.baseRate();
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 5%
         vm.prank(BOB);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, 5 * MathUtils._100_PERCENT / 100);
+        positionManager.managePosition(
+            collateralToken, BOB, 0, false, 1e18, true, 5 * MathUtils._100_PERCENT / 100, emptySignature
+        );
 
         baseRate = positionManager.baseRate();
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 10%
         vm.prank(CAROL);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, 1 * MathUtils._100_PERCENT / 10);
+        positionManager.managePosition(
+            collateralToken, CAROL, 0, false, 1e18, true, 1 * MathUtils._100_PERCENT / 10, emptySignature
+        );
 
         baseRate = positionManager.baseRate();
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
@@ -390,12 +428,14 @@ contract PositionManagerWithdrawRTest is TestSetup {
         // Attempt with max fee = 37.659%
         vm.prank(DAVE);
         positionManager.managePosition(
-            collateralToken, 0, false, 1e18, true, 37_659 * MathUtils._100_PERCENT / 100_000
+            collateralToken, DAVE, 0, false, 1e18, true, 37_659 * MathUtils._100_PERCENT / 100_000, emptySignature
         );
 
         // Attempt with max fee = 100%
         vm.prank(EVE);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, EVE, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
     }
 
     // Doesn't change base rate if it is already zero
@@ -405,6 +445,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: FRANK,
             icr: 10e18
         });
         vm.stopPrank();
@@ -414,6 +455,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 30e18,
             icr: 2e18
         });
@@ -424,6 +466,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -434,6 +477,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -444,6 +488,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -454,6 +499,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -467,7 +513,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Dave withdraws R
         vm.prank(DAVE);
-        positionManager.managePosition(collateralToken, 0, false, 37e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, DAVE, 0, false, 37e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Check base rate is still 0
         uint256 baseRate2 = positionManager.baseRate();
@@ -477,7 +525,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Eve opens position
         vm.prank(EVE);
-        positionManager.managePosition(collateralToken, 0, false, 12e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, EVE, 0, false, 12e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         uint256 baseRate3 = positionManager.baseRate();
         assertEq(baseRate3, 0);
@@ -490,6 +540,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             icr: 10e18
         });
         vm.stopPrank();
@@ -499,6 +550,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 30e18,
             icr: 2e18
         });
@@ -509,6 +561,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -519,6 +572,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -538,7 +592,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Borrower Carol triggers a fee
         vm.prank(CAROL);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, CAROL, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         uint256 lastFeeOpTime2 = positionManager.lastFeeOperationTime();
 
@@ -550,7 +606,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Borrower Carol triggers a fee
         vm.prank(CAROL);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, CAROL, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         uint256 lastFeeOpTime3 = positionManager.lastFeeOperationTime();
 
@@ -567,6 +625,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             icr: 10e18
         });
         vm.stopPrank();
@@ -576,6 +635,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 30e18,
             icr: 2e18
         });
@@ -586,6 +646,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -596,6 +657,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -613,13 +675,17 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Borrower Carol triggers a fee, before decay interval has passed
         vm.prank(CAROL);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, CAROL, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         skip(30 seconds);
 
         // Borrower Carol triggers another fee
         vm.prank(CAROL);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, CAROL, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Check base rate has decreased even though borrower tried to stop it decaying
         uint256 baseRate2 = positionManager.baseRate();
@@ -639,6 +705,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             icr: 10e18
         });
         vm.stopPrank();
@@ -648,6 +715,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 30e18,
             icr: 2e18
         });
@@ -658,6 +726,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -668,6 +737,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -678,6 +748,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -698,7 +769,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         // Dave withdraws R
         vm.prank(DAVE);
-        positionManager.managePosition(collateralToken, 0, false, withdrawAmount, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, DAVE, 0, false, withdrawAmount, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Check fee recipient's R balance after has increased
         uint256 feeRecipientRBalanceAfter = rToken.balanceOf(feeRecipient);
@@ -718,6 +791,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             icr: 10e18
         });
         vm.stopPrank();
@@ -727,6 +801,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 30e18,
             icr: 2e18
         });
@@ -737,6 +812,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -747,6 +823,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -757,6 +834,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -777,7 +855,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
         // Dave withdraws R
         uint256 daveWithdrawal = 37e18;
         vm.prank(DAVE);
-        positionManager.managePosition(collateralToken, 0, false, daveWithdrawal, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, DAVE, 0, false, daveWithdrawal, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         uint256 daveDebtAfter = positionManager.raftDebtToken().balanceOf(DAVE);
 
@@ -797,6 +877,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             icr: 10e18
         });
         vm.stopPrank();
@@ -806,6 +887,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 30e18,
             icr: 2e18
         });
@@ -819,6 +901,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -829,6 +912,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -839,6 +923,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -858,7 +943,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
         // Dave withdraws R
         uint256 daveWithdrawal = 37e18;
         vm.prank(DAVE);
-        positionManager.managePosition(collateralToken, 0, false, daveWithdrawal, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, DAVE, 0, false, daveWithdrawal, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Check fee recipient's R balance has increased
         uint256 feeRecipientRBalanceAfter = rToken.balanceOf(feeRecipient);
@@ -876,6 +963,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             icr: 10e18
         });
         vm.stopPrank();
@@ -885,6 +973,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 30e18,
             icr: 2e18
         });
@@ -895,6 +984,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 40e18,
             icr: 2e18
         });
@@ -905,6 +995,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -915,6 +1006,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 50e18,
             icr: 2e18
         });
@@ -931,7 +1023,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
         // Dave withdraws R
         uint256 withdrawalAmount = 37e18;
         vm.prank(DAVE);
-        positionManager.managePosition(collateralToken, 0, false, withdrawalAmount, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, DAVE, 0, false, withdrawalAmount, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Check Dave's R balance now equals their requested R
         uint256 daveRBalanceAfter = rToken.balanceOf(DAVE);
@@ -947,6 +1041,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 10e18
         });
         vm.stopPrank();
@@ -956,18 +1051,23 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 2e18
         });
         vm.stopPrank();
 
         // Bob successfully withdraws R
         vm.prank(BOB);
-        positionManager.managePosition(collateralToken, 0, false, 1e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, BOB, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Carol with no active position attempts to withdraw R
         vm.prank(CAROL);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NetDebtBelowMinimum.selector, 100e18));
-        positionManager.managePosition(collateralToken, 0, false, 100e18, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, CAROL, 0, false, 100e18, true, MathUtils._100_PERCENT, emptySignature
+        );
     }
 
     // Reverts when requested withdrawal amount is zero R
@@ -977,6 +1077,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -986,18 +1087,21 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 2e18
         });
         vm.stopPrank();
 
         // Bob successfully withdraws 1e-18 R
         vm.prank(BOB);
-        positionManager.managePosition(collateralToken, 0, false, 1, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(collateralToken, BOB, 0, false, 1, true, MathUtils._100_PERCENT, emptySignature);
 
         // Alice attempts to withdraw 0 R
         vm.prank(ALICE);
         vm.expectRevert(IPositionManager.NoCollateralOrDebtChange.selector);
-        positionManager.managePosition(collateralToken, 0, false, 0, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, ALICE, 0, false, 0, true, MathUtils._100_PERCENT, emptySignature
+        );
     }
 
     // Increases user's R token balance and the position's R debt by correct amount
@@ -1007,6 +1111,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 0,
             icr: 0,
             amount: 100 ether
@@ -1022,7 +1127,9 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 withdrawAmount = 10_000e18;
 
         vm.prank(ALICE);
-        positionManager.managePosition(collateralToken, 0, false, withdrawAmount, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, ALICE, 0, false, withdrawAmount, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         uint256 aliceRTokenBalanceAfter = rToken.balanceOf(ALICE);
         assertEq(aliceRTokenBalanceAfter, aliceRTokenBalanceBefore + withdrawAmount);

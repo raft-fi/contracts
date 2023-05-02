@@ -69,6 +69,7 @@ contract OneStepLeverageStETHTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: wstETH,
+            position: BOB,
             icr: 2e18
         });
         vm.stopPrank();

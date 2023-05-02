@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Test } from "forge-std/Test.sol";
+import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.sol";
 import { IPriceFeed } from "../../contracts/Interfaces/IPriceFeed.sol";
 import { ISplitLiquidationCollateral } from "../../contracts/Interfaces/ISplitLiquidationCollateral.sol";
@@ -29,6 +30,8 @@ contract TestSetup is Test {
     // Collateral token mock
     WstETHTokenMock public collateralToken;
     ISplitLiquidationCollateral public splitLiquidationCollateral;
+
+    ERC20PermitSignature public emptySignature;
 
     function setUp() public virtual {
         collateralToken = new WstETHTokenMock();

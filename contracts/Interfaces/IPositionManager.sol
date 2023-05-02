@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IERC20Indexable } from "./IERC20Indexable.sol";
 import { IFeeCollector } from "./IFeeCollector.sol";
 import { IPriceFeed } from "./IPriceFeed.sol";
@@ -262,6 +263,8 @@ interface IPositionManager is IFeeCollector {
     /// @param debtChange The amount of R to add or remove.
     /// @param isDebtIncrease True if the debt is being increased, false otherwise.
     /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
+    /// @param permitSignature Optional permit signature for tokens that support IERC20Permit interface.
+    /// @notice 'permitSignature' it is ignored if permit signature is not for 'collateralToken'.
     function managePosition(
         IERC20 collateralToken,
         address position,
@@ -269,24 +272,8 @@ interface IPositionManager is IFeeCollector {
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        uint256 maxFeePercentage
-    )
-        external;
-
-    /// @dev Manages the position for the borrower (the caller).
-    /// @param collateralToken The token the borrower used as collateral.
-    /// @param collateralChange The amount of collateral to add or remove.
-    /// @param isCollateralIncrease True if the collateral is being increased, false otherwise.
-    /// @param debtChange The amount of R to add or remove.
-    /// @param isDebtIncrease True if the debt is being increased, false otherwise.
-    /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
-    function managePosition(
-        IERC20 collateralToken,
-        uint256 collateralChange,
-        bool isCollateralIncrease,
-        uint256 debtChange,
-        bool isDebtIncrease,
-        uint256 maxFeePercentage
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
     )
         external;
 

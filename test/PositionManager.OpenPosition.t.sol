@@ -46,6 +46,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             maxFeePercentage: MathUtils._100_PERCENT,
             extraDebtAmount: aliceExtraRAmount,
             icr: 0,
@@ -64,6 +65,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             maxFeePercentage: MathUtils._100_PERCENT,
             extraDebtAmount: bobExtraRAmount,
             icr: 0,
@@ -81,6 +83,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: FRANK,
             extraDebtAmount: 10_000e18,
             icr: 10e18
         });
@@ -91,6 +94,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 20_000e18,
             icr: 2e18
         });
@@ -101,6 +105,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 30_000e18,
             icr: 2e18
         });
@@ -111,6 +116,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 40_000e18,
             icr: 2e18
         });
@@ -130,6 +136,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 37e18,
             icr: 2e18
         });
@@ -146,6 +153,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 12e18,
             icr: 2e18
         });
@@ -162,6 +170,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: FRANK,
             extraDebtAmount: 10_000e18,
             icr: 10e18
         });
@@ -172,6 +181,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 20_000e18,
             icr: 2e18
         });
@@ -182,6 +192,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 30_000e18,
             icr: 2e18
         });
@@ -192,6 +203,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 40_000e18,
             icr: 2e18
         });
@@ -207,6 +219,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 37e18,
             icr: 2e18
         });
@@ -223,6 +236,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 12e18,
             icr: 2e18
         });
@@ -239,6 +253,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: FRANK,
             extraDebtAmount: 10_000e18,
             icr: 10e18
         });
@@ -249,6 +264,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 20_000e18,
             icr: 2e18
         });
@@ -259,6 +275,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 30_000e18,
             icr: 2e18
         });
@@ -269,6 +286,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 40_000e18,
             icr: 2e18
         });
@@ -285,6 +303,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 37e18,
             icr: 2e18
         });
@@ -300,6 +319,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 12e18,
             icr: 2e18
         });
@@ -317,6 +337,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: FRANK,
             extraDebtAmount: 10_000e18,
             icr: 10e18
         });
@@ -327,6 +348,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 20_000e18,
             icr: 2e18
         });
@@ -337,6 +359,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 30_000e18,
             icr: 2e18
         });
@@ -347,6 +370,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 40_000e18,
             icr: 2e18
         });
@@ -369,6 +393,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 1e18,
             icr: 2e18
         });
@@ -382,6 +407,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 1e18,
             icr: 2e18
         });
@@ -406,6 +432,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: EVE,
             extraDebtAmount: 10_000e18,
             icr: 10e18
         });
@@ -416,6 +443,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 20_000e18,
             icr: 2e18
         });
@@ -426,6 +454,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 30_000e18,
             icr: 2e18
         });
@@ -436,6 +465,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 40_000e18,
             icr: 2e18
         });
@@ -452,6 +482,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: DAVE,
             extraDebtAmount: 37e18,
             icr: 2e18
         });
@@ -468,6 +499,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -478,6 +510,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -490,7 +523,9 @@ contract PositionManagerOpenPositionTest is TestSetup {
             PositionManagerUtils.getOpenPositionSetupValues(positionManager, priceFeed, 0, bobICR, 0);
         collateralToken.approve(address(positionManager), amount);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, bobICR));
-        positionManager.managePosition(collateralToken, amount, true, debtAmount, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, BOB, amount, true, debtAmount, true, MathUtils._100_PERCENT, emptySignature
+        );
         vm.stopPrank();
     }
 
@@ -510,6 +545,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 0,
             icr: 0,
             amount: 100 ether
@@ -535,6 +571,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -553,6 +590,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -563,6 +601,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -580,7 +619,14 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
         vm.prank(ALICE);
         positionManager.managePosition(
-            collateralToken, alicePositionCollateral, false, alicePositionDebt, false, MathUtils._100_PERCENT
+            collateralToken,
+            ALICE,
+            alicePositionCollateral,
+            false,
+            alicePositionDebt,
+            false,
+            MathUtils._100_PERCENT,
+            emptySignature
         );
 
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
@@ -590,6 +636,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 5000e18,
             icr: 2e18
         });
@@ -610,6 +657,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             extraDebtAmount: 10_000e18,
             icr: 0,
             amount: 100 ether

@@ -48,11 +48,13 @@ contract PositionManagerRedemptionTest is TestSetup {
         collateralToken.approve(address(positionManager), collateralAmount);
         positionManager.managePosition(
             collateralToken,
+            ALICE,
             collateralAmount,
             true, // collateral increase
             rToMint,
             true, // debt increase
-            1e17
+            1e17,
+            emptySignature
         );
         rToken.transfer(BOB, rToRedeem);
         vm.stopPrank();
@@ -92,11 +94,13 @@ contract PositionManagerRedemptionTest is TestSetup {
         collateralToken.approve(address(positionManager), collateralAmount_A);
         positionManager.managePosition(
             collateralToken,
+            ALICE,
             collateralAmount_A,
             true, // collateral increase
             rToMint_A,
             true, // debt increase
-            1e17
+            1e17,
+            emptySignature
         );
         rToken.transfer(BOB, rToRedeem);
         vm.stopPrank();
@@ -108,11 +112,13 @@ contract PositionManagerRedemptionTest is TestSetup {
         collateralToken.approve(address(positionManager), collateralAmount_C);
         positionManager.managePosition(
             collateralToken,
+            CAROL,
             collateralAmount_C,
             true, // collateral increase
             rToMint_C,
             true, // debt increase
-            1e17
+            1e17,
+            emptySignature
         );
         vm.stopPrank();
 

@@ -54,6 +54,7 @@ contract OneStepLeverageTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 2e18
         });
         vm.stopPrank();
