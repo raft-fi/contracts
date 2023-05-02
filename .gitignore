@@ -58,3 +58,8 @@ tests/simulation.csv
 forge-cache/
 out/
 
+#certora
+.certora_internal/
+.certora_recent_jobs.json
+*.zip
+.zip-output-url.txt
