@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IWstETH } from "./Dependencies/IWstETH.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IPositionManagerStETH } from "./Interfaces/IPositionManagerStETH.sol";
@@ -30,9 +31,10 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         payable
         override
     {
+        ERC20PermitSignature memory emptySignature;
         uint256 wstETHAmount = wrapETH();
         IPositionManager(positionManager).managePosition(
-            wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage
+            wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, emptySignature
         );
     }
 
@@ -46,10 +48,18 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         external
         override
     {
+        ERC20PermitSignature memory emptySignature;
         if (isCollateralIncrease && collateralChange > 0) {
             uint256 wstETHAmount = wrapStETH(collateralChange);
             IPositionManager(positionManager).managePosition(
-                wstETH, msg.sender, wstETHAmount, isCollateralIncrease, debtChange, isDebtIncrease, maxFeePercentage
+                wstETH,
+                msg.sender,
+                wstETHAmount,
+                isCollateralIncrease,
+                debtChange,
+                isDebtIncrease,
+                maxFeePercentage,
+                emptySignature
             );
         } else {
             IPositionManager(positionManager).managePosition(
@@ -59,7 +69,8 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
                 isCollateralIncrease,
                 debtChange,
                 isDebtIncrease,
-                maxFeePercentage
+                maxFeePercentage,
+                emptySignature
             );
             uint256 stETHAmount = unwrapStETH(collateralChange);
             stETH.transfer(msg.sender, stETHAmount);

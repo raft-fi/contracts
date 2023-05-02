@@ -6,6 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
+import { ERC20PermitSignature, PermitHelper } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { MathUtils } from "./Dependencies/MathUtils.sol";
 import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
@@ -130,42 +131,48 @@ contract PositionManager is FeeCollector, IPositionManager {
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        uint256 maxFeePercentage
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
     )
         external
         override
+        collateralTokenExists(collateralToken)
+        validMaxFeePercentageWhen(maxFeePercentage, isDebtIncrease)
+        onlyDepositedCollateralTokenOrNew(position, collateralToken)
+        onlyEnabledCollateralTokenWhen(collateralToken, isDebtIncrease && debtChange > 0)
     {
-        _managePosition(
-            collateralToken,
-            position,
-            collateralChange,
-            isCollateralIncrease,
-            debtChange,
-            isDebtIncrease,
-            maxFeePercentage
-        );
-    }
+        if (position != msg.sender && !isDelegateWhitelisted[position][msg.sender]) {
+            revert DelegateNotWhitelisted();
+        }
+        if (collateralChange == 0 && debtChange == 0) {
+            revert NoCollateralOrDebtChange();
+        }
+        if (address(permitSignature.token) == address(collateralToken)) {
+            PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
+        }
 
-    function managePosition(
-        IERC20 collateralToken,
-        uint256 collateralChange,
-        bool isCollateralIncrease,
-        uint256 debtChange,
-        bool isDebtIncrease,
-        uint256 maxFeePercentage
-    )
-        external
-        override
-    {
-        _managePosition(
-            collateralToken,
-            msg.sender,
-            collateralChange,
-            isCollateralIncrease,
-            debtChange,
-            isDebtIncrease,
-            maxFeePercentage
-        );
+        bool newPosition = (raftDebtToken.balanceOf(position) == 0);
+
+        _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
+        _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease);
+
+        uint256 positionDebt = raftDebtToken.balanceOf(position);
+        uint256 positionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
+
+        if (positionDebt == 0) {
+            if (positionCollateral != 0) {
+                revert InvalidPosition();
+            }
+            // position was closed, remove it
+            _closePosition(collateralToken, position, false);
+        } else {
+            _checkValidPosition(collateralToken, positionDebt, positionCollateral);
+
+            if (newPosition) {
+                collateralTokenForPosition[position] = collateralToken;
+                emit PositionCreated(position, collateralToken);
+            }
+        }
     }
 
     function liquidate(IERC20 collateralToken, address position) external override {
@@ -375,60 +382,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     // --- Helper functions ---
-
-    /// @dev Manages the position on behalf of a given borrower.
-    /// @param collateralToken The token the borrower used as collateral.
-    /// @param position The address of the borrower.
-    /// @param collateralChange The amount of collateral to add or remove.
-    /// @param isCollateralIncrease True if the collateral is being increased, false otherwise.
-    /// @param debtChange The amount of R to add or remove.
-    /// @param isDebtIncrease True if the debt is being increased, false otherwise.
-    /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
-    function _managePosition(
-        IERC20 collateralToken,
-        address position,
-        uint256 collateralChange,
-        bool isCollateralIncrease,
-        uint256 debtChange,
-        bool isDebtIncrease,
-        uint256 maxFeePercentage
-    )
-        internal
-        collateralTokenExists(collateralToken)
-        validMaxFeePercentageWhen(maxFeePercentage, isDebtIncrease)
-        onlyDepositedCollateralTokenOrNew(position, collateralToken)
-        onlyEnabledCollateralTokenWhen(collateralToken, isDebtIncrease && debtChange > 0)
-    {
-        if (position != msg.sender && !isDelegateWhitelisted[position][msg.sender]) {
-            revert DelegateNotWhitelisted();
-        }
-        if (collateralChange == 0 && debtChange == 0) {
-            revert NoCollateralOrDebtChange();
-        }
-
-        bool newPosition = (raftDebtToken.balanceOf(position) == 0);
-
-        _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
-        _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease);
-
-        uint256 positionDebt = raftDebtToken.balanceOf(position);
-        uint256 positionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
-
-        if (positionDebt == 0) {
-            if (positionCollateral != 0) {
-                revert InvalidPosition();
-            }
-            // position was closed, remove it
-            _closePosition(collateralToken, position, false);
-        } else {
-            _checkValidPosition(collateralToken, positionDebt, positionCollateral);
-
-            if (newPosition) {
-                collateralTokenForPosition[position] = collateralToken;
-                emit PositionCreated(position, collateralToken);
-            }
-        }
-    }
 
     /// @dev Adjusts the debt of a given borrower by burning or minting the corresponding amount of R and the Raft
     /// debt token. If the debt is being increased, the borrowing fee is also triggered.

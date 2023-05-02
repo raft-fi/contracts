@@ -90,6 +90,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -101,7 +102,9 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, 0);
+        positionManager.managePosition(
+            collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0, emptySignature
+        );
         vm.stopPrank();
 
         uint256 positionManagerBalanceAfterAlice = collateralToken.balanceOf(address(positionManager));
@@ -115,6 +118,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeedSecond,
             collateralToken: collateralTokenSecond,
+            position: BOB,
             icr: 2e18
         });
         vm.stopPrank();
@@ -124,7 +128,9 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
         vm.startPrank(BOB);
         collateralTokenSecond.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralTokenSecond, collateralTopUpAmount, true, 0, false, 0);
+        positionManager.managePosition(
+            collateralTokenSecond, BOB, collateralTopUpAmount, true, 0, false, 0, emptySignature
+        );
         vm.stopPrank();
 
         uint256 positionManagerBalanceAfterBob = collateralTokenSecond.balanceOf(address(positionManager));
@@ -138,6 +144,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -148,7 +155,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         // Alice close position with first collateral token
         vm.startPrank(ALICE);
         positionManager.managePosition(
-            collateralToken, resultAlice.collateral, false, resultAlice.debtAmount, false, 0
+            collateralToken, ALICE, resultAlice.collateral, false, resultAlice.debtAmount, false, 0, emptySignature
         );
         vm.stopPrank();
 
@@ -159,6 +166,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeedSecond,
             collateralToken: collateralTokenSecond,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -175,6 +183,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -186,7 +195,9 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralTopUpAmount);
-        positionManager.managePosition(collateralToken, collateralTopUpAmount, true, 0, false, 0);
+        positionManager.managePosition(
+            collateralToken, ALICE, collateralTopUpAmount, true, 0, false, 0, emptySignature
+        );
         vm.stopPrank();
 
         uint256 positionManagerBalanceAfterAlice = collateralToken.balanceOf(address(positionManager));
@@ -196,7 +207,9 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         collateralTokenSecond.mint(ALICE, 10e36);
         vm.startPrank(ALICE);
         vm.expectRevert(IPositionManager.PositionCollateralTokenMismatch.selector);
-        positionManager.managePosition(collateralTokenSecond, collateralTopUpAmount, true, 0, false, 0);
+        positionManager.managePosition(
+            collateralTokenSecond, ALICE, collateralTopUpAmount, true, 0, false, 0, emptySignature
+        );
         vm.stopPrank();
     }
 
@@ -206,6 +219,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 20e18
         });
         vm.stopPrank();
@@ -215,6 +229,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 4e18
         });
         vm.stopPrank();
@@ -225,6 +240,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeedSecond,
             collateralToken: collateralTokenSecond,
+            position: CAROL,
             icr: 2e18
         });
         vm.stopPrank();
@@ -235,6 +251,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeedSecond,
             collateralToken: collateralTokenSecond,
+            position: DAVE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -286,6 +303,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             icr: 2e18
         });
         vm.stopPrank();
@@ -306,6 +324,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -315,6 +334,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralTokenSecond,
+            position: BOB,
             extraDebtAmount: 1e18,
             icr: 2e18
         });
@@ -327,26 +347,30 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
         // Alice can still withdraw R
         vm.prank(ALICE);
-        positionManager.managePosition(collateralToken, 0, false, 1, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralToken, ALICE, 0, false, 1, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Bob cannot withdraw more R
         vm.prank(BOB);
         vm.expectRevert(IPositionManager.CollateralTokenDisabled.selector);
-        positionManager.managePosition(collateralTokenSecond, 0, false, 1, true, MathUtils._100_PERCENT);
+        positionManager.managePosition(
+            collateralTokenSecond, BOB, 0, false, 1, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         // Bob can execute other operations
         vm.startPrank(BOB);
         collateralTokenSecond.approve(address(positionManager), 1);
-        positionManager.managePosition(collateralTokenSecond, 1, true, 0, false, 0);
-        positionManager.managePosition(collateralTokenSecond, 1, false, 0, false, 0);
-        positionManager.managePosition(collateralTokenSecond, 0, false, 1, false, 0);
+        positionManager.managePosition(collateralTokenSecond, BOB, 1, true, 0, false, 0, emptySignature);
+        positionManager.managePosition(collateralTokenSecond, BOB, 1, false, 0, false, 0, emptySignature);
+        positionManager.managePosition(collateralTokenSecond, BOB, 0, false, 1, false, 0, emptySignature);
         vm.stopPrank();
 
         // Carol cannot open a position with the disabled collateral token and withdraw R
         vm.startPrank(CAROL);
         collateralTokenSecond.approve(address(positionManager), 1 ether);
         vm.expectRevert(IPositionManager.CollateralTokenDisabled.selector);
-        positionManager.managePosition(collateralTokenSecond, 1 ether, true, 1, true, 0);
+        positionManager.managePosition(collateralTokenSecond, CAROL, 1 ether, true, 1, true, 0, emptySignature);
         vm.stopPrank();
     }
 

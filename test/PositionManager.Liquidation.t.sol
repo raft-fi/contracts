@@ -43,6 +43,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 20e18
         });
         vm.stopPrank();
@@ -52,6 +53,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 2e18
         });
         vm.stopPrank();
@@ -95,6 +97,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -120,6 +123,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             extraDebtAmount: 0,
             icr: 200e18,
             amount: 100 ether
@@ -132,6 +136,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 2e18
         });
         vm.stopPrank();
@@ -160,6 +165,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 4e18
         });
         vm.stopPrank();
@@ -169,6 +175,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 2.1e18
         });
         vm.stopPrank();
@@ -183,6 +190,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: CAROL,
             icr: 2e18
         });
         vm.stopPrank();
@@ -208,6 +216,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 3e18
         });
         vm.stopPrank();
@@ -217,6 +226,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 3e18
         });
         vm.stopPrank();
@@ -242,6 +252,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: ALICE,
             icr: 22e17
         });
         vm.stopPrank();
@@ -251,6 +262,7 @@ contract PositionManagerLiquidationTest is TestSetup {
             positionManager: positionManager,
             priceFeed: priceFeed,
             collateralToken: collateralToken,
+            position: BOB,
             icr: 22e17
         });
         vm.stopPrank();

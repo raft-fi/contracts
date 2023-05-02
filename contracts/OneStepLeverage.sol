@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IRToken } from "./Interfaces/IRToken.sol";
 import { PositionManagerDependent } from "./PositionManagerDependent.sol";
@@ -152,8 +153,16 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             collateralChange = principalCollateralChange + leveragedCollateralChange;
         }
 
+        ERC20PermitSignature memory emptySignature;
         IPositionManager(positionManager).managePosition(
-            collateralToken, user, collateralChange, increaseCollateral, amount, isDebtIncrease, maxFeePercentage
+            collateralToken,
+            user,
+            collateralChange,
+            increaseCollateral,
+            amount,
+            isDebtIncrease,
+            maxFeePercentage,
+            emptySignature
         );
 
         if (releasePrincipals && !principalCollateralIncrease && principalCollateralChange > 0) {
