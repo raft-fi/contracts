@@ -325,8 +325,9 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Returns the redemption fee for a given collateral amount.
     /// @param collateralAmount The amount of collateral.
+    /// @param priceDeviation Deviation for the reported price by oracle in percentage.
     /// @return The redemption fee.
-    function getRedemptionFee(uint256 collateralAmount) external view returns (uint256);
+    function getRedemptionFee(uint256 collateralAmount, uint256 priceDeviation) external view returns (uint256);
 
     /// @dev Returns the redemption fee with decay for a given collateral amount.
     /// @param collateralAmount The amount of collateral.

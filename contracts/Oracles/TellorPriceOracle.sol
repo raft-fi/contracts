@@ -15,6 +15,8 @@ contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
 
     uint256 private constant ETHUSD_TELLOR_REQ_ID = 1;
 
+    uint256 public constant override DEVIATION = 5e15; // 0.5%
+
     // --- Constructor ---
 
     constructor(ITellor tellor_, IWstETH wstETH_) BasePriceOracle(wstETH_) {
