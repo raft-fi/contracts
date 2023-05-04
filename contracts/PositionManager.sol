@@ -26,8 +26,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     uint256 public constant override MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
 
-    uint256 public constant override MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10_000 * 25; // 0.25%
-    uint256 public constant override MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 100 * 2; // 2%
+    uint256 public constant override MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10_000 * 5; // 0.05%
+    uint256 public constant override MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT;
     uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
     uint256 public constant override MAX_BORROWING_RATE = MathUtils._100_PERCENT / 100 * 5; // 5%
 
