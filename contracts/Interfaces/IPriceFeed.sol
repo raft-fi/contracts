@@ -70,5 +70,7 @@ interface IPriceFeed {
     /// it uses the last good price seen by Raft.
     ///
     /// @return currentPrice Returned price.
-    function fetchPrice() external returns (uint256 currentPrice);
+    /// @return deviation Deviation of the reported price in percentage.
+    /// @notice Actual returned price is in range `currentPrice` +/- `currentPrice * deviation / ONE`
+    function fetchPrice() external returns (uint256 currentPrice, uint256 deviation);
 }

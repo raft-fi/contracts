@@ -29,6 +29,9 @@ interface IPriceOracle {
     /// @dev Used to convert a price answer to an 18-digit precision uint.
     function TARGET_DIGITS() external view returns (uint256);
 
+    /// @dev price deviation for the oracle in percentage.
+    function DEVIATION() external view returns (uint256);
+
     /// @dev Return price oracle response which consists the following information: oracle is broken or frozen, the
     /// price change between two rounds is more than max, and the price.
     function getPriceOracleResponse() external view returns (PriceOracleResponse memory);

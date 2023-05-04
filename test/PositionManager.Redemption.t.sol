@@ -66,7 +66,7 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 bobCollateralTokenBalanceBefore = collateralToken.balanceOf(BOB);
         uint256 feeRecipientBalanceBefore = collateralToken.balanceOf(address(positionManager.feeRecipient()));
         uint256 collateralToRemoveFromPool = rToRedeem.divDown(DEFAULT_PRICE);
-        uint256 collateralToRedeem = 432.5e18;
+        uint256 collateralToRedeem = 430e18;
         uint256 collateralFee = collateralToRemoveFromPool - collateralToRedeem;
 
         vm.startPrank(BOB);
@@ -125,7 +125,7 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 bobCollateralTokenBalanceBefore = collateralToken.balanceOf(BOB);
         uint256 feeRecipientBalanceBefore = collateralToken.balanceOf(address(positionManager.feeRecipient()));
         uint256 collateralToRemoveFromPool = rToRedeem.divDown(DEFAULT_PRICE);
-        uint256 collateralToRedeem = 447_198_852_772_466_539_500;
+        uint256 collateralToRedeem = 444_698_852_772_466_539_500;
         uint256 collateralFee = collateralToRemoveFromPool - collateralToRedeem;
 
         vm.startPrank(BOB);

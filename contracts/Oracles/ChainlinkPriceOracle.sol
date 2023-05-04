@@ -20,6 +20,8 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
 
     uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
 
+    uint256 public constant override DEVIATION = 1e16; // 1%
+
     // --- Constructor ---
 
     constructor(AggregatorV3Interface _priceAggregatorAddress, IWstETH _wstETH) BasePriceOracle(_wstETH) {

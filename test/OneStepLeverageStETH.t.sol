@@ -143,7 +143,8 @@ contract OneStepLeverageStETHTest is TestSetup {
         (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(wstETH);
         uint256 debtAfter = positionManager.raftDebtToken().balanceOf(position);
         uint256 collAfter = raftCollateralToken.balanceOf(position);
-        uint256 collAfterExpressedInR = positionManager.priceFeeds(wstETH).fetchPrice().mulDown(collAfter);
+        (uint256 price,) = positionManager.priceFeeds(wstETH).fetchPrice();
+        uint256 collAfterExpressedInR = price.mulDown(collAfter);
         uint256 effectiveLeverage = collAfterExpressedInR.divDown(collAfterExpressedInR - debtAfter);
         assertEq(effectiveLeverage, targetLeverageMultiplier);
     }

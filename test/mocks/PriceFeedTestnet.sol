@@ -10,6 +10,7 @@ import { IPriceOracle } from "../../contracts/Oracles/Interfaces/IPriceOracle.so
 * variable. The contract does not connect to a live Chainlink price feed.*/
 contract PriceFeedTestnet is IPriceFeed {
     uint256 private _price = 200 * 1e18;
+    uint256 private constant DEVIATION = 5e15; // 0.5%
 
     IPriceOracle public override primaryOracle;
     IPriceOracle public override secondaryOracle;
@@ -25,11 +26,11 @@ contract PriceFeedTestnet is IPriceFeed {
         return _price;
     }
 
-    function fetchPrice() external override returns (uint256) {
+    function fetchPrice() external override returns (uint256, uint256) {
         // Fire an event just like the mainnet version would.
         // This lets the subgraph rely on events to get the latest price even when developing locally.
         emit LastGoodPriceUpdated(_price);
-        return _price;
+        return (_price, DEVIATION);
     }
 
     // Manual external price setter.

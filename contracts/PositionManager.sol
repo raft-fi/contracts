@@ -176,7 +176,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function liquidate(IERC20 collateralToken, address position) external override {
-        uint256 price = priceFeeds[collateralToken].fetchPrice();
+        (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
         uint256 icr = MathUtils._computeCR(
             raftCollateralTokens[collateralToken].token.balanceOf(position), raftDebtToken.balanceOf(position), price
         );
@@ -236,7 +236,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             revert AmountIsZero();
         }
 
-        uint256 price = priceFeeds[collateralToken].fetchPrice();
+        (uint256 price, uint256 deviation) = priceFeeds[collateralToken].fetchPrice();
         uint256 collateralToRedeem = debtAmount.divDown(price);
 
         // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
@@ -244,7 +244,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _updateBaseRateFromRedemption(collateralToRedeem, price, rToken.totalSupply());
 
         // Calculate the redemption fee
-        uint256 redemptionFee = getRedemptionFee(collateralToRedeem);
+        uint256 redemptionFee = getRedemptionFee(collateralToRedeem, deviation);
 
         _checkValidFee(redemptionFee, collateralToRedeem, maxFeePercentage);
 
@@ -365,8 +365,16 @@ contract PositionManager is FeeCollector, IPositionManager {
         return _calcRedemptionRate(_calcDecayedBaseRate());
     }
 
-    function getRedemptionFee(uint256 collateralAmount) public view override returns (uint256) {
-        return getRedemptionRate().mulDown(collateralAmount);
+    function getRedemptionFee(
+        uint256 collateralAmount,
+        uint256 priceDeviation
+    )
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return Math.min(getRedemptionRate() + priceDeviation, MathUtils._100_PERCENT).mulDown(collateralAmount);
     }
 
     function getBorrowingRate() public view override returns (uint256) {
@@ -557,8 +565,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             revert NetDebtBelowMinimum(positionDebt);
         }
 
-        uint256 newICR =
-            MathUtils._computeCR(positionCollateral, positionDebt, priceFeeds[collateralToken].fetchPrice());
+        (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
+        uint256 newICR = MathUtils._computeCR(positionCollateral, positionDebt, price);
         if (newICR < MathUtils.MCR) {
             revert NewICRLowerThanMCR(newICR);
         }

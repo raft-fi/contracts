@@ -50,17 +50,17 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         _setPriceDifferenceBetweenOracle(newPriceDifferenceBetweenOracles);
     }
 
-    function fetchPrice() external override returns (uint256 price) {
+    function fetchPrice() external override returns (uint256, uint256) {
         IPriceOracle.PriceOracleResponse memory primaryOracleResponse = primaryOracle.getPriceOracleResponse();
         // If primary oracle is broken or frozen, try secondary oracle
         if (primaryOracleResponse.isBrokenOrFrozen) {
             // If secondary oracle is broken then both oracles are untrusted, so return the last good price
             IPriceOracle.PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
             if (secondaryOracleResponse.isBrokenOrFrozen || secondaryOracleResponse.priceChangeAboveMax) {
-                return lastGoodPrice;
+                return (lastGoodPrice, Math.max(primaryOracle.DEVIATION(), secondaryOracle.DEVIATION()));
             }
 
-            return _storePrice(secondaryOracleResponse.price);
+            return (_storePrice(secondaryOracleResponse.price), secondaryOracle.DEVIATION());
         }
 
         // If primary oracle price has changed by > 50% between two consecutive rounds, compare it to secondary
@@ -69,7 +69,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             IPriceOracle.PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
             // If primary oracle is broken or frozen, both oracles are untrusted, and return last good price
             if (secondaryOracleResponse.isBrokenOrFrozen) {
-                return lastGoodPrice;
+                return (lastGoodPrice, Math.max(primaryOracle.DEVIATION(), secondaryOracle.DEVIATION()));
             }
 
             /*
@@ -78,16 +78,19 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             * continue using primary oracle
             */
             if (_bothOraclesSimilarPrice(primaryOracleResponse.price, secondaryOracleResponse.price)) {
-                return _storePrice(primaryOracleResponse.price);
+                return (_storePrice(primaryOracleResponse.price), primaryOracle.DEVIATION());
             }
 
             // If both oracle are live and have different prices, return the price that is a lower changed between the
             // two oracle's prices
-            return _storePrice(_getPriceWithLowerChange(primaryOracleResponse.price, secondaryOracleResponse.price));
+            uint256 price = _getPriceWithLowerChange(primaryOracleResponse.price, secondaryOracleResponse.price);
+            uint256 deviation =
+                (price == primaryOracleResponse.price) ? primaryOracle.DEVIATION() : secondaryOracle.DEVIATION();
+            return (_storePrice(price), deviation);
         }
 
         // If primary oracle is working, return primary oracle current price
-        return _storePrice(primaryOracleResponse.price);
+        return (_storePrice(primaryOracleResponse.price), primaryOracle.DEVIATION());
     }
 
     // --- Helper functions ---
