@@ -78,3 +78,21 @@ jobs:
         run: |
           echo "## Tests result" >> $GITHUB_STEP_SUMMARY
           echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+  analyze:
+    needs: ["lint"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v3"
+        with:
+          submodules: "recursive"
+
+      - name: "Run Slither analysis"
+        uses: crytic/slither-action@dev-git-safe-workspace
+        with:
+          fail-on: "medium"
+
+      - name: "Add test summary"
+        run: |
+          echo "## Slither analysis result" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY

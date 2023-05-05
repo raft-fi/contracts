@@ -1,4 +1,10 @@
 {
-  "detectors_to_exclude": "naming-convention",
-  "filter_paths": "mocks|Dependencies"
+  "filter_paths": "lib|test|script",
+  "solc_remaps": [
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "forge-std/=lib/forge-std/src/",
+    "@tempusfinance/tempus-utils/contracts/=lib/tempus-utils/contracts/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@redstone-finance/evm-connector/contracts/=lib/redstone-oracles-monorepo/packages/evm-connector/contracts/"
+  ]
 }
