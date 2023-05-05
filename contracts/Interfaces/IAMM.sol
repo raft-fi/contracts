@@ -6,6 +6,16 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @dev Interface that particular AMM integrations need to implement in order to be used in OneStepLeverage.
 /// Implementation will be used to swap between R and collateralToken.
 interface IAMM {
+    /// @dev Emitted when a swap between two tokens occurs.
+    /// @param tokenIn The address of the input token being swapped.
+    /// @param tokenOut The address of the output token being swapped.
+    /// @param amountIn The amount of input tokens being swapped.
+    /// @param amountOut The amount of output tokens being swapped.
+    /// @param minReturn The minimum acceptable return for the swap (expressed in `tokenOut`).
+    event Swap(
+        address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut, uint256 minReturn
+    );
+
     /// @dev Swaps `amountIn` of `tokenIn` for `tokenOut`. Fails if returned amount is smaller than `minReturn`.
     /// @param tokenIn Address of the token that is being swapped.
     /// @param tokenOut Address of the token to swap for.
