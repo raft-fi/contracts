@@ -103,11 +103,16 @@ interface IPositionManager is IFeeCollector {
     /// @param debtRedeemed The amount of debt that was redeemed.
     /// @param collateralSent The amount of collateral sent to the redeemer.
     /// @param fee The amount of fee paid to the fee recipient.
-    event Redemption(uint256 debtRedeemed, uint256 collateralSent, uint256 fee);
+    /// @param rebate Redemption rebate amount.
+    event Redemption(uint256 debtRedeemed, uint256 collateralSent, uint256 fee, uint256 rebate);
 
     /// @dev Borrowing spread has been updated.
     /// @param borrowingSpread The new borrowing spread.
     event BorrowingSpreadUpdated(uint256 borrowingSpread);
+
+    /// @dev Redemption rebate has been updated.
+    /// @param redemptionRebate The new redemption rebate.
+    event RedemptionRebateUpdated(uint256 redemptionRebate);
 
     /// @dev Redemption spread has been updated.
     /// @param redemptionSpread The new redemption spread.
@@ -147,6 +152,9 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Borrowing spread exceeds maximum.
     error BorrowingSpreadExceedsMaximum();
+
+    /// @dev tried setting redemption rebate to more than 100%.
+    error RedemptionRebateExceedsMaximum();
 
     /// @dev Redemption spread is out of allowed range.
     error RedemptionSpreadOutOfRange();
@@ -322,6 +330,13 @@ interface IPositionManager is IFeeCollector {
 
     /// @return The current redemption rate.
     function getRedemptionRate() external view returns (uint256);
+
+    /// @return Percentage of the redemption fee returned to redeemed positions.
+    function redemptionRebate() external view returns (uint256);
+
+    /// @dev Sets new redemption rebate percentage.
+    /// @param newRedemptionRebate Value that is being set as a redemption rebate percentage.
+    function setRedemptionRebate(uint256 newRedemptionRebate) external;
 
     /// @return The current redemption rate with decay.
     function getRedemptionRateWithDecay() external view returns (uint256);

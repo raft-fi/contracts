@@ -169,7 +169,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         vm.startPrank(BOB);
         collateralToken.approve(address(positionManager), 1 ether);
         vm.expectRevert(IPositionManager.InvalidPosition.selector);
-        positionManager.managePosition(collateralToken, BOB, 1 ether, true, 0, false, 0, emptySignature);
+        positionManager.managePosition(collateralToken, BOB, 1 ether, true, 0, true, 0, emptySignature);
         vm.stopPrank();
     }
 }
