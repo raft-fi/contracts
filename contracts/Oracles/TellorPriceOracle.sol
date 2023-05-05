@@ -11,9 +11,9 @@ contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
 
     ITellor public immutable override tellor;
 
-    uint256 private constant TELLOR_DIGITS = 6;
+    uint256 private constant TELLOR_DIGITS = 18;
 
-    uint256 private constant ETHUSD_TELLOR_REQ_ID = 1;
+    bytes32 private constant STETH_TELLOR_QUERY_ID = keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd")));
 
     uint256 public constant override DEVIATION = 5e15; // 0.5%
 
@@ -42,20 +42,20 @@ contract TellorPriceOracle is ITellorPriceOracle, BasePriceOracle {
         uint256 time;
         uint256 value;
 
-        try tellor.getNewValueCountbyRequestId(ETHUSD_TELLOR_REQ_ID) returns (uint256 count_) {
+        try tellor.getNewValueCountbyQueryId(STETH_TELLOR_QUERY_ID) returns (uint256 count_) {
             count = count_;
         } catch {
             return (tellorResponse);
         }
 
-        try tellor.getTimestampbyRequestIDandIndex(ETHUSD_TELLOR_REQ_ID, count - 1) returns (uint256 time_) {
+        try tellor.getTimestampbyQueryIdandIndex(STETH_TELLOR_QUERY_ID, count - 1) returns (uint256 time_) {
             time = time_;
         } catch {
             return (tellorResponse);
         }
 
-        try tellor.retrieveData(ETHUSD_TELLOR_REQ_ID, time) returns (uint256 value_) {
-            value = value_;
+        try tellor.retrieveData(STETH_TELLOR_QUERY_ID, time) returns (bytes memory value_) {
+            value = uint256(bytes32(value_));
         } catch {
             return (tellorResponse);
         }
