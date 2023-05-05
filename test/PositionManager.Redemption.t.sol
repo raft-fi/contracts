@@ -14,14 +14,12 @@ contract PositionManagerRedemptionTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
-    PositionManager public positionManager;
     IRToken public rToken;
 
     function setUp() public override {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager = new PositionManager(splitLiquidationCollateral);
         rToken = positionManager.rToken();
 
         positionManager.addCollateralToken(collateralToken, priceFeed);

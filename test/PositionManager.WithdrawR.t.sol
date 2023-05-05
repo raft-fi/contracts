@@ -13,7 +13,6 @@ contract PositionManagerWithdrawRTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
-    PositionManagerTester public positionManager;
     IRToken public rToken;
 
     function setUp() public override {
@@ -147,7 +146,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially set base rate to 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
 
         // Check base rate is now non-zero
         uint256 baseRate1 = positionManager.baseRate();
@@ -286,8 +285,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         uint256 baseRate = positionManager.baseRate();
 
@@ -392,8 +391,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make baseRate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         uint256 baseRate = positionManager.baseRate();
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
@@ -579,8 +578,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make baseRate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         // Check base rate is now non-zero
         uint256 baseRate1 = positionManager.baseRate();
@@ -664,8 +663,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         // Check base rate is now non-zero
         uint256 baseRate1 = positionManager.baseRate();
@@ -755,8 +754,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         // Check base rate is now non-zero
         uint256 baseRate1 = positionManager.baseRate();
@@ -843,8 +842,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 daveDebtBefore = positionManager.raftDebtToken().balanceOf(DAVE);
 
         // Artificially make baseRate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         // Check base rate is now non-zero
         uint256 baseRate = positionManager.baseRate();
@@ -930,8 +929,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         uint256 baseRate = positionManager.baseRate();
         assertGt(baseRate, 0);

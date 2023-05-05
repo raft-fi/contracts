@@ -5,10 +5,12 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Test } from "forge-std/Test.sol";
 import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.sol";
+import { PositionManager } from "../../contracts/PositionManager.sol";
 import { IPriceFeed } from "../../contracts/Interfaces/IPriceFeed.sol";
 import { ISplitLiquidationCollateral } from "../../contracts/Interfaces/ISplitLiquidationCollateral.sol";
 import { SplitLiquidationCollateral } from "../../contracts/SplitLiquidationCollateral.sol";
 import { WstETHTokenMock } from "../mocks/WstETHTokenMock.sol";
+import { MathUtils } from "../../contracts/Dependencies/MathUtils.sol";
 
 contract TestSetup is Test {
     // User accounts
@@ -27,6 +29,8 @@ contract TestSetup is Test {
     IPriceFeed public constant PRICE_FEED = IPriceFeed(address(12_345));
     IPositionManager public constant POSITION_MANAGER = IPositionManager(address(34_567));
 
+    IPositionManager public positionManager;
+
     // Collateral token mock
     WstETHTokenMock public collateralToken;
     ISplitLiquidationCollateral public splitLiquidationCollateral;
@@ -36,5 +40,8 @@ contract TestSetup is Test {
     function setUp() public virtual {
         collateralToken = new WstETHTokenMock();
         splitLiquidationCollateral = new SplitLiquidationCollateral();
+        positionManager = new PositionManager(splitLiquidationCollateral);
+        positionManager.setRedemptionSpread(MathUtils._100_PERCENT / 100); // 1%
+        positionManager.setRedemptionRebate(MathUtils._100_PERCENT / 2); // 50%
     }
 }

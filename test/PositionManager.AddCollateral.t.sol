@@ -14,16 +14,11 @@ contract PositionManagerAddCollateralTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
-    IPositionManager public positionManager;
 
     function setUp() public override {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        splitLiquidationCollateral = new SplitLiquidationCollateral();
-        positionManager = new PositionManager(
-            splitLiquidationCollateral
-        );
         positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralToken.mint(ALICE, 10e36);

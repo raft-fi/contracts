@@ -5,8 +5,6 @@ import { PositionManagerTester } from "./mocks/PositionManagerTester.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerInternalTest is TestSetup {
-    PositionManagerTester public positionManager;
-
     uint40[] public decayBaseRateSeconds;
     uint256[] public decayBaseRates;
     mapping(uint256 decayBaseRate => uint256[] expected) public decayBaseRatesExpected;
@@ -229,13 +227,13 @@ contract PositionManagerInternalTest is TestSetup {
 
     // decayBaseRateFromBorrowing(): returns the initial base rate for no time increase
     function testDecayBaseRateFromBorrowingNoTimeIncrease() public {
-        positionManager.setBaseRate(5e17);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5e17);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         uint256 baseRateBefore = positionManager.baseRate();
         assertEq(baseRateBefore, 5e17);
 
-        positionManager.unprotectedDecayBaseRateFromBorrowing();
+        PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing();
         uint256 baseRateAfter = positionManager.baseRate();
 
         assertEq(baseRateBefore, baseRateAfter);
@@ -243,18 +241,18 @@ contract PositionManagerInternalTest is TestSetup {
 
     // decayBaseRateFromBorrowing(): returns the initial base rate for more than one minute passed
     function testDecayBaseRateFromBorrowingOneMinutePassed() public {
-        positionManager.setBaseRate(5e17);
+        PositionManagerTester(address(positionManager)).setBaseRate(5e17);
 
         uint8[4] memory decaySeconds = [1, 17, 29, 50];
 
         for (uint256 i; i < decaySeconds.length; i++) {
-            positionManager.setLastFeeOpTimeToNow();
+            PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
             uint256 baseRateBefore = positionManager.baseRate();
 
             vm.warp(decaySeconds[i]);
 
-            positionManager.unprotectedDecayBaseRateFromBorrowing();
+            PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing();
             uint256 baseRateAfter = positionManager.baseRate();
 
             assertEq(baseRateBefore, baseRateAfter);
@@ -266,16 +264,16 @@ contract PositionManagerInternalTest is TestSetup {
         for (uint256 i; i < 0; ++i) {
             for (uint256 j; j < decayBaseRateSeconds.length; j++) {
                 uint256 baseRate = decayBaseRates[j];
-                positionManager.setBaseRate(baseRate);
+                PositionManagerTester(address(positionManager)).setBaseRate(baseRate);
                 assertEq(positionManager.baseRate(), baseRate);
 
                 uint256 secondsPassed = decayBaseRateSeconds[i];
                 uint256 expectedBaseRate = decayBaseRatesExpected[baseRate][i];
-                positionManager.setLastFeeOpTimeToNow();
+                PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
                 vm.warp(secondsPassed);
 
-                positionManager.unprotectedDecayBaseRateFromBorrowing();
+                PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing();
                 uint256 baseRateAfter = positionManager.baseRate();
 
                 assertEq(baseRateAfter, expectedBaseRate);

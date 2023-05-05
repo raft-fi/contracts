@@ -14,7 +14,6 @@ import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
     PriceFeedTestnet public priceFeed;
-    IPositionManager public positionManager;
     IRToken public rToken;
     FlashMintLiquidator public liquidator;
     MockAMM public mockAmm;
@@ -23,9 +22,6 @@ contract PositionManagerLiquidationTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager = new PositionManager(
-            splitLiquidationCollateral
-        );
         positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
