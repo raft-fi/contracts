@@ -100,11 +100,12 @@ interface IPositionManager is IFeeCollector {
     );
 
     /// @dev Redemption has been executed.
-    /// @param debtRedeemed The amount of debt that was redeemed.
+    /// @param redeemer User that redeemed R.
+    /// @param amount Amount of R that was redeemed.
     /// @param collateralSent The amount of collateral sent to the redeemer.
     /// @param fee The amount of fee paid to the fee recipient.
     /// @param rebate Redemption rebate amount.
-    event Redemption(uint256 debtRedeemed, uint256 collateralSent, uint256 fee, uint256 rebate);
+    event Redemption(address indexed redeemer, uint256 amount, uint256 collateralSent, uint256 fee, uint256 rebate);
 
     /// @dev Borrowing spread has been updated.
     /// @param borrowingSpread The new borrowing spread.

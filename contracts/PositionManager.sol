@@ -259,8 +259,6 @@ contract PositionManager is FeeCollector, IPositionManager {
         // Send the redemption fee to the recipient
         collateralToken.safeTransfer(feeRecipient, redemptionFee - rebate);
 
-        emit Redemption(debtAmount, collateralToRedeem, redemptionFee, rebate);
-
         // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
         rToken.burn(msg.sender, debtAmount);
         _totalDebt -= debtAmount;
@@ -270,6 +268,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
 
         _updateDebtAndCollateralIndex(collateralToken);
+
+        emit Redemption(msg.sender, debtAmount, collateralToRedeem, redemptionFee, rebate);
     }
 
     function whitelistDelegate(address delegate, bool whitelisted) external override {
