@@ -12,16 +12,12 @@ import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
     PriceFeedTestnet public priceFeed;
-    IPositionManager public positionManager;
     IRToken public rToken;
 
     function setUp() public override {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager = new PositionManager(
-            splitLiquidationCollateral
-        );
         positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();

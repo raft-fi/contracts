@@ -13,16 +13,12 @@ contract PositionManagerRepayDebtTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
-    IPositionManager public positionManager;
     IRToken public rToken;
 
     function setUp() public override {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager = new PositionManager(
-            splitLiquidationCollateral
-        );
         positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();

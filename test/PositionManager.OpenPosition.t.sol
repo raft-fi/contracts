@@ -14,7 +14,6 @@ contract PositionManagerOpenPositionTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
-    PositionManagerTester public positionManager;
     IRToken public rToken;
 
     function setUp() public override {
@@ -123,8 +122,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         uint256 baseRate1 = positionManager.baseRate();
         assertGt(baseRate1, 0);
@@ -293,8 +292,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         uint256 lastFeeOpTime1 = positionManager.lastFeeOperationTime();
 
@@ -377,8 +376,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         // Check baseRate is non-zero
         uint256 baseRate1 = positionManager.baseRate();
@@ -472,8 +471,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        positionManager.setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        positionManager.setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
 
         skip(2 hours);
 

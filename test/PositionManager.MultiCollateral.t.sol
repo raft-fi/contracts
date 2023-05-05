@@ -21,7 +21,6 @@ contract PositionManagerMultiCollateralTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
     PriceFeedTestnet public priceFeed;
-    IPositionManager public positionManager;
 
     TokenMock public collateralTokenSecond;
     PriceFeedTestnet public priceFeedSecond;
@@ -30,10 +29,6 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
     function setUp() public override {
         super.setUp();
-
-        positionManager = new PositionManager(
-            splitLiquidationCollateral
-        );
 
         priceFeed = new PriceFeedTestnet();
         positionManager.addCollateralToken(collateralToken, priceFeed);

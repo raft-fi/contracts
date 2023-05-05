@@ -22,7 +22,6 @@ contract OneStepLeverageTest is TestSetup {
     uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
 
     PriceFeedTestnet public priceFeed;
-    IPositionManager public positionManager;
     OneStepLeverage public oneStepLeverage;
 
     function setUp() public override {
@@ -30,9 +29,6 @@ contract OneStepLeverageTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
 
-        positionManager = new PositionManager(
-            new SplitLiquidationCollateral()
-        );
         positionManager.addCollateralToken(collateralToken, priceFeed);
 
         IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);

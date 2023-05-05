@@ -117,8 +117,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             string(bytes.concat("Raft ", bytes(IERC20Metadata(address(rToken)).name()), " debt")),
             string(bytes.concat("r", bytes(IERC20Metadata(address(rToken)).symbol()), "-d"))
         );
-        setRedemptionSpread(MathUtils._100_PERCENT / 100);
-        setRedemptionRebate(MathUtils._100_PERCENT / 2); // 50%
+        setRedemptionSpread(MathUtils._100_PERCENT);
+        setRedemptionRebate(MathUtils._100_PERCENT);
         setSplitLiquidationCollateral(newSplitLiquidationCollateral);
 
         emit PositionManagerDeployed(rToken, raftDebtToken, msg.sender);

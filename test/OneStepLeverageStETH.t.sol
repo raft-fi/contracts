@@ -25,7 +25,6 @@ contract OneStepLeverageStETHTest is TestSetup {
     IWstETH public constant wstETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
     address public constant ETH_WHALE = 0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8;
     PriceFeedTestnet public priceFeed;
-    IPositionManager public positionManager;
     OneStepLeverageStETH public oneStepLeverageStETH;
     IStETH public stETH;
 
@@ -35,10 +34,6 @@ contract OneStepLeverageStETHTest is TestSetup {
 
         stETH = IStETH(address(wstETH.stETH()));
         priceFeed = new PriceFeedTestnet();
-
-        positionManager = new PositionManager(
-            new SplitLiquidationCollateral()
-        );
         positionManager.addCollateralToken(wstETH, priceFeed);
 
         IAMM mockAmm = new MockAMM(wstETH, positionManager.rToken(), 200e18);
