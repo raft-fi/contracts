@@ -137,10 +137,10 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         // Alice attempts to close position but leave some collateral
         vm.prank(ALICE);
-        vm.expectRevert(IPositionManager.InvalidPosition.selector);
         positionManager.managePosition(
             collateralToken, ALICE, alicePositionCollateralBefore / 2, false, aliceDebtBefore, false, 0, emptySignature
         );
+        assertEq(raftCollateralToken.balanceOf(ALICE), 0);
     }
 
     // Succeeds when borrower's R balance is equals to his entire debt and borrowing rate = 0

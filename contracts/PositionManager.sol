@@ -152,7 +152,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         uint256 debtBefore = raftDebtToken.balanceOf(position);
-        if (isDebtIncrease == false && debtChange == type(uint256).max) {
+        if (!isDebtIncrease && (debtChange == type(uint256).max || (debtBefore != 0 && debtChange == debtBefore))) {
             isCollateralIncrease = false;
             collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
             debtChange = debtBefore;
