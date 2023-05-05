@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
+import { AggregatorV3Interface } from "../../contracts/Dependencies/AggregatorV3Interface.sol";
 
 contract MockChainlink is AggregatorV3Interface {
     // storage variables to hold the mock data
