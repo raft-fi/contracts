@@ -54,12 +54,17 @@ build/
 reports/
 tests/simulation.csv
 
-#foundry
+# foundry
 forge-cache/
 out/
 
-#certora
+# certora
 .certora_internal/
 .certora_recent_jobs.json
 *.zip
 .zip-output-url.txt
+
+# broadcasts
+!broadcast
+broadcast/*
+broadcast/*/31337/
