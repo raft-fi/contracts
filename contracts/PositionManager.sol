@@ -53,6 +53,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     uint256 public override borrowingSpread;
     uint256 public override redemptionSpread;
     uint256 public override baseRate;
+    uint256 public override redemptionRebate;
 
     uint256 public override lastFeeOperationTime;
 
@@ -117,6 +118,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             string(bytes.concat("r", bytes(IERC20Metadata(address(rToken)).symbol()), "-d"))
         );
         setRedemptionSpread(MathUtils._100_PERCENT / 100);
+        setRedemptionRebate(MathUtils._100_PERCENT / 2); // 50%
         setSplitLiquidationCollateral(newSplitLiquidationCollateral);
 
         emit PositionManagerDeployed(rToken, raftDebtToken, msg.sender);
@@ -250,13 +252,14 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         // Calculate the redemption fee
         uint256 redemptionFee = getRedemptionFee(collateralToRedeem, deviation);
+        uint256 rebate = redemptionFee.mulDown(redemptionRebate);
 
         _checkValidFee(redemptionFee, collateralToRedeem, maxFeePercentage);
 
         // Send the redemption fee to the recipient
-        collateralToken.safeTransfer(feeRecipient, redemptionFee);
+        collateralToken.safeTransfer(feeRecipient, redemptionFee - rebate);
 
-        emit Redemption(debtAmount, collateralToRedeem, redemptionFee);
+        emit Redemption(debtAmount, collateralToRedeem, redemptionFee, rebate);
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
         rToken.burn(msg.sender, debtAmount);
@@ -284,6 +287,14 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
         borrowingSpread = newBorrowingSpread;
         emit BorrowingSpreadUpdated(newBorrowingSpread);
+    }
+
+    function setRedemptionRebate(uint256 newRedemptionRebate) public override onlyOwner {
+        if (newRedemptionRebate > MathUtils._100_PERCENT) {
+            revert RedemptionRebateExceedsMaximum();
+        }
+        redemptionRebate = newRedemptionRebate;
+        emit RedemptionRebateUpdated(newRedemptionRebate);
     }
 
     function getRedemptionFeeWithDecay(uint256 collateralAmount)

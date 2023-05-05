@@ -101,7 +101,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         // Carol with no active position attempts to withdraw
         vm.prank(CAROL);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(collateralToken, CAROL, 1 ether, false, 0, false, 0, emptySignature);
+        positionManager.managePosition(collateralToken, CAROL, 1 ether, false, 0, true, 0, emptySignature);
     }
 
     // Reverts when requested collateral withdrawal is > the position's collateral

@@ -65,9 +65,11 @@ contract PositionManagerRedemptionTest is TestSetup {
 
         uint256 bobCollateralTokenBalanceBefore = collateralToken.balanceOf(BOB);
         uint256 feeRecipientBalanceBefore = collateralToken.balanceOf(address(positionManager.feeRecipient()));
-        uint256 collateralToRemoveFromPool = rToRedeem.divDown(DEFAULT_PRICE);
+        uint256 matchingCollateral = rToRedeem.divDown(DEFAULT_PRICE);
         uint256 collateralToRedeem = 430e18;
-        uint256 collateralFee = collateralToRemoveFromPool - collateralToRedeem;
+        uint256 collateralFee = matchingCollateral - collateralToRedeem;
+        uint256 rebate = collateralFee.mulDown(positionManager.redemptionRebate());
+        uint256 collateralToRemoveFromPool = matchingCollateral - rebate;
 
         vm.startPrank(BOB);
         positionManager.redeemCollateral(collateralToken, rToRedeem, 1e18);
@@ -76,7 +78,7 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 redeemedAmount = collateralToken.balanceOf(BOB) - bobCollateralTokenBalanceBefore;
         assertEq(redeemedAmount, collateralToRedeem);
         uint256 feeRecipientBalanceAfter = collateralToken.balanceOf(address(positionManager.feeRecipient()));
-        assertEq(feeRecipientBalanceAfter - feeRecipientBalanceBefore, collateralFee);
+        assertEq(feeRecipientBalanceAfter - feeRecipientBalanceBefore, collateralFee - rebate);
         assertEq(collateralToken.balanceOf(address(positionManager)), collateralAmount - collateralToRemoveFromPool);
         assertApproxEqAbs(raftCollateralToken.balanceOf(ALICE), collateralAmount - collateralToRemoveFromPool, 1e5);
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), rToMint - rToRedeem);
@@ -124,9 +126,11 @@ contract PositionManagerRedemptionTest is TestSetup {
 
         uint256 bobCollateralTokenBalanceBefore = collateralToken.balanceOf(BOB);
         uint256 feeRecipientBalanceBefore = collateralToken.balanceOf(address(positionManager.feeRecipient()));
-        uint256 collateralToRemoveFromPool = rToRedeem.divDown(DEFAULT_PRICE);
+        uint256 matchingCollateral = rToRedeem.divDown(DEFAULT_PRICE);
         uint256 collateralToRedeem = 444_698_852_772_466_539_500;
-        uint256 collateralFee = collateralToRemoveFromPool - collateralToRedeem;
+        uint256 collateralFee = matchingCollateral - collateralToRedeem;
+        uint256 rebate = collateralFee.mulDown(positionManager.redemptionRebate());
+        uint256 collateralToRemoveFromPool = matchingCollateral - rebate;
 
         vm.startPrank(BOB);
         positionManager.redeemCollateral(collateralToken, rToRedeem, 1e18);
@@ -135,7 +139,9 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 redeemedAmount = collateralToken.balanceOf(BOB) - bobCollateralTokenBalanceBefore;
         assertEq(redeemedAmount, collateralToRedeem);
         uint256 feeRecipientBalanceAfter = collateralToken.balanceOf(address(positionManager.feeRecipient()));
-        assertEq(feeRecipientBalanceAfter - feeRecipientBalanceBefore, collateralFee);
+
+        assertEq(feeRecipientBalanceAfter - feeRecipientBalanceBefore, collateralFee - rebate);
+
         assertEq(
             collateralToken.balanceOf(address(positionManager)),
             collateralAmount_A + collateralAmount_C - collateralToRemoveFromPool

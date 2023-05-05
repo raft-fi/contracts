@@ -112,6 +112,11 @@ contract PositionManagerTest is TestSetup {
         positionManager.setBorrowingSpread(maxBorrowingSpread + 1);
     }
 
+    function testOutOfRangeSetRedemptionRebate() public {
+        vm.expectRevert(IPositionManager.RedemptionRebateExceedsMaximum.selector);
+        positionManager.setRedemptionRebate(1e18 + 1);
+    }
+
     // --- Redemption Spread ---
 
     function testSetRedemptionSpread() public {

@@ -96,7 +96,7 @@ contract PositionManagerClosePositionTest is TestSetup {
     }
 
     // Reduces position's collateral and debt to zero
-    function testCollateralNotZeroWhenDebtZeroReverts() public {
+    function testCollateralWithdrawsWhenDebtZero() public {
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
