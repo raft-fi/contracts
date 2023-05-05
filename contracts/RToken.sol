@@ -33,7 +33,7 @@ contract RToken is ERC20Permit, ERC20FlashMint, PositionManagerDependent, FeeCol
         PositionManagerDependent(positionManager_)
         FeeCollector(feeRecipient_)
     {
-        flashMintFeePercentage = 0;
+        setFlashMintFeePercentage(PERCENTAGE_BASE / 200); // 0.5%
 
         transferOwnership(feeRecipient_);
 

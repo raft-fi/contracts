@@ -20,10 +20,10 @@ contract PositionManagerStETHTest is TestSetup {
     PriceFeedTestnet public priceFeed;
     PositionManagerStETH public positionManagerStETH;
     IStETH public stETH;
-    SplitLiquidationCollateral public splitLiquidationCollateralNew;
 
     function setUp() public override {
         vm.createSelectFork("mainnet", 16_974_953);
+        super.setUp();
 
         priceFeed = new PriceFeedTestnet();
         positionManager.addCollateralToken(IERC20(WSTETH_ADDRESS), priceFeed);

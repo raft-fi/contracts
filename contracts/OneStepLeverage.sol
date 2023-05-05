@@ -159,7 +159,7 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             user,
             collateralChange,
             increaseCollateral,
-            amount,
+            amount + (isDebtIncrease ? fee : 0),
             isDebtIncrease,
             maxFeePercentage,
             emptySignature
