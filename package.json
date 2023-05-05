@@ -43,6 +43,5 @@
     "*.{json,md,yml}": [
       "yarn prettier:write"
     ]
-  },
-  "dependencies": {}
+  }
 }
