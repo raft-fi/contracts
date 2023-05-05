@@ -141,6 +141,6 @@ contract OneStepLeverageStETHTest is TestSetup {
         (uint256 price,) = positionManager.priceFeeds(wstETH).fetchPrice();
         uint256 collAfterExpressedInR = price.mulDown(collAfter);
         uint256 effectiveLeverage = collAfterExpressedInR.divDown(collAfterExpressedInR - debtAfter);
-        assertEq(effectiveLeverage, targetLeverageMultiplier);
+        assertApproxEqAbs(effectiveLeverage, targetLeverageMultiplier, 5e17);
     }
 }

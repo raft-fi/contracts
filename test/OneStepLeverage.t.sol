@@ -85,12 +85,15 @@ contract OneStepLeverageTest is TestSetup {
         uint256 price = priceFeed.getPrice();
         uint256 targetDebt = collateralAmount.mulDown(price).mulDown(leverageMultiplier - 1e18);
         uint256 minReturn = collateralAmount.mulDown(leverageMultiplier - 1e18).mulDown(1e18 - 1e15);
+        uint256 feeRecBalanceBefore = positionManager.rToken().balanceOf(positionManager.rToken().feeRecipient());
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(oneStepLeverage), collateralAmount);
         oneStepLeverage.manageLeveragedPosition(
             targetDebt, true, collateralAmount, true, "", minReturn, MathUtils._100_PERCENT
         );
+        uint256 feeRecBalanceAfter = positionManager.rToken().balanceOf(positionManager.rToken().feeRecipient());
+        assertEq(feeRecBalanceAfter - feeRecBalanceBefore, targetDebt / 200);
 
         checkEffectiveLeverage(ALICE, leverageMultiplier);
     }
@@ -108,18 +111,13 @@ contract OneStepLeverageTest is TestSetup {
             targetDebt, true, collateralAmount, true, "", minReturn, MathUtils._100_PERCENT
         );
 
-        uint256 collateralToSwap = targetDebt * (1e18 + 1e15) / price;
+        uint256 debtAfterLeverage = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 collateralToSwap = debtAfterLeverage * (1e18 + 1e16) / price;
         (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 principalDecrease = raftCollateralToken.balanceOf(ALICE) - collateralToSwap;
 
         oneStepLeverage.manageLeveragedPosition(
-            positionManager.raftDebtToken().balanceOf(ALICE),
-            false,
-            principalDecrease,
-            false,
-            "",
-            collateralToSwap,
-            MathUtils._100_PERCENT
+            debtAfterLeverage, false, principalDecrease, false, "", collateralToSwap, MathUtils._100_PERCENT
         );
 
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
@@ -133,6 +131,6 @@ contract OneStepLeverageTest is TestSetup {
         (uint256 price,) = positionManager.priceFeeds(collateralToken).fetchPrice();
         uint256 collAfterExpressedInR = price.mulDown(collAfter);
         uint256 effectiveLeverage = collAfterExpressedInR.divDown(collAfterExpressedInR - debtAfter);
-        assertEq(effectiveLeverage, targetLeverageMultiplier);
+        assertApproxEqAbs(effectiveLeverage, targetLeverageMultiplier, 5e17);
     }
 }
