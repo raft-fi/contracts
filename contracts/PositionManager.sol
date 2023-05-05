@@ -151,7 +151,12 @@ contract PositionManager is FeeCollector, IPositionManager {
             PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
         }
 
-        bool newPosition = (raftDebtToken.balanceOf(position) == 0);
+        uint256 debtBefore = raftDebtToken.balanceOf(position);
+        if (isDebtIncrease == false && debtChange == type(uint256).max) {
+            isCollateralIncrease = false;
+            collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
+            debtChange = debtBefore;
+        }
 
         _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
         _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease);
@@ -168,7 +173,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         } else {
             _checkValidPosition(collateralToken, positionDebt, positionCollateral);
 
-            if (newPosition) {
+            if (debtBefore == 0) {
                 collateralTokenForPosition[position] = collateralToken;
                 emit PositionCreated(position, collateralToken);
             }
