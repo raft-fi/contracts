@@ -205,10 +205,10 @@ contract PositionManager is FeeCollector, IPositionManager {
             emit TotalDebtChanged(_totalDebt);
 
             // Collateral is sent to protocol as a fee only in case of liquidation
-            collateralToken.transfer(feeRecipient, collateralLiquidationFee);
+            collateralToken.safeTransfer(feeRecipient, collateralLiquidationFee);
         }
 
-        collateralToken.transfer(msg.sender, collateralToSendToLiquidator);
+        collateralToken.safeTransfer(msg.sender, collateralToSendToLiquidator);
 
         _closePosition(collateralToken, position, true);
 
