@@ -153,7 +153,7 @@ interface IPositionManager is IFeeCollector {
     /// @dev Borrowing spread exceeds maximum.
     error BorrowingSpreadExceedsMaximum();
 
-    /// @dev tried setting redemption rebate to more than 100%.
+    /// @dev Redemption rebate exceeds maximum.
     error RedemptionRebateExceedsMaximum();
 
     /// @dev Redemption spread is out of allowed range.
