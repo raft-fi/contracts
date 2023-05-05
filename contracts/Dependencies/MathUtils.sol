@@ -24,7 +24,7 @@ library MathUtils {
     uint256 internal constant _NICR_PRECISION = 1e20;
 
     /// @notice Number of minutes in 1000 years.
-    uint256 internal constant _MINUTES_IN_1000_YEARS = 1000 * 356 days / 1 minutes;
+    uint256 internal constant _MINUTES_IN_1000_YEARS = 1000 * 365 days / 1 minutes;
 
     // --- Functions ---
 
