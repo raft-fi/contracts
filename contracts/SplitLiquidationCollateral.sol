@@ -40,7 +40,6 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
         returns (uint256 collateralToSendToProtocol, uint256 collateralToSentToLiquidator)
     {
         if (isRedistribution) {
-            collateralToSendToProtocol = 0;
             uint256 collateralValue = totalCollateral.mulDown(price);
             uint256 rewardRate = _calculateRedistributorRewardRate(collateralValue);
             collateralToSentToLiquidator = totalCollateral.mulDown(rewardRate);
