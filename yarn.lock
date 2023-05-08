@@ -23,6 +23,11 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
+"@balancer-labs/v2-interfaces@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@balancer-labs/v2-interfaces/-/v2-interfaces-0.4.0.tgz#9bfc2aed7bed4208ebf4b18a14664d8e90d4c141"
+  integrity sha512-K0ij26m8/UOvdPmrAnuh/C7kT8OQupsgV8KRyIt+aTHW1KbPOi4v8zLMwW2AwSYMSRjPK2A/ttlnNizT0iA4Qg==
+
 "@chainlink/contracts@^0.6.0":
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/@chainlink/contracts/-/contracts-0.6.1.tgz#8842b57e755793cbdbcbc45277fb5d179c993e19"

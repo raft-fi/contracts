@@ -13,3 +13,6 @@
 	path = lib/redstone-oracles-monorepo
 	url = https://github.com/redstone-finance/redstone-oracles-monorepo
 	branch = b3c9cd8
+[submodule "lib/balancer-v2-monorepo"]
+	path = lib/balancer-v2-monorepo
+	url = https://github.com/balancer/balancer-v2-monorepo

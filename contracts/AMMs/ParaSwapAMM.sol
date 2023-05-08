@@ -6,19 +6,12 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IAMM } from "../Interfaces/IAMM.sol";
 import { IParaSwapAugustus } from "../Dependencies/IParaSwapAugustus.sol";
 import { IParaSwapAugustusRegistry } from "../Dependencies/IParaSwapAugustusRegistry.sol";
+import { AMMBase } from "./AMMBase.sol";
 
-contract ParaSwapAMM is IAMM {
+contract ParaSwapAMM is AMMBase {
     using SafeERC20 for IERC20;
 
     IParaSwapAugustusRegistry public immutable augustusRegistry;
-
-    /// @dev Thrown when the amount received after a swap is below the provided minimum return parameter.
-    /// @param amountReceived The amount of tokens received after the swap.
-    /// @param minReturn The provided minimum return.
-    error InsufficientAmountReceived(uint256 amountReceived, uint256 minReturn);
-
-    /// @dev Thrown when a swap is only partially filled.
-    error SwapPartiallyFilled();
 
     /// @dev Thrown when an invalid Augustus contract is provided.
     error InvalidAugustusContract();
@@ -37,45 +30,13 @@ contract ParaSwapAMM is IAMM {
         augustusRegistry = IParaSwapAugustusRegistry(_augustusRegistry);
     }
 
-    function swap(
-        IERC20 tokenIn,
-        IERC20 tokenOut,
-        uint256 amountIn,
-        uint256 minReturn,
-        bytes calldata extraData
-    )
-        external
-        override
-        returns (uint256 amountOut)
-    {
+    function _executeSwap(IERC20 tokenIn, uint256 amountIn, uint256, bytes calldata extraData) internal override {
         (IParaSwapAugustus augustus, uint256 fromAmountOffset, bytes memory swapCalldata) =
             abi.decode(extraData, (IParaSwapAugustus, uint256, bytes));
 
-        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
-
-        amountOut = _sellOnParaSwap(fromAmountOffset, swapCalldata, augustus, tokenIn, tokenOut, amountIn, minReturn);
-
-        tokenOut.safeTransfer(msg.sender, amountOut);
-    }
-
-    function _sellOnParaSwap(
-        uint256 fromAmountOffset,
-        bytes memory swapCalldata,
-        IParaSwapAugustus augustus,
-        IERC20 tokenIn,
-        IERC20 tokenOut,
-        uint256 amountIn,
-        uint256 minReturn
-    )
-        internal
-        returns (uint256 amountOut)
-    {
         if (!augustusRegistry.isValidAugustus(address(augustus))) {
             revert InvalidAugustusContract();
         }
-
-        uint256 balanceBeforeAssetFrom = tokenIn.balanceOf(address(this));
-        uint256 balanceBeforeAssetTo = tokenOut.balanceOf(address(this));
 
         tokenIn.safeApprove(augustus.getTokenTransferProxy(), amountIn);
 
@@ -101,16 +62,5 @@ contract ParaSwapAMM is IAMM {
                 revert(0, returndatasize())
             }
         }
-
-        if (tokenIn.balanceOf(address(this)) != balanceBeforeAssetFrom - amountIn) {
-            revert SwapPartiallyFilled();
-        }
-
-        amountOut = tokenOut.balanceOf(address(this)) - balanceBeforeAssetTo;
-        if (amountOut < minReturn) {
-            revert InsufficientAmountReceived(amountOut, minReturn);
-        }
-
-        emit Swap(address(tokenIn), address(tokenOut), amountIn, amountOut, minReturn);
     }
 }
