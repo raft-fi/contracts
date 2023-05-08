@@ -13,6 +13,7 @@ interface IChainlinkPriceOracle is IPriceOracle {
         uint256 timestamp;
         bool success;
         uint8 decimals;
+        uint80 answeredInRound;
     }
 
     // --- Errors ---

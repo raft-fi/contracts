@@ -65,12 +65,13 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
 
         // Secondly, try to get latest price data:
         try priceAggregator.latestRoundData() returns (
-            uint80 roundId, int256 answer, uint256, /* startedAt */ uint256 timestamp, uint80 /* answeredInRound */
+            uint80 roundId, int256 answer, uint256, /* startedAt */ uint256 timestamp, uint80 answeredInRound
         ) {
             // If call to Chainlink succeeds, return the response and success = true
             chainlinkResponse.roundId = roundId;
             chainlinkResponse.answer = answer;
             chainlinkResponse.timestamp = timestamp;
+            chainlinkResponse.answeredInRound = answeredInRound;
             chainlinkResponse.success = true;
             return chainlinkResponse;
         } catch {
@@ -98,13 +99,14 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
 
         // Try to get the price data from the previous round:
         try priceAggregator.getRoundData(currentRoundID - 1) returns (
-            uint80 roundId, int256 answer, uint256, /* startedAt */ uint256 timestamp, uint80 /* answeredInRound */
+            uint80 roundId, int256 answer, uint256, /* startedAt */ uint256 timestamp, uint80 answeredInRound
         ) {
             // If call to Chainlink succeeds, return the response and success = true
             prevChainlinkResponse.roundId = roundId;
             prevChainlinkResponse.answer = answer;
             prevChainlinkResponse.timestamp = timestamp;
             prevChainlinkResponse.decimals = currentDecimals;
+            prevChainlinkResponse.answeredInRound = answeredInRound;
             prevChainlinkResponse.success = true;
             return prevChainlinkResponse;
         } catch {
@@ -128,12 +130,13 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         view
         returns (bool)
     {
-        return _badChainlinkResponse(currentResponse) || _badChainlinkResponse(prevResponse);
+        return _badChainlinkResponse(currentResponse) || _badChainlinkResponse(prevResponse)
+            || currentResponse.timestamp <= prevResponse.timestamp;
     }
 
     function _badChainlinkResponse(ChainlinkResponse memory response) internal view returns (bool) {
-        return !response.success || response.roundId == 0 || response.timestamp == 0
-            || response.timestamp > block.timestamp || response.answer <= 0;
+        return !response.success || response.roundId == 0 || response.timestamp == 0 || response.answer <= 0
+            || response.answeredInRound != response.roundId || response.timestamp > block.timestamp;
     }
 
     function _chainlinkPriceChangeAboveMax(

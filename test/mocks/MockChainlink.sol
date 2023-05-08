@@ -77,7 +77,7 @@ contract MockChainlink is AggregatorV3Interface {
     {
         if (latestRevert) require(1 == 0, "latestRoundData reverted");
 
-        return (latestRoundId, price, 0, updateTime, 0);
+        return (latestRoundId, price, 0, updateTime, latestRoundId);
     }
 
     function getRoundData(uint80)
@@ -88,7 +88,7 @@ contract MockChainlink is AggregatorV3Interface {
     {
         if (prevRevert) require(1 == 0, "getRoundData reverted");
 
-        return (prevRoundId, prevPrice, 0, updateTime, 0);
+        return (prevRoundId, prevPrice, 0, updateTime + prevRoundId - latestRoundId, prevRoundId);
     }
 
     function description() external pure override returns (string memory) {
