@@ -7,18 +7,16 @@ import { IAMM } from "../Interfaces/IAMM.sol";
 import { IParaSwapAugustus } from "../Dependencies/IParaSwapAugustus.sol";
 import { IParaSwapAugustusRegistry } from "../Dependencies/IParaSwapAugustusRegistry.sol";
 import { AMMBase } from "./AMMBase.sol";
+import { MsgDataManipulator } from "./MsgDataManipulator.sol";
 
 contract ParaSwapAMM is AMMBase {
     using SafeERC20 for IERC20;
+    using MsgDataManipulator for bytes;
 
     IParaSwapAugustusRegistry public immutable augustusRegistry;
 
     /// @dev Thrown when an invalid Augustus contract is provided.
     error InvalidAugustusContract();
-
-    /// @dev Thrown when `swap` is provided with an invalid fromAmountOffset parameter.
-    /// @param fromAmountOffset The invalid value that was provided.
-    error FromAmountOffsetOutOfRange(uint256 fromAmountOffset);
 
     /// @dev Thrown when provided with a zero address Augustus Registry constructor argument.
     error ZeroAddressAugustusRegistry();
@@ -38,23 +36,11 @@ contract ParaSwapAMM is AMMBase {
             revert InvalidAugustusContract();
         }
 
-        tokenIn.safeApprove(augustus.getTokenTransferProxy(), amountIn);
-
         if (fromAmountOffset != 0) {
-            // Ensure 256 bit (32 bytes) fromAmount value is within bounds of the
-            // calldata, not overlapping with the first 4 bytes (function selector).
-            if (fromAmountOffset < 4 || fromAmountOffset > swapCalldata.length - 32) {
-                revert FromAmountOffsetOutOfRange(fromAmountOffset);
-            }
-
-            // Overwrite the fromAmount with the correct amount for the swap.
-            // In memory, amountIn consists of a 256 bit length field, followed by
-            // the actual bytes data, that is why 32 is added to the byte offset.
-            assembly {
-                mstore(add(swapCalldata, add(fromAmountOffset, 32)), amountIn)
-            }
+            swapCalldata.swapValueAtIndex(fromAmountOffset, amountIn);
         }
 
+        tokenIn.approve(augustus.getTokenTransferProxy(), amountIn);
         (bool success,) = address(augustus).call(swapCalldata);
         if (!success) {
             assembly {
