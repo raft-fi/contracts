@@ -23,6 +23,8 @@ contract PriceFeedTest is TestSetup {
     function setUp() public override {
         super.setUp();
 
+        vm.warp(100);
+
         randomAddress = makeAddr("randomAddress");
 
         mockChainlink = new MockChainlink();
