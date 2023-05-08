@@ -23,8 +23,9 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@tempusfinance/tempus-utils": "npm:@tempus-labs/tempus-utils@^1.0.7",
-    "@redstone-finance/evm-connector": "^0.0.22"
+    "@balancer-labs/v2-interfaces": "^0.4.0",
+    "@redstone-finance/evm-connector": "^0.0.22",
+    "@tempusfinance/tempus-utils": "npm:@tempus-labs/tempus-utils@^1.0.7"
   },
   "private": true,
   "scripts": {
