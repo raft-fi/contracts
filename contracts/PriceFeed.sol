@@ -54,7 +54,7 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
         IPriceOracle.PriceOracleResponse memory primaryOracleResponse = primaryOracle.getPriceOracleResponse();
         // If primary oracle is broken or frozen, try secondary oracle
         if (primaryOracleResponse.isBrokenOrFrozen) {
-            // If secondary oracle is broken then both oracles are untrusted, so return the last good price
+            // If secondary oracle is broken or frozen, then both oracles are untrusted, so return the last good price
             IPriceOracle.PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
             if (secondaryOracleResponse.isBrokenOrFrozen || secondaryOracleResponse.priceChangeAboveMax) {
                 return (lastGoodPrice, Math.max(primaryOracle.DEVIATION(), secondaryOracle.DEVIATION()));
@@ -63,11 +63,11 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             return (_storePrice(secondaryOracleResponse.price), secondaryOracle.DEVIATION());
         }
 
-        // If primary oracle price has changed by > 50% between two consecutive rounds, compare it to secondary
-        // oracle's price
+        // If primary oracle price has changed by > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND between two consecutive
+        // rounds, compare it to secondary oracle's price
         if (primaryOracleResponse.priceChangeAboveMax) {
             IPriceOracle.PriceOracleResponse memory secondaryOracleResponse = secondaryOracle.getPriceOracleResponse();
-            // If primary oracle is broken or frozen, both oracles are untrusted, and return last good price
+            // If secondary oracle is broken or frozen, then both oracles are untrusted, so return the last good price
             if (secondaryOracleResponse.isBrokenOrFrozen) {
                 return (lastGoodPrice, Math.max(primaryOracle.DEVIATION(), secondaryOracle.DEVIATION()));
             }
