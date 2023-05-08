@@ -184,18 +184,16 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function liquidate(IERC20 collateralToken, address position) external override {
         (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
-        uint256 icr = MathUtils._computeCR(
-            raftCollateralTokens[collateralToken].token.balanceOf(position), raftDebtToken.balanceOf(position), price
-        );
+        uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
+        uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
+        uint256 icr = MathUtils._computeCR(entirePositionCollateral, entirePositionDebt, price);
         if (icr >= MathUtils.MCR) {
             revert NothingToLiquidate();
         }
 
-        uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
         if (entirePositionDebt == raftDebtToken.totalSupply()) {
             revert CannotLiquidateLastPosition();
         }
-        uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
 
         (uint256 collateralLiquidationFee, uint256 collateralToSendToLiquidator) =
