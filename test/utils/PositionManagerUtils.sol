@@ -73,15 +73,17 @@ library PositionManagerUtils {
         PositionManagerStETH positionManagerStETH,
         PriceFeedTestnet priceFeed,
         uint256 icr,
-        ETHType ethType
+        ETHType ethType,
+        uint256 extraDebt
     )
         internal
         returns (OpenPositionResult memory result)
     {
         result.icr = icr;
         uint256 amount;
-        (result.debtAmount, result.totalDebt, amount) =
-            getOpenPositionSetupValues(IPositionManager(positionManagerStETH.positionManager()), priceFeed, 0, icr, 0);
+        (result.debtAmount, result.totalDebt, amount) = getOpenPositionSetupValues(
+            IPositionManager(positionManagerStETH.positionManager()), priceFeed, extraDebt, icr, 0
+        );
 
         if (ethType == ETHType.ETH) {
             IStETH stETH = positionManagerStETH.stETH();
