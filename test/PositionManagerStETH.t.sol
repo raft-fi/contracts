@@ -52,7 +52,8 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 150 * MathUtils._100_PERCENT / 100,
-            ethType: PositionManagerUtils.ETHType.ETH
+            ethType: PositionManagerUtils.ETHType.ETH,
+            extraDebt: 0
         });
         vm.stopPrank();
 
@@ -72,7 +73,8 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 150 * MathUtils._100_PERCENT / 100,
-            ethType: PositionManagerUtils.ETHType.STETH
+            ethType: PositionManagerUtils.ETHType.STETH,
+            extraDebt: 0
         });
         vm.stopPrank();
 
@@ -93,7 +95,8 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 2 ether,
-            ethType: PositionManagerUtils.ETHType.ETH
+            ethType: PositionManagerUtils.ETHType.ETH,
+            extraDebt: 0
         });
         vm.stopPrank();
         assertGt(positionManager.rToken().balanceOf(ALICE), rBalanceBefore);
@@ -126,7 +129,8 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 2 ether,
-            ethType: PositionManagerUtils.ETHType.ETH
+            ethType: PositionManagerUtils.ETHType.ETH,
+            extraDebt: 0
         });
         vm.stopPrank();
 
@@ -147,7 +151,8 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 2 ether,
-            ethType: PositionManagerUtils.ETHType.STETH
+            ethType: PositionManagerUtils.ETHType.STETH,
+            extraDebt: 0
         });
         vm.stopPrank();
         assertGt(positionManager.rToken().balanceOf(ALICE), rBalanceBefore);
@@ -184,7 +189,8 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 2 ether,
-            ethType: PositionManagerUtils.ETHType.STETH
+            ethType: PositionManagerUtils.ETHType.STETH,
+            extraDebt: 0
         });
         vm.stopPrank();
 
@@ -195,6 +201,38 @@ contract PositionManagerStETHTest is TestSetup {
         // Alice withdraws 1 wstETH
         vm.prank(ALICE);
         positionManagerStETH.managePositionStETH(withdrawAmount, false, 0, false, 0);
+
+        uint256 aliceBalanceAfter = stETH.balanceOf(ALICE);
+        assertApproxEqAbs(aliceBalanceAfter, aliceBalanceBefore + stETHAmount, 1);
+    }
+
+    // Sends the correct amount of stETH to the user
+    function testWithdrawStETHAlongWithRRepayment() public {
+        _depositETH(ALICE, 50 ether);
+
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPositionStETH({
+            positionManagerStETH: positionManagerStETH,
+            priceFeed: priceFeed,
+            icr: 2 ether,
+            ethType: PositionManagerUtils.ETHType.STETH,
+            extraDebt: 2 ether
+        });
+        vm.stopPrank();
+
+        uint256 aliceBalanceBefore = stETH.balanceOf(ALICE);
+        uint256 withdrawAmount = 1 ether;
+        uint256 stETHAmount = stETH.getPooledEthByShares(withdrawAmount);
+
+        uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
+
+        // Alice withdraws 1 wstETH
+        vm.startPrank(ALICE);
+        positionManager.rToken().approve(address(positionManagerStETH), 1 ether);
+        positionManagerStETH.managePositionStETH(withdrawAmount, false, 1 ether, false, 0);
+        vm.stopPrank();
+
+        assertEq(positionManager.rToken().balanceOf(ALICE), rBalanceBefore - 1 ether);
 
         uint256 aliceBalanceAfter = stETH.balanceOf(ALICE);
         assertApproxEqAbs(aliceBalanceAfter, aliceBalanceBefore + stETHAmount, 1);

@@ -33,6 +33,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
     {
         ERC20PermitSignature memory emptySignature;
         uint256 wstETHAmount = wrapETH();
+        if (!isDebtIncrease) {
+            IPositionManager(positionManager).rToken().transferFrom(msg.sender, address(this), debtChange);
+        }
         IPositionManager(positionManager).managePosition(
             wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, emptySignature
         );
@@ -52,6 +55,10 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         override
     {
         ERC20PermitSignature memory emptySignature;
+        if (!isDebtIncrease) {
+            IPositionManager(positionManager).rToken().transferFrom(msg.sender, address(this), debtChange);
+        }
+
         if (isCollateralIncrease && collateralChange > 0) {
             uint256 wstETHAmount = wrapStETH(collateralChange);
             IPositionManager(positionManager).managePosition(
