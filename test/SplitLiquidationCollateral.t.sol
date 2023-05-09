@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
-import { Test, console } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 contract SplitLiquidationCollateralTest is Test {
     SplitLiquidationCollateral public splitLiquidationCollateral;
