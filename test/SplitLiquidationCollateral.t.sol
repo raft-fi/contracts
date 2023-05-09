@@ -88,4 +88,30 @@ contract SplitLiquidationCollateralTest is Test {
         assertEq(collateralToSendToProtocol, 1_500_000e18);
         assertEq(collateralToSentToLiquidator, collateralAmount - collateralToSendToProtocol);
     }
+
+    function testFuzzSplitLiquidation(uint256 collateralAmount, uint256 price, uint256 cr) public {
+        cr = bound(cr, 1e18 + 1, 1.1e18 - 1);
+        price = bound(price, 1e16, 1e32);
+        collateralAmount = bound(collateralAmount, 1e13, 1e30);
+
+        // cr = collateralAmount * price / debt
+        uint256 debtAmount = collateralAmount * price / cr;
+
+        (uint256 collateralToProtocol, uint256 collateralToLiquidator) =
+            splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
+        assertEq(collateralToProtocol + collateralToLiquidator, collateralAmount);
+    }
+
+    function testFuzzSplitRedistribution(uint256 collateralAmount, uint256 price, uint256 cr) public {
+        cr = bound(cr, 1e5, 1e18 - 1);
+        price = bound(price, 1e16, 1e32);
+        collateralAmount = bound(collateralAmount, 1e13, 1e30);
+
+        // cr = collateralAmount * price / debt
+        uint256 debtAmount = collateralAmount * price / cr;
+        (uint256 collateralToProtocol, uint256 collateralToLiquidator) =
+            splitLiquidationCollateral.split(collateralAmount, debtAmount, price, true);
+        assertEq(collateralToProtocol, 0);
+        assertLt(collateralToLiquidator, collateralAmount);
+    }
 }
