@@ -196,14 +196,11 @@ contract PositionManagerStETHTest is TestSetup {
 
         uint256 aliceBalanceBefore = stETH.balanceOf(ALICE);
         uint256 withdrawAmount = 1 ether;
-        uint256 stETHAmount = stETH.getPooledEthByShares(withdrawAmount);
 
-        // Alice withdraws 1 wstETH
+        // Alice withdraws 1 stETH
         vm.prank(ALICE);
         positionManagerStETH.managePositionStETH(withdrawAmount, false, 0, false, 0);
-
-        uint256 aliceBalanceAfter = stETH.balanceOf(ALICE);
-        assertApproxEqAbs(aliceBalanceAfter, aliceBalanceBefore + stETHAmount, 1);
+        assertApproxEqAbs(stETH.balanceOf(ALICE), aliceBalanceBefore + withdrawAmount, 2);
     }
 
     // Sends the correct amount of stETH to the user
@@ -222,7 +219,6 @@ contract PositionManagerStETHTest is TestSetup {
 
         uint256 aliceBalanceBefore = stETH.balanceOf(ALICE);
         uint256 withdrawAmount = 1 ether;
-        uint256 stETHAmount = stETH.getPooledEthByShares(withdrawAmount);
 
         uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
 
@@ -233,9 +229,7 @@ contract PositionManagerStETHTest is TestSetup {
         vm.stopPrank();
 
         assertEq(positionManager.rToken().balanceOf(ALICE), rBalanceBefore - 1 ether);
-
-        uint256 aliceBalanceAfter = stETH.balanceOf(ALICE);
-        assertApproxEqAbs(aliceBalanceAfter, aliceBalanceBefore + stETHAmount, 1);
+        assertApproxEqAbs(stETH.balanceOf(ALICE), aliceBalanceBefore + withdrawAmount, 2);
     }
 
     function _depositETH(address _account, uint256 _amount) private {

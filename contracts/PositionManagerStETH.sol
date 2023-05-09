@@ -45,7 +45,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
     }
 
     function managePositionStETH(
-        uint256 collateralChange,
+        uint256 stETHCollateralChange,
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
@@ -58,32 +58,23 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         if (!isDebtIncrease) {
             IPositionManager(positionManager).rToken().transferFrom(msg.sender, address(this), debtChange);
         }
+        uint256 wstETHCollateralChange = (isCollateralIncrease && stETHCollateralChange > 0)
+            ? wrapStETH(stETHCollateralChange)
+            : wstETH.getWstETHByStETH(stETHCollateralChange);
 
-        if (isCollateralIncrease && collateralChange > 0) {
-            uint256 wstETHAmount = wrapStETH(collateralChange);
-            IPositionManager(positionManager).managePosition(
-                wstETH,
-                msg.sender,
-                wstETHAmount,
-                isCollateralIncrease,
-                debtChange,
-                isDebtIncrease,
-                maxFeePercentage,
-                emptySignature
-            );
-        } else {
-            IPositionManager(positionManager).managePosition(
-                wstETH,
-                msg.sender,
-                collateralChange,
-                isCollateralIncrease,
-                debtChange,
-                isDebtIncrease,
-                maxFeePercentage,
-                emptySignature
-            );
-            uint256 stETHAmount = unwrapStETH(collateralChange);
-            stETH.transfer(msg.sender, stETHAmount);
+        IPositionManager(positionManager).managePosition(
+            wstETH,
+            msg.sender,
+            wstETHCollateralChange,
+            isCollateralIncrease,
+            debtChange,
+            isDebtIncrease,
+            maxFeePercentage,
+            emptySignature
+        );
+
+        if (!isCollateralIncrease && wstETHCollateralChange > 0) {
+            unwrapStETH(wstETHCollateralChange);
         }
 
         if (isDebtIncrease) {

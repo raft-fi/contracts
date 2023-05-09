@@ -34,7 +34,7 @@ abstract contract WstETHWrapper is IWstETHWrapper {
         return wstETH.wrap(stETHAmount);
     }
 
-    function unwrapStETH(uint256 stETHAmount) internal returns (uint256) {
-        return wstETH.unwrap(stETHAmount);
+    function unwrapStETH(uint256 wstETHAmount) internal {
+        stETH.transfer(msg.sender, wstETH.unwrap(wstETHAmount));
     }
 }
