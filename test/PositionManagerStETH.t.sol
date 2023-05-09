@@ -86,6 +86,8 @@ contract PositionManagerStETHTest is TestSetup {
 
     function testDepositETH() public {
         IERC20 _collateralToken = IERC20(WSTETH_ADDRESS);
+
+        uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStETH({
             positionManagerStETH: positionManagerStETH,
@@ -94,6 +96,7 @@ contract PositionManagerStETHTest is TestSetup {
             ethType: PositionManagerUtils.ETHType.ETH
         });
         vm.stopPrank();
+        assertGt(positionManager.rToken().balanceOf(ALICE), rBalanceBefore);
 
         (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
 
@@ -138,6 +141,7 @@ contract PositionManagerStETHTest is TestSetup {
 
         IERC20 _collateralToken = IERC20(WSTETH_ADDRESS);
 
+        uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStETH({
             positionManagerStETH: positionManagerStETH,
@@ -146,6 +150,7 @@ contract PositionManagerStETHTest is TestSetup {
             ethType: PositionManagerUtils.ETHType.STETH
         });
         vm.stopPrank();
+        assertGt(positionManager.rToken().balanceOf(ALICE), rBalanceBefore);
 
         (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
 
