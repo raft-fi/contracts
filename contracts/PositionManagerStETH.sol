@@ -36,6 +36,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         IPositionManager(positionManager).managePosition(
             wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, emptySignature
         );
+        if (isDebtIncrease) {
+            IPositionManager(positionManager).rToken().transfer(msg.sender, debtChange);
+        }
     }
 
     function managePositionStETH(
@@ -74,6 +77,10 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
             );
             uint256 stETHAmount = unwrapStETH(collateralChange);
             stETH.transfer(msg.sender, stETHAmount);
+        }
+
+        if (isDebtIncrease) {
+            IPositionManager(positionManager).rToken().transfer(msg.sender, debtChange);
         }
     }
 }
