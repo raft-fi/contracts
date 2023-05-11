@@ -66,6 +66,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         ERC20PermitSignature memory emptySignature;
 
         if (!isDebtIncrease) {
+            if (debtChange == type(uint256).max) {
+                debtChange = IPositionManager(positionManager).raftDebtToken().balanceOf(msg.sender);
+            }
             IRToken rToken = IPositionManager(positionManager).rToken();
             _applyPermit(rToken, permitSignature);
             rToken.transferFrom(msg.sender, address(this), debtChange);
@@ -75,7 +78,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
             ? wrapStETH(stETHCollateralChange)
             : wstETH.getWstETHByStETH(stETHCollateralChange);
 
-        IPositionManager(positionManager).managePosition(
+        (wstETHCollateralChange, debtChange) = IPositionManager(positionManager).managePosition(
             wstETH,
             msg.sender,
             wstETHCollateralChange,

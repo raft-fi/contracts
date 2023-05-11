@@ -612,25 +612,19 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.prank(address(positionManager));
         rToken.mint(ALICE, 10_000e18);
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
-        uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
-        uint256 alicePositionDebt = positionManager.raftDebtToken().balanceOf(ALICE);
-
-        vm.prank(ALICE);
+        vm.startPrank(ALICE);
         positionManager.managePosition(
             collateralToken,
             ALICE,
-            alicePositionCollateral,
+            0,
             false,
-            alicePositionDebt,
+            positionManager.raftDebtToken().balanceOf(ALICE),
             false,
             MathUtils._100_PERCENT,
             emptySignature
         );
-
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
 
-        vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,

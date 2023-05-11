@@ -114,10 +114,9 @@ contract OneStepLeverageTest is TestSetup {
         uint256 debtAfterLeverage = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 collateralToSwap = debtAfterLeverage * (1e18 + 1e16) / price;
         (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
-        uint256 principalDecrease = raftCollateralToken.balanceOf(ALICE) - collateralToSwap;
 
         oneStepLeverage.manageLeveragedPosition(
-            debtAfterLeverage, false, principalDecrease, false, "", collateralToSwap, MathUtils._100_PERCENT
+            debtAfterLeverage, false, 0, false, "", collateralToSwap, MathUtils._100_PERCENT
         );
 
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
