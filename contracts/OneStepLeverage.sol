@@ -10,6 +10,7 @@ import { IRToken } from "./Interfaces/IRToken.sol";
 import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 import { IOneStepLeverage } from "./Interfaces/IOneStepLeverage.sol";
 import { IAMM } from "./Interfaces/IAMM.sol";
+import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
 
 contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
     using SafeERC20 for IERC20;
@@ -84,9 +85,26 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         bool releasePrincipals
     )
         internal
+        returns (uint256 actualCollateralChange)
     {
         if (debtChange == 0) {
             revert ZeroDebtChange();
+        }
+
+        bool fullRepayment;
+        if (!isDebtIncrease) {
+            uint256 positionDebt = IPositionManager(positionManager).raftDebtToken().balanceOf(msg.sender);
+            if (debtChange == type(uint256).max) {
+                debtChange = positionDebt;
+            }
+            fullRepayment = (debtChange == positionDebt);
+
+            (IERC20Indexable raftCollateralToken,) =
+                IPositionManager(positionManager).raftCollateralTokens(collateralToken);
+            actualCollateralChange =
+                fullRepayment ? raftCollateralToken.balanceOf(msg.sender) : principalCollateralChange;
+        } else {
+            actualCollateralChange = principalCollateralChange;
         }
 
         bytes memory data = abi.encode(
@@ -97,7 +115,8 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             ammData,
             minReturnOrAmountToSell,
             maxFeePercentage,
-            releasePrincipals
+            releasePrincipals,
+            fullRepayment
         );
 
         IRToken rToken = IPositionManager(positionManager).rToken();
@@ -131,8 +150,9 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             bytes memory ammData,
             uint256 minReturnOrAmountToSell,
             uint256 maxFeePercentage,
-            bool releasePrincipals
-        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256, bool));
+            bool releasePrincipals,
+            bool fullRepayment
+        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256, bool, bool));
 
         uint256 leveragedCollateralChange = isDebtIncrease
             ? amm.swap(rToken, collateralToken, amount, minReturnOrAmountToSell, ammData)
@@ -150,7 +170,7 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
                 : leveragedCollateralChange > principalCollateralChange;
         } else {
             increaseCollateral = principalCollateralIncrease;
-            collateralChange = principalCollateralChange + leveragedCollateralChange;
+            collateralChange = principalCollateralChange + (fullRepayment ? 0 : leveragedCollateralChange);
         }
 
         ERC20PermitSignature memory emptySignature;

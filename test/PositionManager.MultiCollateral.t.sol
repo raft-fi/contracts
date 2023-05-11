@@ -150,7 +150,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         // Alice close position with first collateral token
         vm.startPrank(ALICE);
         positionManager.managePosition(
-            collateralToken, ALICE, resultAlice.collateral, false, resultAlice.debtAmount, false, 0, emptySignature
+            collateralToken, ALICE, 0, false, resultAlice.debtAmount, false, 0, emptySignature
         );
         vm.stopPrank();
 

@@ -35,7 +35,7 @@ contract OneStepLeverageStETH is IERC3156FlashBorrower, IOneStepLeverageStETH, W
             ? wrapStETH(stETHCollateralChange)
             : wstETH.getWstETHByStETH(stETHCollateralChange);
 
-        _manageLeveragedPosition(
+        wstETHCollateralChange = _manageLeveragedPosition(
             debtChange,
             isDebtIncrease,
             wstETHCollateralChange,
@@ -46,7 +46,7 @@ contract OneStepLeverageStETH is IERC3156FlashBorrower, IOneStepLeverageStETH, W
             false
         );
 
-        if (!stETHCollateralIncrease && stETHCollateralChange > 0) {
+        if (!stETHCollateralIncrease && wstETHCollateralChange > 0) {
             unwrapStETH(wstETHCollateralChange);
         }
     }

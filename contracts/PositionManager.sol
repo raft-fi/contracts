@@ -142,6 +142,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         validMaxFeePercentageWhen(maxFeePercentage, isDebtIncrease)
         onlyDepositedCollateralTokenOrNew(position, collateralToken)
         onlyEnabledCollateralTokenWhen(collateralToken, isDebtIncrease && debtChange > 0)
+        returns (uint256 actualCollateralChange, uint256 actualDebtChange)
     {
         if (position != msg.sender && !isDelegateWhitelisted[position][msg.sender]) {
             revert DelegateNotWhitelisted();
@@ -155,7 +156,9 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         uint256 debtBefore = raftDebtToken.balanceOf(position);
         if (!isDebtIncrease && (debtChange == type(uint256).max || (debtBefore != 0 && debtChange == debtBefore))) {
-            isCollateralIncrease = false;
+            if (collateralChange != 0 || isCollateralIncrease) {
+                revert WrongCollateralParamsForFullRepayment();
+            }
             collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
             debtChange = debtBefore;
         }
@@ -180,6 +183,7 @@ contract PositionManager is FeeCollector, IPositionManager {
                 emit PositionCreated(position, collateralToken);
             }
         }
+        return (collateralChange, debtChange);
     }
 
     function liquidate(IERC20 collateralToken, address position) external override {

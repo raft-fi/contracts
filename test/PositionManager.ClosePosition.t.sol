@@ -73,9 +73,7 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         // Alice attempts to close position
         vm.prank(ALICE);
-        positionManager.managePosition(
-            collateralToken, ALICE, alicePositionCollateralBefore, false, aliceDebtBefore, false, 0, emptySignature
-        );
+        positionManager.managePosition(collateralToken, ALICE, 0, false, aliceDebtBefore, false, 0, emptySignature);
 
         uint256 aliceCollateralAfter = collateralToken.balanceOf(ALICE);
         uint256 alicePositionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
@@ -133,9 +131,7 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         // Alice attempts to close position but leave some collateral
         vm.prank(ALICE);
-        positionManager.managePosition(
-            collateralToken, ALICE, alicePositionCollateralBefore / 2, false, aliceDebtBefore, false, 0, emptySignature
-        );
+        positionManager.managePosition(collateralToken, ALICE, 0, false, aliceDebtBefore, false, 0, emptySignature);
         assertEq(raftCollateralToken.balanceOf(ALICE), 0);
     }
 
@@ -167,19 +163,14 @@ contract PositionManagerClosePositionTest is TestSetup {
         uint256 borrowingRate = positionManager.getBorrowingRate();
         assertEq(borrowingRate, 0);
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
-
         // Confirm Bob's R balance is less than his position debt
         uint256 bobRBalance = rToken.balanceOf(BOB);
-        uint256 bobPositionCollateral = raftCollateralToken.balanceOf(BOB);
         uint256 bobPositionDebt = positionManager.raftDebtToken().balanceOf(BOB);
 
         assertEq(bobPositionDebt, bobRBalance);
 
         vm.prank(BOB);
-        positionManager.managePosition(
-            collateralToken, BOB, bobPositionCollateral, false, bobPositionDebt, false, 0, emptySignature
-        );
+        positionManager.managePosition(collateralToken, BOB, 0, false, bobPositionDebt, false, 0, emptySignature);
     }
 
     // Reverts if borrower has insufficient R balance to repay his entire debt when borrowing rate > 0%
@@ -223,8 +214,6 @@ contract PositionManagerClosePositionTest is TestSetup {
 
         vm.prank(BOB);
         vm.expectRevert("ERC20: burn amount exceeds balance");
-        positionManager.managePosition(
-            collateralToken, BOB, bobPositionCollateral, false, bobPositionDebt, false, 0, emptySignature
-        );
+        positionManager.managePosition(collateralToken, BOB, 0, false, bobPositionDebt, false, 0, emptySignature);
     }
 }
