@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import { ERC20PermitSignature, PermitHelper } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IWstETH } from "./Dependencies/IWstETH.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IPositionManagerStETH } from "./Interfaces/IPositionManagerStETH.sol";
+import { IRToken } from "./Interfaces/IRToken.sol";
 import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 import { WstETHWrapper } from "./WstETHWrapper.sol";
 
 contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent, WstETHWrapper {
     // --- Constructor ---
+
     constructor(
         address positionManager_,
         IWstETH wstETH_
@@ -25,7 +28,8 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
     function managePositionETH(
         uint256 debtChange,
         bool isDebtIncrease,
-        uint256 maxFeePercentage
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
     )
         external
         payable
@@ -33,9 +37,13 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
     {
         ERC20PermitSignature memory emptySignature;
         uint256 wstETHAmount = wrapETH();
+
         if (!isDebtIncrease) {
-            IPositionManager(positionManager).rToken().transferFrom(msg.sender, address(this), debtChange);
+            IRToken rToken = IPositionManager(positionManager).rToken();
+            _applyPermit(rToken, permitSignature);
+            rToken.transferFrom(msg.sender, address(this), debtChange);
         }
+
         IPositionManager(positionManager).managePosition(
             wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, emptySignature
         );
@@ -49,15 +57,20 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease,
-        uint256 maxFeePercentage
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
     )
         external
         override
     {
         ERC20PermitSignature memory emptySignature;
+
         if (!isDebtIncrease) {
-            IPositionManager(positionManager).rToken().transferFrom(msg.sender, address(this), debtChange);
+            IRToken rToken = IPositionManager(positionManager).rToken();
+            _applyPermit(rToken, permitSignature);
+            rToken.transferFrom(msg.sender, address(this), debtChange);
         }
+
         uint256 wstETHCollateralChange = (isCollateralIncrease && stETHCollateralChange > 0)
             ? wrapStETH(stETHCollateralChange)
             : wstETH.getWstETHByStETH(stETHCollateralChange);
@@ -79,6 +92,12 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
 
         if (isDebtIncrease) {
             IPositionManager(positionManager).rToken().transfer(msg.sender, debtChange);
+        }
+    }
+
+    function _applyPermit(IERC20Permit token, ERC20PermitSignature calldata permitSignature) internal {
+        if (address(permitSignature.token) == address(token)) {
+            PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
         }
     }
 }
