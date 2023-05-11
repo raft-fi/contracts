@@ -5,11 +5,13 @@ import { IVault } from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol"
 import { IAsset } from "@balancer-labs/v2-interfaces/contracts/vault/IAsset.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { IAMM } from "../Interfaces/IAMM.sol";
 import { AMMBase } from "./AMMBase.sol";
 
 contract BalancerAMM is AMMBase {
     using SafeERC20 for IERC20;
+    using SafeCast for uint256;
 
     /// @dev Thrown when provided with a zero address Balancer Vault as a constructor argument.
     error ZeroAddressVault();
@@ -36,8 +38,8 @@ contract BalancerAMM is AMMBase {
             abi.decode(extraData, (IVault.BatchSwapStep[], IAsset[], uint256));
 
         int256[] memory limits = new int256[](assets.length);
-        limits[0] = int256(amountIn);
-        limits[limits.length - 1] = -int256(minReturn);
+        limits[0] = SafeCast.toInt256(amountIn);
+        limits[limits.length - 1] = -SafeCast.toInt256(minReturn);
 
         IVault.FundManagement memory funds = IVault.FundManagement({
             sender: address(this),
