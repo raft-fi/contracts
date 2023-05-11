@@ -84,17 +84,22 @@ library PositionManagerUtils {
         (result.debtAmount, result.totalDebt, amount) = getOpenPositionSetupValues(
             IPositionManager(positionManagerStETH.positionManager()), priceFeed, extraDebt, icr, 0
         );
+        ERC20PermitSignature memory emptySignature;
 
         if (ethType == ETHType.ETH) {
             IStETH stETH = positionManagerStETH.stETH();
             uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
-            positionManagerStETH.managePositionETH{ value: amount }(result.debtAmount, true, MathUtils._100_PERCENT);
+            positionManagerStETH.managePositionETH{ value: amount }(
+                result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
+            );
             result.collateral = wstETHAmount;
         } else {
             IStETH stETH = positionManagerStETH.stETH();
             uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
             stETH.approve(address(positionManagerStETH), amount);
-            positionManagerStETH.managePositionStETH(amount, true, result.debtAmount, true, MathUtils._100_PERCENT);
+            positionManagerStETH.managePositionStETH(
+                amount, true, result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
+            );
             result.collateral = wstETHAmount;
         }
 

@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IWstETHWrapper } from "../contracts/Interfaces/IWstETHWrapper.sol";
 import { IStETH } from "../contracts/Dependencies/IStETH.sol";
@@ -110,10 +111,11 @@ contract PositionManagerStETHTest is TestSetup {
         assertEq(positionManagerStETHBalanceBefore, result.collateral);
 
         uint256 collateralTopUpAmount = 1 ether;
+        ERC20PermitSignature memory emptySignature;
 
         vm.startPrank(ALICE);
         uint256 wstETHAmount = stETH.getSharesByPooledEth(collateralTopUpAmount);
-        positionManagerStETH.managePositionETH{ value: collateralTopUpAmount }(0, false, 0);
+        positionManagerStETH.managePositionETH{ value: collateralTopUpAmount }(0, false, 0, emptySignature);
         vm.stopPrank();
 
         uint256 positionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
@@ -134,9 +136,11 @@ contract PositionManagerStETHTest is TestSetup {
         });
         vm.stopPrank();
 
+        ERC20PermitSignature memory emptySignature;
+
         vm.startPrank(ALICE);
         vm.expectRevert(IWstETHWrapper.SendingEtherFailed.selector);
-        positionManagerStETH.managePositionETH{ value: 0 }(0, false, 0);
+        positionManagerStETH.managePositionETH{ value: 0 }(0, false, 0, emptySignature);
         vm.stopPrank();
     }
 
@@ -166,11 +170,12 @@ contract PositionManagerStETHTest is TestSetup {
         assertEq(positionManagerStETHBalanceBefore, result.collateral);
 
         uint256 collateralTopUpAmount = 1 ether;
+        ERC20PermitSignature memory emptySignature;
 
         vm.startPrank(ALICE);
         uint256 wstETHAmount = stETH.getSharesByPooledEth(collateralTopUpAmount);
         stETH.approve(address(positionManagerStETH), collateralTopUpAmount);
-        positionManagerStETH.managePositionStETH(collateralTopUpAmount, true, 0, false, 0);
+        positionManagerStETH.managePositionStETH(collateralTopUpAmount, true, 0, false, 0, emptySignature);
         vm.stopPrank();
 
         uint256 positionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
@@ -196,10 +201,11 @@ contract PositionManagerStETHTest is TestSetup {
 
         uint256 aliceBalanceBefore = stETH.balanceOf(ALICE);
         uint256 withdrawAmount = 1 ether;
+        ERC20PermitSignature memory emptySignature;
 
         // Alice withdraws 1 stETH
         vm.prank(ALICE);
-        positionManagerStETH.managePositionStETH(withdrawAmount, false, 0, false, 0);
+        positionManagerStETH.managePositionStETH(withdrawAmount, false, 0, false, 0, emptySignature);
         assertApproxEqAbs(stETH.balanceOf(ALICE), aliceBalanceBefore + withdrawAmount, 2);
     }
 
@@ -219,13 +225,14 @@ contract PositionManagerStETHTest is TestSetup {
 
         uint256 aliceBalanceBefore = stETH.balanceOf(ALICE);
         uint256 withdrawAmount = 1 ether;
+        ERC20PermitSignature memory emptySignature;
 
         uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
 
         // Alice withdraws 1 wstETH
         vm.startPrank(ALICE);
         positionManager.rToken().approve(address(positionManagerStETH), 1 ether);
-        positionManagerStETH.managePositionStETH(withdrawAmount, false, 1 ether, false, 0);
+        positionManagerStETH.managePositionStETH(withdrawAmount, false, 1 ether, false, 0, emptySignature);
         vm.stopPrank();
 
         assertEq(positionManager.rToken().balanceOf(ALICE), rBalanceBefore - 1 ether);

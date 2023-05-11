@@ -274,9 +274,9 @@ interface IPositionManager is IFeeCollector {
     /// @param isDebtIncrease True if the debt is being increased, false otherwise.
     /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
     /// @param permitSignature Optional permit signature for tokens that support IERC20Permit interface.
-    /// @notice 'permitSignature' it is ignored if permit signature is not for 'collateralToken'.
+    /// @notice `permitSignature` it is ignored if permit signature is not for `collateralToken`.
     /// @notice In case of full debt repayment, `isCollateralIncrease` and `collateralChange` are ignored.
-    /// These values are set to `false`(collateral decrease), and the whole collateral balance of the user.
+    /// These values are set to `false` (collateral decrease), and the whole collateral balance of the user.
     function managePosition(
         IERC20 collateralToken,
         address position,
