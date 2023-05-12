@@ -275,7 +275,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         priceFeed.setPrice(100e18);
 
         // liquidate Bob's position
-        positionManager.liquidate(collateralToken, BOB);
+        positionManager.liquidate(BOB);
 
         priceFeedSecond.setPrice(100e18);
 
@@ -287,7 +287,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         );
 
         // liquidate Carol's position
-        positionManager.liquidate(collateralTokenSecond, CAROL);
+        positionManager.liquidate(CAROL);
 
         // Carol's position is closed
         assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
