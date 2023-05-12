@@ -75,7 +75,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         priceFeed.setPrice(100e18);
 
         // liquidate position
-        positionManager.liquidate(collateralToken, BOB);
+        positionManager.liquidate(BOB);
 
         // Bob's position is closed
         assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
@@ -111,7 +111,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         assertEq(bobICR, 1e18);
 
         // liquidate position
-        positionManager.liquidate(collateralToken, BOB);
+        positionManager.liquidate(BOB);
 
         // Bob's position is closed
         assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
@@ -150,7 +150,7 @@ contract PositionManagerRedistributionTest is TestSetup {
 
         // liquidate position
         vm.expectRevert(IPositionManager.CannotLiquidateLastPosition.selector);
-        positionManager.liquidate(collateralToken, ALICE);
+        positionManager.liquidate(ALICE);
     }
 
     // Liquidates undercollateralized position if there are two positions in the system
@@ -189,7 +189,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         assertEq(aliceICR, 90 * MathUtils._100_PERCENT / 100);
 
         // Liquidate the position
-        positionManager.liquidate(collateralToken, ALICE);
+        positionManager.liquidate(ALICE);
 
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
         assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
@@ -220,7 +220,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
-        positionManager.liquidate(collateralToken, CAROL);
+        positionManager.liquidate(CAROL);
 
         vm.startPrank(CAROL);
         PositionManagerUtils.openPosition({
@@ -238,12 +238,12 @@ contract PositionManagerRedistributionTest is TestSetup {
         priceFeed.setPrice(100e18);
 
         // Carol liquidated, and her position is closed
-        positionManager.liquidate(collateralToken, CAROL);
+        positionManager.liquidate(CAROL);
 
         assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
-        positionManager.liquidate(collateralToken, CAROL);
+        positionManager.liquidate(CAROL);
     }
 
     // Liquidates based on entire collateral/debt (including pending rewards), not raw collateral/debt
@@ -313,7 +313,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         assertGe(bobICRBefore, MathUtils.MCR);
         assertLe(carolICRBefore, MathUtils.MCR);
 
-        positionManager.liquidate(collateralToken, DAVE);
+        positionManager.liquidate(DAVE);
 
         uint256 aliceICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price);
         uint256 bobICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
@@ -343,9 +343,9 @@ contract PositionManagerRedistributionTest is TestSetup {
 
         // Liquidate Alice unsuccessfully and Bob and Carol successfully
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
-        positionManager.liquidate(collateralToken, ALICE);
-        positionManager.liquidate(collateralToken, BOB);
-        positionManager.liquidate(collateralToken, CAROL);
+        positionManager.liquidate(ALICE);
+        positionManager.liquidate(BOB);
+        positionManager.liquidate(CAROL);
 
         // Confirm token balances have not changed
         assertEq(rToken.balanceOf(ALICE), alicePosition.debtAmount);

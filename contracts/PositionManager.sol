@@ -186,7 +186,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         return (collateralChange, debtChange);
     }
 
-    function liquidate(IERC20 collateralToken, address position) external override {
+    function liquidate(address position) external override {
+        IERC20 collateralToken = collateralTokenForPosition[position];
+        if (address(collateralToken) == address(0)) {
+            revert NothingToLiquidate();
+        }
         (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
         uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
         uint256 entirePositionDebt = raftDebtToken.balanceOf(position);

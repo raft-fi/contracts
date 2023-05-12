@@ -255,9 +255,8 @@ interface IPositionManager is IFeeCollector {
     function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral) external;
 
     /// @dev Liquidates the borrower if its position's ICR is lower than the minimum collateral ratio.
-    /// @param collateralToken The token used as collateral.
     /// @param position The address of the borrower.
-    function liquidate(IERC20 collateralToken, address position) external;
+    function liquidate(address position) external;
 
     /// @dev Redeems the collateral token for a given debt amount. It sends @param debtAmount R to the system and
     /// redeems the corresponding amount of collateral from as many positions as are needed to fill the redemption

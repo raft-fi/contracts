@@ -155,7 +155,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         priceFeed.setPrice(100e18);
 
         // Bob gets liquidated
-        positionManager.liquidate(collateralToken, BOB);
+        positionManager.liquidate(BOB);
 
         assertEq(address(positionManager.collateralTokenForPosition(BOB)), address(0));
         assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);

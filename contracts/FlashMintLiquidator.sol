@@ -70,7 +70,7 @@ contract FlashMintLiquidator is IFlashMintLiquidator, PositionManagerDependent {
 
         (address liquidator, address position, bytes memory ammData) = abi.decode(data, (address, address, bytes));
 
-        IPositionManager(positionManager).liquidate(collateralToken, position);
+        IPositionManager(positionManager).liquidate(position);
         uint256 repayAmount = amount + fee;
         amm.swap(collateralToken, rToken, collateralToken.balanceOf(address(this)), repayAmount, ammData);
         rToken.transfer(liquidator, rToken.balanceOf(address(this)) - repayAmount);
