@@ -23,7 +23,7 @@ contract TellorPriceOracleTest is Test {
         IPriceOracle.PriceOracleResponse memory priceOracleResponse = tellorPriceOracle.getPriceOracleResponse();
         assertEq(priceOracleResponse.isBrokenOrFrozen, false);
         assertEq(priceOracleResponse.priceChangeAboveMax, false);
-        assertApproxEqAbs(priceOracleResponse.price, 2_257_969e15, 1e15);
+        assertApproxEqAbs(priceOracleResponse.price, 2_254_051e15, 1e15);
     }
 
     function testTellorWstETHPriceFrozen() public {

@@ -19,6 +19,10 @@ interface IPriceOracle {
 
     // --- Functions ---
 
+    /// @dev Return price oracle response which consists the following information: oracle is broken or frozen, the
+    /// price change between two rounds is more than max, and the price.
+    function getPriceOracleResponse() external returns (PriceOracleResponse memory);
+
     /// @dev Return wstETH address.
     function wstETH() external view returns (IWstETH);
 
@@ -31,8 +35,4 @@ interface IPriceOracle {
 
     /// @dev price deviation for the oracle in percentage.
     function DEVIATION() external view returns (uint256);
-
-    /// @dev Return price oracle response which consists the following information: oracle is broken or frozen, the
-    /// price change between two rounds is more than max, and the price.
-    function getPriceOracleResponse() external view returns (PriceOracleResponse memory);
 }
