@@ -267,7 +267,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         emit TotalDebtChanged(_totalDebt);
 
         // Send collateral to account
-        collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
+        collateralToken.safeTransfer(msg.sender, collateralToRedeem - (redemptionFee - rebate));
 
         _updateDebtAndCollateralIndex(collateralToken);
 
