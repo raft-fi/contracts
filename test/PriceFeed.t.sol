@@ -23,7 +23,7 @@ contract PriceFeedTest is TestSetup {
     function setUp() public override {
         super.setUp();
 
-        vm.warp(100);
+        vm.warp(20 minutes + 1);
 
         randomAddress = makeAddr("randomAddress");
 
@@ -211,6 +211,8 @@ contract PriceFeedTest is TestSetup {
     // Primary oracle breaks, secondary working: fetchPrice should return the correct secondary oracle price, taking
     // into account secondary oracle 6-digit granularity
     function testFetchPricePrimaryOracleBreak() public {
+        mockTellor.setUpdateTime(1);
+
         // Primary oracle breaks with negative price
         mockChainlink.setPrevPrice(10 ** 7);
         mockChainlink.setPrice(-5000);
@@ -227,11 +229,19 @@ contract PriceFeedTest is TestSetup {
         mockTellor.setPrice(10 ** 18);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
+        // Check Raft PriceFeed where update time is previous value (so it will not get the new price)
+        assertEq(price, 123 * 10 ** 18);
+
+        // Secondary oracle price update time
+        mockTellor.setUpdateTime(2);
+        priceFeed.fetchPrice();
+        price = priceFeed.lastGoodPrice();
         // Check Raft PriceFeed gives 10, with 18 digit precision
         assertEq(price, 10 ** 18);
 
         // Secondary oracle price is 1e9 at 6-digit precision
         mockTellor.setPrice(10 ** 26);
+        mockTellor.setUpdateTime(3);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
         // Check Raft PriceFeed gives 1e9, with 18 digit precision
@@ -239,6 +249,7 @@ contract PriceFeedTest is TestSetup {
 
         // Secondary oracle price is 0.0001 at 6-digit precision
         mockTellor.setPrice(100 * 10 ** 12);
+        mockTellor.setUpdateTime(4);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
         // Check Raft PriceFeed gives 0.0001 with 18 digit precision
@@ -246,6 +257,7 @@ contract PriceFeedTest is TestSetup {
 
         // Secondary oracle price is 1234.56789 at 6-digit precision
         mockTellor.setPrice(1_234_567_890 * 10 ** 12);
+        mockTellor.setUpdateTime(5);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
         // Check Raft PriceFeed gives 0.0001 with 18 digit precision
@@ -357,10 +369,6 @@ contract PriceFeedTest is TestSetup {
         mockTellor.setPrice(123 * 10 ** 18);
 
         skip(3 hours + 1); // Fast forward 3 hours
-
-        // check secondary oracle price timestamp is out of date by > 3 hours
-        uint256 tellorUpdateTime = mockTellor.getTimestampbyQueryIdandIndex(bytes32(0), 0);
-        assertLt(tellorUpdateTime, block.timestamp - 3 hours);
 
         priceFeed.fetchPrice();
         uint256 price = priceFeed.lastGoodPrice();
@@ -500,6 +508,7 @@ contract PriceFeedTest is TestSetup {
         mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
         mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 25% from previous
         mockTellor.setPrice(105_000_001 * 10 ** 12); // secondary oracle price drops to 105.000001
+        mockTellor.setUpdateTime(1);
         priceFeed.fetchPrice();
         uint256 price = priceFeed.lastGoodPrice();
         assertEq(price, 100 * 10 ** 18); // return primary oracle price
@@ -509,6 +518,7 @@ contract PriceFeedTest is TestSetup {
         mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
         mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 25% from previous
         mockTellor.setPrice(94_999_999 * 10 ** 12); // Secondary oracle price drops to 94.999999
+        mockTellor.setUpdateTime(2);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
         assertEq(price, 94_999_999 * 10 ** 12); // return secondary oracle price
@@ -518,6 +528,7 @@ contract PriceFeedTest is TestSetup {
         mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
         mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 25% from previous
         mockTellor.setPrice(94_999_999 * 10 ** 12); // Secondary oracle price drops to 94.999999
+        mockTellor.setUpdateTime(3);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
         assertEq(price, 100 * 10 ** 18); // return primary oracle price
@@ -527,6 +538,7 @@ contract PriceFeedTest is TestSetup {
         mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
         mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 25% from previous
         mockTellor.setPrice(105_000_001 * 10 ** 12); // Secondary oracle price drops to 105.000001
+        mockTellor.setUpdateTime(4);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
         assertEq(price, 105_000_001 * 10 ** 12); // return secondary oracle price
@@ -537,6 +549,7 @@ contract PriceFeedTest is TestSetup {
         mockChainlink.setPrevPrice(1000 * 10 ** 8); // prev price = 1000
         mockChainlink.setPrice(100 * 10 ** 8); // price drops to 100: a drop of > 25% from previous
         mockTellor.setPrice(10 ** 18); // Secondary oracle price drops to 1
+        mockTellor.setUpdateTime(5);
         priceFeed.fetchPrice();
         price = priceFeed.lastGoodPrice();
         assertEq(price, 2 * 10 ** 18); // return lastGoodPrice
@@ -552,10 +565,6 @@ contract PriceFeedTest is TestSetup {
 
         // 3 hours pass with no secondary oracle updates
         skip(3 hours + 1);
-
-        // check secondary oracle price timestamp is out of date by > 3 hours
-        uint256 tellorUpdateTime = mockTellor.getTimestampbyQueryIdandIndex(bytes32(0), 0);
-        assertLt(tellorUpdateTime, block.timestamp - 3 hours);
 
         mockChainlink.setUpdateTime(block.timestamp);
 
@@ -655,10 +664,6 @@ contract PriceFeedTest is TestSetup {
 
         // 3 hours pass with no secondary oracle updates
         skip(3 hours + 1);
-
-        // check secondary oracle price timestamp is out of date by > 3 hours
-        uint256 tellorUpdateTime = mockTellor.getTimestampbyQueryIdandIndex(bytes32(0), 0);
-        assertLt(tellorUpdateTime, block.timestamp - 3 hours);
 
         mockChainlink.setUpdateTime(block.timestamp); // Primary oracle's price is current
 

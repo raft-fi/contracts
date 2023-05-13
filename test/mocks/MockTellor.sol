@@ -32,17 +32,8 @@ contract MockTellor is ITellor {
 
     // --- Mock data reporting functions ---
 
-    function getTimestampbyQueryIdandIndex(bytes32, uint256) external view returns (uint256) {
-        return updateTime;
-    }
-
-    function getNewValueCountbyQueryId(bytes32) external view returns (uint256) {
-        if (revertRequest) require(1 == 0, "Tellor request reverted");
-        return 1;
-    }
-
-    function retrieveData(bytes32, uint256) external view returns (bytes memory) {
-        return _toBytes(price);
+    function getDataBefore(bytes32, uint256) external view returns (bool, bytes memory, uint256) {
+        return (true, _toBytes(price), updateTime);
     }
 
     function _toBytes(uint256 x) internal pure returns (bytes memory b) {

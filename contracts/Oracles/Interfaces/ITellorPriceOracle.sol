@@ -8,7 +8,6 @@ interface ITellorPriceOracle is IPriceOracle {
     // --- Types ---
 
     struct TellorResponse {
-        bool isRetrieved;
         uint256 value;
         uint256 timestamp;
         bool success;
@@ -23,4 +22,10 @@ interface ITellorPriceOracle is IPriceOracle {
 
     /// @dev Wrapper contract that calls the Tellor system.
     function tellor() external returns (ITellor);
+
+    /// @dev Returns the last stored price from Tellor oracle
+    function lastStoredPrice() external returns (uint256);
+
+    /// @dev Returns the last stored timestamp from Tellor oracle
+    function lastStoredTimestamp() external returns (uint256);
 }
