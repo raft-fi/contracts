@@ -191,8 +191,9 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (!isRedistribution) {
             rToken.burn(msg.sender, entirePositionDebt);
-            _totalDebt -= entirePositionDebt;
-            emit TotalDebtChanged(_totalDebt);
+            uint256 newTotalDebt = _totalDebt - entirePositionDebt;
+            _totalDebt = newTotalDebt;
+            emit TotalDebtChanged(newTotalDebt);
 
             // Collateral is sent to protocol as a fee only in case of liquidation
             collateralToken.safeTransfer(feeRecipient, collateralLiquidationFee);
