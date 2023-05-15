@@ -105,7 +105,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
             revert CollateralTokenNotAdded();
         }
-        if (isDebtIncrease && debtChange > 0 && !raftCollateralTokens[collateralToken].isEnabled) {
+        if (isDebtIncrease && debtChange != 0 && !raftCollateralTokens[collateralToken].isEnabled) {
             revert CollateralTokenDisabled();
         }
 
@@ -541,7 +541,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         _checkValidFee(borrowingFee, debtAmount, maxFeePercentage);
 
-        if (borrowingFee > 0) {
+        if (borrowingFee != 0) {
             rToken.mint(feeRecipient, borrowingFee);
             emit RBorrowingFeePaid(position, borrowingFee);
         }
