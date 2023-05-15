@@ -132,7 +132,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
         }
 
-        uint256 debtBefore = raftDebtToken.balanceOf(position);
+        IERC20Indexable _raftDebtToken = raftDebtToken;
+        uint256 debtBefore = _raftDebtToken.balanceOf(position);
         if (!isDebtIncrease) {
             if (debtChange == type(uint256).max || (debtBefore != 0 && debtChange == debtBefore)) {
                 if (collateralChange != 0) {
@@ -149,7 +150,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
         _adjustCollateral(collateralToken, token, position, collateralChange, isCollateralIncrease);
 
-        uint256 positionDebt = raftDebtToken.balanceOf(position);
+        uint256 positionDebt = _raftDebtToken.balanceOf(position);
         uint256 positionCollateral = token.balanceOf(position);
 
         if (positionDebt == 0) {
@@ -173,13 +174,14 @@ contract PositionManager is FeeCollector, IPositionManager {
         (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
         IERC20Indexable token = raftCollateralTokens[collateralToken].token;
         uint256 entirePositionCollateral = token.balanceOf(position);
-        uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
+        IERC20Indexable _raftDebtToken = raftDebtToken;
+        uint256 entirePositionDebt = _raftDebtToken.balanceOf(position);
         uint256 icr = MathUtils._computeCR(entirePositionCollateral, entirePositionDebt, price);
         if (icr >= MathUtils.MCR) {
             revert NothingToLiquidate();
         }
 
-        if (entirePositionDebt == raftDebtToken.totalSupply()) {
+        if (entirePositionDebt == _raftDebtToken.totalSupply()) {
             revert CannotLiquidateLastPosition();
         }
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
