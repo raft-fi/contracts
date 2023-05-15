@@ -93,39 +93,50 @@ contract PositionManager is FeeCollector, IPositionManager {
         override
         returns (uint256 actualCollateralChange, uint256 actualDebtChange)
     {
-        if (
-            collateralTokenForPosition[position] != IERC20(address(0))
-                && collateralTokenForPosition[position] != collateralToken
-        ) {
-            revert PositionCollateralTokenMismatch();
+        if (collateralTokenForPosition[position] != IERC20(address(0))) {
+            if (collateralTokenForPosition[position] != collateralToken) {
+                revert PositionCollateralTokenMismatch();
+            }
         }
-        if (isDebtIncrease && (maxFeePercentage < borrowingSpread || maxFeePercentage > MathUtils._100_PERCENT)) {
-            revert InvalidMaxFeePercentage();
+        if (isDebtIncrease) {
+            if (maxFeePercentage < borrowingSpread || maxFeePercentage > MathUtils._100_PERCENT) {
+                revert InvalidMaxFeePercentage();
+            }
         }
         if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
             revert CollateralTokenNotAdded();
         }
-        if (isDebtIncrease && debtChange != 0 && !raftCollateralTokens[collateralToken].isEnabled) {
-            revert CollateralTokenDisabled();
+        if (isDebtIncrease) {
+            if (debtChange != 0) {
+                if (!raftCollateralTokens[collateralToken].isEnabled) {
+                    revert CollateralTokenDisabled();
+                }
+            }
         }
 
-        if (position != msg.sender && !isDelegateWhitelisted[position][msg.sender]) {
-            revert DelegateNotWhitelisted();
+        if (position != msg.sender) {
+            if ( !isDelegateWhitelisted[position][msg.sender]) {
+                revert DelegateNotWhitelisted();
+            }
         }
-        if (collateralChange == 0 && debtChange == 0) {
-            revert NoCollateralOrDebtChange();
+        if (collateralChange == 0) {
+            if (debtChange == 0) {
+                revert NoCollateralOrDebtChange();
+            }
         }
         if (address(permitSignature.token) == address(collateralToken)) {
             PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
         }
 
         uint256 debtBefore = raftDebtToken.balanceOf(position);
-        if (!isDebtIncrease && (debtChange == type(uint256).max || (debtBefore != 0 && debtChange == debtBefore))) {
-            if (collateralChange != 0 || isCollateralIncrease) {
-                revert WrongCollateralParamsForFullRepayment();
+        if (!isDebtIncrease) {
+            if (debtChange == type(uint256).max || (debtBefore != 0 && debtChange == debtBefore)) {
+                if (collateralChange != 0 || isCollateralIncrease) {
+                    revert WrongCollateralParamsForFullRepayment();
+                }
+                collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
+                debtChange = debtBefore;
             }
-            collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
-            debtChange = debtBefore;
         }
 
         _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
