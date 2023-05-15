@@ -149,7 +149,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
-        _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease);
+        _adjustCollateral(collateralToken, token, position, collateralChange, isCollateralIncrease);
 
         uint256 positionDebt = raftDebtToken.balanceOf(position);
         uint256 positionCollateral = token.balanceOf(position);
@@ -437,6 +437,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @param isCollateralIncrease True if the collateral is being increased, false otherwise.
     function _adjustCollateral(
         IERC20 collateralToken,
+        IERC20Indexable token,
         address position,
         uint256 collateralChange,
         bool isCollateralIncrease
@@ -448,10 +449,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         if (isCollateralIncrease) {
-            raftCollateralTokens[collateralToken].token.mint(position, collateralChange);
+            token.mint(position, collateralChange);
             collateralToken.safeTransferFrom(msg.sender, address(this), collateralChange);
         } else {
-            raftCollateralTokens[collateralToken].token.burn(position, collateralChange);
+            token.burn(position, collateralChange);
             collateralToken.safeTransfer(msg.sender, collateralChange);
         }
 
