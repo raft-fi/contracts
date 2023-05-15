@@ -93,8 +93,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         override
         returns (uint256 actualCollateralChange, uint256 actualDebtChange)
     {
-        if (collateralTokenForPosition[position] != IERC20(address(0))) {
-            if (collateralTokenForPosition[position] != collateralToken) {
+        IERC20 _collateralTokenForPosition = collateralTokenForPosition[position];
+        if (_collateralTokenForPosition != IERC20(address(0))) {
+            if (_collateralTokenForPosition != collateralToken) {
                 revert PositionCollateralTokenMismatch();
             }
         }
@@ -106,12 +107,14 @@ contract PositionManager is FeeCollector, IPositionManager {
                 revert InvalidMaxFeePercentage();
             }
         }
-        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
+        RaftCollateralTokenInfo storage raftCollateralToken = raftCollateralTokens[collateralToken];
+        IERC20Indexable token = raftCollateralToken.token;
+        if (address(token) == address(0)) {
             revert CollateralTokenNotAdded();
         }
         if (isDebtIncrease) {
             if (debtChange != 0) {
-                if (!raftCollateralTokens[collateralToken].isEnabled) {
+                if (!raftCollateralToken.isEnabled) {
                     revert CollateralTokenDisabled();
                 }
             }
@@ -140,7 +143,7 @@ contract PositionManager is FeeCollector, IPositionManager {
                 if (isCollateralIncrease) {
                     revert WrongCollateralParamsForFullRepayment();
                 }
-                collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
+                collateralChange = token.balanceOf(position);
                 debtChange = debtBefore;
             }
         }
@@ -149,7 +152,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease);
 
         uint256 positionDebt = raftDebtToken.balanceOf(position);
-        uint256 positionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
+        uint256 positionCollateral = token.balanceOf(position);
 
         if (positionDebt == 0) {
             if (positionCollateral != 0) {
