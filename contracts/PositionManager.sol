@@ -414,19 +414,21 @@ contract PositionManager is FeeCollector, IPositionManager {
             return;
         }
 
+        uint256 totalDebtChanged;
         if (isDebtIncrease) {
             uint256 totalDebtChange = debtChange + _triggerBorrowingFee(position, debtChange, maxFeePercentage);
             raftDebtToken.mint(position, totalDebtChange);
-            _totalDebt += totalDebtChange;
+            totalDebtChanged = _totalDebt + totalDebtChange;
             rToken.mint(msg.sender, debtChange);
         } else {
-            _totalDebt -= debtChange;
+            totalDebtChanged = _totalDebt - debtChange;
             raftDebtToken.burn(position, debtChange);
             rToken.burn(msg.sender, debtChange);
         }
+        _totalDebt = totalDebtChanged;
 
         emit DebtChanged(position, debtChange, isDebtIncrease);
-        emit TotalDebtChanged(_totalDebt);
+        emit TotalDebtChanged(totalDebtChanged);
     }
 
     /// @dev Adjusts the collateral of a given borrower by burning or minting the corresponding amount of Raft
