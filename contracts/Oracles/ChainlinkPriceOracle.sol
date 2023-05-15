@@ -154,11 +154,9 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         uint256 maxPrice = Math.max(currentScaledPrice, prevScaledPrice);
 
         /*
-        * Use the larger price as the denominator:
-        * - If price decreased, the percentage deviation is in relation to the the previous price.
-        * - If price increased, the percentage deviation is in relation to the current price.
+        * Use the previous round price as the denominator
         */
-        uint256 percentDeviation = (maxPrice - minPrice).divDown(maxPrice);
+        uint256 percentDeviation = (maxPrice - minPrice).divDown(prevScaledPrice);
 
         // Return true if price has more than doubled, or more than halved.
         return percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
