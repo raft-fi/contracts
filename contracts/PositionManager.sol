@@ -59,53 +59,6 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     uint256 private _totalDebt;
 
-    // --- Modifiers ---
-
-    /// @dev Checks if the collateral token has been added to the position manager, or reverts otherwise.
-    /// @param collateralToken The collateral token to check.
-    modifier collateralTokenExists(IERC20 collateralToken) {
-        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
-            revert CollateralTokenNotAdded();
-        }
-        _;
-    }
-
-    /// @dev Checks if the collateral token has enabled, or reverts otherwise. When the condition is false, the check
-    /// is skipped.
-    /// @param collateralToken The collateral token to check.
-    /// @param condition If true, the check will be performed.
-    modifier onlyEnabledCollateralTokenWhen(IERC20 collateralToken, bool condition) {
-        if (condition && !raftCollateralTokens[collateralToken].isEnabled) {
-            revert CollateralTokenDisabled();
-        }
-        _;
-    }
-
-    /// @dev Checks if the borrower has a position with the collateral token or doesn't have a position at all, or
-    /// reverts otherwise.
-    /// @param position The borrower to check.
-    /// @param collateralToken The collateral token to check.
-    modifier onlyDepositedCollateralTokenOrNew(address position, IERC20 collateralToken) {
-        if (
-            collateralTokenForPosition[position] != IERC20(address(0))
-                && collateralTokenForPosition[position] != collateralToken
-        ) {
-            revert PositionCollateralTokenMismatch();
-        }
-        _;
-    }
-
-    /// @dev Checks if the max fee percentage is between the borrowing spread and 100%, or reverts otherwise. When the
-    /// condition is false, the check is skipped.
-    /// @param maxFeePercentage The max fee percentage to check.
-    /// @param condition If true, the check will be performed.
-    modifier validMaxFeePercentageWhen(uint256 maxFeePercentage, bool condition) {
-        if (condition && (maxFeePercentage < borrowingSpread || maxFeePercentage > MathUtils._100_PERCENT)) {
-            revert InvalidMaxFeePercentage();
-        }
-        _;
-    }
-
     // --- Constructor ---
 
     /// @dev Initializes the position manager.
@@ -138,12 +91,24 @@ contract PositionManager is FeeCollector, IPositionManager {
     )
         external
         override
-        collateralTokenExists(collateralToken)
-        validMaxFeePercentageWhen(maxFeePercentage, isDebtIncrease)
-        onlyDepositedCollateralTokenOrNew(position, collateralToken)
-        onlyEnabledCollateralTokenWhen(collateralToken, isDebtIncrease && debtChange > 0)
         returns (uint256 actualCollateralChange, uint256 actualDebtChange)
     {
+        if (
+            collateralTokenForPosition[position] != IERC20(address(0))
+                && collateralTokenForPosition[position] != collateralToken
+        ) {
+            revert PositionCollateralTokenMismatch();
+        }
+        if (isDebtIncrease && (maxFeePercentage < borrowingSpread || maxFeePercentage > MathUtils._100_PERCENT)) {
+            revert InvalidMaxFeePercentage();
+        }
+        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
+            revert CollateralTokenNotAdded();
+        }
+        if (isDebtIncrease && debtChange > 0 && !raftCollateralTokens[collateralToken].isEnabled) {
+            revert CollateralTokenDisabled();
+        }
+
         if (position != msg.sender && !isDelegateWhitelisted[position][msg.sender]) {
             revert DelegateNotWhitelisted();
         }
@@ -345,8 +310,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         public
         override
         onlyOwner
-        collateralTokenExists(collateralToken)
     {
+        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
+            revert CollateralTokenNotAdded();
+        }
         bool previousIsEnabled = raftCollateralTokens[collateralToken].isEnabled;
         raftCollateralTokens[collateralToken].isEnabled = isEnabled;
 
