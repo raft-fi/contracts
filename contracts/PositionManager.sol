@@ -99,7 +99,10 @@ contract PositionManager is FeeCollector, IPositionManager {
             }
         }
         if (isDebtIncrease) {
-            if (maxFeePercentage < borrowingSpread || maxFeePercentage > MathUtils._100_PERCENT) {
+            if (maxFeePercentage < borrowingSpread) {
+                revert InvalidMaxFeePercentage();
+            }
+            if (maxFeePercentage > MathUtils._100_PERCENT) {
                 revert InvalidMaxFeePercentage();
             }
         }
@@ -131,7 +134,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 debtBefore = raftDebtToken.balanceOf(position);
         if (!isDebtIncrease) {
             if (debtChange == type(uint256).max || (debtBefore != 0 && debtChange == debtBefore)) {
-                if (collateralChange != 0 || isCollateralIncrease) {
+                if (collateralChange != 0) {
+                    revert WrongCollateralParamsForFullRepayment();
+                }
+                if (isCollateralIncrease) {
                     revert WrongCollateralParamsForFullRepayment();
                 }
                 collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
