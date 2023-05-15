@@ -99,6 +99,8 @@ contract PositionManager is FeeCollector, IPositionManager {
                 revert PositionCollateralTokenMismatch();
             }
         }
+        RaftCollateralTokenInfo storage raftCollateralToken = raftCollateralTokens[collateralToken];
+        IERC20Indexable token = raftCollateralToken.token;
         if (isDebtIncrease) {
             if (maxFeePercentage < borrowingSpread) {
                 revert InvalidMaxFeePercentage();
@@ -106,18 +108,14 @@ contract PositionManager is FeeCollector, IPositionManager {
             if (maxFeePercentage > MathUtils._100_PERCENT) {
                 revert InvalidMaxFeePercentage();
             }
-        }
-        RaftCollateralTokenInfo storage raftCollateralToken = raftCollateralTokens[collateralToken];
-        IERC20Indexable token = raftCollateralToken.token;
-        if (address(token) == address(0)) {
-            revert CollateralTokenNotAdded();
-        }
-        if (isDebtIncrease) {
             if (debtChange != 0) {
                 if (!raftCollateralToken.isEnabled) {
                     revert CollateralTokenDisabled();
                 }
             }
+        }
+        if (address(token) == address(0)) {
+            revert CollateralTokenNotAdded();
         }
 
         if (position != msg.sender) {
