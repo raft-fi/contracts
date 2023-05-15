@@ -542,19 +542,23 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @dev Update the last fee operation time only if time passed >= decay interval. This prevents base rate
     /// griefing.
     function _updateLastFeeOpTime() internal {
-        uint256 timePassed = block.timestamp - lastFeeOperationTime;
+        unchecked {
+            uint256 timePassed = block.timestamp - lastFeeOperationTime;
 
-        if (timePassed >= 1 minutes) {
-            lastFeeOperationTime = block.timestamp;
-            emit LastFeeOpTimeUpdated(block.timestamp);
+            if (timePassed >= 1 minutes) {
+                lastFeeOperationTime = block.timestamp;
+                emit LastFeeOpTimeUpdated(block.timestamp);
+            }
         }
     }
 
     function _calcDecayedBaseRate() internal view returns (uint256) {
-        uint256 minutesPassed = (block.timestamp - lastFeeOperationTime) / 1 minutes;
-        uint256 decayFactor = MathUtils._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
+        unchecked {
+            uint256 minutesPassed = (block.timestamp - lastFeeOperationTime) / 1 minutes;
+            uint256 decayFactor = MathUtils._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
-        return baseRate.mulDown(decayFactor);
+            return baseRate.mulDown(decayFactor);
+        }
     }
 
     function _triggerBorrowingFee(
