@@ -448,30 +448,43 @@ contract PriceFeedTest is TestSetup {
         assertEq(price, 150_000_001 * 10 ** 10);
     }
 
-    // Primary oracle price increase of >33%, return secondary oracle price
-    function testFetchPricePrimaryOraclePriceIncreaseMoreThan33Percent() public {
+    // Primary oracle price increase of >25%, return secondary oracle price
+    function testFetchPricePrimaryOraclePriceIncreaseMoreThan25Percent() public {
         priceFeed.setLastGoodPrice(2 * 10 ** 18);
 
         mockTellor.setPrice(203 * 10 ** 16);
         mockChainlink.setPrevPrice(2 * 10 ** 8); // price = 2
-        mockChainlink.setPrice(267 * 10 ** 6); // price increases to 2.67: an increase of > 33% from previous
+        mockChainlink.setPrice(250_000_001); // price increases to 2.50000001: an increase of > 25% from previous
 
         priceFeed.fetchPrice();
         uint256 price = priceFeed.lastGoodPrice();
         assertEq(price, 203 * 10 ** 16);
     }
 
-    // Primary oracle price increase of 33%, return primary oracle price
-    function testFetchPricePrimaryOraclePriceIncreaseOf33Percent() public {
+    // Primary oracle price increase of <25%, return primary oracle price
+    function testFetchPricePrimaryOraclePriceIncreaseLessThan25Percent() public {
+        priceFeed.setLastGoodPrice(2 * 10 ** 18);
+
+        mockTellor.setPrice(203 * 10 ** 16);
+        mockChainlink.setPrevPrice(2 * 10 ** 8); // price = 2
+        mockChainlink.setPrice(249_999_999); // price increases to 2.49999999: an increase of < 25% from previous
+
+        priceFeed.fetchPrice();
+        uint256 price = priceFeed.lastGoodPrice();
+        assertEq(price, 249_999_999 * 10 ** 10);
+    }
+
+    // Primary oracle price increase of 25%, return primary oracle price
+    function testFetchPricePrimaryOraclePriceIncreaseOf25Percent() public {
         priceFeed.setLastGoodPrice(2 * 10 ** 18);
 
         mockTellor.setPrice(203 * 10 ** 4);
         mockChainlink.setPrevPrice(2 * 10 ** 8); // price = 2
-        mockChainlink.setPrice(266 * 10 ** 6); // price increases to 2.66: an increase of 33% from previous
+        mockChainlink.setPrice(25 * 10 ** 7); // price increases to 2.5: an increase of 25% from previous
 
         priceFeed.fetchPrice();
         uint256 price = priceFeed.lastGoodPrice();
-        assertEq(price, 266 * 10 ** 16);
+        assertEq(price, 25 * 10 ** 17);
     }
 
     // Primary oracle price drop of >25% and secondary oracle price matches: return primary oracle price
