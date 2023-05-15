@@ -203,7 +203,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         _closePosition(collateralToken, token, position, true);
 
-        _updateDebtAndCollateralIndex(collateralToken);
+        _updateDebtAndCollateralIndex(collateralToken, token);
 
         emit Liquidation(
             msg.sender,
@@ -256,7 +256,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         // Send collateral to account
         collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
 
-        _updateDebtAndCollateralIndex(collateralToken);
+        _updateDebtAndCollateralIndex(collateralToken, raftCollateralTokens[collateralToken].token);
 
         emit Redemption(msg.sender, debtAmount, collateralToRedeem, redemptionFee, rebate);
     }
@@ -465,9 +465,9 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     /// @dev Updates debt and collateral indexes for a given collateral token.
     /// @param collateralToken The collateral token for which to update the indexes.
-    function _updateDebtAndCollateralIndex(IERC20 collateralToken) internal {
+    function _updateDebtAndCollateralIndex(IERC20 collateralToken, IERC20Indexable token) internal {
         raftDebtToken.setIndex(_totalDebt);
-        raftCollateralTokens[collateralToken].token.setIndex(collateralToken.balanceOf(address(this)));
+        token.setIndex(collateralToken.balanceOf(address(this)));
     }
 
     function _closePosition(IERC20 collateralToken, IERC20Indexable token, address position, bool burnTokens) internal {
