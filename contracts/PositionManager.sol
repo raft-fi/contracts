@@ -115,7 +115,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         if (position != msg.sender) {
-            if ( !isDelegateWhitelisted[position][msg.sender]) {
+            if (!isDelegateWhitelisted[position][msg.sender]) {
                 revert DelegateNotWhitelisted();
             }
         }
