@@ -157,7 +157,7 @@ contract PositionManager is FeeCollector, IPositionManager {
                 revert InvalidPosition();
             }
             // position was closed, remove it
-            _closePosition(collateralToken, position, false);
+            _closePosition(collateralToken, token, position, false);
         } else {
             _checkValidPosition(collateralToken, positionDebt, positionCollateral);
 
@@ -171,7 +171,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function liquidate(IERC20 collateralToken, address position) external override {
         (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
-        uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
+        IERC20Indexable token = raftCollateralTokens[collateralToken].token;
+        uint256 entirePositionCollateral = token.balanceOf(position);
         uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
         uint256 icr = MathUtils._computeCR(entirePositionCollateral, entirePositionDebt, price);
         if (icr >= MathUtils.MCR) {
@@ -197,7 +198,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         collateralToken.safeTransfer(msg.sender, collateralToSendToLiquidator);
 
-        _closePosition(collateralToken, position, true);
+        _closePosition(collateralToken, token, position, true);
 
         _updateDebtAndCollateralIndex(collateralToken);
 
@@ -466,12 +467,12 @@ contract PositionManager is FeeCollector, IPositionManager {
         raftCollateralTokens[collateralToken].token.setIndex(collateralToken.balanceOf(address(this)));
     }
 
-    function _closePosition(IERC20 collateralToken, address position, bool burnTokens) internal {
+    function _closePosition(IERC20 collateralToken, IERC20Indexable token, address position, bool burnTokens) internal {
         collateralTokenForPosition[position] = IERC20(address(0));
 
         if (burnTokens) {
             raftDebtToken.burn(position, type(uint256).max);
-            raftCollateralTokens[collateralToken].token.burn(position, type(uint256).max);
+            token.burn(position, type(uint256).max);
         }
         emit PositionClosed(position, collateralToken);
     }
