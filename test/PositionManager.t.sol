@@ -5,20 +5,14 @@ import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
-import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerTest is TestSetup {
-    PriceFeedTestnet public priceFeed;
-
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
         priceFeed.setPrice(1e18);
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -181,7 +175,7 @@ contract PositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
 
         assertEq(raftCollateralToken.balanceOf(ALICE), alicePosition.collateral);
         assertEq(raftCollateralToken.balanceOf(BOB), bobPosition.collateral);
@@ -211,5 +205,22 @@ contract PositionManagerTest is TestSetup {
 
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), alicePosition.totalDebt);
         assertEq(positionManager.raftDebtToken().balanceOf(BOB), bobPosition.totalDebt);
+    }
+
+    function testRedemptionDisabled() public {
+        positionManager.modifyCollateralToken(collateralToken, true, false);
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: collateralToken,
+            position: ALICE,
+            icr: 150 * MathUtils._100_PERCENT / 100
+        });
+        vm.expectRevert(
+            abi.encodeWithSelector(IPositionManager.RedemptionsForCollateralTokenDisabled.selector, collateralToken)
+        );
+        positionManager.redeemCollateral(collateralToken, 1, 1e18);
+        vm.stopPrank();
     }
 }

@@ -6,20 +6,14 @@ import { PositionManager } from "../contracts/PositionManager.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
-import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerAddCollateralTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
-    PriceFeedTestnet public priceFeed;
-
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -106,7 +100,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         uint256 collateralTopUpAmount = 1 ether;
 

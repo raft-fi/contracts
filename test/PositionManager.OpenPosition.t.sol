@@ -13,7 +13,6 @@ import { TestSetup } from "./utils/TestSetup.t.sol";
 contract PositionManagerOpenPositionTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
-    PriceFeedTestnet public priceFeed;
     IRToken public rToken;
 
     function setUp() public override {
@@ -530,7 +529,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
     // Creates a new position and assigns the correct collateral and debt amount
     function testPositionCollateralDebtAmount() public {
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 collateralBefore = raftCollateralToken.balanceOf(address(this));
         uint256 debtBefore = positionManager.raftDebtToken().balanceOf(address(this));
 
@@ -576,7 +575,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
         uint256 positionManagerCollateralAfter = collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerCollateralAfter, alicePositionCollateral);

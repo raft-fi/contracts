@@ -20,8 +20,6 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
     uint256 public constant DEFAULT_PRICE = 200e18;
 
-    PriceFeedTestnet public priceFeed;
-
     TokenMock public collateralTokenSecond;
     PriceFeedTestnet public priceFeedSecond;
 
@@ -29,9 +27,6 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralTokenSecond = new TokenMock();
         priceFeedSecond = new PriceFeedTestnet();
@@ -48,14 +43,14 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         TokenMock collateralTokenThird = new TokenMock();
         PriceFeedTestnet priceFeedThird = new PriceFeedTestnet();
 
-        (IERC20Indexable raftCollateralTokenThird, bool raftCollateralTokenThirdEnabled) =
+        (IERC20Indexable raftCollateralTokenThird, bool raftCollateralTokenThirdEnabled,) =
             positionManager.raftCollateralTokens(collateralTokenThird);
         assertEq(address(raftCollateralTokenThird), address(0));
         assertFalse(raftCollateralTokenThirdEnabled);
 
         positionManager.addCollateralToken(collateralTokenThird, priceFeedThird);
 
-        (raftCollateralTokenThird, raftCollateralTokenThirdEnabled) =
+        (raftCollateralTokenThird, raftCollateralTokenThirdEnabled,) =
             positionManager.raftCollateralTokens(collateralTokenThird);
         assertTrue(raftCollateralTokenThird != IERC20(address(0)));
         assertTrue(raftCollateralTokenThirdEnabled);
@@ -305,10 +300,10 @@ contract PositionManagerMultiCollateralTest is TestSetup {
     }
 
     function testDisabledCollateralToken() public {
-        (, bool raftCollateralTokenFirstEnabled) = positionManager.raftCollateralTokens(collateralToken);
+        (, bool raftCollateralTokenFirstEnabled,) = positionManager.raftCollateralTokens(collateralToken);
         assertTrue(raftCollateralTokenFirstEnabled);
 
-        (, bool raftCollateralTokenSecondEnabled) = positionManager.raftCollateralTokens(collateralTokenSecond);
+        (, bool raftCollateralTokenSecondEnabled,) = positionManager.raftCollateralTokens(collateralTokenSecond);
         assertTrue(raftCollateralTokenSecondEnabled);
 
         collateralTokenSecond.mint(BOB, 10e36);
@@ -335,9 +330,9 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        positionManager.modifyCollateralToken(collateralTokenSecond, false);
+        positionManager.modifyCollateralToken(collateralTokenSecond, false, true);
 
-        (, raftCollateralTokenSecondEnabled) = positionManager.raftCollateralTokens(collateralTokenSecond);
+        (, raftCollateralTokenSecondEnabled,) = positionManager.raftCollateralTokens(collateralTokenSecond);
         assertFalse(raftCollateralTokenSecondEnabled);
 
         // Alice can still withdraw R
@@ -372,10 +367,10 @@ contract PositionManagerMultiCollateralTest is TestSetup {
     function testInvalidCollateralTokenModification() public {
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
-        positionManager.modifyCollateralToken(collateralToken, false);
+        positionManager.modifyCollateralToken(collateralToken, false, true);
 
         TokenMock collateralTokenThird = new TokenMock();
         vm.expectRevert(IPositionManager.CollateralTokenNotAdded.selector);
-        positionManager.modifyCollateralToken(collateralTokenThird, true);
+        positionManager.modifyCollateralToken(collateralTokenThird, true, true);
     }
 }

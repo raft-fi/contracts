@@ -12,7 +12,6 @@ import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 import { MockAMM } from "./mocks/MockAMM.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
-import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 
@@ -21,15 +20,10 @@ contract OneStepLeverageTest is TestSetup {
 
     uint256 public constant LIQUIDATION_PROTOCOL_FEE = 0;
 
-    PriceFeedTestnet public priceFeed;
     OneStepLeverage public oneStepLeverage;
 
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);
         oneStepLeverage = new OneStepLeverage(positionManager, mockAmm, collateralToken);
@@ -113,7 +107,7 @@ contract OneStepLeverageTest is TestSetup {
 
         uint256 debtAfterLeverage = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 collateralToSwap = debtAfterLeverage * (1e18 + 1e16) / price;
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
 
         oneStepLeverage.manageLeveragedPosition(
             debtAfterLeverage, false, 0, false, "", collateralToSwap, MathUtils._100_PERCENT
@@ -124,7 +118,7 @@ contract OneStepLeverageTest is TestSetup {
     }
 
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 debtAfter = positionManager.raftDebtToken().balanceOf(position);
         uint256 collAfter = raftCollateralToken.balanceOf(position);
         (uint256 price,) = positionManager.priceFeeds(collateralToken).fetchPrice();

@@ -95,6 +95,15 @@ contract PositionManager is FeeCollector, IPositionManager {
         _;
     }
 
+    /// @dev Checks if redemptions are enabled for particular collateral token.
+    /// @param collateralToken Collateral user is trying to redeem.
+    modifier collateralRedemptionsEnabled(IERC20 collateralToken) {
+        if (!raftCollateralTokens[collateralToken].redemptionsEnabled) {
+            revert RedemptionsForCollateralTokenDisabled(collateralToken);
+        }
+        _;
+    }
+
     /// @dev Checks if the max fee percentage is between the borrowing spread and 100%, or reverts otherwise. When the
     /// condition is false, the check is skipped.
     /// @param maxFeePercentage The max fee percentage to check.
@@ -241,6 +250,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     )
         external
         override
+        collateralRedemptionsEnabled(collateralToken)
     {
         if (maxFeePercentage < MIN_REDEMPTION_SPREAD || maxFeePercentage > MathUtils._100_PERCENT) {
             revert MaxFeePercentageOutOfRange();
@@ -344,18 +354,22 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function modifyCollateralToken(
         IERC20 collateralToken,
-        bool isEnabled
+        bool isEnabled,
+        bool redemptionsEnabled
     )
         public
         override
         onlyOwner
         collateralTokenExists(collateralToken)
     {
-        bool previousIsEnabled = raftCollateralTokens[collateralToken].isEnabled;
+        RaftCollateralTokenInfo memory previousInfo = raftCollateralTokens[collateralToken];
         raftCollateralTokens[collateralToken].isEnabled = isEnabled;
+        raftCollateralTokens[collateralToken].redemptionsEnabled = redemptionsEnabled;
 
-        if (previousIsEnabled != isEnabled) {
-            emit CollateralTokenModified(collateralToken, raftCollateralTokens[collateralToken].token, isEnabled);
+        if (previousInfo.isEnabled != isEnabled || previousInfo.redemptionsEnabled != redemptionsEnabled) {
+            emit CollateralTokenModified(
+                collateralToken, raftCollateralTokens[collateralToken].token, isEnabled, redemptionsEnabled
+            );
         }
     }
 

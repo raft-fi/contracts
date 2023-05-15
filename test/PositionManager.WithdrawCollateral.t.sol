@@ -5,20 +5,14 @@ import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
-import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerWithdrawCollateralTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
-    PriceFeedTestnet public priceFeed;
-
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -132,7 +126,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 bobPositionCollateral = raftCollateralToken.balanceOf(BOB);
         uint256 carolPositionCollateral = raftCollateralToken.balanceOf(CAROL);
 
@@ -234,7 +228,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
 
         // Check position is active
@@ -283,7 +277,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 alicePositionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
 
         uint256 withdrawAmount = 1 ether;

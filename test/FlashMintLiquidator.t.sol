@@ -7,22 +7,17 @@ import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { FlashMintLiquidator } from "../contracts/FlashMintLiquidator.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
-import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { MockAMM } from "./mocks/MockAMM.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
-    PriceFeedTestnet public priceFeed;
     IRToken public rToken;
     FlashMintLiquidator public liquidator;
     MockAMM public mockAmm;
 
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
 

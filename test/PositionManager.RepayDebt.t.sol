@@ -11,15 +11,10 @@ import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerRepayDebtTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
-
-    PriceFeedTestnet public priceFeed;
     IRToken public rToken;
 
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
 

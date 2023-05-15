@@ -6,19 +6,14 @@ import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
-import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
-    PriceFeedTestnet public priceFeed;
     IRToken public rToken;
 
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
 

@@ -99,7 +99,7 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             }
             fullRepayment = (debtChange == positionDebt);
 
-            (IERC20Indexable raftCollateralToken,) =
+            (IERC20Indexable raftCollateralToken,,) =
                 IPositionManager(positionManager).raftCollateralTokens(collateralToken);
             actualCollateralChange =
                 fullRepayment ? raftCollateralToken.balanceOf(msg.sender) : principalCollateralChange;

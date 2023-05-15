@@ -16,9 +16,11 @@ interface IPositionManager is IFeeCollector {
     /// @dev Information for a Raft indexable collateral token.
     /// @param token The Raft indexable collateral token.
     /// @param isEnabled Whether the token can be used as collateral or not.
+    /// @param redemptionsEnabled Whether collateral can be used to redeem R.
     struct RaftCollateralTokenInfo {
         IERC20Indexable token;
         bool isEnabled;
+        bool redemptionsEnabled;
     }
 
     // --- Events ---
@@ -39,7 +41,10 @@ interface IPositionManager is IFeeCollector {
     /// @param collateralToken The token used as collateral.
     /// @param raftCollateralToken The Raft indexable collateral token for the given collateral token.
     /// @param isEnabled True if the token is enabled, false otherwise.
-    event CollateralTokenModified(IERC20 collateralToken, IERC20Indexable raftCollateralToken, bool isEnabled);
+    /// @param redemptionsEnabled Whether collateral can be used to redeem R.
+    event CollateralTokenModified(
+        IERC20 collateralToken, IERC20Indexable raftCollateralToken, bool isEnabled, bool redemptionsEnabled
+    );
 
     /// @dev A delegate has been whitelisted for a certain position.
     /// @param position The position for which the delegate was whitelisted.
@@ -186,6 +191,10 @@ interface IPositionManager is IFeeCollector {
     /// @param maxFeePercentage The maximum fee percentage.
     error FeeExceedsMaxFee(uint256 fee, uint256 amount, uint256 maxFeePercentage);
 
+    /// @dev Cannot redeem R for collateral token as redemptions are disabled.
+    /// @param collateralToken Collateral user is trying to redeem.
+    error RedemptionsForCollateralTokenDisabled(IERC20 collateralToken);
+
     /// @dev Borrower uses a different collateral token already.
     error PositionCollateralTokenMismatch();
 
@@ -222,10 +231,11 @@ interface IPositionManager is IFeeCollector {
     /// @param collateralToken The token used as collateral.
     /// @return raftCollateralToken The Raft indexable collateral token.
     /// @return isEnabled Whether the collateral token can be used as collateral or not.
+    /// @return redemptionsEnabled Whether collateral can be used to redeem R.
     function raftCollateralTokens(IERC20 collateralToken)
         external
         view
-        returns (IERC20Indexable raftCollateralToken, bool isEnabled);
+        returns (IERC20Indexable raftCollateralToken, bool isEnabled, bool redemptionsEnabled);
 
     /// @dev Returns the collateral token that a given position used for their position.
     /// @param position The address of the borrower.
@@ -240,7 +250,8 @@ interface IPositionManager is IFeeCollector {
     /// @dev Enables or disables a collateral token. Reverts if the collateral token has not been added.
     /// @param collateralToken The collateral token.
     /// @param isEnabled Whether the collateral token can be used as collateral or not.
-    function modifyCollateralToken(IERC20 collateralToken, bool isEnabled) external;
+    /// @param redemptionsEnabled Whether collateral can be used to redeem R.
+    function modifyCollateralToken(IERC20 collateralToken, bool isEnabled, bool redemptionsEnabled) external;
 
     /// @dev Returns the price feed for a given collateral token.
     /// @param collateralToken The token used as collateral.

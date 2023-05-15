@@ -13,16 +13,11 @@ contract PositionManagerRedemptionTest is TestSetup {
 
     uint256 public constant DEFAULT_PRICE = 200e18;
 
-    PriceFeedTestnet public priceFeed;
     IRToken public rToken;
 
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
         rToken = positionManager.rToken();
-
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -40,7 +35,7 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 rToRedeem = 100_000e18;
         uint256 collateralAmount = rToMint.divUp(DEFAULT_PRICE).mulUp(initialCR);
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralAmount);
@@ -85,7 +80,7 @@ contract PositionManagerRedemptionTest is TestSetup {
     function testRedeemCollateralWhenMultipleActivePositions() public {
         uint256 rToRedeem = 100_000e18;
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
 
         uint256 initialCR_A = 1.5e18;
         uint256 rToMint_A = 400_000e18;

@@ -12,7 +12,6 @@ import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 import { MockAMM } from "./mocks/MockAMM.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
-import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { IWstETH } from "../contracts/Dependencies/IWstETH.sol";
 import { IStETH } from "../contracts/Dependencies/IStETH.sol";
@@ -24,7 +23,6 @@ contract OneStepLeverageStETHTest is TestSetup {
 
     IWstETH public constant wstETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
     address public constant ETH_WHALE = 0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8;
-    PriceFeedTestnet public priceFeed;
     OneStepLeverageStETH public oneStepLeverageStETH;
     IStETH public stETH;
 
@@ -33,7 +31,6 @@ contract OneStepLeverageStETHTest is TestSetup {
         super.setUp();
 
         stETH = IStETH(address(wstETH.stETH()));
-        priceFeed = new PriceFeedTestnet();
         positionManager.addCollateralToken(wstETH, priceFeed);
 
         IAMM mockAmm = new MockAMM(wstETH, positionManager.rToken(), 200e18);
@@ -135,7 +132,7 @@ contract OneStepLeverageStETHTest is TestSetup {
     }
 
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(wstETH);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(wstETH);
         uint256 debtAfter = positionManager.raftDebtToken().balanceOf(position);
         uint256 collAfter = raftCollateralToken.balanceOf(position);
         (uint256 price,) = positionManager.priceFeeds(wstETH).fetchPrice();

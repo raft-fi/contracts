@@ -13,14 +13,10 @@ import { TestSetup } from "./utils/TestSetup.t.sol";
 contract PositionManagerClosePositionTest is TestSetup {
     uint256 public constant DEFAULT_PRICE = 200e18;
 
-    PriceFeedTestnet public priceFeed;
     IRToken public rToken;
 
     function setUp() public override {
         super.setUp();
-
-        priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
 
         rToken = positionManager.rToken();
 
@@ -55,7 +51,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 alicePositionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 bobRBalance = rToken.balanceOf(BOB);
@@ -113,7 +109,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 alicePositionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 bobRBalance = rToken.balanceOf(BOB);
@@ -203,7 +199,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         uint256 borrowingRate = positionManager.getBorrowingRate();
         assertGt(borrowingRate, 0);
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
 
         // Confirm Bob's R balance is less than his position debt
         uint256 bobRBalance = rToken.balanceOf(BOB);

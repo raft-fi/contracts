@@ -9,6 +9,7 @@ import { PositionManager } from "../../contracts/PositionManager.sol";
 import { IPriceFeed } from "../../contracts/Interfaces/IPriceFeed.sol";
 import { ISplitLiquidationCollateral } from "../../contracts/Interfaces/ISplitLiquidationCollateral.sol";
 import { SplitLiquidationCollateral } from "../../contracts/SplitLiquidationCollateral.sol";
+import { PriceFeedTestnet } from "../mocks/PriceFeedTestnet.sol";
 import { WstETHTokenMock } from "../mocks/WstETHTokenMock.sol";
 import { MathUtils } from "../../contracts/Dependencies/MathUtils.sol";
 
@@ -35,6 +36,8 @@ contract TestSetup is Test {
     WstETHTokenMock public collateralToken;
     ISplitLiquidationCollateral public splitLiquidationCollateral;
 
+    PriceFeedTestnet public priceFeed;
+
     ERC20PermitSignature public emptySignature;
 
     function setUp() public virtual {
@@ -43,5 +46,9 @@ contract TestSetup is Test {
         positionManager = new PositionManager(splitLiquidationCollateral);
         positionManager.setRedemptionSpread(MathUtils._100_PERCENT / 100); // 1%
         positionManager.setRedemptionRebate(MathUtils._100_PERCENT / 2); // 50%
+        priceFeed = new PriceFeedTestnet();
+
+        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.modifyCollateralToken(collateralToken, true, true);
     }
 }

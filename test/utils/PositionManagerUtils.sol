@@ -180,7 +180,7 @@ library PositionManagerUtils {
 
         if (icr > 0) {
             IERC20 raftDebtToken = positionManager.raftDebtToken();
-            (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
+            (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(_collateralToken);
             uint256 debt = raftDebtToken.balanceOf(position);
             uint256 collateral = raftCollateralToken.balanceOf(position);
             uint256 price = priceFeed.getPrice();
@@ -246,7 +246,7 @@ library PositionManagerUtils {
         view
         returns (uint256)
     {
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         return MathUtils._computeCR(
             raftCollateralToken.balanceOf(position), positionManager.raftDebtToken().balanceOf(position), price
         );
