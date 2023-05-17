@@ -150,6 +150,10 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (collateralChange == 0 && debtChange == 0) {
             revert NoCollateralOrDebtChange();
         }
+        if (collateralChange == type(uint256).max) {
+            revert MaxCollateralChangeExceeded();
+        }
+        
         if (address(permitSignature.token) == address(collateralToken)) {
             PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
         }
