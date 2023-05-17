@@ -3,6 +3,8 @@
   out = "out"
   solc_version = "0.8.19"
   via-ir = true
+  optimizer = true
+  optimizer_runs = 200000
 
 [fmt]
   bracket_spacing = true
