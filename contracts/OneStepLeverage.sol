@@ -116,7 +116,8 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             minReturnOrAmountToSell,
             maxFeePercentage,
             releasePrincipals,
-            fullRepayment
+            fullRepayment,
+            actualCollateralChange
         );
 
         IRToken rToken = IPositionManager(positionManager).rToken();
@@ -151,8 +152,9 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             uint256 minReturnOrAmountToSell,
             uint256 maxFeePercentage,
             bool releasePrincipals,
-            bool fullRepayment
-        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256, bool, bool));
+            bool fullRepayment,
+            uint256 actualCollateralChange
+        ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256, bool, bool, uint256));
 
         uint256 leveragedCollateralChange = isDebtIncrease
             ? amm.swap(rToken, collateralToken, amount, minReturnOrAmountToSell, ammData)
@@ -185,8 +187,8 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             emptySignature
         );
 
-        if (releasePrincipals && !principalCollateralIncrease && principalCollateralChange > 0) {
-            collateralToken.safeTransfer(user, principalCollateralChange);
+        if (releasePrincipals && !principalCollateralIncrease && actualCollateralChange > 0) {
+            collateralToken.safeTransfer(user, actualCollateralChange - (fullRepayment ? minReturnOrAmountToSell : 0));
         }
         if (!isDebtIncrease) {
             uint256 repayAmount = amount + fee;
