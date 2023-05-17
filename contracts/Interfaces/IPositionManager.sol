@@ -209,6 +209,9 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Cannot change collateral in case of repaying the whole debt.
     error WrongCollateralParamsForFullRepayment();
+    
+    /// @dev Maximum collateral change has been exceeded
+    error MaxCollateralChangeExceeded();
 
     // --- Functions ---
 
