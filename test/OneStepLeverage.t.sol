@@ -111,6 +111,8 @@ contract OneStepLeverageTest is TestSetup {
             targetDebt, true, collateralAmount, true, "", minReturn, MathUtils._100_PERCENT
         );
 
+        uint256 collateralBalanceBefore = collateralToken.balanceOf(ALICE);
+
         uint256 debtAfterLeverage = positionManager.raftDebtToken().balanceOf(ALICE);
         uint256 collateralToSwap = debtAfterLeverage * (1e18 + 1e16) / price;
         (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
@@ -121,6 +123,8 @@ contract OneStepLeverageTest is TestSetup {
 
         assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
         assertEq(raftCollateralToken.balanceOf(ALICE), 0);
+        assertGt(collateralToken.balanceOf(ALICE), collateralBalanceBefore);
+        assertEq(collateralToken.balanceOf(address(oneStepLeverage)), 0);
     }
 
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
