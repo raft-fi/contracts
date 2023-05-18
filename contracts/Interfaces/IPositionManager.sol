@@ -320,12 +320,6 @@ interface IPositionManager is IFeeCollector {
     /// @return The borrowing fee.
     function getBorrowingFee(uint256 debtAmount) external view returns (uint256);
 
-    /// @return The min redemption spread.
-    function MIN_REDEMPTION_SPREAD() external view returns (uint256);
-
-    /// @return The max redemption spread.
-    function MAX_REDEMPTION_SPREAD() external view returns (uint256);
-
     /// @return The current redemption spread.
     function redemptionSpread() external view returns (uint256);
 

@@ -116,7 +116,7 @@ contract PositionManagerTest is TestSetup {
     // --- Redemption Spread ---
 
     function testSetRedemptionSpread() public {
-        uint256 spread = positionManager.MIN_REDEMPTION_SPREAD() + 1;
+        uint256 spread = 1e5;
         positionManager.setRedemptionSpread(spread);
         assertEq(positionManager.redemptionSpread(), spread);
     }
@@ -129,11 +129,7 @@ contract PositionManagerTest is TestSetup {
     }
 
     function testOutOfRangeSetRedemptionSpread() public {
-        uint256 minRedemptionSpread = positionManager.MIN_REDEMPTION_SPREAD();
-        vm.expectRevert(IPositionManager.RedemptionSpreadOutOfRange.selector);
-        positionManager.setRedemptionSpread(minRedemptionSpread - 1);
-
-        uint256 maxRedemptionSpread = positionManager.MAX_REDEMPTION_SPREAD();
+        uint256 maxRedemptionSpread = 1e18 + 1;
         vm.expectRevert(IPositionManager.RedemptionSpreadOutOfRange.selector);
         positionManager.setRedemptionSpread(maxRedemptionSpread + 1);
     }
