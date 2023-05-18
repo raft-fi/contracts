@@ -177,7 +177,7 @@ contract PositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
 
         assertEq(raftCollateralToken.balanceOf(ALICE), alicePosition.collateral);
         assertEq(raftCollateralToken.balanceOf(BOB), bobPosition.collateral);
@@ -205,7 +205,8 @@ contract PositionManagerTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), alicePosition.totalDebt);
-        assertEq(positionManager.raftDebtToken().balanceOf(BOB), bobPosition.totalDebt);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertEq(raftDebtToken.balanceOf(ALICE), alicePosition.totalDebt);
+        assertEq(raftDebtToken.balanceOf(BOB), bobPosition.totalDebt);
     }
 }

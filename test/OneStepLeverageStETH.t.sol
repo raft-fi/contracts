@@ -135,8 +135,9 @@ contract OneStepLeverageStETHTest is TestSetup {
     }
 
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(wstETH);
-        uint256 debtAfter = positionManager.raftDebtToken().balanceOf(position);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(wstETH);
+        uint256 debtAfter = raftDebtToken.balanceOf(position);
         uint256 collAfter = raftCollateralToken.balanceOf(position);
         (uint256 price,) = positionManager.priceFeeds(wstETH).fetchPrice();
         uint256 collAfterExpressedInR = price.mulDown(collAfter);

@@ -17,6 +17,8 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
 
     IAMM public immutable override amm;
     IERC20 public immutable override collateralToken;
+    IERC20Indexable public immutable override raftDebtToken;
+    IERC20Indexable public immutable override raftCollateralToken;
 
     uint256 public constant override MAX_LEFTOVER_R = 1e18;
 
@@ -35,6 +37,8 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         }
         amm = amm_;
         collateralToken = collateralToken_;
+        (raftCollateralToken, raftDebtToken,) =
+            IPositionManager(positionManager).raftCollateralTokens(collateralToken_);
 
         // We approve tokens here so we do not need to do approvals in particular actions.
         // Approved contracts are known, so this should be considered as safe.
@@ -93,14 +97,12 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
 
         bool fullRepayment;
         if (!isDebtIncrease) {
-            uint256 positionDebt = IPositionManager(positionManager).raftDebtToken().balanceOf(msg.sender);
+            uint256 positionDebt = raftDebtToken.balanceOf(msg.sender);
             if (debtChange == type(uint256).max) {
                 debtChange = positionDebt;
             }
             fullRepayment = (debtChange == positionDebt);
 
-            (IERC20Indexable raftCollateralToken,) =
-                IPositionManager(positionManager).raftCollateralTokens(collateralToken);
             actualCollateralChange =
                 fullRepayment ? raftCollateralToken.balanceOf(msg.sender) : principalCollateralChange;
         } else {

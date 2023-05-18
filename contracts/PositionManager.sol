@@ -34,7 +34,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Immutables ---
 
     IRToken public immutable override rToken;
-    IERC20Indexable public immutable override raftDebtToken;
 
     // --- Variables ---
 
@@ -55,14 +54,14 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     uint256 public override lastFeeOperationTime;
 
-    uint256 private _totalDebt;
+    mapping(IERC20 collateralToken => uint256 totalDebt) private _totalDebt;
 
     // --- Modifiers ---
 
     /// @dev Checks if the collateral token has been added to the position manager, or reverts otherwise.
     /// @param collateralToken The collateral token to check.
     modifier collateralTokenExists(IERC20 collateralToken) {
-        if (address(raftCollateralTokens[collateralToken].token) == address(0)) {
+        if (address(raftCollateralTokens[collateralToken].collateralToken) == address(0)) {
             revert CollateralTokenNotAdded();
         }
         _;
@@ -110,16 +109,12 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @param newSplitLiquidationCollateral The split liquidation collateral contract.
     constructor(ISplitLiquidationCollateral newSplitLiquidationCollateral) FeeCollector(msg.sender) {
         rToken = new RToken(address(this), msg.sender);
-        raftDebtToken = new ERC20Indexable(
-            address(this),
-            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(rToken)).name()), " debt")),
-            string(bytes.concat("r", bytes(IERC20Metadata(address(rToken)).symbol()), "-d"))
-        );
+
         setRedemptionSpread(MathUtils._100_PERCENT);
         setRedemptionRebate(MathUtils._100_PERCENT);
         setSplitLiquidationCollateral(newSplitLiquidationCollateral);
 
-        emit PositionManagerDeployed(rToken, raftDebtToken, msg.sender);
+        emit PositionManagerDeployed(rToken, msg.sender);
     }
 
     // --- External functions ---
@@ -152,27 +147,33 @@ contract PositionManager is FeeCollector, IPositionManager {
             PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
         }
 
-        uint256 debtBefore = raftDebtToken.balanceOf(position);
+        RaftCollateralTokenInfo memory collateralTokenInfo = raftCollateralTokens[collateralToken];
+
+        uint256 debtBefore = collateralTokenInfo.debtToken.balanceOf(position);
         if (!isDebtIncrease && (debtChange == type(uint256).max || (debtBefore != 0 && debtChange == debtBefore))) {
             if (collateralChange != 0 || isCollateralIncrease) {
                 revert WrongCollateralParamsForFullRepayment();
             }
-            collateralChange = raftCollateralTokens[collateralToken].token.balanceOf(position);
+            collateralChange = collateralTokenInfo.collateralToken.balanceOf(position);
             debtChange = debtBefore;
         }
 
-        _adjustDebt(position, debtChange, isDebtIncrease, maxFeePercentage);
-        _adjustCollateral(collateralToken, position, collateralChange, isCollateralIncrease);
+        _adjustDebt(
+            position, collateralToken, collateralTokenInfo.debtToken, debtChange, isDebtIncrease, maxFeePercentage
+        );
+        _adjustCollateral(
+            collateralToken, collateralTokenInfo.collateralToken, position, collateralChange, isCollateralIncrease
+        );
 
-        uint256 positionDebt = raftDebtToken.balanceOf(position);
-        uint256 positionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
+        uint256 positionDebt = collateralTokenInfo.debtToken.balanceOf(position);
+        uint256 positionCollateral = collateralTokenInfo.collateralToken.balanceOf(position);
 
         if (positionDebt == 0) {
             if (positionCollateral != 0) {
                 revert InvalidPosition();
             }
             // position was closed, remove it
-            _closePosition(collateralToken, position, false);
+            _closePosition(collateralTokenInfo.collateralToken, collateralTokenInfo.debtToken, position, false);
         } else {
             _checkValidPosition(collateralToken, positionDebt, positionCollateral);
 
@@ -186,18 +187,19 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     function liquidate(address position) external override {
         IERC20 collateralToken = collateralTokenForPosition[position];
+        RaftCollateralTokenInfo memory collateralTokenInfo = raftCollateralTokens[collateralToken];
         if (address(collateralToken) == address(0)) {
             revert NothingToLiquidate();
         }
         (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
-        uint256 entirePositionCollateral = raftCollateralTokens[collateralToken].token.balanceOf(position);
-        uint256 entirePositionDebt = raftDebtToken.balanceOf(position);
+        uint256 entirePositionCollateral = collateralTokenInfo.collateralToken.balanceOf(position);
+        uint256 entirePositionDebt = collateralTokenInfo.debtToken.balanceOf(position);
         uint256 icr = MathUtils._computeCR(entirePositionCollateral, entirePositionDebt, price);
         if (icr >= MathUtils.MCR) {
             revert NothingToLiquidate();
         }
 
-        if (entirePositionDebt == raftDebtToken.totalSupply()) {
+        if (entirePositionDebt == collateralTokenInfo.debtToken.totalSupply()) {
             revert CannotLiquidateLastPosition();
         }
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
@@ -207,8 +209,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (!isRedistribution) {
             rToken.burn(msg.sender, entirePositionDebt);
-            _totalDebt -= entirePositionDebt;
-            emit TotalDebtChanged(_totalDebt);
+            _totalDebt[collateralToken] -= entirePositionDebt;
+            emit TotalDebtChanged(collateralToken, _totalDebt[collateralToken]);
 
             // Collateral is sent to protocol as a fee only in case of liquidation
             collateralToken.safeTransfer(feeRecipient, collateralLiquidationFee);
@@ -216,9 +218,11 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         collateralToken.safeTransfer(msg.sender, collateralToSendToLiquidator);
 
-        _closePosition(collateralToken, position, true);
+        _closePosition(collateralTokenInfo.collateralToken, collateralTokenInfo.debtToken, position, true);
 
-        _updateDebtAndCollateralIndex(collateralToken);
+        _updateDebtAndCollateralIndex(
+            collateralToken, collateralTokenInfo.collateralToken, collateralTokenInfo.debtToken
+        );
 
         emit Liquidation(
             msg.sender,
@@ -265,13 +269,17 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
         rToken.burn(msg.sender, debtAmount);
-        _totalDebt -= debtAmount;
-        emit TotalDebtChanged(_totalDebt);
+        _totalDebt[collateralToken] -= debtAmount;
+        emit TotalDebtChanged(collateralToken, _totalDebt[collateralToken]);
 
         // Send collateral to account
         collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
 
-        _updateDebtAndCollateralIndex(collateralToken);
+        _updateDebtAndCollateralIndex(
+            collateralToken,
+            raftCollateralTokens[collateralToken].collateralToken,
+            raftCollateralTokens[collateralToken].debtToken
+        );
 
         emit Redemption(msg.sender, debtAmount, collateralToRedeem, redemptionFee, rebate);
     }
@@ -322,22 +330,27 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (address(priceFeed) == address(0)) {
             revert PriceFeedAddressCannotBeZero();
         }
-        if (address(raftCollateralTokens[collateralToken].token) != address(0)) {
+        if (address(raftCollateralTokens[collateralToken].collateralToken) != address(0)) {
             revert CollateralTokenAlreadyAdded();
         }
 
         RaftCollateralTokenInfo memory raftCollateralTokenInfo;
-        raftCollateralTokenInfo.token = new ERC20Indexable(
+        raftCollateralTokenInfo.collateralToken = new ERC20Indexable(
             address(this),
             string(bytes.concat("Raft ", bytes(IERC20Metadata(address(collateralToken)).name()), " collateral")),
             string(bytes.concat("r", bytes(IERC20Metadata(address(collateralToken)).symbol()), "-c"))
+        );
+        raftCollateralTokenInfo.debtToken = new ERC20Indexable(
+            address(this),
+            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(collateralToken)).name()), " debt")),
+            string(bytes.concat("r", bytes(IERC20Metadata(address(collateralToken)).symbol()), "-d"))
         );
         raftCollateralTokenInfo.isEnabled = true;
 
         raftCollateralTokens[collateralToken] = raftCollateralTokenInfo;
         priceFeeds[collateralToken] = priceFeed;
 
-        emit CollateralTokenAdded(collateralToken, raftCollateralTokens[collateralToken].token, priceFeed);
+        emit CollateralTokenAdded(collateralToken, raftCollateralTokenInfo.collateralToken, priceFeed);
     }
 
     function modifyCollateralToken(
@@ -353,7 +366,9 @@ contract PositionManager is FeeCollector, IPositionManager {
         raftCollateralTokens[collateralToken].isEnabled = isEnabled;
 
         if (previousIsEnabled != isEnabled) {
-            emit CollateralTokenModified(collateralToken, raftCollateralTokens[collateralToken].token, isEnabled);
+            emit CollateralTokenModified(
+                collateralToken, raftCollateralTokens[collateralToken].collateralToken, isEnabled
+            );
         }
     }
 
@@ -419,6 +434,8 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @param maxFeePercentage The maximum fee percentage.
     function _adjustDebt(
         address position,
+        IERC20 collateralToken,
+        IERC20Indexable raftDebtToken,
         uint256 debtChange,
         bool isDebtIncrease,
         uint256 maxFeePercentage
@@ -432,16 +449,16 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (isDebtIncrease) {
             uint256 totalDebtChange = debtChange + _triggerBorrowingFee(position, debtChange, maxFeePercentage);
             raftDebtToken.mint(position, totalDebtChange);
-            _totalDebt += totalDebtChange;
+            _totalDebt[collateralToken] += totalDebtChange;
             rToken.mint(msg.sender, debtChange);
         } else {
-            _totalDebt -= debtChange;
+            _totalDebt[collateralToken] -= debtChange;
             raftDebtToken.burn(position, debtChange);
             rToken.burn(msg.sender, debtChange);
         }
 
-        emit DebtChanged(position, debtChange, isDebtIncrease);
-        emit TotalDebtChanged(_totalDebt);
+        emit DebtChanged(position, collateralToken, debtChange, isDebtIncrease);
+        emit TotalDebtChanged(collateralToken, _totalDebt[collateralToken]);
     }
 
     /// @dev Adjusts the collateral of a given borrower by burning or minting the corresponding amount of Raft
@@ -452,6 +469,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     /// @param isCollateralIncrease True if the collateral is being increased, false otherwise.
     function _adjustCollateral(
         IERC20 collateralToken,
+        IERC20Indexable raftCollateralToken,
         address position,
         uint256 collateralChange,
         bool isCollateralIncrease
@@ -463,31 +481,44 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         if (isCollateralIncrease) {
-            raftCollateralTokens[collateralToken].token.mint(position, collateralChange);
+            raftCollateralToken.mint(position, collateralChange);
             collateralToken.safeTransferFrom(msg.sender, address(this), collateralChange);
         } else {
-            raftCollateralTokens[collateralToken].token.burn(position, collateralChange);
+            raftCollateralToken.burn(position, collateralChange);
             collateralToken.safeTransfer(msg.sender, collateralChange);
         }
 
-        emit CollateralChanged(position, collateralChange, isCollateralIncrease);
+        emit CollateralChanged(position, collateralToken, collateralChange, isCollateralIncrease);
     }
 
     /// @dev Updates debt and collateral indexes for a given collateral token.
     /// @param collateralToken The collateral token for which to update the indexes.
-    function _updateDebtAndCollateralIndex(IERC20 collateralToken) internal {
-        raftDebtToken.setIndex(_totalDebt);
-        raftCollateralTokens[collateralToken].token.setIndex(collateralToken.balanceOf(address(this)));
+    function _updateDebtAndCollateralIndex(
+        IERC20 collateralToken,
+        IERC20Indexable raftCollateralToken,
+        IERC20Indexable raftDebtToken
+    )
+        internal
+    {
+        raftDebtToken.setIndex(_totalDebt[collateralToken]);
+        raftCollateralToken.setIndex(collateralToken.balanceOf(address(this)));
     }
 
-    function _closePosition(IERC20 collateralToken, address position, bool burnTokens) internal {
+    function _closePosition(
+        IERC20Indexable raftCollateralToken,
+        IERC20Indexable raftDebtToken,
+        address position,
+        bool burnTokens
+    )
+        internal
+    {
         collateralTokenForPosition[position] = IERC20(address(0));
 
         if (burnTokens) {
             raftDebtToken.burn(position, type(uint256).max);
-            raftCollateralTokens[collateralToken].token.burn(position, type(uint256).max);
+            raftCollateralToken.burn(position, type(uint256).max);
         }
-        emit PositionClosed(position, collateralToken);
+        emit PositionClosed(position);
     }
 
     // --- Borrowing & redemption fee helper functions ---

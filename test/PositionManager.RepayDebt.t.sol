@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
@@ -225,7 +226,8 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 aliceDebt = raftDebtToken.balanceOf(ALICE);
 
         // Bob successfully repays some R
         vm.prank(BOB);
@@ -261,7 +263,8 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 
         vm.prank(ALICE);
@@ -269,7 +272,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
             collateralToken, ALICE, 0, false, aliceDebtBefore / 10, false, 0, emptySignature
         );
 
-        uint256 aliceDebtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 aliceDebtAfter = raftDebtToken.balanceOf(ALICE);
         assertGt(aliceDebtAfter, 0);
         assertEq(aliceDebtAfter, 9 * aliceDebtBefore / 10);
     }
@@ -298,7 +301,8 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 
         uint256 aliceRTokenBalanceBefore = rToken.balanceOf(ALICE);
