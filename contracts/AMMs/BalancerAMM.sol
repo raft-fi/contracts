@@ -46,7 +46,9 @@ contract BalancerAMM is AMMBase {
             toInternalBalance: false
         });
 
-        tokenIn.approve(address(vault), amountIn);
+        if (tokenIn.allowance(address(this), address(vault)) == 0) {
+            tokenIn.safeApprove(address(vault), type(uint256).max);
+        }
 
         swaps[0].amount = amountIn;
         vault.batchSwap(IVault.SwapKind.GIVEN_IN, swaps, assets, funds, limits, deadline);
