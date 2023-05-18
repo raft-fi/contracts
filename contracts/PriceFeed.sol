@@ -84,8 +84,13 @@ contract PriceFeed is IPriceFeed, Ownable2Step {
             // If both oracle are live and have different prices, return the price that is a lower changed between the
             // two oracle's prices
             uint256 price = _getPriceWithLowerChange(primaryOracleResponse.price, secondaryOracleResponse.price);
-            uint256 deviation =
-                (price == primaryOracleResponse.price) ? primaryOracle.DEVIATION() : secondaryOracle.DEVIATION();
+            uint256 deviation = (price == primaryOracleResponse.price)
+                ? primaryOracle.DEVIATION()
+                : (
+                    (price == secondaryOracleResponse.price)
+                        ? secondaryOracle.DEVIATION()
+                        : Math.max(primaryOracle.DEVIATION(), secondaryOracle.DEVIATION())
+                );
             return (_storePrice(price), deviation);
         }
 
