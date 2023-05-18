@@ -296,12 +296,6 @@ interface IPositionManager is IFeeCollector {
         external
         returns (uint256 actualCollateralChange, uint256 actualDebtChange);
 
-    /// @return The max borrowing spread.
-    function MAX_BORROWING_SPREAD() external view returns (uint256);
-
-    /// @return The max borrowing rate.
-    function MAX_BORROWING_RATE() external view returns (uint256);
-
     /// @return The current borrowing spread.
     function borrowingSpread() external view returns (uint256);
 

@@ -28,8 +28,6 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     uint256 public constant override MIN_REDEMPTION_SPREAD = MathUtils._100_PERCENT / 10_000 * 5; // 0.05%
     uint256 public constant override MAX_REDEMPTION_SPREAD = MathUtils._100_PERCENT;
-    uint256 public constant override MAX_BORROWING_SPREAD = MathUtils._100_PERCENT / 100; // 1%
-    uint256 public constant override MAX_BORROWING_RATE = MathUtils._100_PERCENT / 100 * 5; // 5%
 
     uint256 public constant override BETA = 2;
 
@@ -288,7 +286,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function setBorrowingSpread(uint256 newBorrowingSpread) external override onlyOwner {
-        if (newBorrowingSpread > MAX_BORROWING_SPREAD) {
+        if (newBorrowingSpread > MathUtils._100_PERCENT) {
             revert BorrowingSpreadExceedsMaximum();
         }
         borrowingSpread = newBorrowingSpread;
@@ -529,7 +527,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     }
 
     function _calcBorrowingRate(uint256 baseRate_) internal view returns (uint256) {
-        return Math.min(borrowingSpread + baseRate_, MAX_BORROWING_RATE);
+        return Math.min(borrowingSpread + baseRate_, MathUtils._100_PERCENT);
     }
 
     /// @dev Updates the base rate based on time elapsed since the last redemption or R borrowing operation.

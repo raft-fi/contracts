@@ -183,7 +183,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
     // Reverts when borrowing rate > 0% and withdrawal would bring the user's ICR < MCR
     function testBorrowingRateNonZeroWithdrawalLowersICR() public {
-        positionManager.setBorrowingSpread(positionManager.MAX_BORROWING_SPREAD() / 2);
+        positionManager.setBorrowingSpread(MathUtils._100_PERCENT / 2);
         assertGt(positionManager.getBorrowingRate(), 0);
 
         vm.startPrank(ALICE);

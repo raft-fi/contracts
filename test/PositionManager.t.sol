@@ -103,7 +103,7 @@ contract PositionManagerTest is TestSetup {
     }
 
     function testOutOfRangeSetBorrowingSpread() public {
-        uint256 maxBorrowingSpread = positionManager.MAX_BORROWING_SPREAD();
+        uint256 maxBorrowingSpread = MathUtils._100_PERCENT;
         vm.expectRevert(IPositionManager.BorrowingSpreadExceedsMaximum.selector);
         positionManager.setBorrowingSpread(maxBorrowingSpread + 1);
     }

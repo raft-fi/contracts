@@ -136,7 +136,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
     // Reverts when borrowing rate > 0% and it would leave position with net debt < minimum net debt
     function testRevertNetDebtBelowMinWhenBorrowingRateNonZero() public {
-        positionManager.setBorrowingSpread(positionManager.MAX_BORROWING_SPREAD() / 2);
+        positionManager.setBorrowingSpread(MathUtils._100_PERCENT / 2);
         assertGt(positionManager.getBorrowingRate(), 0);
 
         // Make the R request 1 wei above min net debt to correct for floor division, and make
