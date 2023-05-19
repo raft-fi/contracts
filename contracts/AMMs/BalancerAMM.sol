@@ -39,7 +39,7 @@ contract BalancerAMM is AMMBase {
 
         int256[] memory limits = new int256[](assets.length);
         limits[0] = SafeCast.toInt256(amountIn);
-        limits[limits.length - 1] = -SafeCast.toInt256(minReturn);
+        limits[limits.length - 1] = -minReturn.toInt256();
 
         IVault.FundManagement memory funds = IVault.FundManagement({
             sender: address(this),
