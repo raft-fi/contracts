@@ -46,8 +46,9 @@ contract BalancerAMM is AMMBase {
             toInternalBalance: false
         });
 
-        if (tokenIn.allowance(address(this), address(vault)) == 0) {
-            tokenIn.safeApprove(address(vault), type(uint256).max);
+        uint256 currentAllowance = tokenIn.allowance(address(this), address(vault));
+        if (currentAllowance != type(uint256).max) {
+            tokenIn.safeIncreaseAllowance(address(vault), type(uint256).max - currentAllowance);
         }
 
         swaps[0].amount = amountIn;

@@ -40,8 +40,9 @@ contract ParaSwapAMM is AMMBase {
             swapCalldata.swapValueAtIndex(fromAmountOffset, amountIn);
         }
 
-        if (tokenIn.allowance(address(this), augustus.getTokenTransferProxy()) == 0) {
-            tokenIn.safeApprove(augustus.getTokenTransferProxy(), type(uint256).max);
+        uint256 currentAllowance = tokenIn.allowance(address(this), augustus.getTokenTransferProxy());
+        if (currentAllowance != type(uint256).max) {
+            tokenIn.safeIncreaseAllowance(augustus.getTokenTransferProxy(), type(uint256).max - currentAllowance);
         }
 
         (bool success,) = address(augustus).call(swapCalldata);

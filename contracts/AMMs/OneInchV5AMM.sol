@@ -29,8 +29,9 @@ contract OneInchV5AMM is AMMBase {
             swapCalldata.swapValueAtIndex(fromAmountOffset, amountIn);
         }
 
-        if (tokenIn.allowance(address(this), address(aggregationRouter)) == 0) {
-            tokenIn.safeApprove(address(aggregationRouter), type(uint256).max);
+        uint256 currentAllowance = tokenIn.allowance(address(this), address(aggregationRouter));
+        if (currentAllowance != type(uint256).max) {
+            tokenIn.safeIncreaseAllowance(address(aggregationRouter), type(uint256).max - currentAllowance);
         }
 
         (bool success,) = aggregationRouter.call(swapCalldata);
