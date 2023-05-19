@@ -38,7 +38,7 @@ contract BalancerAMM is AMMBase {
             abi.decode(extraData, (IVault.BatchSwapStep[], IAsset[], uint256));
 
         int256[] memory limits = new int256[](assets.length);
-        limits[0] = SafeCast.toInt256(amountIn);
+        limits[0] = amountIn.toInt256();
         limits[limits.length - 1] = -minReturn.toInt256();
 
         IVault.FundManagement memory funds = IVault.FundManagement({
