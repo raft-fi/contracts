@@ -58,9 +58,10 @@ contract PositionManagerStETHTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS));
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS));
         uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
-        uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 aliceDebt = raftDebtToken.balanceOf(ALICE);
 
         assertEq(alicePositionCollateral, alicePosition.collateral);
         assertEq(aliceDebt, alicePosition.totalDebt);
@@ -79,9 +80,10 @@ contract PositionManagerStETHTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS));
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(IERC20(WSTETH_ADDRESS));
         uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
-        uint256 aliceDebt = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 aliceDebt = raftDebtToken.balanceOf(ALICE);
 
         assertEq(alicePositionCollateral, alicePosition.collateral);
         assertEq(aliceDebt, alicePosition.totalDebt);
@@ -102,7 +104,7 @@ contract PositionManagerStETHTest is TestSetup {
         vm.stopPrank();
         assertGt(positionManager.rToken().balanceOf(ALICE), rBalanceBefore);
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(_collateralToken);
 
         uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);
@@ -161,7 +163,7 @@ contract PositionManagerStETHTest is TestSetup {
         vm.stopPrank();
         assertGt(positionManager.rToken().balanceOf(ALICE), rBalanceBefore);
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(_collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(_collateralToken);
 
         uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         assertEq(positionCollateralBefore, result.collateral);

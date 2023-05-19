@@ -40,7 +40,8 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 rToRedeem = 100_000e18;
         uint256 collateralAmount = rToMint.divUp(DEFAULT_PRICE).mulUp(initialCR);
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(collateralToken);
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralAmount);
@@ -57,7 +58,7 @@ contract PositionManagerRedemptionTest is TestSetup {
         rToken.transfer(BOB, rToRedeem);
         vm.stopPrank();
 
-        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), rToMint);
+        assertEq(raftDebtToken.balanceOf(ALICE), rToMint);
         assertEq(collateralToken.balanceOf(address(positionManager)), collateralAmount);
         assertEq(raftCollateralToken.balanceOf(ALICE), collateralAmount);
 
@@ -79,13 +80,14 @@ contract PositionManagerRedemptionTest is TestSetup {
         assertEq(feeRecipientBalanceAfter - feeRecipientBalanceBefore, collateralFee - rebate);
         assertEq(collateralToken.balanceOf(address(positionManager)), collateralAmount - collateralToRemoveFromPool);
         assertApproxEqAbs(raftCollateralToken.balanceOf(ALICE), collateralAmount - collateralToRemoveFromPool, 1e5);
-        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), rToMint - rToRedeem);
+        assertEq(raftDebtToken.balanceOf(ALICE), rToMint - rToRedeem);
     }
 
     function testRedeemCollateralWhenMultipleActivePositions() public {
         uint256 rToRedeem = 100_000e18;
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(collateralToken);
 
         uint256 initialCR_A = 1.5e18;
         uint256 rToMint_A = 400_000e18;
@@ -152,9 +154,7 @@ contract PositionManagerRedemptionTest is TestSetup {
             1e5
         );
         assertApproxEqAbs(
-            positionManager.raftDebtToken().balanceOf(ALICE),
-            rToMint_A - rToRedeem * rToMint_A / (rToMint_A + rToMint_C),
-            1e5
+            raftDebtToken.balanceOf(ALICE), rToMint_A - rToRedeem * rToMint_A / (rToMint_A + rToMint_C), 1e5
         );
 
         assertApproxEqAbs(
@@ -164,9 +164,7 @@ contract PositionManagerRedemptionTest is TestSetup {
             1e5
         );
         assertApproxEqAbs(
-            positionManager.raftDebtToken().balanceOf(CAROL),
-            rToMint_C - rToRedeem * rToMint_C / (rToMint_A + rToMint_C),
-            1e5
+            raftDebtToken.balanceOf(CAROL), rToMint_C - rToRedeem * rToMint_C / (rToMint_A + rToMint_C), 1e5
         );
     }
 }

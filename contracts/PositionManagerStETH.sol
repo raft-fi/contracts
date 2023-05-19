@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import { ERC20PermitSignature, PermitHelper } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IWstETH } from "./Dependencies/IWstETH.sol";
+import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IPositionManagerStETH } from "./Interfaces/IPositionManagerStETH.sol";
 import { IRToken } from "./Interfaces/IRToken.sol";
@@ -11,6 +12,8 @@ import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 import { WstETHWrapper } from "./WstETHWrapper.sol";
 
 contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent, WstETHWrapper {
+    IERC20Indexable private immutable raftDebtToken;
+    IRToken private immutable rToken;
     // --- Constructor ---
 
     constructor(
@@ -20,6 +23,8 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         PositionManagerDependent(positionManager_)
         WstETHWrapper(wstETH_)
     {
+        (, raftDebtToken,) = IPositionManager(positionManager_).raftCollateralTokens(wstETH);
+        rToken = IPositionManager(positionManager_).rToken();
         wstETH.approve(positionManager, type(uint256).max); // for deposits
     }
 
@@ -39,7 +44,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         uint256 wstETHAmount = wrapETH();
 
         if (!isDebtIncrease) {
-            IRToken rToken = IPositionManager(positionManager).rToken();
             _applyPermit(rToken, permitSignature);
             rToken.transferFrom(msg.sender, address(this), debtChange);
         }
@@ -48,7 +52,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
             wstETH, msg.sender, wstETHAmount, true, debtChange, isDebtIncrease, maxFeePercentage, emptySignature
         );
         if (isDebtIncrease) {
-            IPositionManager(positionManager).rToken().transfer(msg.sender, debtChange);
+            rToken.transfer(msg.sender, debtChange);
         }
     }
 
@@ -67,9 +71,8 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
 
         if (!isDebtIncrease) {
             if (debtChange == type(uint256).max) {
-                debtChange = IPositionManager(positionManager).raftDebtToken().balanceOf(msg.sender);
+                debtChange = raftDebtToken.balanceOf(msg.sender);
             }
-            IRToken rToken = IPositionManager(positionManager).rToken();
             _applyPermit(rToken, permitSignature);
             rToken.transferFrom(msg.sender, address(this), debtChange);
         }
@@ -94,7 +97,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         }
 
         if (isDebtIncrease) {
-            IPositionManager(positionManager).rToken().transfer(msg.sender, debtChange);
+            rToken.transfer(msg.sender, debtChange);
         }
     }
 

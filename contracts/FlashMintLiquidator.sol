@@ -35,7 +35,7 @@ contract FlashMintLiquidator is IFlashMintLiquidator, PositionManagerDependent {
         collateralToken = collateralToken_;
 
         rToken = positionManager_.rToken();
-        raftDebtToken = positionManager_.raftDebtToken();
+        (, raftDebtToken,) = positionManager_.raftCollateralTokens(collateralToken);
 
         // We approve tokens here so we do not need to do approvals in particular actions.
         // Approved contracts are known, so this should be considered as safe.

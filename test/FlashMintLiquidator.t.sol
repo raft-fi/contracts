@@ -11,6 +11,7 @@ import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { MockAMM } from "./mocks/MockAMM.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 
 contract PositionManagerLiquidationTest is TestSetup {
     PriceFeedTestnet public priceFeed;
@@ -95,7 +96,8 @@ contract PositionManagerLiquidationTest is TestSetup {
         liquidator.liquidate(BOB, "");
 
         // Bob's position is closed
-        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertEq(raftDebtToken.balanceOf(BOB), 0);
         assertGt(rToken.balanceOf(address(this)), 535e18);
     }
 }

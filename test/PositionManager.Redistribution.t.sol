@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
@@ -77,8 +78,9 @@ contract PositionManagerRedistributionTest is TestSetup {
         // liquidate position
         positionManager.liquidate(BOB);
 
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
         // Bob's position is closed
-        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        assertEq(raftDebtToken.balanceOf(BOB), 0);
     }
 
     // Closes a position that has ICR = 100%
@@ -113,8 +115,9 @@ contract PositionManagerRedistributionTest is TestSetup {
         // liquidate position
         positionManager.liquidate(BOB);
 
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
         // Bob's position is closed
-        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        assertEq(raftDebtToken.balanceOf(BOB), 0);
     }
 
     function testRedistributeLastDebt() public {
@@ -191,8 +194,9 @@ contract PositionManagerRedistributionTest is TestSetup {
         // Liquidate the position
         positionManager.liquidate(ALICE);
 
-        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
-        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertEq(raftDebtToken.balanceOf(ALICE), 0);
+        assertGt(raftDebtToken.balanceOf(BOB), 0);
     }
 
     // Reverts if position is non-existent or has been closed
@@ -217,7 +221,8 @@ contract PositionManagerRedistributionTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertEq(raftDebtToken.balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(CAROL);
@@ -232,7 +237,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertGt(positionManager.raftDebtToken().balanceOf(CAROL), 0);
+        assertGt(raftDebtToken.balanceOf(CAROL), 0);
 
         // Price drops, Carol ICR falls below MCR
         priceFeed.setPrice(100e18);
@@ -240,7 +245,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         // Carol liquidated, and her position is closed
         positionManager.liquidate(CAROL);
 
-        assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
+        assertEq(raftDebtToken.balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(CAROL);
@@ -323,9 +328,11 @@ contract PositionManagerRedistributionTest is TestSetup {
         assertLe(bobICRAfter, MathUtils.MCR);
         assertLe(carolICRAfter, MathUtils.MCR);
 
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+
         // Though Bob's true ICR (including pending rewards) is below the MCR, check that Bob's raw collateral and debt
         // has not changed, and that his "raw" ICR is above the MCR
-        uint256 bobDebt = positionManager.raftDebtToken().balanceOf(BOB);
+        uint256 bobDebt = raftDebtToken.balanceOf(BOB);
         uint256 bobPositionCollateral = collateralToken.balanceOf(BOB);
 
         uint256 bobRawICR = bobPositionCollateral * price / bobDebt;

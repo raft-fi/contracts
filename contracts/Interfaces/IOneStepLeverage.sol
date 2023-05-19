@@ -5,6 +5,7 @@ import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC31
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
 import { IAMM } from "./IAMM.sol";
+import { IERC20Indexable } from "./IERC20Indexable.sol";
 
 /// @dev Interface that OneStepLeverage needs to implement
 interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
@@ -58,6 +59,12 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
 
     /// @dev Collateral token used for leverage.
     function collateralToken() external view returns (IERC20);
+
+    /// @dev Collateral token used for leverage.
+    function raftCollateralToken() external view returns (IERC20Indexable);
+
+    /// @dev Collateral token used for leverage.
+    function raftDebtToken() external view returns (IERC20Indexable);
 
     /// @dev Increases or decreases leverage for a position.
     /// @param debtChange Debt being added or removed.

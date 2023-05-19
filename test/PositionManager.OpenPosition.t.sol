@@ -53,7 +53,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertGt(raftDebtToken.balanceOf(ALICE), 0);
 
         uint256 bobExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(
             positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 47_789_898e22
@@ -72,7 +73,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        assertGt(raftDebtToken.balanceOf(BOB), 0);
     }
 
     // Decays a non-zero base rate
@@ -530,9 +531,10 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
     // Creates a new position and assigns the correct collateral and debt amount
     function testPositionCollateralDebtAmount() public {
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(collateralToken);
         uint256 collateralBefore = raftCollateralToken.balanceOf(address(this));
-        uint256 debtBefore = positionManager.raftDebtToken().balanceOf(address(this));
+        uint256 debtBefore = raftDebtToken.balanceOf(address(this));
 
         assertEq(collateralBefore, 0);
         assertEq(debtBefore, 0);
@@ -552,7 +554,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         uint256 collateralAfter = raftCollateralToken.balanceOf(ALICE);
-        uint256 debtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 debtAfter = raftDebtToken.balanceOf(ALICE);
         uint256 expectedDebt = PositionManagerUtils.getAmountWithBorrowingFee(positionManager, debtAmount);
 
         assertGt(collateralAfter, 0);
@@ -576,7 +578,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
         uint256 positionManagerCollateralAfter = collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerCollateralAfter, alicePositionCollateral);
@@ -606,7 +608,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertGt(raftDebtToken.balanceOf(ALICE), 0);
 
         // To compensate borrowing fees
         vm.prank(address(positionManager));
@@ -618,12 +621,12 @@ contract PositionManagerOpenPositionTest is TestSetup {
             ALICE,
             0,
             false,
-            positionManager.raftDebtToken().balanceOf(ALICE),
+            raftDebtToken.balanceOf(ALICE),
             false,
             MathUtils._100_PERCENT,
             emptySignature
         );
-        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        assertEq(raftDebtToken.balanceOf(ALICE), 0);
 
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
@@ -635,12 +638,13 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        assertGt(raftDebtToken.balanceOf(ALICE), 0);
     }
 
     // Increases the position's R debt and user's R token balance by the correct amounts
     function testPositionDebtUserBalanceIncrease() public {
-        uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         uint256 aliceRTokenBalanceBefore = rToken.balanceOf(ALICE);
         assertEq(aliceDebtBefore, 0);
         assertEq(aliceRTokenBalanceBefore, 0);
@@ -657,7 +661,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 aliceDebtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 aliceDebtAfter = raftDebtToken.balanceOf(ALICE);
         uint256 aliceRTokenBalanceAfter = rToken.balanceOf(ALICE);
         assertGt(aliceDebtAfter, 10_000e18);
         assertGt(aliceRTokenBalanceAfter, 10_000e18);

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
@@ -80,8 +81,9 @@ contract PositionManagerLiquidationTest is TestSetup {
         // liquidate position
         positionManager.liquidate(BOB);
 
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
         // Bob's position is closed
-        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        assertEq(raftDebtToken.balanceOf(BOB), 0);
     }
 
     function testLiquidateLastDebt() public {
@@ -147,8 +149,9 @@ contract PositionManagerLiquidationTest is TestSetup {
         // Liquidate the position
         positionManager.liquidate(ALICE);
 
-        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
-        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertEq(raftDebtToken.balanceOf(ALICE), 0);
+        assertGt(raftDebtToken.balanceOf(BOB), 0);
     }
 
     // Reverts if position is non-existent or has been closed
@@ -176,7 +179,8 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertEq(raftDebtToken.balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(CAROL);
@@ -191,7 +195,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        assertGt(positionManager.raftDebtToken().balanceOf(CAROL), 0);
+        assertGt(raftDebtToken.balanceOf(CAROL), 0);
 
         // Price drops, Carol ICR falls below MCR
         priceFeed.setPrice(105e18);
@@ -199,7 +203,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         // Carol liquidated, and her position is closed
         positionManager.liquidate(CAROL);
 
-        assertEq(positionManager.raftDebtToken().balanceOf(CAROL), 0);
+        assertEq(raftDebtToken.balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(CAROL);
@@ -237,9 +241,11 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(BOB);
 
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+
         // Check Bob active, check Alice active
-        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
-        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        assertGt(raftDebtToken.balanceOf(BOB), 0);
+        assertGt(raftDebtToken.balanceOf(ALICE), 0);
     }
 
     function testInvalidLiquidationICREqualTo110Percent() public {
@@ -275,8 +281,9 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(BOB);
 
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
         // Check Bob active, check Alice active
-        assertGt(positionManager.raftDebtToken().balanceOf(BOB), 0);
-        assertGt(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        assertGt(raftDebtToken.balanceOf(BOB), 0);
+        assertGt(raftDebtToken.balanceOf(ALICE), 0);
     }
 }

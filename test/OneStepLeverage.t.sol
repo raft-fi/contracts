@@ -99,6 +99,9 @@ contract OneStepLeverageTest is TestSetup {
     }
 
     function testAdjustLeveragedPositionToClosePosition() public {
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(collateralToken);
+
         uint256 collateralAmount = 420e18;
         uint256 leverageMultiplier = 9e18;
         uint256 price = priceFeed.getPrice();
@@ -113,23 +116,23 @@ contract OneStepLeverageTest is TestSetup {
 
         uint256 collateralBalanceBefore = collateralToken.balanceOf(ALICE);
 
-        uint256 debtAfterLeverage = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 debtAfterLeverage = raftDebtToken.balanceOf(ALICE);
         uint256 collateralToSwap = debtAfterLeverage * (1e18 + 1e16) / price;
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
 
         oneStepLeverage.manageLeveragedPosition(
             debtAfterLeverage, false, 0, false, "", collateralToSwap, MathUtils._100_PERCENT
         );
 
-        assertEq(positionManager.raftDebtToken().balanceOf(ALICE), 0);
+        assertEq(raftDebtToken.balanceOf(ALICE), 0);
         assertEq(raftCollateralToken.balanceOf(ALICE), 0);
         assertGt(collateralToken.balanceOf(ALICE), collateralBalanceBefore);
         assertEq(collateralToken.balanceOf(address(oneStepLeverage)), 0);
     }
 
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
-        uint256 debtAfter = positionManager.raftDebtToken().balanceOf(position);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(collateralToken);
+        uint256 debtAfter = raftDebtToken.balanceOf(position);
         uint256 collAfter = raftCollateralToken.balanceOf(position);
         (uint256 price,) = positionManager.priceFeeds(collateralToken).fetchPrice();
         uint256 collAfterExpressedInR = price.mulDown(collAfter);

@@ -106,7 +106,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
         uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         uint256 collateralTopUpAmount = 1 ether;
 
@@ -158,7 +158,8 @@ contract PositionManagerAddCollateralTest is TestSetup {
         positionManager.liquidate(BOB);
 
         assertEq(address(positionManager.collateralTokenForPosition(BOB)), address(0));
-        assertEq(positionManager.raftDebtToken().balanceOf(BOB), 0);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        assertEq(raftDebtToken.balanceOf(BOB), 0);
 
         // Bob attempts to add collateral to his closed position
         vm.startPrank(BOB);

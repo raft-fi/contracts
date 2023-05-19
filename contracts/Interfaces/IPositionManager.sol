@@ -14,10 +14,12 @@ interface IPositionManager is IFeeCollector {
     // --- Types ---
 
     /// @dev Information for a Raft indexable collateral token.
-    /// @param token The Raft indexable collateral token.
+    /// @param collateralToken The Raft indexable collateral token.
+    /// @param debtToken Coresponding Rafft indexable debt token.
     /// @param isEnabled Whether the token can be used as collateral or not.
     struct RaftCollateralTokenInfo {
-        IERC20Indexable token;
+        IERC20Indexable collateralToken;
+        IERC20Indexable debtToken;
         bool isEnabled;
     }
 
@@ -25,9 +27,8 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev New position manager has been token deployed.
     /// @param rToken The R token used by the position manager.
-    /// @param raftDebtToken The Raft indexable debt token.
     /// @param feeRecipient The address of fee recipient.
-    event PositionManagerDeployed(IRToken rToken, IERC20Indexable raftDebtToken, address feeRecipient);
+    event PositionManagerDeployed(IRToken rToken, address feeRecipient);
 
     /// @dev New collateral token has been added added to the system.
     /// @param collateralToken The token used as collateral.
@@ -54,24 +55,30 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev The position has been closed by either repayment, liquidation, or redemption.
     /// @param position The address of the user whose position is closed.
-    /// @param collateralToken The token used as collateral for the closed position.
-    event PositionClosed(address indexed position, IERC20 indexed collateralToken);
+    event PositionClosed(address indexed position);
 
     /// @dev Collateral amount for the position has been changed.
     /// @param position The address of the user that has opened the position.
+    /// @param collateralToken The address of the collateral token being added to position.
     /// @param collateralAmount The amount of collateral added or removed.
     /// @param isCollateralIncrease Whether the collateral is added to the position or removed from it.
-    event CollateralChanged(address indexed position, uint256 collateralAmount, bool isCollateralIncrease);
+    event CollateralChanged(
+        address indexed position, IERC20 indexed collateralToken, uint256 collateralAmount, bool isCollateralIncrease
+    );
 
     /// @dev Debt amount for position has been changed.
     /// @param position The address of the user that has opened the position.
+    /// @param collateralToken The address of the collateral token backing the debt.
     /// @param debtAmount The amount of debt added or removed.
     /// @param isDebtIncrease Whether the debt is added to the position or removed from it.
-    event DebtChanged(address indexed position, uint256 debtAmount, bool isDebtIncrease);
+    event DebtChanged(
+        address indexed position, IERC20 indexed collateralToken, uint256 debtAmount, bool isDebtIncrease
+    );
 
     /// @dev Total debt in the system has been changed.
+    /// @param collateralToken Collateral token we change the debt for.
     /// @param totalDebt The new total debt in the system.
-    event TotalDebtChanged(uint256 totalDebt);
+    event TotalDebtChanged(IERC20 collateralToken, uint256 totalDebt);
 
     /// @dev Borrowing fee has been paid. Emitted only if the actual fee was paid - doesn't happen with no fees are
     /// paid.
@@ -215,22 +222,25 @@ interface IPositionManager is IFeeCollector {
     /// @return The R token used by position manager.
     function rToken() external view returns (IRToken);
 
-    /// @return The Raft indexable debt token.
-    function raftDebtToken() external view returns (IERC20Indexable);
-
-    /// @dev Returns the Raft indexable collateral token for a given collateral token.
+    /// @dev Retrieves information about certain collateral type.
     /// @param collateralToken The token used as collateral.
     /// @return raftCollateralToken The Raft indexable collateral token.
+    /// @return raftDebtToken The Raft indexable debt token.
     /// @return isEnabled Whether the collateral token can be used as collateral or not.
     function raftCollateralTokens(IERC20 collateralToken)
         external
         view
-        returns (IERC20Indexable raftCollateralToken, bool isEnabled);
+        returns (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken, bool isEnabled);
 
     /// @dev Returns the collateral token that a given position used for their position.
     /// @param position The address of the borrower.
     /// @return collateralToken The collateral token of the borrower's position.
     function collateralTokenForPosition(address position) external view returns (IERC20 collateralToken);
+
+    /// @dev Returns total debt taken with particular collateral token.
+    /// @param collateralToken Collateral token used to query total debt.
+    /// @return totalDebt Total debt for the particular collateral token.
+    function totalDebtForCollateral(IERC20 collateralToken) external view returns (uint256 totalDebt);
 
     /// @dev Adds a new collateral token to the protocol.
     /// @param collateralToken The new collateral token.

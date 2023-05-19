@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { PositionManagerTester } from "./mocks/PositionManagerTester.sol";
 import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
@@ -839,7 +840,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 daveDebtBefore = positionManager.raftDebtToken().balanceOf(DAVE);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 daveDebtBefore = raftDebtToken.balanceOf(DAVE);
 
         // Artificially make baseRate 5%
         PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
@@ -858,7 +860,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, DAVE, 0, false, daveWithdrawal, true, MathUtils._100_PERCENT, emptySignature
         );
 
-        uint256 daveDebtAfter = positionManager.raftDebtToken().balanceOf(DAVE);
+        uint256 daveDebtAfter = raftDebtToken.balanceOf(DAVE);
 
         // Check debt is equal to initial debt + withdrawal + emitted fee
         uint256 fee = positionManager.getBorrowingFee(daveWithdrawal);
@@ -1120,7 +1122,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 aliceRTokenBalanceBefore = rToken.balanceOf(ALICE);
         assertGt(aliceRTokenBalanceBefore, 0);
 
-        uint256 aliceDebtBefore = positionManager.raftDebtToken().balanceOf(ALICE);
+        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 
         uint256 withdrawAmount = 10_000e18;
@@ -1133,7 +1136,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 aliceRTokenBalanceAfter = rToken.balanceOf(ALICE);
         assertEq(aliceRTokenBalanceAfter, aliceRTokenBalanceBefore + withdrawAmount);
 
-        uint256 aliceDebtAfter = positionManager.raftDebtToken().balanceOf(ALICE);
+        uint256 aliceDebtAfter = raftDebtToken.balanceOf(ALICE);
         assertApproxEqAbs(aliceDebtAfter, aliceDebtBefore + withdrawAmount, 10);
     }
 }
