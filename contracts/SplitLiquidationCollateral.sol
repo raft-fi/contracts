@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import { ISplitLiquidationCollateral } from "./Interfaces/ISplitLiquidationCollateral.sol";
+import { MathUtils } from "./Dependencies/MathUtils.sol";
 
 contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     // --- Types ---
@@ -26,6 +27,8 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
     uint256 public constant override LOW_TOTAL_DEBT = 3000e18;
     uint256 private constant MEDIUM_TOTAL_DEBT = 100_000e18;
     uint256 private constant HIGH_TOTAL_DEBT = 1_000_000e18;
+
+    uint256 public constant override MCR = 110 * MathUtils._100_PERCENT / 100; // 110%
 
     // --- Functions ---
 

@@ -11,9 +11,6 @@ library MathUtils {
     /// @dev 1e18 is the scaling factor (100% == 1e18).
     uint256 public constant _100_PERCENT = Fixed256x18.ONE;
 
-    /// @notice Minimum collateral ratio for individual positions.
-    uint256 public constant MCR = 110 * _100_PERCENT / 100; // 110%
-
     /// @notice Precision for Nominal ICR (independent of price).
     /// @dev Rationale for the value:
     /// - Making it “too high” could lead to overflows.

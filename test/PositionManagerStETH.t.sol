@@ -27,7 +27,7 @@ contract PositionManagerStETHTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(IERC20(WSTETH_ADDRESS), priceFeed);
+        positionManager.addCollateralToken(IERC20(WSTETH_ADDRESS), priceFeed, splitLiquidationCollateral);
 
         positionManagerStETH = new PositionManagerStETH(
             address(positionManager),

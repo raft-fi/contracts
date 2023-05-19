@@ -29,7 +29,7 @@ contract OneStepLeverageTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
 
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);
         oneStepLeverage = new OneStepLeverage(positionManager, mockAmm, collateralToken);

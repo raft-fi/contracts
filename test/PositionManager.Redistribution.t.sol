@@ -19,7 +19,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         rToken = positionManager.rToken();
 
@@ -314,9 +314,9 @@ contract PositionManagerRedistributionTest is TestSetup {
         Carol ICR: 1 * 100 / 100 = 100%
 
         Therefore Alice and Bob above the MCR, Carol is below */
-        assertGe(aliceICRBefore, MathUtils.MCR);
-        assertGe(bobICRBefore, MathUtils.MCR);
-        assertLe(carolICRBefore, MathUtils.MCR);
+        assertGe(aliceICRBefore, (110 * MathUtils._100_PERCENT / 100));
+        assertGe(bobICRBefore, (110 * MathUtils._100_PERCENT / 100));
+        assertLe(carolICRBefore, (110 * MathUtils._100_PERCENT / 100));
 
         positionManager.liquidate(DAVE);
 
@@ -324,9 +324,9 @@ contract PositionManagerRedistributionTest is TestSetup {
         uint256 bobICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         uint256 carolICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, CAROL, price);
 
-        assertGe(aliceICRAfter, MathUtils.MCR);
-        assertLe(bobICRAfter, MathUtils.MCR);
-        assertLe(carolICRAfter, MathUtils.MCR);
+        assertGe(aliceICRAfter, (110 * MathUtils._100_PERCENT / 100));
+        assertLe(bobICRAfter, (110 * MathUtils._100_PERCENT / 100));
+        assertLe(carolICRAfter, (110 * MathUtils._100_PERCENT / 100));
 
         (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
 
@@ -336,7 +336,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         uint256 bobPositionCollateral = collateralToken.balanceOf(BOB);
 
         uint256 bobRawICR = bobPositionCollateral * price / bobDebt;
-        assertGe(bobRawICR, MathUtils.MCR);
+        assertGe(bobRawICR, (110 * MathUtils._100_PERCENT / 100));
 
         vm.startPrank(EVE);
         PositionManagerUtils.openPosition({

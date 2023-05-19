@@ -12,10 +12,8 @@ contract PositionManagerInternalTest is TestSetup {
     function setUp() public override {
         super.setUp();
 
-        positionManager = new PositionManagerTester(
-            splitLiquidationCollateral
-        );
-        positionManager.addCollateralToken(collateralToken, PRICE_FEED);
+        positionManager = new PositionManagerTester();
+        positionManager.addCollateralToken(collateralToken, PRICE_FEED, splitLiquidationCollateral);
 
         decayBaseRateSeconds = [
             0,
@@ -227,33 +225,33 @@ contract PositionManagerInternalTest is TestSetup {
 
     // decayBaseRateFromBorrowing(): returns the initial base rate for no time increase
     function testDecayBaseRateFromBorrowingNoTimeIncrease() public {
-        PositionManagerTester(address(positionManager)).setBaseRate(5e17);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5e17);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
-        uint256 baseRateBefore = positionManager.baseRate();
+        uint256 baseRateBefore = positionManager.baseRate(collateralToken);
         assertEq(baseRateBefore, 5e17);
 
-        PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing();
-        uint256 baseRateAfter = positionManager.baseRate();
+        PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing(collateralToken);
+        uint256 baseRateAfter = positionManager.baseRate(collateralToken);
 
         assertEq(baseRateBefore, baseRateAfter);
     }
 
     // decayBaseRateFromBorrowing(): returns the initial base rate for more than one minute passed
     function testDecayBaseRateFromBorrowingOneMinutePassed() public {
-        PositionManagerTester(address(positionManager)).setBaseRate(5e17);
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5e17);
 
         uint8[4] memory decaySeconds = [1, 17, 29, 50];
 
         for (uint256 i; i < decaySeconds.length; i++) {
-            PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+            PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
-            uint256 baseRateBefore = positionManager.baseRate();
+            uint256 baseRateBefore = positionManager.baseRate(collateralToken);
 
             vm.warp(decaySeconds[i]);
 
-            PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing();
-            uint256 baseRateAfter = positionManager.baseRate();
+            PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing(collateralToken);
+            uint256 baseRateAfter = positionManager.baseRate(collateralToken);
 
             assertEq(baseRateBefore, baseRateAfter);
         }
@@ -264,17 +262,17 @@ contract PositionManagerInternalTest is TestSetup {
         for (uint256 i; i < 0; ++i) {
             for (uint256 j; j < decayBaseRateSeconds.length; j++) {
                 uint256 baseRate = decayBaseRates[j];
-                PositionManagerTester(address(positionManager)).setBaseRate(baseRate);
-                assertEq(positionManager.baseRate(), baseRate);
+                PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, baseRate);
+                assertEq(positionManager.baseRate(collateralToken), baseRate);
 
                 uint256 secondsPassed = decayBaseRateSeconds[i];
                 uint256 expectedBaseRate = decayBaseRatesExpected[baseRate][i];
-                PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+                PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
                 vm.warp(secondsPassed);
 
-                PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing();
-                uint256 baseRateAfter = positionManager.baseRate();
+                PositionManagerTester(address(positionManager)).unprotectedDecayBaseRateFromBorrowing(collateralToken);
+                uint256 baseRateAfter = positionManager.baseRate(collateralToken);
 
                 assertEq(baseRateAfter, expectedBaseRate);
             }

@@ -82,9 +82,10 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Borrowing fee has been paid. Emitted only if the actual fee was paid - doesn't happen with no fees are
     /// paid.
+    /// @param collateralToken Collateral token used to mint R.
     /// @param position The address of position's owner that triggered the fee payment.
     /// @param feeAmount The amount of tokens paid as the borrowing fee.
-    event RBorrowingFeePaid(address indexed position, uint256 feeAmount);
+    event RBorrowingFeePaid(IERC20 collateralToken, address indexed position, uint256 feeAmount);
 
     /// @dev Liquidation has been executed.
     /// @param liquidator The liquidator that executed the liquidation.
@@ -123,20 +124,26 @@ interface IPositionManager is IFeeCollector {
     event RedemptionRebateUpdated(uint256 redemptionRebate);
 
     /// @dev Redemption spread has been updated.
+    /// @param collateralToken Collateral token that the spread was set for.
     /// @param redemptionSpread The new redemption spread.
-    event RedemptionSpreadUpdated(uint256 redemptionSpread);
+    event RedemptionSpreadUpdated(IERC20 collateralToken, uint256 redemptionSpread);
 
     /// @dev Base rate has been updated.
+    /// @param collateralToken Collateral token that the baser rate was updated for.
     /// @param baseRate The new base rate.
-    event BaseRateUpdated(uint256 baseRate);
+    event BaseRateUpdated(IERC20 collateralToken, uint256 baseRate);
 
     /// @dev Last fee operation time has been updated.
+    /// @param collateralToken Collateral token that the baser rate was updated for.
     /// @param lastFeeOpTime The new operation time.
-    event LastFeeOpTimeUpdated(uint256 lastFeeOpTime);
+    event LastFeeOpTimeUpdated(IERC20 collateralToken, uint256 lastFeeOpTime);
 
     /// @dev Split liquidation collateral has been changed.
+    /// @param collateralToken Collateral token whose split liquidation collateral contract is set.
     /// @param newSplitLiquidationCollateral New value that was set to be split liquidation collateral.
-    event SplitLiquidationCollateralChanged(ISplitLiquidationCollateral indexed newSplitLiquidationCollateral);
+    event SplitLiquidationCollateralChanged(
+        IERC20 collateralToken, ISplitLiquidationCollateral indexed newSplitLiquidationCollateral
+    );
 
     // --- Errors ---
 
@@ -245,7 +252,13 @@ interface IPositionManager is IFeeCollector {
     /// @dev Adds a new collateral token to the protocol.
     /// @param collateralToken The new collateral token.
     /// @param priceFeed The price feed for the collateral token.
-    function addCollateralToken(IERC20 collateralToken, IPriceFeed priceFeed) external;
+    /// @param newSplitLiquidationCollateral split liquidation collateral contract address.
+    function addCollateralToken(
+        IERC20 collateralToken,
+        IPriceFeed priceFeed,
+        ISplitLiquidationCollateral newSplitLiquidationCollateral
+    )
+        external;
 
     /// @dev Enables or disables a collateral token. Reverts if the collateral token has not been added.
     /// @param collateralToken The collateral token.
@@ -257,12 +270,18 @@ interface IPositionManager is IFeeCollector {
     /// @return priceFeed The contract that provides a price for the collateral token.
     function priceFeeds(IERC20 collateralToken) external view returns (IPriceFeed priceFeed);
 
-    /// @dev Returns address of the split liquidation collateral contract.
-    function splitLiquidationCollateral() external view returns (ISplitLiquidationCollateral);
+    /// @param collateralToken Collateral token whose split liquidation collateral is being queried.
+    /// @return Returns address of the split liquidation collateral contract.
+    function splitLiquidationCollateral(IERC20 collateralToken) external view returns (ISplitLiquidationCollateral);
 
     /// @dev Sets the new split liquidation collateral contract.
+    /// @param collateralToken Collateral token whose split liquidation collateral is being set.
     /// @param newSplitLiquidationCollateral New split liquidation collateral contract address.
-    function setSplitLiquidationCollateral(ISplitLiquidationCollateral newSplitLiquidationCollateral) external;
+    function setSplitLiquidationCollateral(
+        IERC20 collateralToken,
+        ISplitLiquidationCollateral newSplitLiquidationCollateral
+    )
+        external;
 
     /// @dev Liquidates the borrower if its position's ICR is lower than the minimum collateral ratio.
     /// @param position The address of the borrower.
@@ -312,64 +331,90 @@ interface IPositionManager is IFeeCollector {
     /// @return The max borrowing rate.
     function MAX_BORROWING_RATE() external view returns (uint256);
 
+    /// @param collateralToken Collateral token we query borrowing spread for.
     /// @return The current borrowing spread.
-    function borrowingSpread() external view returns (uint256);
+    function borrowingSpread(IERC20 collateralToken) external view returns (uint256);
 
     /// @dev Sets the new borrowing spread.
+    /// @param collateralToken Collateral token we set borrowing spread for.
     /// @param newBorrowingSpread New borrowing spread to be used.
-    function setBorrowingSpread(uint256 newBorrowingSpread) external;
+    function setBorrowingSpread(IERC20 collateralToken, uint256 newBorrowingSpread) external;
 
+    /// @param collateralToken Collateral token we query base rate for.
+    /// @return rate The base rate.
+    function baseRate(IERC20 collateralToken) external view returns (uint256 rate);
+
+    /// @param collateralToken Collateral token we query borrowing rate for.
     /// @return The current borrowing rate.
-    function getBorrowingRate() external view returns (uint256);
+    function getBorrowingRate(IERC20 collateralToken) external view returns (uint256);
 
+    /// @param collateralToken Collateral token we query borrowing rate with decay for.
     /// @return The current borrowing rate with decay.
-    function getBorrowingRateWithDecay() external view returns (uint256);
+    function getBorrowingRateWithDecay(IERC20 collateralToken) external view returns (uint256);
 
     /// @dev Returns the borrowing fee for a given debt amount.
+    /// @param collateralToken Collateral token we query borrowing fee for.
     /// @param debtAmount The amount of debt.
     /// @return The borrowing fee.
-    function getBorrowingFee(uint256 debtAmount) external view returns (uint256);
+    function getBorrowingFee(IERC20 collateralToken, uint256 debtAmount) external view returns (uint256);
 
-    /// @return The current redemption spread.
-    function redemptionSpread() external view returns (uint256);
+    /// @param collateralToken Collateral token we query redemption spread for.
+    /// @return spread The current redemption spread for collateral token.
+    function redemptionSpread(IERC20 collateralToken) external view returns (uint256 spread);
 
-    /// @return The base rate.
-    function baseRate() external view returns (uint256);
+    /// @param collateralToken Collateral token we query redemption rebate for.
+    /// @return rebate Percentage of the redemption fee returned to redeemed positions.
+    function redemptionRebate(IERC20 collateralToken) external view returns (uint256 rebate);
+
+    /// @param collateralToken Collateral token we query redemption rate for.
+    /// @return rate The current redemption rate for collateral token.
+    function getRedemptionRate(IERC20 collateralToken) external view returns (uint256 rate);
 
     /// @dev Sets the new redemption spread.
     /// @param newRedemptionSpread New redemption spread to be used.
-    function setRedemptionSpread(uint256 newRedemptionSpread) external;
-
-    /// @return The current redemption rate.
-    function getRedemptionRate() external view returns (uint256);
-
-    /// @return Percentage of the redemption fee returned to redeemed positions.
-    function redemptionRebate() external view returns (uint256);
+    function setRedemptionSpread(IERC20 collateralToken, uint256 newRedemptionSpread) external;
 
     /// @dev Sets new redemption rebate percentage.
     /// @param newRedemptionRebate Value that is being set as a redemption rebate percentage.
-    function setRedemptionRebate(uint256 newRedemptionRebate) external;
+    function setRedemptionRebate(IERC20 collateralToken, uint256 newRedemptionRebate) external;
 
+    /// @param collateralToken Collateral token we query redemption rate with decay for.
     /// @return The current redemption rate with decay.
-    function getRedemptionRateWithDecay() external view returns (uint256);
+    function getRedemptionRateWithDecay(IERC20 collateralToken) external view returns (uint256);
 
     /// @dev Returns the redemption fee for a given collateral amount.
+    /// @param collateralToken Collateral token we query redemption fee for.
     /// @param collateralAmount The amount of collateral.
     /// @param priceDeviation Deviation for the reported price by oracle in percentage.
     /// @return The redemption fee.
-    function getRedemptionFee(uint256 collateralAmount, uint256 priceDeviation) external view returns (uint256);
+    function getRedemptionFee(
+        IERC20 collateralToken,
+        uint256 collateralAmount,
+        uint256 priceDeviation
+    )
+        external
+        view
+        returns (uint256);
 
     /// @dev Returns the redemption fee with decay for a given collateral amount.
+    /// @param collateralToken Collateral token we query redemption fee with decay for.
     /// @param collateralAmount The amount of collateral.
     /// @return The redemption fee with decay.
-    function getRedemptionFeeWithDecay(uint256 collateralAmount) external view returns (uint256);
+    function getRedemptionFeeWithDecay(
+        IERC20 collateralToken,
+        uint256 collateralAmount
+    )
+        external
+        view
+        returns (uint256);
 
     /// @return Half-life of 12h (720 min).
     /// @dev (1/2) = d^720 => d = (1/2)^(1/720)
     function MINUTE_DECAY_FACTOR() external view returns (uint256);
 
-    /// @return The timestamp of the latest fee operation (redemption or new R issuance).
-    function lastFeeOperationTime() external view returns (uint256);
+    /// @param collateralToken Collateral token we query last operation time fee for.
+    /// @return lastOpTime The timestamp of the latest fee operation (redemption or new R issuance).
+    function lastFeeOperationTime(IERC20 collateralToken) external view returns (uint256 lastOpTime);
 
     /// @dev Returns if a given delegate is whitelisted for a given borrower.
     /// @param position The address of the borrower.

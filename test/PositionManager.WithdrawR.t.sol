@@ -20,10 +20,8 @@ contract PositionManagerWithdrawRTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager = new PositionManagerTester(
-            splitLiquidationCollateral
-        );
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager = new PositionManagerTester();
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         rToken = positionManager.rToken();
 
@@ -63,12 +61,16 @@ contract PositionManagerWithdrawRTest is TestSetup {
             priceFeed: priceFeed,
             collateralToken: collateralToken,
             position: CAROL,
-            icr: MathUtils.MCR
+            icr: (110 * MathUtils._100_PERCENT / 100)
         });
         vm.stopPrank();
 
         vm.prank(CAROL);
-        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPositionManager.NewICRLowerThanMCR.selector, (110 * MathUtils._100_PERCENT / 100) - 1
+            )
+        );
         positionManager.managePosition(
             collateralToken, CAROL, 0, false, 1, true, MathUtils._100_PERCENT, emptySignature
         );
@@ -77,7 +79,10 @@ contract PositionManagerWithdrawRTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        assertLt(PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price), MathUtils.MCR);
+        assertLt(
+            PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price),
+            (110 * MathUtils._100_PERCENT / 100)
+        );
 
         uint256 withdrawalAmount = 1;
 
@@ -147,10 +152,10 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially set base rate to 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
 
         // Check base rate is now non-zero
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertGt(baseRate1, 0);
 
         skip(2 hours);
@@ -162,7 +167,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         );
 
         // Check base rate has decreased
-        uint256 baseRate2 = positionManager.baseRate();
+        uint256 baseRate2 = positionManager.baseRate(collateralToken);
         assertLt(baseRate2, baseRate1);
 
         skip(1 hours);
@@ -173,7 +178,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, EVE, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
         );
 
-        uint256 baseRate3 = positionManager.baseRate();
+        uint256 baseRate3 = positionManager.baseRate(collateralToken);
         assertLt(baseRate3, baseRate2);
     }
 
@@ -286,10 +291,10 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
-        uint256 baseRate = positionManager.baseRate();
+        uint256 baseRate = positionManager.baseRate(collateralToken);
 
         // 100%: 1e18,  10%: 1e17,  1%: 1e16,  0.1%: 1e15
         // 5%: 5e16
@@ -306,7 +311,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.15e18, 3e18, maxFee));
         positionManager.managePosition(collateralToken, ALICE, 0, false, 3e18, true, maxFee, emptySignature);
 
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 1%
@@ -315,7 +320,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
         positionManager.managePosition(collateralToken, BOB, 0, false, 1e18, true, maxFee, emptySignature);
 
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 3.754%
@@ -324,7 +329,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.FeeExceedsMaxFee.selector, 0.05e18, 1e18, maxFee));
         positionManager.managePosition(collateralToken, CAROL, 0, false, 1e18, true, maxFee, emptySignature);
 
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 0.5%
@@ -392,10 +397,10 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make baseRate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
-        uint256 baseRate = positionManager.baseRate();
+        uint256 baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee > 5%
@@ -404,7 +409,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, ALICE, 0, false, 1e18, true, 5 * MathUtils._100_PERCENT / 100 + 1, emptySignature
         );
 
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 5%
@@ -413,7 +418,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, BOB, 0, false, 1e18, true, 5 * MathUtils._100_PERCENT / 100, emptySignature
         );
 
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 10%
@@ -422,7 +427,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, CAROL, 0, false, 1e18, true, 1 * MathUtils._100_PERCENT / 10, emptySignature
         );
 
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 5 * MathUtils._100_PERCENT / 100);
 
         // Attempt with max fee = 37.659%
@@ -506,7 +511,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Check base rate is zero
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertEq(baseRate1, 0);
 
         skip(2 hours);
@@ -518,7 +523,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         );
 
         // Check base rate is still 0
-        uint256 baseRate2 = positionManager.baseRate();
+        uint256 baseRate2 = positionManager.baseRate(collateralToken);
         assertEq(baseRate2, 0);
 
         skip(1 hours);
@@ -529,7 +534,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, EVE, 0, false, 12e18, true, MathUtils._100_PERCENT, emptySignature
         );
 
-        uint256 baseRate3 = positionManager.baseRate();
+        uint256 baseRate3 = positionManager.baseRate(collateralToken);
         assertEq(baseRate3, 0);
     }
 
@@ -579,14 +584,14 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make baseRate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
         // Check base rate is now non-zero
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertGt(baseRate1, 0);
 
-        uint256 lastFeeOpTime1 = positionManager.lastFeeOperationTime();
+        uint256 lastFeeOpTime1 = positionManager.lastFeeOperationTime(collateralToken);
 
         skip(10 seconds);
 
@@ -596,7 +601,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, CAROL, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
         );
 
-        uint256 lastFeeOpTime2 = positionManager.lastFeeOperationTime();
+        uint256 lastFeeOpTime2 = positionManager.lastFeeOperationTime(collateralToken);
 
         // Check that the last fee operation time did not update, as borrower D's debt issuance occurred
         // since before minimum interval had passed
@@ -610,7 +615,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
             collateralToken, CAROL, 0, false, 1e18, true, MathUtils._100_PERCENT, emptySignature
         );
 
-        uint256 lastFeeOpTime3 = positionManager.lastFeeOperationTime();
+        uint256 lastFeeOpTime3 = positionManager.lastFeeOperationTime(collateralToken);
 
         // Check that the last fee operation time DID update, as borrower's debt issuance occurred
         // after minimum interval had passed
@@ -664,11 +669,11 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
         // Check base rate is now non-zero
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertGt(baseRate1, 0);
 
         skip(30 seconds);
@@ -688,7 +693,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         );
 
         // Check base rate has decreased even though borrower tried to stop it decaying
-        uint256 baseRate2 = positionManager.baseRate();
+        uint256 baseRate2 = positionManager.baseRate(collateralToken);
         assertLt(baseRate2, baseRate1);
     }
 
@@ -755,11 +760,11 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
         // Check base rate is now non-zero
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertGt(baseRate1, 0);
 
         skip(2 hours);
@@ -844,11 +849,11 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 daveDebtBefore = raftDebtToken.balanceOf(DAVE);
 
         // Artificially make baseRate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
         // Check base rate is now non-zero
-        uint256 baseRate = positionManager.baseRate();
+        uint256 baseRate = positionManager.baseRate(collateralToken);
         assertGt(baseRate, 0);
 
         skip(2 hours);
@@ -863,7 +868,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 daveDebtAfter = raftDebtToken.balanceOf(DAVE);
 
         // Check debt is equal to initial debt + withdrawal + emitted fee
-        uint256 fee = positionManager.getBorrowingFee(daveWithdrawal);
+        uint256 fee = positionManager.getBorrowingFee(collateralToken, daveWithdrawal);
         assertEq(daveDebtAfter, daveDebtBefore + daveWithdrawal + fee);
     }
 
@@ -931,10 +936,10 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
-        uint256 baseRate = positionManager.baseRate();
+        uint256 baseRate = positionManager.baseRate(collateralToken);
         assertGt(baseRate, 0);
 
         skip(2 hours);
@@ -1014,7 +1019,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         vm.stopPrank();
 
         // Check base rate is zero
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertEq(baseRate1, 0);
 
         skip(2 hours);

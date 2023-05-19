@@ -20,7 +20,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         rToken = positionManager.rToken();
 
@@ -162,7 +162,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         vm.stopPrank();
 
         // Check if borrowing rate is 0
-        uint256 borrowingRate = positionManager.getBorrowingRate();
+        uint256 borrowingRate = positionManager.getBorrowingRate(collateralToken);
         assertEq(borrowingRate, 0);
 
         (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
@@ -178,7 +178,7 @@ contract PositionManagerClosePositionTest is TestSetup {
 
     // Reverts if borrower has insufficient R balance to repay his entire debt when borrowing rate > 0%
     function testUnsuccessfulClosureBorrowingRateNonZero() public {
-        positionManager.setBorrowingSpread(5 * MathUtils._100_PERCENT / 1000);
+        positionManager.setBorrowingSpread(collateralToken, 5 * MathUtils._100_PERCENT / 1000);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -203,7 +203,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         vm.stopPrank();
 
         // Check if borrowing rate > 0
-        uint256 borrowingRate = positionManager.getBorrowingRate();
+        uint256 borrowingRate = positionManager.getBorrowingRate(collateralToken);
         assertGt(borrowingRate, 0);
 
         (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);

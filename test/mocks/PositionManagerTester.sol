@@ -13,24 +13,22 @@ for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
     // solhint-disable no-empty-blocks
-    constructor(ISplitLiquidationCollateral newSplitLiquidationCollateral)
-        PositionManager(newSplitLiquidationCollateral)
-    { }
+    constructor() PositionManager() { }
     // solhint-enable no-empty-blocks
 
-    function unprotectedDecayBaseRateFromBorrowing() external returns (uint256) {
-        baseRate = _calcDecayedBaseRate();
-        assert(baseRate >= 0 && baseRate <= MathUtils._100_PERCENT);
+    function unprotectedDecayBaseRateFromBorrowing(IERC20 collateralToken) external returns (uint256) {
+        baseRate[collateralToken] = _calcDecayedBaseRate(collateralToken);
+        assert(baseRate[collateralToken] >= 0 && baseRate[collateralToken] <= MathUtils._100_PERCENT);
 
-        _updateLastFeeOpTime();
-        return baseRate;
+        _updateLastFeeOpTime(collateralToken);
+        return baseRate[collateralToken];
     }
 
-    function setLastFeeOpTimeToNow() external {
-        lastFeeOperationTime = block.timestamp;
+    function setLastFeeOpTimeToNow(IERC20 collateralToken) external {
+        lastFeeOperationTime[collateralToken] = block.timestamp;
     }
 
-    function setBaseRate(uint256 _baseRate) external {
-        baseRate = _baseRate;
+    function setBaseRate(IERC20 collateralToken, uint256 _baseRate) external {
+        baseRate[collateralToken] = _baseRate;
     }
 }

@@ -7,6 +7,7 @@ import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
+import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 
 contract PositionManagerRedemptionTest is TestSetup {
     using Fixed256x18 for uint256;
@@ -22,7 +23,9 @@ contract PositionManagerRedemptionTest is TestSetup {
         priceFeed = new PriceFeedTestnet();
         rToken = positionManager.rToken();
 
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
+        positionManager.setRedemptionSpread(collateralToken, MathUtils._100_PERCENT / 100); // 1%
+        positionManager.setRedemptionRebate(collateralToken, MathUtils._100_PERCENT / 2); // 50%
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -67,7 +70,7 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 matchingCollateral = rToRedeem.divDown(DEFAULT_PRICE);
         uint256 collateralToRedeem = 430e18;
         uint256 collateralFee = matchingCollateral - collateralToRedeem;
-        uint256 rebate = collateralFee.mulDown(positionManager.redemptionRebate());
+        uint256 rebate = collateralFee.mulDown(positionManager.redemptionRebate(collateralToken));
         uint256 collateralToRemoveFromPool = matchingCollateral - rebate;
 
         vm.startPrank(BOB);
@@ -129,7 +132,7 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 matchingCollateral = rToRedeem.divDown(DEFAULT_PRICE);
         uint256 collateralToRedeem = 444_698_852_772_466_539_500;
         uint256 collateralFee = matchingCollateral - collateralToRedeem;
-        uint256 rebate = collateralFee.mulDown(positionManager.redemptionRebate());
+        uint256 rebate = collateralFee.mulDown(positionManager.redemptionRebate(collateralToken));
         uint256 collateralToRemoveFromPool = matchingCollateral - rebate;
 
         vm.startPrank(BOB);

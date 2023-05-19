@@ -7,6 +7,9 @@ interface ISplitLiquidationCollateral {
     /// @dev Returns lowest total debt that will be split.
     function LOW_TOTAL_DEBT() external view returns (uint256);
 
+    /// @dev Minimum collateralisation ratio for position
+    function MCR() external view returns (uint256);
+
     /// @dev Splits collateral between protocol and liquidator.
     /// @param totalCollateral Amount of collateral to split.
     /// @param totalDebt Amount of debt to split.

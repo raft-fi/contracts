@@ -20,12 +20,10 @@ contract PositionManagerOpenPositionTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager = new PositionManagerTester(
-            splitLiquidationCollateral
-        );
+        positionManager = new PositionManagerTester();
         rToken = positionManager.rToken();
 
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -37,7 +35,9 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
     function testSuccessfulPositionOpening() public {
         uint256 aliceExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(
-            positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT()
+            positionManager,
+            collateralToken,
+            positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT()
         );
 
         vm.startPrank(ALICE);
@@ -57,7 +57,9 @@ contract PositionManagerOpenPositionTest is TestSetup {
         assertGt(raftDebtToken.balanceOf(ALICE), 0);
 
         uint256 bobExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(
-            positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 47_789_898e22
+            positionManager,
+            collateralToken,
+            positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT() + 47_789_898e22
         );
 
         vm.startPrank(BOB);
@@ -123,10 +125,10 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertGt(baseRate1, 0);
 
         skip(2 hours);
@@ -143,7 +145,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Check base rate has decreased
-        uint256 baseRate2 = positionManager.baseRate();
+        uint256 baseRate2 = positionManager.baseRate(collateralToken);
         assertLt(baseRate2, baseRate1);
 
         skip(1 hours);
@@ -159,7 +161,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 baseRate3 = positionManager.baseRate();
+        uint256 baseRate3 = positionManager.baseRate(collateralToken);
         assertLt(baseRate3, baseRate2);
     }
 
@@ -209,7 +211,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 baseRate = positionManager.baseRate();
+        uint256 baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 0);
 
         skip(2 hours);
@@ -226,7 +228,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Check base rate has decreased
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 0);
 
         skip(1 hours);
@@ -242,7 +244,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        baseRate = positionManager.baseRate();
+        baseRate = positionManager.baseRate(collateralToken);
         assertEq(baseRate, 0);
     }
 
@@ -293,10 +295,10 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
-        uint256 lastFeeOpTime1 = positionManager.lastFeeOperationTime();
+        uint256 lastFeeOpTime1 = positionManager.lastFeeOperationTime(collateralToken);
 
         vm.startPrank(DAVE);
         PositionManagerUtils.openPosition({
@@ -309,7 +311,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 lastFeeOpTime2 = positionManager.lastFeeOperationTime();
+        uint256 lastFeeOpTime2 = positionManager.lastFeeOperationTime(collateralToken);
         assertEq(lastFeeOpTime2, lastFeeOpTime1);
 
         skip(1 minutes);
@@ -325,7 +327,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        uint256 lastFeeOpTime3 = positionManager.lastFeeOperationTime();
+        uint256 lastFeeOpTime3 = positionManager.lastFeeOperationTime(collateralToken);
         assertGt(lastFeeOpTime3, lastFeeOpTime2);
     }
 
@@ -377,11 +379,11 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
         // Check baseRate is non-zero
-        uint256 baseRate1 = positionManager.baseRate();
+        uint256 baseRate1 = positionManager.baseRate(collateralToken);
         assertGt(baseRate1, 0);
 
         skip(59 minutes);
@@ -414,7 +416,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Check base rate has decreased even though Borrower tried to stop it decaying
-        uint256 baseRate2 = positionManager.baseRate();
+        uint256 baseRate2 = positionManager.baseRate(collateralToken);
         assertLt(baseRate2, baseRate1);
     }
 
@@ -472,8 +474,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.stopPrank();
 
         // Artificially make base rate 5%
-        PositionManagerTester(address(positionManager)).setBaseRate(5 * MathUtils._100_PERCENT / 100);
-        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow();
+        PositionManagerTester(address(positionManager)).setBaseRate(collateralToken, 5 * MathUtils._100_PERCENT / 100);
+        PositionManagerTester(address(positionManager)).setLastFeeOpTimeToNow(collateralToken);
 
         skip(2 hours);
 
@@ -520,7 +522,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         vm.startPrank(BOB);
         uint256 bobICR = 109 * MathUtils._100_PERCENT / 100;
         (uint256 debtAmount,, uint256 amount) =
-            PositionManagerUtils.getOpenPositionSetupValues(positionManager, priceFeed, 0, bobICR, 0);
+            PositionManagerUtils.getOpenPositionSetupValues(positionManager, collateralToken, priceFeed, 0, bobICR, 0);
         collateralToken.approve(address(positionManager), amount);
         vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, bobICR));
         positionManager.managePosition(
@@ -539,7 +541,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         assertEq(collateralBefore, 0);
         assertEq(debtBefore, 0);
 
-        uint256 debtAmount = positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT();
+        uint256 debtAmount = positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT();
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -555,7 +557,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
         uint256 collateralAfter = raftCollateralToken.balanceOf(ALICE);
         uint256 debtAfter = raftDebtToken.balanceOf(ALICE);
-        uint256 expectedDebt = PositionManagerUtils.getAmountWithBorrowingFee(positionManager, debtAmount);
+        uint256 expectedDebt =
+            PositionManagerUtils.getAmountWithBorrowingFee(positionManager, collateralToken, debtAmount);
 
         assertGt(collateralAfter, 0);
         assertGt(debtAfter, 0);

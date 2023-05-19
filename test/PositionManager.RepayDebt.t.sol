@@ -20,7 +20,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         rToken = positionManager.rToken();
 
@@ -55,7 +55,10 @@ contract PositionManagerRepayDebtTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        assertLt(PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price), MathUtils.MCR);
+        assertLt(
+            PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price),
+            (110 * MathUtils._100_PERCENT / 100)
+        );
 
         uint256 repaymentAmount = 1e18;
 
@@ -63,7 +66,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IPositionManager.NetDebtBelowMinimum.selector,
-                positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - repaymentAmount
+                positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT() - repaymentAmount
             )
         );
         positionManager.managePosition(collateralToken, ALICE, 0, false, repaymentAmount, false, 0, emptySignature);
@@ -82,7 +85,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
             100e30,
             true,
             PositionManagerUtils.getNetBorrowingAmount(
-                positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 2
+                positionManager,
+                collateralToken,
+                positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT() + 2
             ),
             true,
             MathUtils._100_PERCENT,
@@ -106,7 +111,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
     // Reverts when borrowing rate = 0% and it would leave position with net debt < minimum net debt
     function testRevertNetDebtBelowMinWhenBorrowingRateZero() public {
-        assertEq(positionManager.getBorrowingRate(), 0);
+        assertEq(positionManager.getBorrowingRate(collateralToken), 0);
 
         // Make the R request 1 wei above min net debt to correct for floor division, and make
         // net debt = min net debt + 1 wei
@@ -118,7 +123,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
             100e30,
             true,
             PositionManagerUtils.getNetBorrowingAmount(
-                positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 1
+                positionManager,
+                collateralToken,
+                positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT() + 1
             ),
             true,
             MathUtils._100_PERCENT,
@@ -128,7 +135,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IPositionManager.NetDebtBelowMinimum.selector,
-                positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - 1
+                positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT() - 1
             )
         );
         positionManager.managePosition(collateralToken, ALICE, 0, false, 2, false, 0, emptySignature);
@@ -137,8 +144,8 @@ contract PositionManagerRepayDebtTest is TestSetup {
 
     // Reverts when borrowing rate > 0% and it would leave position with net debt < minimum net debt
     function testRevertNetDebtBelowMinWhenBorrowingRateNonZero() public {
-        positionManager.setBorrowingSpread(positionManager.MAX_BORROWING_SPREAD() / 2);
-        assertGt(positionManager.getBorrowingRate(), 0);
+        positionManager.setBorrowingSpread(collateralToken, positionManager.MAX_BORROWING_SPREAD() / 2);
+        assertGt(positionManager.getBorrowingRate(collateralToken), 0);
 
         // Make the R request 1 wei above min net debt to correct for floor division, and make
         // net debt = min net debt + 1 wei
@@ -150,7 +157,9 @@ contract PositionManagerRepayDebtTest is TestSetup {
             100e30,
             true,
             PositionManagerUtils.getNetBorrowingAmount(
-                positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() + 1
+                positionManager,
+                collateralToken,
+                positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT() + 1
             ),
             true,
             MathUtils._100_PERCENT,
@@ -162,7 +171,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IPositionManager.NetDebtBelowMinimum.selector,
-                positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT() - 1
+                positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT() - 1
             )
         );
         positionManager.managePosition(collateralToken, ALICE, 0, false, 2, false, 0, emptySignature);

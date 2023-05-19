@@ -10,7 +10,6 @@ import { IPriceFeed } from "../../contracts/Interfaces/IPriceFeed.sol";
 import { ISplitLiquidationCollateral } from "../../contracts/Interfaces/ISplitLiquidationCollateral.sol";
 import { SplitLiquidationCollateral } from "../../contracts/SplitLiquidationCollateral.sol";
 import { WstETHTokenMock } from "../mocks/WstETHTokenMock.sol";
-import { MathUtils } from "../../contracts/Dependencies/MathUtils.sol";
 
 contract TestSetup is Test {
     // User accounts
@@ -40,8 +39,6 @@ contract TestSetup is Test {
     function setUp() public virtual {
         collateralToken = new WstETHTokenMock();
         splitLiquidationCollateral = new SplitLiquidationCollateral();
-        positionManager = new PositionManager(splitLiquidationCollateral);
-        positionManager.setRedemptionSpread(MathUtils._100_PERCENT / 100); // 1%
-        positionManager.setRedemptionRebate(MathUtils._100_PERCENT / 2); // 50%
+        positionManager = new PositionManager();
     }
 }
