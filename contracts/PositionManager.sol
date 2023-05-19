@@ -54,7 +54,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     uint256 public override lastFeeOperationTime;
 
-    mapping(IERC20 collateralToken => uint256 totalDebt) private _totalDebt;
+    mapping(IERC20 collateralToken => uint256 totalDebt) public override totalDebtForCollateral;
 
     // --- Modifiers ---
 
@@ -209,8 +209,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (!isRedistribution) {
             rToken.burn(msg.sender, entirePositionDebt);
-            _totalDebt[collateralToken] -= entirePositionDebt;
-            emit TotalDebtChanged(collateralToken, _totalDebt[collateralToken]);
+            totalDebtForCollateral[collateralToken] -= entirePositionDebt;
+            emit TotalDebtChanged(collateralToken, totalDebtForCollateral[collateralToken]);
 
             // Collateral is sent to protocol as a fee only in case of liquidation
             collateralToken.safeTransfer(feeRecipient, collateralLiquidationFee);
@@ -269,8 +269,8 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
         rToken.burn(msg.sender, debtAmount);
-        _totalDebt[collateralToken] -= debtAmount;
-        emit TotalDebtChanged(collateralToken, _totalDebt[collateralToken]);
+        totalDebtForCollateral[collateralToken] -= debtAmount;
+        emit TotalDebtChanged(collateralToken, totalDebtForCollateral[collateralToken]);
 
         // Send collateral to account
         collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
@@ -449,16 +449,16 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (isDebtIncrease) {
             uint256 totalDebtChange = debtChange + _triggerBorrowingFee(position, debtChange, maxFeePercentage);
             raftDebtToken.mint(position, totalDebtChange);
-            _totalDebt[collateralToken] += totalDebtChange;
+            totalDebtForCollateral[collateralToken] += totalDebtChange;
             rToken.mint(msg.sender, debtChange);
         } else {
-            _totalDebt[collateralToken] -= debtChange;
+            totalDebtForCollateral[collateralToken] -= debtChange;
             raftDebtToken.burn(position, debtChange);
             rToken.burn(msg.sender, debtChange);
         }
 
         emit DebtChanged(position, collateralToken, debtChange, isDebtIncrease);
-        emit TotalDebtChanged(collateralToken, _totalDebt[collateralToken]);
+        emit TotalDebtChanged(collateralToken, totalDebtForCollateral[collateralToken]);
     }
 
     /// @dev Adjusts the collateral of a given borrower by burning or minting the corresponding amount of Raft
@@ -500,7 +500,7 @@ contract PositionManager is FeeCollector, IPositionManager {
     )
         internal
     {
-        raftDebtToken.setIndex(_totalDebt[collateralToken]);
+        raftDebtToken.setIndex(totalDebtForCollateral[collateralToken]);
         raftCollateralToken.setIndex(collateralToken.balanceOf(address(this)));
     }
 

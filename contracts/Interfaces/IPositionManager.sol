@@ -237,6 +237,11 @@ interface IPositionManager is IFeeCollector {
     /// @return collateralToken The collateral token of the borrower's position.
     function collateralTokenForPosition(address position) external view returns (IERC20 collateralToken);
 
+    /// @dev Returns total debt taken with particular collateral token.
+    /// @param collateralToken Collateral token used to query total debt.
+    /// @return totalDebt Total debt for the particular collateral token.
+    function totalDebtForCollateral(IERC20 collateralToken) external view returns (uint256 totalDebt);
+
     /// @dev Adds a new collateral token to the protocol.
     /// @param collateralToken The new collateral token.
     /// @param priceFeed The price feed for the collateral token.
