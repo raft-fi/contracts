@@ -18,7 +18,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -53,7 +53,10 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        assertLt(PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price), MathUtils.MCR);
+        assertLt(
+            PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price),
+            (110 * MathUtils._100_PERCENT / 100)
+        );
 
         uint256 collateralWithdrawAmount = 1;
 
@@ -153,7 +156,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
     // Succeeds when borrowing rate = 0% and withdrawal would bring the user's ICR < MCR
     function testBorrowingRateZeroWithdrawalLowersICR() public {
-        assertEq(positionManager.getBorrowingRate(), 0);
+        assertEq(positionManager.getBorrowingRate(collateralToken), 0);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -171,20 +174,24 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             priceFeed: priceFeed,
             collateralToken: collateralToken,
             position: BOB,
-            icr: MathUtils.MCR
+            icr: (110 * MathUtils._100_PERCENT / 100)
         });
         vm.stopPrank();
 
         // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
         vm.prank(BOB);
-        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPositionManager.NewICRLowerThanMCR.selector, (110 * MathUtils._100_PERCENT / 100) - 1
+            )
+        );
         positionManager.managePosition(collateralToken, BOB, 1, false, 0, false, 0, emptySignature);
     }
 
     // Reverts when borrowing rate > 0% and withdrawal would bring the user's ICR < MCR
     function testBorrowingRateNonZeroWithdrawalLowersICR() public {
-        positionManager.setBorrowingSpread(positionManager.MAX_BORROWING_SPREAD() / 2);
-        assertGt(positionManager.getBorrowingRate(), 0);
+        positionManager.setBorrowingSpread(collateralToken, positionManager.MAX_BORROWING_SPREAD() / 2);
+        assertGt(positionManager.getBorrowingRate(collateralToken), 0);
 
         vm.startPrank(ALICE);
         PositionManagerUtils.openPosition({
@@ -202,13 +209,13 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             priceFeed: priceFeed,
             collateralToken: collateralToken,
             position: BOB,
-            icr: MathUtils.MCR
+            icr: (110 * MathUtils._100_PERCENT / 100)
         });
         vm.stopPrank();
         /*
         // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
         vm.prank(BOB);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, MathUtils.MCR - 1));
+        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, (110 * MathUtils._100_PERCENT / 100) - 1));
         positionManager.managePosition(1, false, 0, false, 0);*/
     }
 

@@ -34,7 +34,7 @@ contract OneStepLeverageStETHTest is TestSetup {
 
         stETH = IStETH(address(wstETH.stETH()));
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(wstETH, priceFeed);
+        positionManager.addCollateralToken(wstETH, priceFeed, splitLiquidationCollateral);
 
         IAMM mockAmm = new MockAMM(wstETH, positionManager.rToken(), 200e18);
         oneStepLeverageStETH = new OneStepLeverageStETH(positionManager, mockAmm, wstETH);

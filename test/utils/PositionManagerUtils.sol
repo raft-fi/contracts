@@ -46,7 +46,7 @@ library PositionManagerUtils {
     {
         result.icr = icr;
         (result.debtAmount, result.totalDebt, amount) =
-            getOpenPositionSetupValues(positionManager, priceFeed, extraDebtAmount, icr, amount);
+            getOpenPositionSetupValues(positionManager, collateralToken, priceFeed, extraDebtAmount, icr, amount);
 
         collateralToken.approve(address(positionManager), amount);
         ERC20PermitSignature memory emptySignature;
@@ -82,7 +82,12 @@ library PositionManagerUtils {
         result.icr = icr;
         uint256 amount;
         (result.debtAmount, result.totalDebt, amount) = getOpenPositionSetupValues(
-            IPositionManager(positionManagerStETH.positionManager()), priceFeed, extraDebt, icr, 0
+            IPositionManager(positionManagerStETH.positionManager()),
+            positionManagerStETH.wstETH(),
+            priceFeed,
+            extraDebt,
+            icr,
+            0
         );
         ERC20PermitSignature memory emptySignature;
 
@@ -141,6 +146,7 @@ library PositionManagerUtils {
 
     function getOpenPositionSetupValues(
         IPositionManager positionManager,
+        IERC20 collateralToken,
         PriceFeedTestnet priceFeed,
         uint256 extraDebtAmount,
         uint256 icr,
@@ -151,9 +157,11 @@ library PositionManagerUtils {
         returns (uint256 debtAmount, uint256 totalDebt, uint256 newAmount)
     {
         debtAmount = getNetBorrowingAmount(
-            positionManager, positionManager.splitLiquidationCollateral().LOW_TOTAL_DEBT()
+            positionManager,
+            collateralToken,
+            positionManager.splitLiquidationCollateral(collateralToken).LOW_TOTAL_DEBT()
         ) + extraDebtAmount;
-        totalDebt = getAmountWithBorrowingFee(positionManager, debtAmount);
+        totalDebt = getAmountWithBorrowingFee(positionManager, collateralToken, debtAmount);
         newAmount = (amount == 0) ? icr * totalDebt / priceFeed.getPrice() : amount;
     }
 
@@ -188,9 +196,9 @@ library PositionManagerUtils {
             // solhint-disable-next-line reason-string
             require(targetDebt > debt, "Target debt is not greater than current debt");
             result.increasedTotalDebt = targetDebt - debt;
-            result.debtAmount = getNetBorrowingAmount(positionManager, result.increasedTotalDebt);
+            result.debtAmount = getNetBorrowingAmount(positionManager, _collateralToken, result.increasedTotalDebt);
         } else {
-            result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, result.debtAmount);
+            result.increasedTotalDebt = getAmountWithBorrowingFee(positionManager, _collateralToken, result.debtAmount);
         }
 
         ERC20PermitSignature memory emptySignature;
@@ -215,25 +223,27 @@ library PositionManagerUtils {
 
     function getNetBorrowingAmount(
         IPositionManager _positionManager,
+        IERC20 collateralToken,
         uint256 _debtWithFee
     )
         internal
         view
         returns (uint256)
     {
-        uint256 borrowingRate = _positionManager.getBorrowingRateWithDecay();
+        uint256 borrowingRate = _positionManager.getBorrowingRateWithDecay(collateralToken);
         return _debtWithFee.divUp(MathUtils._100_PERCENT + borrowingRate);
     }
 
     function getAmountWithBorrowingFee(
         IPositionManager positionManager,
+        IERC20 collateralToken,
         uint256 debtAmount
     )
         internal
         view
         returns (uint256)
     {
-        return debtAmount + positionManager.getBorrowingFee(debtAmount);
+        return debtAmount + positionManager.getBorrowingFee(collateralToken, debtAmount);
     }
 
     function getCurrentICR(

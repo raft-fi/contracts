@@ -18,7 +18,7 @@ contract PositionManagerTest is TestSetup {
 
         priceFeed = new PriceFeedTestnet();
         priceFeed.setPrice(1e18);
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -91,66 +91,69 @@ contract PositionManagerTest is TestSetup {
     // --- Borrowing Spread ---
 
     function testSetBorrowingSpread() public {
-        positionManager.setBorrowingSpread(100);
-        assertEq(positionManager.borrowingSpread(), 100);
+        positionManager.setBorrowingSpread(collateralToken, 100);
+        assertEq(positionManager.borrowingSpread(collateralToken), 100);
     }
 
     function testUnauthorizedSetBorrowingSpread() public {
         vm.prank(ALICE);
         vm.expectRevert("Ownable: caller is not the owner");
 
-        positionManager.setBorrowingSpread(100);
+        positionManager.setBorrowingSpread(collateralToken, 100);
     }
 
     function testOutOfRangeSetBorrowingSpread() public {
         uint256 maxBorrowingSpread = positionManager.MAX_BORROWING_SPREAD();
         vm.expectRevert(IPositionManager.BorrowingSpreadExceedsMaximum.selector);
-        positionManager.setBorrowingSpread(maxBorrowingSpread + 1);
+        positionManager.setBorrowingSpread(collateralToken, maxBorrowingSpread + 1);
     }
 
     function testOutOfRangeSetRedemptionRebate() public {
         vm.expectRevert(IPositionManager.RedemptionRebateExceedsMaximum.selector);
-        positionManager.setRedemptionRebate(1e18 + 1);
+        positionManager.setRedemptionRebate(collateralToken, 1e18 + 1);
     }
 
     // --- Redemption Spread ---
 
     function testSetRedemptionSpread() public {
         uint256 spread = 1e5;
-        positionManager.setRedemptionSpread(spread);
-        assertEq(positionManager.redemptionSpread(), spread);
+        positionManager.setRedemptionSpread(collateralToken, spread);
+        assertEq(positionManager.redemptionSpread(collateralToken), spread);
     }
 
     function testUnauthorizedSetRedemptionSpread() public {
         vm.prank(ALICE);
         vm.expectRevert("Ownable: caller is not the owner");
 
-        positionManager.setRedemptionSpread(100);
+        positionManager.setRedemptionSpread(collateralToken, 100);
     }
 
     function testOutOfRangeSetRedemptionSpread() public {
         uint256 maxRedemptionSpread = 1e18 + 1;
         vm.expectRevert(IPositionManager.RedemptionSpreadOutOfRange.selector);
-        positionManager.setRedemptionSpread(maxRedemptionSpread + 1);
+        positionManager.setRedemptionSpread(collateralToken, maxRedemptionSpread + 1);
     }
 
     // --- Split liquidation collateral ---
     function testSetSplitLiquidationCollateral() public {
         SplitLiquidationCollateral newSplitLiquidationCollateral = new SplitLiquidationCollateral();
 
-        positionManager.setSplitLiquidationCollateral(newSplitLiquidationCollateral);
-        assertEq(address(positionManager.splitLiquidationCollateral()), address(newSplitLiquidationCollateral));
+        positionManager.setSplitLiquidationCollateral(collateralToken, newSplitLiquidationCollateral);
+        assertEq(
+            address(positionManager.splitLiquidationCollateral(collateralToken)),
+            address(newSplitLiquidationCollateral)
+        );
     }
 
     function testCannotSetSplitLiquidationCollateral() public {
         vm.expectRevert(IPositionManager.SplitLiquidationCollateralCannotBeZero.selector);
-        positionManager.setSplitLiquidationCollateral(SplitLiquidationCollateral(address(0)));
+        positionManager.setSplitLiquidationCollateral(collateralToken, SplitLiquidationCollateral(address(0)));
 
         SplitLiquidationCollateral newSplitLiquidationCollateral = new SplitLiquidationCollateral();
         vm.prank(ALICE);
         vm.expectRevert("Ownable: caller is not the owner");
 
-        positionManager.setSplitLiquidationCollateral(newSplitLiquidationCollateral);
+        positionManager.setSplitLiquidationCollateral(collateralToken, newSplitLiquidationCollateral);
     }
 
     // --- Getters ---

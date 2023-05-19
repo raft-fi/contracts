@@ -19,7 +19,7 @@ contract PositionManagerAddCollateralTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         collateralToken.mint(ALICE, 10e36);
         collateralToken.mint(BOB, 10e36);
@@ -52,7 +52,10 @@ contract PositionManagerAddCollateralTest is TestSetup {
         priceFeed.setPrice(100e18);
         uint256 price = priceFeed.getPrice();
 
-        assertLt(PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price), MathUtils.MCR);
+        assertLt(
+            PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price),
+            (110 * MathUtils._100_PERCENT / 100)
+        );
 
         uint256 collateralTopUpAmount = 1;
 

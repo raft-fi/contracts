@@ -34,11 +34,11 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         collateralTokenSecond = new TokenMock();
         priceFeedSecond = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond);
+        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond, splitLiquidationCollateral);
 
         (, raftDebtToken2,) = positionManager.raftCollateralTokens(collateralTokenSecond);
         (, raftDebtToken1,) = positionManager.raftCollateralTokens(collateralToken);
@@ -62,7 +62,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         assertEq(address(raftCollateralTokenThird), address(0));
         assertFalse(raftCollateralTokenThirdEnabled);
 
-        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird);
+        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird, splitLiquidationCollateral);
 
         (raftCollateralTokenThird, raftDebtTokenThird, raftCollateralTokenThirdEnabled) =
             positionManager.raftCollateralTokens(collateralTokenThird);
@@ -72,19 +72,19 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
     function testCannotAddCollateralToken() public {
         vm.expectRevert(IPositionManager.CollateralTokenAddressCannotBeZero.selector);
-        positionManager.addCollateralToken(IERC20(address(0)), priceFeedSecond);
+        positionManager.addCollateralToken(IERC20(address(0)), priceFeedSecond, splitLiquidationCollateral);
 
         vm.expectRevert(IPositionManager.PriceFeedAddressCannotBeZero.selector);
-        positionManager.addCollateralToken(collateralTokenSecond, IPriceFeed(address(0)));
+        positionManager.addCollateralToken(collateralTokenSecond, IPriceFeed(address(0)), splitLiquidationCollateral);
 
         vm.expectRevert(IPositionManager.CollateralTokenAlreadyAdded.selector);
-        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond);
+        positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond, splitLiquidationCollateral);
 
         TokenMock collateralTokenThird = new TokenMock();
         PriceFeedTestnet priceFeedThird = new PriceFeedTestnet();
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
-        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird);
+        positionManager.addCollateralToken(collateralTokenThird, priceFeedThird, splitLiquidationCollateral);
     }
 
     function testDepositTwoDifferentCollateralsWtihTwoDifferentUsers() public {

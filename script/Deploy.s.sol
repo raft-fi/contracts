@@ -18,11 +18,11 @@ contract DeployScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         SplitLiquidationCollateral splitLiquidationCollateral = new SplitLiquidationCollateral();
-        PositionManager positionManager = new PositionManager(splitLiquidationCollateral);
+        PositionManager positionManager = new PositionManager();
         new PositionManagerStETH(address(positionManager), WSTETH);
 
         PriceFeedTestnet priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(WSTETH, priceFeed);
+        positionManager.addCollateralToken(WSTETH, priceFeed, splitLiquidationCollateral);
 
         vm.stopBroadcast();
     }

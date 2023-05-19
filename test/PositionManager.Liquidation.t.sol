@@ -19,7 +19,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(collateralToken, priceFeed);
+        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
 
         rToken = positionManager.rToken();
 
@@ -235,7 +235,7 @@ contract PositionManagerLiquidationTest is TestSetup {
 
         // Check Bob's ICR > 110%
         uint256 bobICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
-        assertTrue(bobICR > MathUtils.MCR);
+        assertTrue(bobICR > (110 * MathUtils._100_PERCENT / 100));
 
         // Attempt to liquidate Bob
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
@@ -275,7 +275,7 @@ contract PositionManagerLiquidationTest is TestSetup {
 
         // Check Bob's ICR == 110%
         uint256 bobICR = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
-        assertTrue(bobICR == MathUtils.MCR);
+        assertTrue(bobICR == (110 * MathUtils._100_PERCENT / 100));
 
         // Attempt to liquidate Bob
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
