@@ -633,13 +633,14 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Validation check helper functions ---
 
     function _checkValidPosition(IERC20 collateralToken, uint256 positionDebt, uint256 positionCollateral) internal {
-        if (positionDebt < splitLiquidationCollateral[collateralToken].LOW_TOTAL_DEBT()) {
+        ISplitLiquidationCollateral splitCollateral = splitLiquidationCollateral[collateralToken];
+        if (positionDebt < splitCollateral.LOW_TOTAL_DEBT()) {
             revert NetDebtBelowMinimum(positionDebt);
         }
 
         (uint256 price,) = priceFeeds[collateralToken].fetchPrice();
         uint256 newICR = MathUtils._computeCR(positionCollateral, positionDebt, price);
-        if (newICR < splitLiquidationCollateral[collateralToken].MCR()) {
+        if (newICR < splitCollateral.MCR()) {
             revert NewICRLowerThanMCR(newICR);
         }
     }
