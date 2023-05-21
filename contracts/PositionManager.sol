@@ -16,6 +16,7 @@ import { ERC20Indexable } from "./ERC20Indexable.sol";
 import { FeeCollector } from "./FeeCollector.sol";
 import { RToken, IRToken } from "./RToken.sol";
 
+/// @dev Implementation of Position Manager. Current implementation does not support rebasing tokens as collateral.
 contract PositionManager is FeeCollector, IPositionManager {
     // --- Types ---
 
