@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { AggregatorV3Interface } from "../Dependencies/AggregatorV3Interface.sol";
+import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
 import { IWstETH } from "../Dependencies/IWstETH.sol";
 import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import { MathUtils } from "../Dependencies/MathUtils.sol";

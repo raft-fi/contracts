@@ -1,10 +1,6 @@
 [submodule "lib/tempus-utils"]
 	path = lib/tempus-utils
 	url = https://github.com/tempusfinance/tempus-utils
-[submodule "lib/redstone-oracles-monorepo"]
-	path = lib/redstone-oracles-monorepo
-	url = https://github.com/redstone-finance/redstone-oracles-monorepo
-	branch = b3c9cd8
 [submodule "lib/balancer-v2-monorepo"]
 	path = lib/balancer-v2-monorepo
 	url = https://github.com/balancer/balancer-v2-monorepo
@@ -16,3 +12,6 @@
 	path = lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 	branch = v4.8.3
+[submodule "lib/chainlink"]
+	path = lib/chainlink
+	url = https://github.com/smartcontractkit/chainlink
