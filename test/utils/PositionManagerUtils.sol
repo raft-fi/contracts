@@ -91,22 +91,21 @@ library PositionManagerUtils {
         );
         ERC20PermitSignature memory emptySignature;
 
+        IStETH stETH = positionManagerStETH.stETH();
+        uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
+
         if (ethType == ETHType.ETH) {
-            IStETH stETH = positionManagerStETH.stETH();
-            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
             positionManagerStETH.managePositionETH{ value: amount }(
                 result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
             );
-            result.collateral = wstETHAmount;
         } else {
-            IStETH stETH = positionManagerStETH.stETH();
-            uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
             stETH.approve(address(positionManagerStETH), amount);
             positionManagerStETH.managePositionStETH(
                 amount, true, result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
             );
-            result.collateral = wstETHAmount;
         }
+
+        result.collateral = wstETHAmount;
 
         return result;
     }

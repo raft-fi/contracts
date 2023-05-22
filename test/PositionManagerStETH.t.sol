@@ -97,7 +97,7 @@ contract PositionManagerStETHTest is TestSetup {
         PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStETH({
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
-            icr: 2 ether,
+            icr: 2 * MathUtils._100_PERCENT,
             ethType: PositionManagerUtils.ETHType.ETH,
             extraDebt: 0
         });
@@ -132,7 +132,7 @@ contract PositionManagerStETHTest is TestSetup {
         PositionManagerUtils.openPositionStETH({
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
-            icr: 2 ether,
+            icr: 2 * MathUtils._100_PERCENT,
             ethType: PositionManagerUtils.ETHType.ETH,
             extraDebt: 0
         });
@@ -156,7 +156,7 @@ contract PositionManagerStETHTest is TestSetup {
         PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStETH({
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
-            icr: 2 ether,
+            icr: 2 * MathUtils._100_PERCENT,
             ethType: PositionManagerUtils.ETHType.STETH,
             extraDebt: 0
         });
@@ -195,7 +195,7 @@ contract PositionManagerStETHTest is TestSetup {
         PositionManagerUtils.openPositionStETH({
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
-            icr: 2 ether,
+            icr: 2 * MathUtils._100_PERCENT,
             ethType: PositionManagerUtils.ETHType.STETH,
             extraDebt: 0
         });
@@ -219,7 +219,7 @@ contract PositionManagerStETHTest is TestSetup {
         PositionManagerUtils.openPositionStETH({
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
-            icr: 2 ether,
+            icr: 2 * MathUtils._100_PERCENT,
             ethType: PositionManagerUtils.ETHType.STETH,
             extraDebt: 2 ether
         });
@@ -242,8 +242,7 @@ contract PositionManagerStETHTest is TestSetup {
     }
 
     function _depositETH(address _account, uint256 _amount) private {
-        vm.startPrank(_account);
-        IStETH(address(stETH)).submit{ value: _amount }(ALICE);
-        vm.stopPrank();
+        vm.prank(_account);
+        IStETH(address(stETH)).submit{ value: _amount }(_account);
     }
 }
