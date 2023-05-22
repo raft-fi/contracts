@@ -235,7 +235,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 aliceDebt = raftDebtToken.balanceOf(ALICE);
 
         // Bob successfully repays some R
@@ -272,7 +272,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 
@@ -310,7 +310,7 @@ contract PositionManagerRepayDebtTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 

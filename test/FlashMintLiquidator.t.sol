@@ -96,7 +96,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         liquidator.liquidate(BOB, "");
 
         // Bob's position is closed
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         assertEq(raftDebtToken.balanceOf(BOB), 0);
         assertGt(rToken.balanceOf(address(this)), 535e18);
     }

@@ -53,7 +53,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         assertGt(raftDebtToken.balanceOf(ALICE), 0);
 
         uint256 bobExtraRAmount = PositionManagerUtils.getNetBorrowingAmount(
@@ -533,8 +533,8 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
     // Creates a new position and assigns the correct collateral and debt amount
     function testPositionCollateralDebtAmount() public {
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
         uint256 collateralBefore = raftCollateralToken.balanceOf(address(this));
         uint256 debtBefore = raftDebtToken.balanceOf(address(this));
 
@@ -581,7 +581,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
         uint256 positionManagerCollateralAfter = collateralToken.balanceOf(address(positionManager));
         assertEq(positionManagerCollateralAfter, alicePositionCollateral);
@@ -611,7 +611,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         assertGt(raftDebtToken.balanceOf(ALICE), 0);
 
         // To compensate borrowing fees
@@ -646,7 +646,7 @@ contract PositionManagerOpenPositionTest is TestSetup {
 
     // Increases the position's R debt and user's R token balance by the correct amounts
     function testPositionDebtUserBalanceIncrease() public {
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         uint256 aliceRTokenBalanceBefore = rToken.balanceOf(ALICE);
         assertEq(aliceDebtBefore, 0);

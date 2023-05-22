@@ -17,18 +17,21 @@ contract PositionManagerTester is PositionManager {
     // solhint-enable no-empty-blocks
 
     function unprotectedDecayBaseRateFromBorrowing(IERC20 collateralToken) external returns (uint256) {
-        baseRate[collateralToken] = _calcDecayedBaseRate(collateralToken);
-        assert(baseRate[collateralToken] >= 0 && baseRate[collateralToken] <= MathUtils._100_PERCENT);
+        collateralInfo[collateralToken].baseRate = _calcDecayedBaseRate(collateralToken);
+        assert(
+            collateralInfo[collateralToken].baseRate >= 0
+                && collateralInfo[collateralToken].baseRate <= MathUtils._100_PERCENT
+        );
 
         _updateLastFeeOpTime(collateralToken);
-        return baseRate[collateralToken];
+        return collateralInfo[collateralToken].baseRate;
     }
 
     function setLastFeeOpTimeToNow(IERC20 collateralToken) external {
-        lastFeeOperationTime[collateralToken] = block.timestamp;
+        collateralInfo[collateralToken].lastFeeOperationTime = block.timestamp;
     }
 
     function setBaseRate(IERC20 collateralToken, uint256 _baseRate) external {
-        baseRate[collateralToken] = _baseRate;
+        collateralInfo[collateralToken].baseRate = _baseRate;
     }
 }

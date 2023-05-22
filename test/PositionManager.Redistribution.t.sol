@@ -78,7 +78,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         // liquidate position
         positionManager.liquidate(BOB);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         // Bob's position is closed
         assertEq(raftDebtToken.balanceOf(BOB), 0);
     }
@@ -115,7 +115,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         // liquidate position
         positionManager.liquidate(BOB);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         // Bob's position is closed
         assertEq(raftDebtToken.balanceOf(BOB), 0);
     }
@@ -194,7 +194,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         // Liquidate the position
         positionManager.liquidate(ALICE);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         assertEq(raftDebtToken.balanceOf(ALICE), 0);
         assertGt(raftDebtToken.balanceOf(BOB), 0);
     }
@@ -221,7 +221,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         assertEq(raftDebtToken.balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
@@ -328,7 +328,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         assertLe(bobICRAfter, (110 * MathUtils._100_PERCENT / 100));
         assertLe(carolICRAfter, (110 * MathUtils._100_PERCENT / 100));
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
 
         // Though Bob's true ICR (including pending rewards) is below the MCR, check that Bob's raw collateral and debt
         // has not changed, and that his "raw" ICR is above the MCR

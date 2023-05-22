@@ -23,7 +23,7 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         PositionManagerDependent(positionManager_)
         WstETHWrapper(wstETH_)
     {
-        (, raftDebtToken,) = IPositionManager(positionManager_).raftCollateralTokens(wstETH);
+        (, raftDebtToken,,,,,,,,) = IPositionManager(positionManager_).collateralInfo(wstETH);
         rToken = IPositionManager(positionManager_).rToken();
         wstETH.approve(positionManager, type(uint256).max); // for deposits
     }

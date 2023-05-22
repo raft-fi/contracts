@@ -135,7 +135,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 bobPositionCollateral = raftCollateralToken.balanceOf(BOB);
         uint256 carolPositionCollateral = raftCollateralToken.balanceOf(CAROL);
 
@@ -241,8 +241,8 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
         uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
 
         // Check position is active
@@ -268,7 +268,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         // Check position is active
         assertGt(raftDebtToken.balanceOf(ALICE), 0);
 
@@ -292,7 +292,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken,,) = positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken,,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 alicePositionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
 
         uint256 withdrawAmount = 1 ether;
