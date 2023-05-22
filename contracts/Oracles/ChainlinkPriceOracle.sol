@@ -147,15 +147,15 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         view
         returns (bool)
     {
-        uint256 currentScaledPrice = _convertIntoWstETHPrice(uint256(currentResponse.answer), currentResponse.decimals);
-        uint256 prevScaledPrice = _convertIntoWstETHPrice(uint256(prevResponse.answer), prevResponse.decimals);
+        // Not needed to be converted to WstETH price, as we are only checking for a percentage change.
+        // Also, not needed to be converted by decimals, because aggregator decimals are the same for both responses.
+        uint256 currentScaledPrice = uint256(currentResponse.answer);
+        uint256 prevScaledPrice = uint256(prevResponse.answer);
 
         uint256 minPrice = Math.min(currentScaledPrice, prevScaledPrice);
         uint256 maxPrice = Math.max(currentScaledPrice, prevScaledPrice);
 
-        /*
-        * Use the previous round price as the denominator
-        */
+        // Use the previous round price as the denominator
         uint256 percentDeviation = (maxPrice - minPrice).divDown(prevScaledPrice);
 
         // Return true if price has more than doubled, or more than halved.
