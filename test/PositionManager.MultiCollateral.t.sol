@@ -343,7 +343,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         });
         vm.stopPrank();
 
-        positionManager.modifyCollateralToken(collateralTokenSecond, false);
+        positionManager.setCollateralEnabled(collateralTokenSecond, false);
 
         (,,,, raftCollateralTokenSecondEnabled,,,,,) = positionManager.collateralInfo(collateralTokenSecond);
         assertFalse(raftCollateralTokenSecondEnabled);
@@ -380,10 +380,10 @@ contract PositionManagerMultiCollateralTest is TestSetup {
     function testInvalidCollateralTokenModification() public {
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
-        positionManager.modifyCollateralToken(collateralToken, false);
+        positionManager.setCollateralEnabled(collateralToken, false);
 
         TokenMock collateralTokenThird = new TokenMock();
         vm.expectRevert(IPositionManager.CollateralTokenNotAdded.selector);
-        positionManager.modifyCollateralToken(collateralTokenThird, true);
+        positionManager.setCollateralEnabled(collateralTokenThird, true);
     }
 }

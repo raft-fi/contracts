@@ -357,7 +357,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         );
     }
 
-    function modifyCollateralToken(
+    function setCollateralEnabled(
         IERC20 collateralToken,
         bool isEnabled
     )
