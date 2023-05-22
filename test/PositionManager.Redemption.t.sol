@@ -5,6 +5,7 @@ import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
+import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
@@ -84,6 +85,44 @@ contract PositionManagerRedemptionTest is TestSetup {
         assertEq(collateralToken.balanceOf(address(positionManager)), collateralAmount - collateralToRemoveFromPool);
         assertApproxEqAbs(raftCollateralToken.balanceOf(ALICE), collateralAmount - collateralToRemoveFromPool, 1e5);
         assertEq(raftDebtToken.balanceOf(ALICE), rToMint - rToRedeem);
+    }
+
+    function testRedeemBelowThreshold() public {
+        uint256 initialCR = 1.5e18;
+        uint256 rToMint = 400_000e18;
+        uint256 collateralAmount = rToMint.divUp(DEFAULT_PRICE).mulUp(initialCR);
+        uint256 rToRedeem = 397_001e18;
+
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
+            positionManager.raftCollateralTokens(collateralToken);
+
+        vm.startPrank(ALICE);
+        collateralToken.approve(address(positionManager), collateralAmount);
+        positionManager.managePosition(
+            collateralToken,
+            ALICE,
+            collateralAmount,
+            true, // collateral increase
+            rToMint,
+            true, // debt increase
+            1e17,
+            emptySignature
+        );
+        rToken.transfer(BOB, rToRedeem);
+        vm.stopPrank();
+
+        assertEq(raftDebtToken.balanceOf(ALICE), rToMint);
+        assertEq(collateralToken.balanceOf(address(positionManager)), collateralAmount);
+        assertEq(raftCollateralToken.balanceOf(ALICE), collateralAmount);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPositionManager.TotalDebtCannotBeLowerThanMinDebt.selector, collateralToken, 2999e18
+            )
+        );
+        vm.startPrank(BOB);
+        positionManager.redeemCollateral(collateralToken, rToRedeem, 1e18);
+        vm.stopPrank();
     }
 
     function testRedeemCollateralWhenMultipleActivePositions() public {

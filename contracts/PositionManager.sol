@@ -55,8 +55,6 @@ contract PositionManager is FeeCollector, IPositionManager {
     mapping(IERC20 collateralToken => uint256 spread) public override redemptionSpread;
     mapping(IERC20 collateralToken => uint256 rebate) public override redemptionRebate;
 
-    mapping(IERC20 collateralToken => uint256 totalDebt) public override totalDebtForCollateral;
-
     // --- Modifiers ---
 
     /// @dev Checks if the collateral token has been added to the position manager, or reverts otherwise.
@@ -195,7 +193,8 @@ contract PositionManager is FeeCollector, IPositionManager {
             revert NothingToLiquidate();
         }
 
-        if (entireDebt == collateralTokenInfo.debtToken.totalSupply()) {
+        uint256 totalDebt = collateralTokenInfo.debtToken.totalSupply();
+        if (entireDebt == totalDebt) {
             revert CannotLiquidateLastPosition();
         }
         bool isRedistribution = icr <= MathUtils._100_PERCENT;
@@ -206,8 +205,7 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         if (!isRedistribution) {
             rToken.burn(msg.sender, entireDebt);
-            totalDebtForCollateral[collateralToken] -= entireDebt;
-            emit TotalDebtChanged(collateralToken, totalDebtForCollateral[collateralToken]);
+            totalDebt -= entireDebt;
 
             // Collateral is sent to protocol as a fee only in case of liquidation
             collateralToken.safeTransfer(feeRecipient, collateralLiquidationFee);
@@ -218,7 +216,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _closePosition(collateralTokenInfo.collateralToken, collateralTokenInfo.debtToken, position, true);
 
         _updateDebtAndCollateralIndex(
-            collateralToken, collateralTokenInfo.collateralToken, collateralTokenInfo.debtToken
+            collateralToken, collateralTokenInfo.collateralToken, collateralTokenInfo.debtToken, totalDebt
         );
 
         emit Liquidation(
@@ -247,6 +245,11 @@ contract PositionManager is FeeCollector, IPositionManager {
         if (debtAmount == 0) {
             revert AmountIsZero();
         }
+        IERC20Indexable raftDebtToken = raftCollateralTokens[collateralToken].debtToken;
+        uint256 newTotalDebt = raftDebtToken.totalSupply() - debtAmount;
+        if (newTotalDebt < splitLiquidationCollateral[collateralToken].LOW_TOTAL_DEBT()) {
+            revert TotalDebtCannotBeLowerThanMinDebt(collateralToken, newTotalDebt);
+        }
 
         (uint256 price, uint256 deviation) = priceFeeds[collateralToken].fetchPrice();
         uint256 collateralToRedeem = debtAmount.divDown(price);
@@ -266,16 +269,12 @@ contract PositionManager is FeeCollector, IPositionManager {
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
         rToken.burn(msg.sender, debtAmount);
-        totalDebtForCollateral[collateralToken] -= debtAmount;
-        emit TotalDebtChanged(collateralToken, totalDebtForCollateral[collateralToken]);
 
         // Send collateral to account
         collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
 
         _updateDebtAndCollateralIndex(
-            collateralToken,
-            raftCollateralTokens[collateralToken].collateralToken,
-            raftCollateralTokens[collateralToken].debtToken
+            collateralToken, raftCollateralTokens[collateralToken].collateralToken, raftDebtToken, newTotalDebt
         );
 
         emit Redemption(msg.sender, debtAmount, collateralToRedeem, redemptionFee, rebate);
@@ -469,16 +468,13 @@ contract PositionManager is FeeCollector, IPositionManager {
             uint256 totalDebtChange =
                 debtChange + _triggerBorrowingFee(collateralToken, position, debtChange, maxFeePercentage);
             raftDebtToken.mint(position, totalDebtChange);
-            totalDebtForCollateral[collateralToken] += totalDebtChange;
             rToken.mint(msg.sender, debtChange);
         } else {
-            totalDebtForCollateral[collateralToken] -= debtChange;
             raftDebtToken.burn(position, debtChange);
             rToken.burn(msg.sender, debtChange);
         }
 
         emit DebtChanged(position, collateralToken, debtChange, isDebtIncrease);
-        emit TotalDebtChanged(collateralToken, totalDebtForCollateral[collateralToken]);
     }
 
     /// @dev Adjusts the collateral of a given borrower by burning or minting the corresponding amount of Raft
@@ -513,14 +509,18 @@ contract PositionManager is FeeCollector, IPositionManager {
 
     /// @dev Updates debt and collateral indexes for a given collateral token.
     /// @param collateralToken The collateral token for which to update the indexes.
+    /// @param raftCollateralToken The raft collateral indexable token.
+    /// @param raftDebtToken The raft debt indexable token.
+    /// @param totalDebtForCollateral Totam amount of debt backed by collateral token.
     function _updateDebtAndCollateralIndex(
         IERC20 collateralToken,
         IERC20Indexable raftCollateralToken,
-        IERC20Indexable raftDebtToken
+        IERC20Indexable raftDebtToken,
+        uint256 totalDebtForCollateral
     )
         internal
     {
-        raftDebtToken.setIndex(totalDebtForCollateral[collateralToken]);
+        raftDebtToken.setIndex(totalDebtForCollateral);
         raftCollateralToken.setIndex(collateralToken.balanceOf(address(this)));
     }
 

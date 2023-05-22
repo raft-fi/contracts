@@ -75,11 +75,6 @@ interface IPositionManager is IFeeCollector {
         address indexed position, IERC20 indexed collateralToken, uint256 debtAmount, bool isDebtIncrease
     );
 
-    /// @dev Total debt in the system has been changed.
-    /// @param collateralToken Collateral token we change the debt for.
-    /// @param totalDebt The new total debt in the system.
-    event TotalDebtChanged(IERC20 collateralToken, uint256 totalDebt);
-
     /// @dev Borrowing fee has been paid. Emitted only if the actual fee was paid - doesn't happen with no fees are
     /// paid.
     /// @param collateralToken Collateral token used to mint R.
@@ -162,6 +157,11 @@ interface IPositionManager is IFeeCollector {
     /// @dev Cannot liquidate last position.
     error CannotLiquidateLastPosition();
 
+    /// @dev Cannot redeem collateral below minimum debt threshold.
+    /// @param collateralToken Collateral token used to redeem.
+    /// @param newTotalDebt New total debt backed by collateral, which is lower than minimum debt.
+    error TotalDebtCannotBeLowerThanMinDebt(IERC20 collateralToken, uint256 newTotalDebt);
+
     /// @dev Fee would eat up all returned collateral.
     error FeeEatsUpAllReturnedCollateral();
 
@@ -243,11 +243,6 @@ interface IPositionManager is IFeeCollector {
     /// @param position The address of the borrower.
     /// @return collateralToken The collateral token of the borrower's position.
     function collateralTokenForPosition(address position) external view returns (IERC20 collateralToken);
-
-    /// @dev Returns total debt taken with particular collateral token.
-    /// @param collateralToken Collateral token used to query total debt.
-    /// @return totalDebt Total debt for the particular collateral token.
-    function totalDebtForCollateral(IERC20 collateralToken) external view returns (uint256 totalDebt);
 
     /// @dev Adds a new collateral token to the protocol.
     /// @param collateralToken The new collateral token.
