@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
 /// @dev Interface to be used by contracts that collect fees. Contains fee recipient that can be changed by owner.
