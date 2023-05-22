@@ -40,8 +40,8 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         priceFeedSecond = new PriceFeedTestnet();
         positionManager.addCollateralToken(collateralTokenSecond, priceFeedSecond, splitLiquidationCollateral);
 
-        (, raftDebtToken2,) = positionManager.raftCollateralTokens(collateralTokenSecond);
-        (, raftDebtToken1,) = positionManager.raftCollateralTokens(collateralToken);
+        (, raftDebtToken2,,,,,,,,) = positionManager.collateralInfo(collateralTokenSecond);
+        (, raftDebtToken1,,,,,,,,) = positionManager.collateralInfo(collateralToken);
 
         randomAddress = makeAddr("randomAddress");
 
@@ -54,20 +54,17 @@ contract PositionManagerMultiCollateralTest is TestSetup {
         TokenMock collateralTokenThird = new TokenMock();
         PriceFeedTestnet priceFeedThird = new PriceFeedTestnet();
 
-        (
-            IERC20Indexable raftCollateralTokenThird,
-            IERC20Indexable raftDebtTokenThird,
-            bool raftCollateralTokenThirdEnabled
-        ) = positionManager.raftCollateralTokens(collateralTokenThird);
-        assertEq(address(raftCollateralTokenThird), address(0));
-        assertFalse(raftCollateralTokenThirdEnabled);
+        (IERC20Indexable raftCollateralThird, IERC20Indexable raftDebtThird,,, bool raftCollateralThirdEnabled,,,,,) =
+            positionManager.collateralInfo(collateralTokenThird);
+        assertEq(address(raftCollateralThird), address(0));
+        assertFalse(raftCollateralThirdEnabled);
 
         positionManager.addCollateralToken(collateralTokenThird, priceFeedThird, splitLiquidationCollateral);
 
-        (raftCollateralTokenThird, raftDebtTokenThird, raftCollateralTokenThirdEnabled) =
-            positionManager.raftCollateralTokens(collateralTokenThird);
-        assertTrue(raftCollateralTokenThird != IERC20(address(0)));
-        assertTrue(raftCollateralTokenThirdEnabled);
+        (raftCollateralThird, raftDebtThird,,, raftCollateralThirdEnabled,,,,,) =
+            positionManager.collateralInfo(collateralTokenThird);
+        assertTrue(raftCollateralThird != IERC20(address(0)));
+        assertTrue(raftCollateralThirdEnabled);
     }
 
     function testCannotAddCollateralToken() public {
@@ -316,10 +313,10 @@ contract PositionManagerMultiCollateralTest is TestSetup {
     }
 
     function testDisabledCollateralToken() public {
-        (,, bool raftCollateralTokenFirstEnabled) = positionManager.raftCollateralTokens(collateralToken);
+        (,,,, bool raftCollateralTokenFirstEnabled,,,,,) = positionManager.collateralInfo(collateralToken);
         assertTrue(raftCollateralTokenFirstEnabled);
 
-        (,, bool raftCollateralTokenSecondEnabled) = positionManager.raftCollateralTokens(collateralTokenSecond);
+        (,,,, bool raftCollateralTokenSecondEnabled,,,,,) = positionManager.collateralInfo(collateralTokenSecond);
         assertTrue(raftCollateralTokenSecondEnabled);
 
         collateralTokenSecond.mint(BOB, 10e36);
@@ -348,7 +345,7 @@ contract PositionManagerMultiCollateralTest is TestSetup {
 
         positionManager.modifyCollateralToken(collateralTokenSecond, false);
 
-        (,, raftCollateralTokenSecondEnabled) = positionManager.raftCollateralTokens(collateralTokenSecond);
+        (,,,, raftCollateralTokenSecondEnabled,,,,,) = positionManager.collateralInfo(collateralTokenSecond);
         assertFalse(raftCollateralTokenSecondEnabled);
 
         // Alice can still withdraw R

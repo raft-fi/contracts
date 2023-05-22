@@ -55,8 +55,8 @@ contract PositionManagerClosePositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
         uint256 alicePositionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         uint256 bobRBalance = rToken.balanceOf(BOB);
@@ -114,8 +114,8 @@ contract PositionManagerClosePositionTest is TestSetup {
         });
         vm.stopPrank();
 
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
         uint256 alicePositionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
         uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         uint256 bobRBalance = rToken.balanceOf(BOB);
@@ -165,7 +165,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         uint256 borrowingRate = positionManager.getBorrowingRate(collateralToken);
         assertEq(borrowingRate, 0);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         // Confirm Bob's R balance is less than his position debt
         uint256 bobRBalance = rToken.balanceOf(BOB);
         uint256 bobPositionDebt = raftDebtToken.balanceOf(BOB);
@@ -206,7 +206,7 @@ contract PositionManagerClosePositionTest is TestSetup {
         uint256 borrowingRate = positionManager.getBorrowingRate(collateralToken);
         assertGt(borrowingRate, 0);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
 
         // Confirm Bob's R balance is less than his position debt
         uint256 bobRBalance = rToken.balanceOf(BOB);

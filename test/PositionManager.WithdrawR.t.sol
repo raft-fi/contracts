@@ -845,7 +845,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 daveDebtBefore = raftDebtToken.balanceOf(DAVE);
 
         // Artificially make baseRate 5%
@@ -1127,7 +1127,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
         uint256 aliceRTokenBalanceBefore = rToken.balanceOf(ALICE);
         assertGt(aliceRTokenBalanceBefore, 0);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         uint256 aliceDebtBefore = raftDebtToken.balanceOf(ALICE);
         assertGt(aliceDebtBefore, 0);
 

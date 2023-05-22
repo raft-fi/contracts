@@ -44,8 +44,8 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 rToRedeem = 100_000e18;
         uint256 collateralAmount = rToMint.divUp(DEFAULT_PRICE).mulUp(initialCR);
 
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralAmount);
@@ -93,8 +93,8 @@ contract PositionManagerRedemptionTest is TestSetup {
         uint256 collateralAmount = rToMint.divUp(DEFAULT_PRICE).mulUp(initialCR);
         uint256 rToRedeem = 397_001e18;
 
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
 
         vm.startPrank(ALICE);
         collateralToken.approve(address(positionManager), collateralAmount);
@@ -128,8 +128,8 @@ contract PositionManagerRedemptionTest is TestSetup {
     function testRedeemCollateralWhenMultipleActivePositions() public {
         uint256 rToRedeem = 100_000e18;
 
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(collateralToken);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
 
         uint256 initialCR_A = 1.5e18;
         uint256 rToMint_A = 400_000e18;

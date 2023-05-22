@@ -81,7 +81,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         // liquidate position
         positionManager.liquidate(BOB);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         // Bob's position is closed
         assertEq(raftDebtToken.balanceOf(BOB), 0);
     }
@@ -149,7 +149,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         // Liquidate the position
         positionManager.liquidate(ALICE);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         assertEq(raftDebtToken.balanceOf(ALICE), 0);
         assertGt(raftDebtToken.balanceOf(BOB), 0);
     }
@@ -179,7 +179,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         });
         vm.stopPrank();
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         assertEq(raftDebtToken.balanceOf(CAROL), 0);
 
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
@@ -241,7 +241,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(BOB);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
 
         // Check Bob active, check Alice active
         assertGt(raftDebtToken.balanceOf(BOB), 0);
@@ -281,7 +281,7 @@ contract PositionManagerLiquidationTest is TestSetup {
         vm.expectRevert(IPositionManager.NothingToLiquidate.selector);
         positionManager.liquidate(BOB);
 
-        (, IERC20Indexable raftDebtToken,) = positionManager.raftCollateralTokens(collateralToken);
+        (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
         // Check Bob active, check Alice active
         assertGt(raftDebtToken.balanceOf(BOB), 0);
         assertGt(raftDebtToken.balanceOf(ALICE), 0);

@@ -37,8 +37,8 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         }
         amm = amm_;
         collateralToken = collateralToken_;
-        (raftCollateralToken, raftDebtToken,) =
-            IPositionManager(positionManager).raftCollateralTokens(collateralToken_);
+        raftCollateralToken = positionManager_.raftCollateralToken(collateralToken);
+        raftDebtToken = positionManager_.raftDebtToken(collateralToken);
 
         // We approve tokens here so we do not need to do approvals in particular actions.
         // Approved contracts are known, so this should be considered as safe.

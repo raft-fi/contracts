@@ -7,6 +7,7 @@ import { PositionManager } from "../contracts/PositionManager.sol";
 import { IAMM } from "../contracts/Interfaces/IAMM.sol";
 import { IWstETHWrapper } from "../contracts/Interfaces/IWstETHWrapper.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
+import { IPriceFeed } from "../contracts/Interfaces/IPriceFeed.sol";
 import { IPositionManagerDependent } from "../contracts/Interfaces/IPositionManagerDependent.sol";
 import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { TestSetup } from "./utils/TestSetup.t.sol";
@@ -135,11 +136,11 @@ contract OneStepLeverageStETHTest is TestSetup {
     }
 
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,) =
-            positionManager.raftCollateralTokens(wstETH);
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken, IPriceFeed priceFeedWstEth,,,,,,,) =
+            positionManager.collateralInfo(wstETH);
         uint256 debtAfter = raftDebtToken.balanceOf(position);
         uint256 collAfter = raftCollateralToken.balanceOf(position);
-        (uint256 price,) = positionManager.priceFeeds(wstETH).fetchPrice();
+        (uint256 price,) = priceFeedWstEth.fetchPrice();
         uint256 collAfterExpressedInR = price.mulDown(collAfter);
         uint256 effectiveLeverage = collAfterExpressedInR.divDown(collAfterExpressedInR - debtAfter);
         assertApproxEqAbs(effectiveLeverage, targetLeverageMultiplier, 5e17);
