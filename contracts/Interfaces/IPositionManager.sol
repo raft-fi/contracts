@@ -339,7 +339,7 @@ interface IPositionManager is IFeeCollector {
     /// @dev Enables or disables a collateral token. Reverts if the collateral token has not been added.
     /// @param collateralToken The collateral token.
     /// @param isEnabled Whether the collateral token can be used as collateral or not.
-    function modifyCollateralToken(IERC20 collateralToken, bool isEnabled) external;
+    function setCollateralEnabled(IERC20 collateralToken, bool isEnabled) external;
 
     /// @dev Sets the new split liquidation collateral contract.
     /// @param collateralToken Collateral token whose split liquidation collateral is being set.
