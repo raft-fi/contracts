@@ -12,28 +12,22 @@
     Methods that are not declared here are assumed to be dependent on env.
 */
 methods {
-    totalSupply()                         returns (uint256)   envfree
-    balanceOf(address)                    returns (uint256)   envfree
-    allowance(address,address)            returns (uint256)   envfree
-    name()                                returns (string)    envfree
-    symbol()                              returns (string)    envfree
-    currentIndex()                        returns (uint256)   envfree
-    totalSupplyERC20()                    returns (uint256)   envfree
-    balanceOfERC20(address)               returns (uint256)   envfree
-    setIndex(uint256)
-    increaseAllowance(address, uint256)
-    decreaseAllowance(address, uint256)
-    transfer(address,uint256)
-    transferFrom(address,address,uint256)
-    mint(address,uint256)
-    burn(address,uint256)
+    function totalSupply()                         external returns (uint256)   envfree;
+    function balanceOf(address)                    external returns (uint256)   envfree;
+    function allowance(address,address)            external returns (uint256)   envfree;
+    function currentIndex()                        external returns (uint256)   envfree;
+    function totalSupplyERC20()                    external returns (uint256)   envfree;
+    function balanceOfERC20(address)               external returns (uint256)   envfree;
+    function setIndex(uint256) external;
+    function mint(address,uint256) external;
+    function burn(address,uint256) external;
 }
 
 // Check functions that change the balance of the user
 rule CheckFunctionsThatChangeBalance(method f) filtered {
-		f -> f.selector != mint(address,uint256).selector && 
-            f.selector != burn(address,uint256).selector &&
-            f.selector != setIndex(uint256).selector
+		f -> f.selector != sig:mint(address,uint256).selector && 
+            f.selector != sig:burn(address,uint256).selector &&
+            f.selector != sig:setIndex(uint256).selector
 	}
 {
     env e;
@@ -62,17 +56,17 @@ rule CheckCurrentIndexCannotBeZero(uint256 backingAmount) {
 rule CheckTotalSupplyMustBeGreaterOrEqualThanSumOfUserBalances(method f, address user, uint256 amount) {
     address user1;
     require user != user1;
-    require balanceOfERC20(user) + balanceOfERC20(user1) == totalSupplyERC20();
+    require balanceOfERC20(user) + balanceOfERC20(user1) == to_mathint(totalSupplyERC20());
     
     env e;
-    if (f.selector == mint(address,uint256).selector) {
+    if (f.selector == sig:mint(address,uint256).selector) {
         mint(e, user, amount);
-    } else if (f.selector == burn(address,uint256).selector) {
+    } else if (f.selector == sig:burn(address,uint256).selector) {
         burn(e, user, amount); 
     } else {
         calldataarg args;
         f(e, args);
     }
 
-    assert balanceOf(user) + balanceOf(user1) <= totalSupply();
+    assert balanceOf(user) + balanceOf(user1) <= to_mathint(totalSupply());
 }

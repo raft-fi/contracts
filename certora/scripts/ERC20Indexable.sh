@@ -1,7 +1,7 @@
 #!/bin/bash
 
-certoraRun certora/contracts/ERC20IndexableCertora.sol:ERC20IndexableCertora \
-            --verify ERC20IndexableCertora:certora/specs/ERC20Indexable.spec \
+certoraRun certora/contracts/ERC20IndexableHarness.sol:ERC20IndexableHarness \
+            --verify ERC20IndexableHarness:certora/specs/ERC20Indexable.spec \
             --optimistic_loop \
-            --packages @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/ \
-                        @tempusfinance/tempus-utils/contracts/=lib/tempus-utils/contracts/
+            --packages @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts \
+                        @tempusfinance/tempus-utils/contracts/=lib/tempus-utils/contracts
