@@ -14,6 +14,7 @@ import { WstETHWrapper } from "./WstETHWrapper.sol";
 contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent, WstETHWrapper {
     IERC20Indexable private immutable raftDebtToken;
     IRToken private immutable rToken;
+
     // --- Constructor ---
 
     constructor(
@@ -54,6 +55,8 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         if (isDebtIncrease) {
             rToken.transfer(msg.sender, debtChange);
         }
+
+        emit ETHPositionChanged(msg.sender, msg.value, debtChange, isDebtIncrease);
     }
 
     function managePositionStETH(
@@ -99,6 +102,8 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerDependent
         if (isDebtIncrease) {
             rToken.transfer(msg.sender, debtChange);
         }
+
+        emit StETHPositionChanged(msg.sender, stETHCollateralChange, isCollateralIncrease, debtChange, isDebtIncrease);
     }
 
     function _applyPermit(IERC20Permit token, ERC20PermitSignature calldata permitSignature) internal {
