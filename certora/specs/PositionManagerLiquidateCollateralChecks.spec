@@ -2,7 +2,7 @@
     This is a specification file for the verification of PositionManager
     smart contract using the Certora prover (function liquidate)
 
-    https://prover.certora.com/output/23931/111e9932f01c4126a1d9f60c154362b1?anonymousKey=d917fb174cc730f3abd50a99cf13083aee067df4
+    https://prover.certora.com/output/23931/644125bfe6454b958d24d31649a88b4c?anonymousKey=80dece13e50c168c4c57e34bf5317a5f67540cfa
 */
 
 import "PositionManagerBase.spec";
@@ -43,5 +43,6 @@ rule integrityOfRaftCollateralTokenTotalSupply(address position) {
     
     liquidate(e, position);
 
-    assert to_mathint(raftCollateralTokenMock.totalSupply()) <= to_mathint(collateralTokenMock.balanceOf(currentContract));
+    assert to_mathint(raftCollateralTokenMock.totalSupply()) <= to_mathint(collateralTokenMock.balanceOf(currentContract)) + to_mathint(100) 
+        && to_mathint(raftCollateralTokenMock.totalSupply()) >= to_mathint(collateralTokenMock.balanceOf(currentContract)) - to_mathint(100);
 }

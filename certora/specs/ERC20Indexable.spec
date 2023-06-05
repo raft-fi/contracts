@@ -43,7 +43,9 @@ rule CheckFunctionsThatChangeBalance(method f) filtered {
 // Check currentIndex cannot be zero
 rule CheckCurrentIndexCannotBeZero(uint256 backingAmount) {
     require currentIndex() != 0;
-    // TODO Create a rule in PositionManager that backingAmount cannot be zero (with ERC20.totalSupply is not zero )
+
+    // In PositionManagerGlobalCollateralChecks.spec (rule integrityOfRaftCollateralSetIndex) 
+    //      and PositionManagerGlobalCollateralChecks (rule integrityOfRaftDebtlSetIndex) is checked that backingAmount != 0
     require backingAmount != 0;
 
     env e;

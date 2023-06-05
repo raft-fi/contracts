@@ -237,12 +237,22 @@ contract PositionManager is FeeCollector, IPositionManager {
         IERC20Indexable raftDebtToken = collateralInfo[collateralToken].debtToken;
 
         uint256 newTotalDebt = raftDebtToken.totalSupply() - debtAmount;
-        if (newTotalDebt < collateralInfo[collateralToken].splitLiquidation.LOW_TOTAL_DEBT()) {
+        uint256 lowTotalDebt = collateralInfo[collateralToken].splitLiquidation.LOW_TOTAL_DEBT();
+        if (newTotalDebt < lowTotalDebt) {
             revert TotalDebtCannotBeLowerThanMinDebt(collateralToken, newTotalDebt);
         }
 
         (uint256 price, uint256 deviation) = collateralInfo[collateralToken].priceFeed.fetchPrice();
         uint256 collateralToRedeem = debtAmount.divDown(price);
+        uint256 totalCollateral = collateralToken.balanceOf(address(this));
+        if (
+            totalCollateral - collateralToRedeem == 0
+                || totalCollateral - collateralToRedeem < lowTotalDebt.divDown(price)
+        ) {
+            revert TotalCollateralCannotBeLowerThanMinCollateral(
+                collateralToken, totalCollateral - collateralToRedeem, lowTotalDebt.divDown(price)
+            );
+        }
 
         // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
         // Use the saved total R supply value, from before it was reduced by the redemption.

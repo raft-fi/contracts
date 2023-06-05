@@ -181,6 +181,14 @@ interface IPositionManager is IFeeCollector {
     /// @param newTotalDebt New total debt backed by collateral, which is lower than minimum debt.
     error TotalDebtCannotBeLowerThanMinDebt(IERC20 collateralToken, uint256 newTotalDebt);
 
+    /// @dev Cannot redeem collateral
+    /// @param collateralToken Collateral token used to redeem.
+    /// @param newTotalCollateral New total collateral, which is lower than minimum collateral.
+    /// @param minimumCollateral Minimum collateral required to complete redeem
+    error TotalCollateralCannotBeLowerThanMinCollateral(
+        IERC20 collateralToken, uint256 newTotalCollateral, uint256 minimumCollateral
+    );
+
     /// @dev Fee would eat up all returned collateral.
     error FeeEatsUpAllReturnedCollateral();
 
