@@ -125,6 +125,46 @@ contract PositionManagerRedemptionTest is TestSetup {
         vm.stopPrank();
     }
 
+    function testRedeemBelowCollateralThreshold() public {
+        uint256 initialCR = 1.5e18;
+        uint256 rToMint = 400_000e18;
+        uint256 collateralAmount = rToMint.divUp(DEFAULT_PRICE).mulUp(initialCR);
+        uint256 rToRedeem = 395_000e18;
+
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(collateralToken);
+
+        vm.startPrank(ALICE);
+        collateralToken.approve(address(positionManager), collateralAmount);
+        positionManager.managePosition(
+            collateralToken,
+            ALICE,
+            collateralAmount,
+            true, // collateral increase
+            rToMint,
+            true, // debt increase
+            1e17,
+            emptySignature
+        );
+        rToken.transfer(BOB, rToRedeem);
+        vm.stopPrank();
+
+        assertEq(raftDebtToken.balanceOf(ALICE), rToMint);
+        assertEq(collateralToken.balanceOf(address(positionManager)), collateralAmount);
+        assertEq(raftCollateralToken.balanceOf(ALICE), collateralAmount);
+
+        priceFeed.setPrice(DEFAULT_PRICE / 2);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPositionManager.TotalCollateralCannotBeLowerThanMinCollateral.selector, collateralToken, 10e18, 30e18
+            )
+        );
+        vm.startPrank(BOB);
+        positionManager.redeemCollateral(collateralToken, 299_000e18, 1e18);
+        vm.stopPrank();
+    }
+
     function testRedeemCollateralWhenMultipleActivePositions() public {
         uint256 rToRedeem = 100_000e18;
 
