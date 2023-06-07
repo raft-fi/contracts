@@ -8,6 +8,29 @@ interface IOneStepLeverageStETH is IOneStepLeverage {
     /// @dev Thrown when `manageLeveragedPositionETH` is invoked without passing any ETH value (msg.value == 0).
     error NoETHProvided();
 
+    /// @dev Leveraged position was changed using stETH.
+    /// @param position The changed position.
+    /// @param collateralChange stETH collateral change (collateral added/removed from/to user wallet).
+    /// @param isCollateralIncrease True if collateral is added, false if removed.
+    /// @param debtChange Debt being added or removed.
+    /// @param isDebtIncrease True if increasing debt/leverage.
+    event StETHLeveragedPositionChange(
+        address indexed position,
+        uint256 collateralChange,
+        bool isCollateralIncrease,
+        uint256 debtChange,
+        bool isDebtIncrease
+    );
+
+    /// @dev Leveraged position was changed using ETH.
+    /// @param position The changed position.
+    /// @param collateralChange ETH collateral change (collateral added/removed from/to user wallet).
+    /// @param debtChange Debt being added or removed.
+    /// @param isDebtIncrease True if increasing debt/leverage.
+    event ETHLeveragedPositionChange(
+        address indexed position, uint256 collateralChange, uint256 debtChange, bool isDebtIncrease
+    );
+
     /// @dev Increases or decreases leverage for a position. Allows stETH deposits.
     /// @param debtChange Debt being added or removed.
     /// @param isDebtIncrease True if increasing debt/leverage.
