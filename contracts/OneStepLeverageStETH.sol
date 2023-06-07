@@ -49,6 +49,10 @@ contract OneStepLeverageStETH is IERC3156FlashBorrower, IOneStepLeverageStETH, W
         if (!stETHCollateralIncrease && wstETHCollateralChange > 0) {
             unwrapStETH(wstETHCollateralChange);
         }
+
+        emit StETHLeveragedPositionChange(
+            msg.sender, stETHCollateralChange, stETHCollateralIncrease, debtChange, isDebtIncrease
+        );
     }
 
     function manageLeveragedPositionETH(
@@ -77,5 +81,7 @@ contract OneStepLeverageStETH is IERC3156FlashBorrower, IOneStepLeverageStETH, W
             maxFeePercentage,
             true
         );
+
+        emit ETHLeveragedPositionChange(msg.sender, msg.value, debtChange, isDebtIncrease);
     }
 }
