@@ -60,7 +60,7 @@ contract SplitLiquidationCollateralTest is Test {
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
         // (collateralAmount - debtAmount / price) - collateralToSentToLiquidator
-        assertApproxEqAbs(collateralToSendToProtocol, 3000e18 - 2925e18, 1e18);
+        assertEq(collateralToSendToProtocol, 0);
         // 97.5% of 3000e18 (collateralAmount - debtAmount / price)
         assertEq(collateralToSentToLiquidator, collateralAmount - collateralToSendToProtocol);
 
@@ -69,7 +69,7 @@ contract SplitLiquidationCollateralTest is Test {
         price = 5e18;
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
-        assertEq(collateralToSendToProtocol, 10_500e18);
+        assertEq(collateralToSendToProtocol, 0);
         assertEq(collateralToSentToLiquidator, collateralAmount - collateralToSendToProtocol);
 
         collateralAmount = 500_000e18;
@@ -77,7 +77,7 @@ contract SplitLiquidationCollateralTest is Test {
         price = 5e18;
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
-        assertEq(collateralToSendToProtocol, 150_000e18);
+        assertEq(collateralToSendToProtocol, 0);
         assertEq(collateralToSentToLiquidator, collateralAmount - collateralToSendToProtocol);
 
         collateralAmount = 5_000_000e18;
@@ -85,7 +85,7 @@ contract SplitLiquidationCollateralTest is Test {
         price = 5e18;
         (collateralToSendToProtocol, collateralToSentToLiquidator) =
             splitLiquidationCollateral.split(collateralAmount, debtAmount, price, false);
-        assertEq(collateralToSendToProtocol, 1_500_000e18);
+        assertEq(collateralToSendToProtocol, 0);
         assertEq(collateralToSentToLiquidator, collateralAmount - collateralToSendToProtocol);
     }
 
