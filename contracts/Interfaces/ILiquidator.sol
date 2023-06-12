@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
 import { IAMM } from "./IAMM.sol";
 import { IRToken } from "./IRToken.sol";
 
-/// @dev Interface that OneStepLeverage needs to implement
-interface IFlashMintLiquidator is IERC3156FlashBorrower, IPositionManagerDependent {
+interface ILiquidator is IPositionManagerDependent {
     // --- Errors ---
 
     /// @dev AMM cannot be zero address.
@@ -37,11 +35,8 @@ interface IFlashMintLiquidator is IERC3156FlashBorrower, IPositionManagerDepende
     /// @dev Address of R token.
     function rToken() external view returns (IRToken);
 
-    /// @dev Liquidates position by:
-    /// 1. Flash mint R
-    /// 2. Liquidate position
-    /// 3. Swap collateralToken to R
-    /// 4. Repay flash mint and take profit.
+    /// @dev Liquidates position atomically. Implementation may use flash mints, flash loans
+    ///     or any other mechanism to liquidate position.
     /// @param position Position to liquidate.
     /// @param ammData Additional data to pass to amm for swap.
     function liquidate(address position, bytes calldata ammData) external;

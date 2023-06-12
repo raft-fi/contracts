@@ -4,13 +4,13 @@ pragma solidity 0.8.19;
 import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IFlashMintLiquidator } from "./Interfaces/IFlashMintLiquidator.sol";
+import { ILiquidator } from "./Interfaces/ILiquidator.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IRToken } from "./Interfaces/IRToken.sol";
 import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 import { IAMM } from "./Interfaces/IAMM.sol";
 
-contract FlashMintLiquidator is IFlashMintLiquidator, PositionManagerDependent {
+contract FlashMintLiquidator is ILiquidator, IERC3156FlashBorrower, PositionManagerDependent {
     using SafeERC20 for IERC20;
 
     IAMM public immutable override amm;
