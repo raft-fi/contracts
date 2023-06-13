@@ -22,7 +22,7 @@ contract SplitLiquidationCollateral is ISplitLiquidationCollateral {
 
     uint256 public constant override LOW_TOTAL_DEBT = 3000e18;
 
-    uint256 public constant override MCR = 110 * MathUtils._100_PERCENT / 100; // 110%
+    uint256 public constant override MCR = 120 * MathUtils._100_PERCENT / 100; // 120%
 
     // --- Functions ---
 
