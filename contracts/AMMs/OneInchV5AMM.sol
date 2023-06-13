@@ -22,7 +22,16 @@ contract OneInchV5AMM is AMMBase {
         aggregationRouter = _aggregationRouter;
     }
 
-    function _executeSwap(IERC20 tokenIn, uint256 amountIn, uint256, bytes calldata extraData) internal override {
+    function _executeSwap(
+        IERC20 tokenIn,
+        uint256 amountIn,
+        uint256,
+        bytes calldata extraData
+    )
+        internal
+        virtual
+        override
+    {
         (uint256 fromAmountOffset, bytes memory swapCalldata) = abi.decode(extraData, (uint256, bytes));
 
         if (fromAmountOffset != 0) {

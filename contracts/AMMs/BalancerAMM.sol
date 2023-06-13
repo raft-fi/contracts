@@ -32,6 +32,7 @@ contract BalancerAMM is AMMBase {
         bytes calldata extraData
     )
         internal
+        virtual
         override
     {
         (IVault.BatchSwapStep[] memory swaps, IAsset[] memory assets, uint256 deadline) =
