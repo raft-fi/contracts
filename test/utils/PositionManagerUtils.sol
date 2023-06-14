@@ -9,6 +9,7 @@ import { IStETH } from "../../contracts/Dependencies/IStETH.sol";
 import { IERC20Indexable } from "../../contracts/Interfaces/IERC20Indexable.sol";
 import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.sol";
 import { PositionManagerStETH } from "../../contracts/PositionManagerStETH.sol";
+import { PositionManagerWETH } from "../../contracts/PositionManagerWETH.sol";
 import { PriceFeedTestnet } from "../mocks/PriceFeedTestnet.sol";
 
 library PositionManagerUtils {
@@ -106,6 +107,41 @@ library PositionManagerUtils {
         }
 
         result.collateral = wstETHAmount;
+
+        return result;
+    }
+
+    function openPositionWETH(
+        PositionManagerWETH positionManagerWETH,
+        PriceFeedTestnet priceFeed,
+        uint256 icr,
+        ETHType ethType,
+        uint256 extraDebt
+    )
+        internal
+        returns (OpenPositionResult memory result)
+    {
+        result.icr = icr;
+        uint256 amount;
+        (result.debtAmount, result.totalDebt, amount) = getOpenPositionSetupValues(
+            IPositionManager(positionManagerWETH.positionManager()),
+            positionManagerWETH.wETH(),
+            priceFeed,
+            extraDebt,
+            icr,
+            0
+        );
+        ERC20PermitSignature memory emptySignature;
+
+        if (ethType == ETHType.ETH) {
+            positionManagerWETH.managePositionETH{ value: amount }(
+                amount, true, result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
+            );
+        } else {
+            assert(false);
+        }
+
+        result.collateral = amount;
 
         return result;
     }
