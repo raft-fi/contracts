@@ -2,14 +2,10 @@
 pragma solidity 0.8.19;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
-import { IWstETH } from "../Dependencies/IWstETH.sol";
 import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
-import { MathUtils } from "../Dependencies/MathUtils.sol";
-import { IChainlinkPriceOracle } from "./Interfaces/IChainlinkPriceOracle.sol";
-import { BasePriceOracle } from "./BasePriceOracle.sol";
+import { AggregatorV3Interface, IChainlinkPriceOracle } from "./Interfaces/IChainlinkPriceOracle.sol";
 
-contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
+abstract contract BaseChainlinkPriceOracle is IChainlinkPriceOracle {
     // --- Types ---
 
     using Fixed256x18 for uint256;
@@ -20,11 +16,9 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
 
     uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
 
-    uint256 public constant override DEVIATION = 1e16; // 1%
-
     // --- Constructor ---
 
-    constructor(AggregatorV3Interface _priceAggregatorAddress, IWstETH _wstETH) BasePriceOracle(_wstETH) {
+    constructor(AggregatorV3Interface _priceAggregatorAddress) {
         if (address(_priceAggregatorAddress) == address(0)) {
             revert InvalidPriceAggregatorAddress();
         }
@@ -32,26 +26,6 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
     }
 
     // --- Functions ---
-
-    function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
-        ChainlinkResponse memory chainlinkResponse = _getCurrentChainlinkResponse();
-        ChainlinkResponse memory prevChainlinkResponse =
-            _getPrevChainlinkResponse(chainlinkResponse.roundId, chainlinkResponse.decimals);
-
-        if (
-            _chainlinkIsBroken(chainlinkResponse, prevChainlinkResponse)
-                || _oracleIsFrozen(chainlinkResponse.timestamp)
-        ) {
-            return (PriceOracleResponse(true, false, 0));
-        }
-        return (
-            PriceOracleResponse(
-                false,
-                _chainlinkPriceChangeAboveMax(chainlinkResponse, prevChainlinkResponse),
-                _convertIntoWstETHPrice(uint256(chainlinkResponse.answer), chainlinkResponse.decimals)
-            )
-        );
-    }
 
     function _getCurrentChainlinkResponse() internal view returns (ChainlinkResponse memory chainlinkResponse) {
         // First, try to get current decimal precision:
@@ -144,7 +118,7 @@ contract ChainlinkPriceOracle is IChainlinkPriceOracle, BasePriceOracle {
         ChainlinkResponse memory prevResponse
     )
         internal
-        view
+        pure
         returns (bool)
     {
         // Not needed to be converted to WstETH price, as we are only checking for a percentage change.
