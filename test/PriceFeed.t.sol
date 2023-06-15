@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import { IPriceOracle } from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
-import { ChainlinkPriceOracle } from "../contracts/Oracles/ChainlinkPriceOracle.sol";
-import { TellorPriceOracle } from "../contracts/Oracles/TellorPriceOracle.sol";
+import { ChainlinkPriceOracleWstETH } from "../contracts/Oracles/ChainlinkPriceOracleWstETH.sol";
+import { TellorPriceOracleWstETH } from "../contracts/Oracles/TellorPriceOracleWstETH.sol";
 import { PriceFeed, IPriceFeed } from "../contracts/PriceFeed.sol";
 import { MockChainlink } from "./mocks/MockChainlink.sol";
 import { MockTellor } from "./mocks/MockTellor.sol";
@@ -12,9 +12,9 @@ import { TestSetup } from "./utils/TestSetup.t.sol";
 
 contract PriceFeedTest is TestSetup {
     MockChainlink public mockChainlink;
-    ChainlinkPriceOracle public chainlinkPriceOracle;
+    ChainlinkPriceOracleWstETH public chainlinkPriceOracleWstETH;
     MockTellor public mockTellor;
-    TellorPriceOracle public tellorPriceOracle;
+    TellorPriceOracleWstETH public tellorPriceOracleWstETH;
 
     PriceFeedTester public priceFeed;
 
@@ -28,13 +28,13 @@ contract PriceFeedTest is TestSetup {
         randomAddress = makeAddr("randomAddress");
 
         mockChainlink = new MockChainlink();
-        chainlinkPriceOracle = new ChainlinkPriceOracle(mockChainlink, collateralToken);
+        chainlinkPriceOracleWstETH = new ChainlinkPriceOracleWstETH(mockChainlink, collateralToken);
         mockTellor = new MockTellor();
-        tellorPriceOracle = new TellorPriceOracle(mockTellor, collateralToken);
+        tellorPriceOracleWstETH = new TellorPriceOracleWstETH(mockTellor, collateralToken);
 
         _fillCorrectDataForChainlinkOracle();
 
-        priceFeed = new PriceFeedTester(chainlinkPriceOracle, tellorPriceOracle);
+        priceFeed = new PriceFeedTester(chainlinkPriceOracleWstETH, tellorPriceOracleWstETH);
     }
 
     function testCannotCreateContract() public {
@@ -42,22 +42,24 @@ contract PriceFeedTest is TestSetup {
         new PriceFeed(IPriceOracle(address(0)), IPriceOracle(address(0)), 5e16);
 
         MockChainlink newMockChainlink = new MockChainlink();
-        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(newMockChainlink, collateralToken);
+        ChainlinkPriceOracleWstETH newChainlinkPriceOracle =
+            new ChainlinkPriceOracleWstETH(newMockChainlink, collateralToken);
         vm.expectRevert(IPriceFeed.PrimaryOracleBrokenOrFrozenOrBadResult.selector);
         new PriceFeed(newChainlinkPriceOracle, IPriceOracle(address(0)), 5e16);
 
         vm.expectRevert(IPriceFeed.InvalidSecondaryOracle.selector);
-        new PriceFeed(chainlinkPriceOracle, IPriceOracle(address(0)), 5e16);
+        new PriceFeed(chainlinkPriceOracleWstETH, IPriceOracle(address(0)), 5e16);
 
         vm.expectRevert(IPriceFeed.InvalidPriceDifferenceBetweenOracles.selector);
-        new PriceFeed(chainlinkPriceOracle, tellorPriceOracle, 1e15 - 1);
+        new PriceFeed(chainlinkPriceOracleWstETH, chainlinkPriceOracleWstETH, 1e15 - 1);
 
         vm.expectRevert(IPriceFeed.InvalidPriceDifferenceBetweenOracles.selector);
-        new PriceFeed(chainlinkPriceOracle, tellorPriceOracle, 1e17 + 1);
+        new PriceFeed(chainlinkPriceOracleWstETH, chainlinkPriceOracleWstETH, 1e17 + 1);
     }
 
     function testSetPrimaryOracle() public {
-        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(mockChainlink, collateralToken);
+        ChainlinkPriceOracleWstETH newChainlinkPriceOracle =
+            new ChainlinkPriceOracleWstETH(mockChainlink, collateralToken);
         priceFeed.setPrimaryOracle(newChainlinkPriceOracle);
 
         assertEq(address(newChainlinkPriceOracle), address(priceFeed.primaryOracle()));
@@ -68,7 +70,8 @@ contract PriceFeedTest is TestSetup {
         priceFeed.setPrimaryOracle(IPriceOracle(address(0)));
 
         MockChainlink newMockChainlink = new MockChainlink();
-        ChainlinkPriceOracle newChainlinkPriceOracle = new ChainlinkPriceOracle(newMockChainlink, collateralToken);
+        ChainlinkPriceOracleWstETH newChainlinkPriceOracle =
+            new ChainlinkPriceOracleWstETH(newMockChainlink, collateralToken);
         vm.expectRevert(IPriceFeed.PrimaryOracleBrokenOrFrozenOrBadResult.selector);
         priceFeed.setPrimaryOracle(newChainlinkPriceOracle);
 
@@ -78,7 +81,7 @@ contract PriceFeedTest is TestSetup {
     }
 
     function testSetSecondaryOracle() public {
-        TellorPriceOracle newTellorPriceOracle = new TellorPriceOracle(mockTellor, collateralToken);
+        TellorPriceOracleWstETH newTellorPriceOracle = new TellorPriceOracleWstETH(mockTellor, collateralToken);
         priceFeed.setSecondaryOracle(newTellorPriceOracle);
 
         assertEq(address(newTellorPriceOracle), address(priceFeed.secondaryOracle()));
@@ -89,7 +92,7 @@ contract PriceFeedTest is TestSetup {
         priceFeed.setSecondaryOracle(IPriceOracle(address(0)));
 
         MockTellor newMockTellor = new MockTellor();
-        TellorPriceOracle newTellorPriceOracle = new TellorPriceOracle(newMockTellor, collateralToken);
+        TellorPriceOracleWstETH newTellorPriceOracle = new TellorPriceOracleWstETH(newMockTellor, collateralToken);
 
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
