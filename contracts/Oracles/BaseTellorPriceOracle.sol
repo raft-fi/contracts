@@ -29,4 +29,24 @@ abstract contract BaseTellorPriceOracle is ITellorPriceOracle {
         return
             !response.success || response.timestamp == 0 || response.timestamp > block.timestamp || response.value == 0;
     }
+
+    function _getCurrentTellorResponse(bytes32 queryId) internal returns (TellorResponse memory tellorResponse) {
+        uint256 time;
+        uint256 value;
+
+        try tellor.getDataBefore(queryId, block.timestamp - 20 minutes) returns (
+            bool, bytes memory data, uint256 timestamp
+        ) {
+            value = abi.decode(data, (uint256));
+            time = timestamp;
+        } catch {
+            return (tellorResponse);
+        }
+
+        if (time > lastStoredTimestamp) {
+            lastStoredPrice = value;
+            lastStoredTimestamp = time;
+        }
+        return TellorResponse(lastStoredPrice, lastStoredTimestamp, true);
+    }
 }
