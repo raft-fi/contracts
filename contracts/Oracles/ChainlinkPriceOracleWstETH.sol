@@ -23,23 +23,7 @@ contract ChainlinkPriceOracleWstETH is BaseChainlinkPriceOracle, BasePriceOracle
 
     // --- Functions ---
 
-    function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
-        ChainlinkResponse memory chainlinkResponse = _getCurrentChainlinkResponse();
-        ChainlinkResponse memory prevChainlinkResponse =
-            _getPrevChainlinkResponse(chainlinkResponse.roundId, chainlinkResponse.decimals);
-
-        if (
-            _chainlinkIsBroken(chainlinkResponse, prevChainlinkResponse)
-                || _oracleIsFrozen(chainlinkResponse.timestamp)
-        ) {
-            return (PriceOracleResponse(true, false, 0));
-        }
-        return (
-            PriceOracleResponse(
-                false,
-                _chainlinkPriceChangeAboveMax(chainlinkResponse, prevChainlinkResponse),
-                _convertIntoWstETHPrice(uint256(chainlinkResponse.answer), chainlinkResponse.decimals)
-            )
-        );
+    function _formatPrice(uint256 price, uint256 answerDigits) internal view override returns (uint256) {
+        return _convertIntoWstETHPrice(price, answerDigits);
     }
 }

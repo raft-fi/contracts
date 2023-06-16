@@ -23,6 +23,9 @@ interface ITellorPriceOracle is IPriceOracle {
     /// @dev Wrapper contract that calls the Tellor system.
     function tellor() external returns (ITellor);
 
+    /// @dev Tellor query ID.
+    function tellorQueryId() external returns (bytes32);
+
     /// @dev Returns the last stored price from Tellor oracle
     function lastStoredPrice() external returns (uint256);
 

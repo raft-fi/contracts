@@ -30,7 +30,9 @@ contract PriceFeedTest is TestSetup {
         mockChainlink = new MockChainlink();
         chainlinkPriceOracleWstETH = new ChainlinkPriceOracleWstETH(mockChainlink, collateralToken);
         mockTellor = new MockTellor();
-        tellorPriceOracleWstETH = new TellorPriceOracleWstETH(mockTellor, collateralToken);
+        tellorPriceOracleWstETH = new TellorPriceOracleWstETH(
+            mockTellor, keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd"))
+        ), collateralToken);
 
         _fillCorrectDataForChainlinkOracle();
 
@@ -81,7 +83,9 @@ contract PriceFeedTest is TestSetup {
     }
 
     function testSetSecondaryOracle() public {
-        TellorPriceOracleWstETH newTellorPriceOracle = new TellorPriceOracleWstETH(mockTellor, collateralToken);
+        TellorPriceOracleWstETH newTellorPriceOracle = new TellorPriceOracleWstETH(
+            mockTellor, keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd"))
+        ), collateralToken);
         priceFeed.setSecondaryOracle(newTellorPriceOracle);
 
         assertEq(address(newTellorPriceOracle), address(priceFeed.secondaryOracle()));
@@ -92,7 +96,9 @@ contract PriceFeedTest is TestSetup {
         priceFeed.setSecondaryOracle(IPriceOracle(address(0)));
 
         MockTellor newMockTellor = new MockTellor();
-        TellorPriceOracleWstETH newTellorPriceOracle = new TellorPriceOracleWstETH(newMockTellor, collateralToken);
+        TellorPriceOracleWstETH newTellorPriceOracle = new TellorPriceOracleWstETH(
+            newMockTellor, keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd"))
+        ), collateralToken);
 
         vm.prank(randomAddress);
         vm.expectRevert("Ownable: caller is not the owner");
