@@ -60,7 +60,7 @@ contract PositionManagerWETH is IPositionManagerWETH, PositionManagerDependent {
             collateralChange = msg.value;
         }
 
-        IPositionManager(positionManager).managePosition(
+        (collateralChange, debtChange) = IPositionManager(positionManager).managePosition(
             wETH,
             msg.sender,
             collateralChange,
