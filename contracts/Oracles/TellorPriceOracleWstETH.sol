@@ -10,23 +10,21 @@ contract TellorPriceOracleWstETH is BaseTellorPriceOracle, BasePriceOracleWstETH
 
     uint256 public constant override DEVIATION = 5e15; // 0.5%
 
-    uint256 private constant _TELLOR_DIGITS = 18;
-
-    bytes32 private constant _STETH_TELLOR_QUERY_ID = keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd")));
-
     // --- Constructor ---
 
+    constructor(
+        ITellor tellor_,
+        bytes32 tellorQueryId_,
+        IWstETH wstETH_
+    )
+        BaseTellorPriceOracle(tellor_, tellorQueryId_)
+        BasePriceOracleWstETH(wstETH_)
     // solhint-disable-next-line no-empty-blocks
-    constructor(ITellor tellor_, IWstETH wstETH_) BaseTellorPriceOracle(tellor_) BasePriceOracleWstETH(wstETH_) { }
+    { }
 
     // --- Functions ---
 
-    function getPriceOracleResponse() external override returns (PriceOracleResponse memory) {
-        TellorResponse memory tellorResponse = _getCurrentTellorResponse(_STETH_TELLOR_QUERY_ID);
-
-        if (_tellorIsBroken(tellorResponse) || _oracleIsFrozen(tellorResponse.timestamp)) {
-            return (PriceOracleResponse(true, false, 0));
-        }
-        return (PriceOracleResponse(false, false, _convertIntoWstETHPrice(tellorResponse.value, _TELLOR_DIGITS)));
+    function _formatPrice(uint256 price, uint256 answerDigits) internal view override returns (uint256) {
+        return _convertIntoWstETHPrice(price, answerDigits);
     }
 }

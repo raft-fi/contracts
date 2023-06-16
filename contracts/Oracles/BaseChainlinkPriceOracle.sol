@@ -4,8 +4,9 @@ pragma solidity 0.8.19;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import { AggregatorV3Interface, IChainlinkPriceOracle } from "./Interfaces/IChainlinkPriceOracle.sol";
+import { BasePriceOracle } from "./BasePriceOracle.sol";
 
-abstract contract BaseChainlinkPriceOracle is IChainlinkPriceOracle {
+abstract contract BaseChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
     // --- Types ---
 
     using Fixed256x18 for uint256;
@@ -26,6 +27,26 @@ abstract contract BaseChainlinkPriceOracle is IChainlinkPriceOracle {
     }
 
     // --- Functions ---
+
+    function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
+        ChainlinkResponse memory chainlinkResponse = _getCurrentChainlinkResponse();
+        ChainlinkResponse memory prevChainlinkResponse =
+            _getPrevChainlinkResponse(chainlinkResponse.roundId, chainlinkResponse.decimals);
+
+        if (
+            _chainlinkIsBroken(chainlinkResponse, prevChainlinkResponse)
+                || _oracleIsFrozen(chainlinkResponse.timestamp)
+        ) {
+            return (PriceOracleResponse(true, false, 0));
+        }
+        return (
+            PriceOracleResponse(
+                false,
+                _chainlinkPriceChangeAboveMax(chainlinkResponse, prevChainlinkResponse),
+                _formatPrice(uint256(chainlinkResponse.answer), chainlinkResponse.decimals)
+            )
+        );
+    }
 
     function _getCurrentChainlinkResponse() internal view returns (ChainlinkResponse memory chainlinkResponse) {
         // First, try to get current decimal precision:
@@ -135,4 +156,6 @@ abstract contract BaseChainlinkPriceOracle is IChainlinkPriceOracle {
         // Return true if price has more than doubled, or more than halved.
         return percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
     }
+
+    function _formatPrice(uint256 price, uint256 answerDigits) internal view virtual returns (uint256);
 }

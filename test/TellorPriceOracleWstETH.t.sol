@@ -15,7 +15,9 @@ contract TellorPriceOracleWstETHTest is Test {
     function setUp() public {
         vm.createSelectFork("goerli", 8_946_759);
 
-        tellorPriceOracleWstETH = new TellorPriceOracleWstETH(tellorOracle, wstETH);
+        tellorPriceOracleWstETH = new TellorPriceOracleWstETH(
+            tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd"))
+        ), wstETH);
     }
 
     function testTellorWstETHPrice() public {
