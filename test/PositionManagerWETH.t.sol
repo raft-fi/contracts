@@ -147,6 +147,28 @@ contract PositionManagerWETHTest is TestSetup {
         assertEq(ALICE.balance, aliceBalanceBefore + withdrawAmount);
     }
 
+    function testWithdrawETHAsMaxDebt() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPositionWETH({
+            positionManagerWETH: positionManagerWETH,
+            priceFeed: priceFeed,
+            icr: 2 * MathUtils._100_PERCENT,
+            ethType: PositionManagerUtils.ETHType.ETH,
+            extraDebt: 0
+        });
+        vm.stopPrank();
+
+        uint256 aliceBalanceBefore = ALICE.balance;
+        uint256 withdrawAmount = 30 ether;
+
+        // Alice withdraws max debt
+        vm.startPrank(ALICE);
+        positionManager.rToken().approve(address(positionManagerWETH), type(uint256).max);
+        positionManagerWETH.managePositionETH(0, false, type(uint256).max, false, 0, emptySignature);
+        vm.stopPrank();
+        assertEq(ALICE.balance, aliceBalanceBefore + withdrawAmount);
+    }
+
     // Sends the correct amount of ETH to the user
     function testWithdrawETHAlongWithRRepayment() public {
         vm.startPrank(ALICE);
