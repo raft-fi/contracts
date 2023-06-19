@@ -16,7 +16,7 @@ abstract contract BasePriceOracle is IPriceOracle {
         return (block.timestamp - responseTimestamp) > TIMEOUT;
     }
 
-    function _scalePriceByDigits(uint256 price, uint256 answerDigits) internal pure returns (uint256) {
+    function _formatPrice(uint256 price, uint256 answerDigits) internal view virtual returns (uint256) {
         /*
         * Convert the price returned by the oracle to an 18-digit decimal for use by Raft.
         */

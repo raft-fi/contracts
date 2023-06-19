@@ -27,6 +27,6 @@ abstract contract BasePriceOracleWstETH is BasePriceOracle, IPriceOracleWstETH {
     // --- Functions ---
 
     function _convertIntoWstETHPrice(uint256 price, uint256 answerDigits) internal view returns (uint256) {
-        return _scalePriceByDigits(price, answerDigits).mulDown(wstETH.stEthPerToken());
+        return super._formatPrice(price, answerDigits).mulDown(wstETH.stEthPerToken());
     }
 }
