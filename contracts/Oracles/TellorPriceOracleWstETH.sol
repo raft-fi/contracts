@@ -32,7 +32,7 @@ contract TellorPriceOracleWstETH is IPriceOracleWstETH, TellorPriceOracle {
         wstETH = IWstETH(wstETH_);
     }
 
-    function _formatPrice(uint256 price, uint256 answerDigits) internal view override returns (uint256) {
+    function _formatPrice(uint256 price, uint256 answerDigits) internal override returns (uint256) {
         return super._formatPrice(price, answerDigits).mulDown(wstETH.stEthPerToken());
     }
 }

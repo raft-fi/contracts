@@ -40,7 +40,7 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
 
     // --- Functions ---
 
-    function getPriceOracleResponse() external view override returns (PriceOracleResponse memory) {
+    function getPriceOracleResponse() external override returns (PriceOracleResponse memory) {
         ChainlinkResponse memory chainlinkResponse = _getCurrentChainlinkResponse();
         ChainlinkResponse memory prevChainlinkResponse =
             _getPrevChainlinkResponse(chainlinkResponse.roundId, chainlinkResponse.decimals);
