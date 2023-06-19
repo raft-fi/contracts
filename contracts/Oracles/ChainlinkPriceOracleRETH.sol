@@ -2,36 +2,37 @@
 pragma solidity 0.8.19;
 
 import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
-import { IWstETH } from "../Dependencies/IWstETH.sol";
+import { IPriceFeed } from "../Interfaces/IPriceFeed.sol";
+import { IPriceOracleRETH } from "./Interfaces/IPriceOracleRETH.sol";
 import { AggregatorV3Interface, ChainlinkPriceOracle } from "./ChainlinkPriceOracle.sol";
-import { IPriceOracleWstETH } from "./Interfaces/IPriceOracleWstETH.sol";
 
-contract ChainlinkPriceOracleWstETH is IPriceOracleWstETH, ChainlinkPriceOracle {
+contract ChainlinkPriceOracleRETH is ChainlinkPriceOracle, IPriceOracleRETH {
     // --- Types ---
 
     using Fixed256x18 for uint256;
 
-    // --- Immutable variables ---
+    // --- Immutables ---
 
-    IWstETH public immutable override wstETH;
+    IPriceFeed public immutable override priceFeedETH;
 
     // --- Constructor ---
 
     constructor(
         AggregatorV3Interface priceAggregatorAddress_,
-        IWstETH wstETH_,
+        IPriceFeed priceFeedETH_,
         uint256 deviation_,
         uint256 timeout_
     )
         ChainlinkPriceOracle(priceAggregatorAddress_, deviation_, timeout_)
     {
-        if (address(wstETH_) == address(0)) {
-            revert InvalidWstETHAddress();
+        if (address(priceFeedETH_) == address(0)) {
+            revert InvalidPriceFeedETHAddress();
         }
-        wstETH = IWstETH(wstETH_);
+        priceFeedETH = priceFeedETH_;
     }
 
     function _formatPrice(uint256 price, uint256 answerDigits) internal override returns (uint256) {
-        return super._formatPrice(price, answerDigits).mulDown(wstETH.stEthPerToken());
+        (uint256 ethUsdPrice,) = priceFeedETH.fetchPrice();
+        return super._formatPrice(price, answerDigits).mulDown(ethUsdPrice);
     }
 }
