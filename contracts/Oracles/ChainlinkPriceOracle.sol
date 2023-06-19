@@ -14,13 +14,20 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
     // --- Constants & immutables ---
 
     AggregatorV3Interface public immutable override priceAggregator;
+
     uint256 public immutable override DEVIATION;
 
     uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
 
     // --- Constructor ---
 
-    constructor(AggregatorV3Interface _priceAggregatorAddress, uint256 _deviation) {
+    constructor(
+        AggregatorV3Interface _priceAggregatorAddress,
+        uint256 _deviation,
+        uint256 timeout_
+    )
+        BasePriceOracle(timeout_)
+    {
         if (address(_priceAggregatorAddress) == address(0)) {
             revert InvalidPriceAggregatorAddress();
         }

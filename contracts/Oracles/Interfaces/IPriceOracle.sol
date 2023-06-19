@@ -23,7 +23,7 @@ interface IPriceOracle {
 
     /// @dev Maximum time period allowed since oracle latest round data timestamp, beyond which oracle is considered
     /// frozen.
-    function TIMEOUT() external view returns (uint256);
+    function timeout() external view returns (uint256);
 
     /// @dev Used to convert a price answer to an 18-digit precision uint.
     function TARGET_DIGITS() external view returns (uint256);

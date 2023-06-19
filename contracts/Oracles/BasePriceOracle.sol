@@ -4,16 +4,22 @@ pragma solidity 0.8.19;
 import { IPriceOracle } from "./Interfaces/IPriceOracle.sol";
 
 abstract contract BasePriceOracle is IPriceOracle {
-    // --- Variables ---
-
-    uint256 public constant override TIMEOUT = 3 hours;
+    // --- Constants & immutables ---
 
     uint256 public constant override TARGET_DIGITS = 18;
+
+    uint256 public immutable override timeout;
+
+    // --- Constructor ---
+
+    constructor(uint256 timeout_) {
+        timeout = timeout_;
+    }
 
     // --- Functions ---
 
     function _oracleIsFrozen(uint256 responseTimestamp) internal view returns (bool) {
-        return (block.timestamp - responseTimestamp) > TIMEOUT;
+        return (block.timestamp - responseTimestamp) > timeout;
     }
 
     function _formatPrice(uint256 price, uint256 answerDigits) internal view virtual returns (uint256) {
