@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
-import { IERC20Wrapped } from "./IERC20Wrapper.sol";
+import { IERC20Wrapped } from "./IERC20Wrapped.sol";
 import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
 
 /// @notice Interface for the PositionManagerWrappedCollateralToken contract.
