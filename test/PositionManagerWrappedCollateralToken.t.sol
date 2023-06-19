@@ -2,7 +2,9 @@
 pragma solidity 0.8.19;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256x18.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
+import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { IPositionManager, PositionManager } from "../contracts/PositionManager.sol";
 import {
@@ -17,9 +19,13 @@ import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
 import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 
 contract PositionManagerWrappedCollateralTokenTest is TestSetup {
+    using Fixed256x18 for uint256;
+
     PriceFeedTestnet public priceFeed;
     PositionManagerWrappedCollateralToken public positionManagerWrappedCollToken;
     WrappedCollateralToken public wrappedCollateralToken;
+
+    uint256 public constant DEFAULT_PRICE = 200e18;
 
     function setUp() public override {
         super.setUp();
@@ -29,6 +35,8 @@ contract PositionManagerWrappedCollateralTokenTest is TestSetup {
         );
         priceFeed = new PriceFeedTestnet();
         positionManager.addCollateralToken(wrappedCollateralToken, priceFeed, splitLiquidationCollateral);
+        positionManager.setRedemptionSpread(wrappedCollateralToken, MathUtils._100_PERCENT / 100); // 1%
+        positionManager.setRedemptionRebate(wrappedCollateralToken, MathUtils._100_PERCENT / 2); // 50%
 
         positionManagerWrappedCollToken = new PositionManagerWrappedCollateralToken(
             address(positionManager),
@@ -41,6 +49,8 @@ contract PositionManagerWrappedCollateralTokenTest is TestSetup {
         vm.stopPrank();
 
         collateralToken.mint(ALICE, 10e36);
+
+        priceFeed.setPrice(DEFAULT_PRICE);
     }
 
     function testCannotCreatePositionManagerWrappedCollateralToken() public {
@@ -189,5 +199,55 @@ contract PositionManagerWrappedCollateralTokenTest is TestSetup {
 
         assertEq(positionManager.rToken().balanceOf(ALICE), rBalanceBefore - 1 ether);
         assertEq(collateralToken.balanceOf(ALICE), aliceBalanceBefore + withdrawAmount);
+    }
+
+    function testRedeemCollateral() public {
+        uint256 initialCR = 1.5e18;
+        uint256 rToMint = 400_000e18;
+        uint256 rToRedeem = 100_000e18;
+        uint256 collateralAmount = rToMint.divUp(DEFAULT_PRICE).mulUp(initialCR);
+
+        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
+            positionManager.collateralInfo(wrappedCollateralToken);
+        IRToken rToken = positionManager.rToken();
+
+        vm.startPrank(ALICE);
+        positionManagerWrappedCollToken.managePosition(
+            collateralAmount,
+            true, // collateral increase
+            rToMint,
+            true, // debt increase
+            1e17,
+            emptySignature
+        );
+        rToken.transfer(BOB, rToRedeem);
+        vm.stopPrank();
+
+        assertEq(raftDebtToken.balanceOf(ALICE), rToMint);
+        assertEq(wrappedCollateralToken.balanceOf(address(positionManager)), collateralAmount);
+        assertEq(raftCollateralToken.balanceOf(ALICE), collateralAmount);
+
+        uint256 bobCollateralTokenBalanceBefore = collateralToken.balanceOf(BOB);
+        uint256 feeRecipientBalanceBefore = wrappedCollateralToken.balanceOf(address(positionManager.feeRecipient()));
+        uint256 matchingCollateral = rToRedeem.divDown(DEFAULT_PRICE);
+        uint256 collateralToRedeem = 430e18;
+        uint256 collateralFee = matchingCollateral - collateralToRedeem;
+        uint256 rebate = collateralFee.mulDown(positionManager.redemptionRebate(wrappedCollateralToken));
+        uint256 collateralToRemoveFromPool = matchingCollateral - rebate;
+
+        vm.startPrank(BOB);
+        rToken.approve(address(positionManagerWrappedCollToken), type(uint256).max);
+        positionManagerWrappedCollToken.redeemCollateral(rToRedeem, 1e18);
+        vm.stopPrank();
+
+        uint256 redeemedAmount = collateralToken.balanceOf(BOB) - bobCollateralTokenBalanceBefore;
+        assertEq(redeemedAmount, collateralToRedeem);
+        uint256 feeRecipientBalanceAfter = wrappedCollateralToken.balanceOf(address(positionManager.feeRecipient()));
+        assertEq(feeRecipientBalanceAfter - feeRecipientBalanceBefore, collateralFee - rebate);
+        assertEq(
+            wrappedCollateralToken.balanceOf(address(positionManager)), collateralAmount - collateralToRemoveFromPool
+        );
+        assertApproxEqAbs(raftCollateralToken.balanceOf(ALICE), collateralAmount - collateralToRemoveFromPool, 1e5);
+        assertEq(raftDebtToken.balanceOf(ALICE), rToMint - rToRedeem);
     }
 }

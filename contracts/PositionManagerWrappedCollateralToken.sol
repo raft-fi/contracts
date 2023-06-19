@@ -51,6 +51,7 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         ERC20PermitSignature calldata permitSignature
     )
         external
+        override
     {
         ERC20PermitSignature memory emptySignature;
 
@@ -89,6 +90,14 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         emit WrappedCollateralTokenPositionChanged(
             msg.sender, collateralChange, isCollateralIncrease, debtChange, isDebtIncrease
         );
+    }
+
+    function redeemCollateral(uint256 debtAmount, uint256 maxFeePercentage) external override {
+        _rToken.transferFrom(msg.sender, address(this), debtAmount);
+
+        IPositionManager(positionManager).redeemCollateral(wrappedCollateralToken, debtAmount, maxFeePercentage);
+
+        wrappedCollateralToken.withdrawTo(msg.sender, wrappedCollateralToken.balanceOf(address(this)));
     }
 
     function _applyPermit(IERC20Permit token, ERC20PermitSignature calldata permitSignature) internal {
