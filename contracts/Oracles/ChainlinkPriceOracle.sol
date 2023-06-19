@@ -6,7 +6,7 @@ import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256
 import { AggregatorV3Interface, IChainlinkPriceOracle } from "./Interfaces/IChainlinkPriceOracle.sol";
 import { BasePriceOracle } from "./BasePriceOracle.sol";
 
-abstract contract BaseChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
+contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
     // --- Types ---
 
     using Fixed256x18 for uint256;
@@ -14,16 +14,21 @@ abstract contract BaseChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOr
     // --- Constants & immutables ---
 
     AggregatorV3Interface public immutable override priceAggregator;
+    uint256 public immutable override DEVIATION;
 
     uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
 
     // --- Constructor ---
 
-    constructor(AggregatorV3Interface _priceAggregatorAddress) {
+    constructor(AggregatorV3Interface _priceAggregatorAddress, uint256 _deviation) {
         if (address(_priceAggregatorAddress) == address(0)) {
             revert InvalidPriceAggregatorAddress();
         }
+        if (_deviation >= 1e18) {
+            revert InvalidDeviation();
+        }
         priceAggregator = _priceAggregatorAddress;
+        DEVIATION = _deviation;
     }
 
     // --- Functions ---
@@ -156,6 +161,4 @@ abstract contract BaseChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOr
         // Return true if price has more than doubled, or more than halved.
         return percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
     }
-
-    function _formatPrice(uint256 price, uint256 answerDigits) internal view virtual returns (uint256);
 }

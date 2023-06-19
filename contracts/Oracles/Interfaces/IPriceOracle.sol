@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import { IWstETH } from "../../Dependencies/IWstETH.sol";
-
 interface IPriceOracle {
+    // --- Errors ---
+
+    /// @dev Contract initialized with an invalid deviation parameter.
+    error InvalidDeviation();
+
     // --- Types ---
 
     struct PriceOracleResponse {

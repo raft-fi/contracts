@@ -4,17 +4,17 @@ pragma solidity 0.8.19;
 import { Test } from "forge-std/Test.sol";
 import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
 import { IPriceOracle } from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
-import { ChainlinkPriceOracleWETH } from "../contracts/Oracles/ChainlinkPriceOracleWETH.sol";
+import { ChainlinkPriceOracle } from "../contracts/Oracles/ChainlinkPriceOracle.sol";
 
 contract ChainlinkPriceOracleWETHTest is Test {
     AggregatorV3Interface public constant aggregatorV3ETH =
         AggregatorV3Interface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-    ChainlinkPriceOracleWETH public chainlinkPriceOracleWETH;
+    ChainlinkPriceOracle public chainlinkPriceOracleWETH;
 
     function setUp() public {
         vm.createSelectFork("mainnet", 17_484_072);
 
-        chainlinkPriceOracleWETH = new ChainlinkPriceOracleWETH(aggregatorV3ETH);
+        chainlinkPriceOracleWETH = new ChainlinkPriceOracle(aggregatorV3ETH, 5e15);
     }
 
     function testChainlinkWstETHPrice() public {

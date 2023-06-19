@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import { ITellor, ITellorPriceOracle } from "./Interfaces/ITellorPriceOracle.sol";
 import { BasePriceOracle } from "./BasePriceOracle.sol";
 
-abstract contract BaseTellorPriceOracle is BasePriceOracle, ITellorPriceOracle {
+contract TellorPriceOracle is BasePriceOracle, ITellorPriceOracle {
     // --- Constants & immutables ---
 
     uint256 private constant _TELLOR_DIGITS = 18;
@@ -12,6 +12,8 @@ abstract contract BaseTellorPriceOracle is BasePriceOracle, ITellorPriceOracle {
     ITellor public immutable override tellor;
 
     bytes32 public immutable override tellorQueryId;
+
+    uint256 public immutable override DEVIATION;
 
     // --- Variables ---
 
@@ -21,12 +23,16 @@ abstract contract BaseTellorPriceOracle is BasePriceOracle, ITellorPriceOracle {
 
     // --- Constructor ---
 
-    constructor(ITellor tellor_, bytes32 tellorQueryId_) {
+    constructor(ITellor tellor_, bytes32 tellorQueryId_, uint256 _deviation) {
         if (address(tellor_) == address(0)) {
             revert InvalidTellorAddress();
         }
+        if (_deviation >= 1e18) {
+            revert InvalidDeviation();
+        }
         tellor = ITellor(tellor_);
         tellorQueryId = tellorQueryId_;
+        DEVIATION = _deviation;
     }
 
     // --- Functions ---
@@ -64,6 +70,4 @@ abstract contract BaseTellorPriceOracle is BasePriceOracle, ITellorPriceOracle {
         }
         return TellorResponse(lastStoredPrice, lastStoredTimestamp, true);
     }
-
-    function _formatPrice(uint256 price, uint256 answerDigits) internal view virtual returns (uint256);
 }

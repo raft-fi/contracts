@@ -2,26 +2,22 @@
 pragma solidity 0.8.19;
 
 import { IWstETH } from "../Dependencies/IWstETH.sol";
-import { AggregatorV3Interface, BaseChainlinkPriceOracle } from "./BaseChainlinkPriceOracle.sol";
 import { BasePriceOracleWstETH } from "./BasePriceOracleWstETH.sol";
+import { AggregatorV3Interface, ChainlinkPriceOracle } from "./ChainlinkPriceOracle.sol";
+import { IPriceOracleWstETH } from "./Interfaces/IPriceOracleWstETH.sol";
 
-contract ChainlinkPriceOracleWstETH is BaseChainlinkPriceOracle, BasePriceOracleWstETH {
-    // --- Constants ---
-
-    uint256 public constant override DEVIATION = 1e16; // 1%
-
+contract ChainlinkPriceOracleWstETH is IPriceOracleWstETH, BasePriceOracleWstETH, ChainlinkPriceOracle {
     // --- Constructor ---
 
     constructor(
-        AggregatorV3Interface _priceAggregatorAddress,
-        IWstETH _wstETH
+        AggregatorV3Interface priceAggregatorAddress_,
+        IWstETH wstETH_,
+        uint256 deviation_
     )
-        BaseChainlinkPriceOracle(_priceAggregatorAddress)
-        BasePriceOracleWstETH(_wstETH)
+        BasePriceOracleWstETH(wstETH_)
+        ChainlinkPriceOracle(priceAggregatorAddress_, deviation_)
     // solhint-disable-next-line no-empty-blocks
     { }
-
-    // --- Functions ---
 
     function _formatPrice(uint256 price, uint256 answerDigits) internal view override returns (uint256) {
         return _convertIntoWstETHPrice(price, answerDigits);
