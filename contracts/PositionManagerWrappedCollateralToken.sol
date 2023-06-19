@@ -7,7 +7,7 @@ import { ERC20PermitSignature, PermitHelper } from "@tempusfinance/tempus-utils/
 import { IStETH } from "./Dependencies/IStETH.sol";
 import { IWstETH } from "./Dependencies/IWstETH.sol";
 import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
-import { IERC20Wrapped } from "./Interfaces/IERC20Wrapper.sol";
+import { IERC20Wrapped } from "./Interfaces/IERC20Wrapped.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IRToken } from "./Interfaces/IRToken.sol";
 import { IPositionManagerWrappedCollateralToken } from "./Interfaces/IPositionManagerWrappedCollateralToken.sol";
