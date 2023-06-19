@@ -50,4 +50,9 @@ interface IPositionManagerWrappedCollateralToken is IPositionManagerDependent {
         ERC20PermitSignature calldata permitSignature
     )
         external;
+
+    /// @dev Redeems the collateral from a given debt amount.
+    /// @param amount The amount of debt to redeem.
+    /// @param maxFeePercentage The maximum fee percentage to pay for the redemption.
+    function redeemCollateral(uint256 amount, uint256 maxFeePercentage) external;
 }
