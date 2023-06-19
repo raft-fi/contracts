@@ -14,7 +14,7 @@ contract TellorPriceOracleWETHTest is Test {
         vm.createSelectFork("mainnet", 17_484_688);
 
         tellorPriceOracleWETH =
-            new TellorPriceOracle(tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("eth", "usd"))), 5e15);
+        new TellorPriceOracle(tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("eth", "usd"))), 0, 1 hours);
     }
 
     function testTellorWETHPrice() public {

@@ -23,7 +23,14 @@ contract TellorPriceOracle is BasePriceOracle, ITellorPriceOracle {
 
     // --- Constructor ---
 
-    constructor(ITellor tellor_, bytes32 tellorQueryId_, uint256 _deviation) {
+    constructor(
+        ITellor tellor_,
+        bytes32 tellorQueryId_,
+        uint256 _deviation,
+        uint256 timeout_
+    )
+        BasePriceOracle(timeout_)
+    {
         if (address(tellor_) == address(0)) {
             revert InvalidTellorAddress();
         }
