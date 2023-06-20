@@ -2,11 +2,11 @@
 pragma solidity 0.8.19;
 
 import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
-import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
+import { IPositionManagerWrappedCollateralToken } from "./IPositionManagerWrappedCollateralToken.sol";
 import { IWstETHWrapper } from "./IWstETHWrapper.sol";
 
 /// @notice Interface for the PositionManagerStETH contract.
-interface IPositionManagerStETH is IPositionManagerDependent, IWstETHWrapper {
+interface IPositionManagerStETH is IPositionManagerWrappedCollateralToken, IWstETHWrapper {
     // --- Events ---
 
     /// @dev The position is changed using ETH.

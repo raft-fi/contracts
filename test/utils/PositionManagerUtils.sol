@@ -86,7 +86,7 @@ library PositionManagerUtils {
         uint256 amount;
         (result.debtAmount, result.totalDebt, amount) = getOpenPositionSetupValues(
             IPositionManager(positionManagerStETH.positionManager()),
-            positionManagerStETH.wstETH(),
+            positionManagerStETH.wrappedCollateralToken(),
             priceFeed,
             extraDebt,
             icr,

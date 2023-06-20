@@ -5,24 +5,28 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Script } from "forge-std/Script.sol";
 import { IWstETH } from "../contracts/Dependencies/IWstETH.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
-import { PositionManagerStETH } from "../contracts/PositionManagerStETH.sol";
+import { IERC20Wrapped, PositionManagerStETH } from "../contracts/PositionManagerStETH.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
+import { WrappedCollateralToken } from "../contracts/WrappedCollateralToken.sol";
 import { PriceFeedTestnet } from "../test/mocks/PriceFeedTestnet.sol";
 
 contract DeployScript is Script {
-    IWstETH public constant WSTETH = IWstETH(address(0x6320cD32aA674d2898A68ec82e869385Fc5f7E2f));
+    address public constant WSTETH = 0x6320cD32aA674d2898A68ec82e869385Fc5f7E2f;
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKey);
 
-        SplitLiquidationCollateral splitLiquidationCollateral = new SplitLiquidationCollateral();
         PositionManager positionManager = new PositionManager();
-        new PositionManagerStETH(address(positionManager), WSTETH);
+        WrappedCollateralToken wrappedCollateralToken = new WrappedCollateralToken(
+            IERC20(WSTETH), "Wrapped Collateral Token", "WCT", 100_000_0e18, type(uint256).max
+        );
+        new PositionManagerStETH(address(positionManager), IERC20Wrapped(address(wrappedCollateralToken)));
 
         PriceFeedTestnet priceFeed = new PriceFeedTestnet();
-        positionManager.addCollateralToken(WSTETH, priceFeed, splitLiquidationCollateral);
+        SplitLiquidationCollateral splitLiquidationCollateral = new SplitLiquidationCollateral();
+        positionManager.addCollateralToken(wrappedCollateralToken, priceFeed, splitLiquidationCollateral);
 
         vm.stopBroadcast();
     }
