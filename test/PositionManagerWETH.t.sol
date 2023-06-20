@@ -105,13 +105,13 @@ contract PositionManagerWETHTest is TestSetup {
         vm.stopPrank();
 
         vm.startPrank(ALICE);
-        vm.expectRevert(IPositionManager.NoCollateralOrDebtChange.selector);
-        positionManagerWETH.managePositionETH{ value: 0 }(10, true, 0, false, 0, emptySignature);
+        vm.expectRevert(IPositionManagerWETH.CollateralChangeAmountDoesNotMatchETHValue.selector);
+        positionManagerWETH.managePositionETH{ value: 1 }(2, true, 0, false, 0, emptySignature);
         vm.stopPrank();
 
         vm.startPrank(ALICE);
         vm.expectRevert(IPositionManager.NoCollateralOrDebtChange.selector);
-        positionManagerWETH.managePositionETH{ value: 10 }(0, true, 0, false, 0, emptySignature);
+        positionManagerWETH.managePositionETH{ value: 0 }(0, true, 0, false, 0, emptySignature);
         vm.stopPrank();
 
         vm.startPrank(ALICE);

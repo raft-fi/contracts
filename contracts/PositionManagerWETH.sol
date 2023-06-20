@@ -44,9 +44,11 @@ contract PositionManagerWETH is IPositionManagerWETH, PositionManagerWrappedColl
         }
 
         if (isCollateralIncrease && collateralChange > 0) {
+            if (collateralChange != msg.value) {
+                revert CollateralChangeAmountDoesNotMatchETHValue();
+            }
             IWETH(address(_underlyingCollateralToken)).deposit{ value: msg.value }();
             wrappedCollateralToken.depositFor(address(this), msg.value);
-            collateralChange = msg.value;
         }
 
         (collateralChange, debtChange) = IPositionManager(positionManager).managePosition(
