@@ -3,10 +3,10 @@ pragma solidity 0.8.19;
 
 import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IWETH } from "../Dependencies/IWETH.sol";
-import { IPositionManagerDependent } from "./IPositionManagerDependent.sol";
+import { IPositionManagerWrappedCollateralToken } from "./IPositionManagerWrappedCollateralToken.sol";
 
 /// @notice Interface for the PositionManagerWETH contract.
-interface IPositionManagerWETH is IPositionManagerDependent {
+interface IPositionManagerWETH is IPositionManagerWrappedCollateralToken {
     // --- Events ---
 
     /// @dev The position is changed using ETH.
@@ -25,16 +25,10 @@ interface IPositionManagerWETH is IPositionManagerDependent {
 
     // --- Errors ---
 
-    /// @dev The WETH address cannot be zero.
-    error WETHAddressCannotBeZero();
-
     /// @dev Sending Ether failed.
     error SendingEtherFailed();
 
     // --- Functions ---
-
-    /// @dev Returns the WETH address.
-    function wETH() external view returns (IWETH);
 
     /// @dev Manages the position with ETH for the position (the caller).
     /// @param collateralChange The amount of ETH to add or remove.

@@ -7,6 +7,7 @@ import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/util
 import { MathUtils } from "../../contracts/Dependencies/MathUtils.sol";
 import { IStETH } from "../../contracts/Dependencies/IStETH.sol";
 import { IERC20Indexable } from "../../contracts/Interfaces/IERC20Indexable.sol";
+import { IERC20Wrapped } from "../../contracts/Interfaces/IERC20Wrapped.sol";
 import { IPositionManager } from "../../contracts/Interfaces/IPositionManager.sol";
 import { PositionManagerStETH } from "../../contracts/PositionManagerStETH.sol";
 import { PositionManagerWETH } from "../../contracts/PositionManagerWETH.sol";
@@ -116,7 +117,6 @@ library PositionManagerUtils {
         PositionManagerWETH positionManagerWETH,
         PriceFeedTestnet priceFeed,
         uint256 icr,
-        ETHType ethType,
         uint256 extraDebt
     )
         internal
@@ -124,9 +124,10 @@ library PositionManagerUtils {
     {
         result.icr = icr;
         uint256 amount;
+        IERC20Wrapped wrappedCollateralToken = positionManagerWETH.wrappedCollateralToken();
         (result.debtAmount, result.totalDebt, amount) = getOpenPositionSetupValues(
             IPositionManager(positionManagerWETH.positionManager()),
-            positionManagerWETH.wETH(),
+            wrappedCollateralToken,
             priceFeed,
             extraDebt,
             icr,
@@ -134,13 +135,9 @@ library PositionManagerUtils {
         );
         ERC20PermitSignature memory emptySignature;
 
-        if (ethType == ETHType.ETH) {
-            positionManagerWETH.managePositionETH{ value: amount }(
-                amount, true, result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
-            );
-        } else {
-            assert(false);
-        }
+        positionManagerWETH.managePositionETH{ value: amount }(
+            amount, true, result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         result.collateral = amount;
 
