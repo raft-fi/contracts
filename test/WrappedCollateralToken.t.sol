@@ -67,6 +67,28 @@ contract WrappedCollateralTokenTest is Test {
         vm.stopPrank();
     }
 
+    function testTransfers() public {
+        vm.startPrank(account);
+
+        // set the wrapped token to a pre state
+        underlying.mint(account, 1000e18);
+        underlying.approve(address(wrapped), 1000e18);
+        wrapped.depositFor(account, 1000e18);
+
+        wrapped.setMaxBalance(500e18);
+
+        vm.expectRevert(IWrappedCollateralToken.ExceedsMaxBalance.selector);
+        wrapped.transfer(account2, 501e18);
+
+        // this one should pass
+        wrapped.transfer(account2, 300e18);
+
+        vm.expectRevert(IWrappedCollateralToken.ExceedsMaxBalance.selector);
+        wrapped.transfer(account2, 300e18);
+
+        vm.stopPrank();
+    }
+
     function recoverCallableByOwnerOnly() public {
         vm.prank(account2);
         vm.expectRevert("Ownable: caller is not the owner");
