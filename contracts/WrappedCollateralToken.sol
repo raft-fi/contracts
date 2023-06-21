@@ -37,21 +37,24 @@ contract WrappedCollateralToken is IWrappedCollateralToken, ERC20Wrapper, ERC20P
         emit CapSet(newCap);
     }
 
-    function depositFor(address account, uint256 amount) public virtual override returns (bool) {
-        if (totalSupply() + amount > cap) {
-            revert ExceedsCap();
-        }
-        if (balanceOf(account) + amount > maxBalance) {
-            revert ExceedsMaxBalance();
-        }
-        return ERC20Wrapper.depositFor(account, amount);
-    }
-
     function decimals() public view virtual override(ERC20, ERC20Wrapper) returns (uint8) {
         return ERC20Wrapper.decimals();
     }
 
     function recover(address account) external override onlyOwner returns (uint256) {
         return _recover(account);
+    }
+
+    /// @dev This is called by OZ ERC20 for mint and all transfers after the actual transfer.
+    /// In case of burn it calls with to set to 0.
+    /// In case of mint it calls with from set to 0.
+    /// Implementing balance check here is sufficient.
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+        if (from == address(0) && totalSupply() > cap) {
+            revert ExceedsCap();
+        }
+        if (to != address(0) && balanceOf(to) > maxBalance) {
+            revert ExceedsMaxBalance();
+        }
     }
 }
