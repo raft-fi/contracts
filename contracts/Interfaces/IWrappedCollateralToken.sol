@@ -55,7 +55,7 @@ interface IWrappedCollateralToken is IERC20, IERC20Permit {
     function whitelistAddress(address addressForWhitelist, bool whitelisted) external;
 
     /// @dev Mint wrapped token to cover any underlyingTokens that would have been transferred by mistake.
-    /// @param account Addres to mint wrapped tokens to.
+    /// @param account Address to mint wrapped tokens to.
     function recover(address account) external returns (uint256);
 
     /// @dev Deposits underlying tokens on behalf of user.
