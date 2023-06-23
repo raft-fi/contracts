@@ -5,7 +5,9 @@ import { Test } from "forge-std/Test.sol";
 import { IPositionManagerDependent } from "../contracts/Interfaces/IPositionManagerDependent.sol";
 import { IWrappedCollateralToken } from "../contracts/Interfaces/IWrappedCollateralToken.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
+import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
 import { WrappedCollateralToken } from "../contracts/WrappedCollateralToken.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { TokenMock } from "./mocks/TokenMock.sol";
 
 contract WrappedCollateralTokenTest is Test {
@@ -22,6 +24,13 @@ contract WrappedCollateralTokenTest is Test {
         wrapped = new WrappedCollateralToken(
             underlying, "Wrapped Token Mock", "WRPTKMCK", type(uint256).max, type(uint256).max, address(positionManager)
         );
+
+        PriceFeedTestnet priceFeed = new PriceFeedTestnet();
+        priceFeed.setPrice(1e18);
+        SplitLiquidationCollateral splitLiquidationCollateral = new SplitLiquidationCollateral();
+        positionManager.addCollateralToken(wrapped, priceFeed, splitLiquidationCollateral);
+
+        wrapped.whitelistAddress(account, true);
         vm.stopPrank();
     }
 
@@ -70,6 +79,14 @@ contract WrappedCollateralTokenTest is Test {
         vm.stopPrank();
     }
 
+    function testCannotDepositFor() public {
+        vm.startPrank(account2);
+
+        vm.expectRevert(abi.encodeWithSelector(IWrappedCollateralToken.AddressIsNotWhitelisted.selector, account2));
+        wrapped.depositFor(account2, 501e18);
+        vm.stopPrank();
+    }
+
     function testCannotTransfers() public {
         vm.startPrank(account);
 
@@ -83,7 +100,26 @@ contract WrappedCollateralTokenTest is Test {
         vm.stopPrank();
     }
 
-    function recoverCallableByOwnerOnly() public {
+    function testAddWhitelistAddress() public {
+        vm.startPrank(account);
+        wrapped.whitelistAddress(account2, true);
+        assert(wrapped.isWhitelisted(account2));
+        vm.stopPrank();
+    }
+
+    function testCannotAddWhitelistAddress() public {
+        vm.startPrank(account2);
+        vm.expectRevert("Ownable: caller is not the owner");
+        wrapped.whitelistAddress(account2, true);
+        vm.stopPrank();
+
+        vm.startPrank(account);
+        vm.expectRevert(abi.encodeWithSelector(IWrappedCollateralToken.InvalidWhitelistAddress.selector));
+        wrapped.whitelistAddress(address(0), true);
+        vm.stopPrank();
+    }
+
+    function testRecoverCallableByOwnerOnly() public {
         vm.prank(account2);
         vm.expectRevert("Ownable: caller is not the owner");
         wrapped.recover(account2);

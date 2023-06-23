@@ -48,6 +48,8 @@ contract PositionManagerWrappedCollateralTokenTest is TestSetup {
             IERC20Wrapped(address(wrappedCollateralToken))
         );
 
+        wrappedCollateralToken.whitelistAddress(address(positionManagerWrappedCollToken), true);
+
         vm.startPrank(ALICE);
         positionManager.whitelistDelegate(address(positionManagerWrappedCollToken), true);
         collateralToken.approve(address(positionManagerWrappedCollToken), type(uint256).max);

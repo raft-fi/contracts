@@ -41,6 +41,8 @@ contract PositionManagerWETHTest is TestSetup {
             IERC20Wrapped(address(wrappedCollateralToken))
         );
 
+        wrappedCollateralToken.whitelistAddress(address(positionManagerWETH), true);
+
         vm.prank(ALICE);
         positionManager.whitelistDelegate(address(positionManagerWETH), true);
     }
