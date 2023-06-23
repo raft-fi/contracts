@@ -8,6 +8,7 @@ import { IStETH } from "./Dependencies/IStETH.sol";
 import { IWstETH } from "./Dependencies/IWstETH.sol";
 import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
 import { IERC20Wrapped } from "./Interfaces/IERC20Wrapped.sol";
+import { IWrappedCollateralToken } from "./Interfaces/IWrappedCollateralToken.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IRToken } from "./Interfaces/IRToken.sol";
 import { IPositionManagerWrappedCollateralToken } from "./Interfaces/IPositionManagerWrappedCollateralToken.sol";
@@ -65,7 +66,9 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
 
         if (isCollateralIncrease && collateralChange > 0) {
             _underlyingCollateralToken.transferFrom(msg.sender, address(this), collateralChange);
-            wrappedCollateralToken.depositFor(address(this), collateralChange);
+            IWrappedCollateralToken(address(wrappedCollateralToken)).depositForWithAccountCheck(
+                address(this), msg.sender, collateralChange
+            );
         }
 
         (collateralChange, debtChange) = IPositionManager(positionManager).managePosition(

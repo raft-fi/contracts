@@ -42,6 +42,25 @@ contract WrappedCollateralToken is
         setCap(cap_);
     }
 
+    modifier checkLimits(address accountToCheck, uint256 amount) {
+        if (totalSupply() + amount > cap) {
+            revert ExceedsCap();
+        }
+        uint256 raftColBalance = IPositionManager(positionManager).raftCollateralToken(this).balanceOf(accountToCheck);
+        if ((balanceOf(accountToCheck) + raftColBalance + amount) > maxBalance) {
+            revert ExceedsMaxBalance();
+        }
+
+        _;
+    }
+
+    modifier checkWhitelist() {
+        if (!isWhitelisted[msg.sender]) {
+            revert AddressIsNotWhitelisted(msg.sender);
+        }
+        _;
+    }
+
     function setMaxBalance(uint256 newMaxBalance) public override onlyOwner {
         maxBalance = newMaxBalance;
         emit MaxBalanceSet(newMaxBalance);
@@ -69,21 +88,22 @@ contract WrappedCollateralToken is
         return _recover(account);
     }
 
-    function depositFor(address account, uint256 amount) public override returns (bool) {
-        if (!isWhitelisted[msg.sender]) {
-            revert AddressIsNotWhitelisted(msg.sender);
-        }
-        if (totalSupply() + amount > cap) {
-            revert ExceedsCap();
-        }
-        if (
-            balanceOf(account) + IPositionManager(positionManager).raftCollateralToken(this).balanceOf(account)
-                + amount > maxBalance
-        ) {
-            revert ExceedsMaxBalance();
-        }
+    function depositFor(address, uint256) public virtual override returns (bool) {
+        revert Unsupported();
+    }
 
-        return super.depositFor(account, amount);
+    function depositForWithAccountCheck(
+        address to,
+        address accountToCheck,
+        uint256 amount
+    )
+        external
+        override
+        checkWhitelist
+        checkLimits(accountToCheck, amount)
+        returns (bool)
+    {
+        return super.depositFor(to, amount);
     }
 
     function _transfer(address from, address to, uint256 amount) internal override onlyPositionManager {

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IERC20Wrapped } from "./Interfaces/IERC20Wrapped.sol";
+import { IWrappedCollateralToken } from "./Interfaces/IWrappedCollateralToken.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IWETH, IPositionManagerWETH } from "./Interfaces/IPositionManagerWETH.sol";
 import { PositionManagerWrappedCollateralToken } from "./PositionManagerWrappedCollateralToken.sol";
@@ -48,7 +49,9 @@ contract PositionManagerWETH is IPositionManagerWETH, PositionManagerWrappedColl
                 revert CollateralChangeAmountDoesNotMatchETHValue();
             }
             IWETH(address(_underlyingCollateralToken)).deposit{ value: msg.value }();
-            wrappedCollateralToken.depositFor(address(this), msg.value);
+            IWrappedCollateralToken(address(wrappedCollateralToken)).depositForWithAccountCheck(
+                address(this), msg.sender, msg.value
+            );
         }
 
         (collateralChange, debtChange) = IPositionManager(positionManager).managePosition(
