@@ -31,7 +31,12 @@ contract PositionManagerWrappedCollateralTokenTest is TestSetup {
         super.setUp();
 
         wrappedCollateralToken = new WrappedCollateralToken(
-            collateralToken, "Wrapped Collateral Token", "WCT", 100_000_0e18, type(uint256).max
+            collateralToken, 
+            "Wrapped Collateral Token", 
+            "WCT", 
+            100_000_0e18,
+            type(uint256).max, 
+            address(positionManager)
         );
         priceFeed = new PriceFeedTestnet();
         positionManager.addCollateralToken(wrappedCollateralToken, priceFeed, splitLiquidationCollateral);

@@ -25,7 +25,12 @@ contract PositionManagerWETHTest is TestSetup {
         super.setUp();
 
         wrappedCollateralToken = new WrappedCollateralToken(
-            IERC20(WETH_ADDRESS), "Wrapped Collateral Token", "WCT", 100_000_0e18, type(uint256).max
+            IERC20(WETH_ADDRESS), 
+            "Wrapped Collateral Token", 
+            "WCT", 
+            100_000_0e18, 
+            type(uint256).max, 
+            address(positionManager)
         );
 
         priceFeed = new PriceFeedTestnet();
