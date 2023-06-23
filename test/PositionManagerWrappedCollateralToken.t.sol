@@ -237,7 +237,7 @@ contract PositionManagerWrappedCollateralTokenTest is TestSetup {
 
         vm.startPrank(BOB);
         rToken.approve(address(positionManagerWrappedCollToken), type(uint256).max);
-        positionManagerWrappedCollToken.redeemCollateral(rToRedeem, 1e18);
+        positionManagerWrappedCollToken.redeemCollateral(rToRedeem, 1e18, emptySignature);
         vm.stopPrank();
 
         uint256 redeemedAmount = collateralToken.balanceOf(BOB) - bobCollateralTokenBalanceBefore;

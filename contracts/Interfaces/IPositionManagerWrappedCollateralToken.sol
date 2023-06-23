@@ -54,5 +54,11 @@ interface IPositionManagerWrappedCollateralToken is IPositionManagerDependent {
     /// @dev Redeems the collateral from a given debt amount.
     /// @param amount The amount of debt to redeem.
     /// @param maxFeePercentage The maximum fee percentage to pay for the redemption.
-    function redeemCollateral(uint256 amount, uint256 maxFeePercentage) external;
+    /// @param permitSignature The permit signature for the R token.
+    function redeemCollateral(
+        uint256 amount,
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
+    )
+        external;
 }
