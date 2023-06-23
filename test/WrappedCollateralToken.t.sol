@@ -55,7 +55,7 @@ contract WrappedCollateralTokenTest is Test {
         underlying.mint(account, preSupply + toDeposit);
         underlying.approve(address(wrapped), preSupply + toDeposit);
         wrapped.depositForWithAccountCheck(account, account, preBalance);
-        // mint remider fo preSupply
+        // mint remainder fo preSupply
         wrapped.depositForWithAccountCheck(account2, account2, preSupply - preBalance);
 
         wrapped.setCap(cap);

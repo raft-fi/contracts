@@ -8,6 +8,7 @@
   "npm.exclude": "**/lib/**",
   "solidity.formatter": "forge",
   "cSpell.words": [
+    "Aave",
     "chainlink",
     "collateralization",
     "concat",
@@ -15,8 +16,13 @@
     "ETHUSD",
     "IAMM",
     "IERC",
+    "IWETH",
+    "keccak",
     "mixedcase",
+    "mstore",
     "NICR",
+    "returndatacopy",
+    "returndatasize",
     "smartcontractkit",
     "solhint",
     "STETH",
@@ -25,6 +31,7 @@
     "tempusfinance",
     "TOKENMOCK",
     "undercollateralized",
+    "WRPTKMCK",
     "WSTETH",
     "yarnrc"
   ]

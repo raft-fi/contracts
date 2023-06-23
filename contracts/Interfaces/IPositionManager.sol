@@ -15,7 +15,7 @@ interface IPositionManager is IFeeCollector {
 
     /// @dev Information for a Raft indexable collateral token.
     /// @param collateralToken The Raft indexable collateral token.
-    /// @param debtToken Coresponding Rafft indexable debt token.
+    /// @param debtToken Corresponding Raft indexable debt token.
     /// @param priceFeed The contract that provides a price for the collateral token.
     /// @param splitLiquidation The contract that calculates collateral split in case of liquidation.
     /// @param isEnabled Whether the token can be used as collateral or not.
