@@ -54,9 +54,9 @@ contract WrappedCollateralTokenTest is Test {
         // set the wrapped token to a pre state
         underlying.mint(account, preSupply + toDeposit);
         underlying.approve(address(wrapped), preSupply + toDeposit);
-        wrapped.depositFor(account, preBalance);
+        wrapped.depositForWithAccountCheck(account, account, preBalance);
         // mint remider fo preSupply
-        wrapped.depositFor(account2, preSupply - preBalance);
+        wrapped.depositForWithAccountCheck(account2, account2, preSupply - preBalance);
 
         wrapped.setCap(cap);
         wrapped.setMaxBalance(maxBalance);
@@ -69,7 +69,7 @@ contract WrappedCollateralTokenTest is Test {
             vm.expectRevert(IWrappedCollateralToken.ExceedsMaxBalance.selector);
             noRevert = false;
         }
-        wrapped.depositFor(account, toDeposit);
+        wrapped.depositForWithAccountCheck(account, account, toDeposit);
         if (noRevert) {
             assertEq(wrapped.balanceOf(account), preBalance + toDeposit);
             assertEq(wrapped.totalSupply(), preSupply + toDeposit);
@@ -83,7 +83,7 @@ contract WrappedCollateralTokenTest is Test {
         vm.startPrank(account2);
 
         vm.expectRevert(abi.encodeWithSelector(IWrappedCollateralToken.AddressIsNotWhitelisted.selector, account2));
-        wrapped.depositFor(account2, 501e18);
+        wrapped.depositForWithAccountCheck(account2, account2, 501e18);
         vm.stopPrank();
     }
 
@@ -93,7 +93,7 @@ contract WrappedCollateralTokenTest is Test {
         // set the wrapped token to a pre state
         underlying.mint(account, 1000e18);
         underlying.approve(address(wrapped), 1000e18);
-        wrapped.depositFor(account, 1000e18);
+        wrapped.depositForWithAccountCheck(account, account, 1000e18);
 
         vm.expectRevert(abi.encodeWithSelector(IPositionManagerDependent.CallerIsNotPositionManager.selector, account));
         wrapped.transfer(account2, 501e18);

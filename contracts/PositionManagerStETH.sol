@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IWstETH } from "./Dependencies/IWstETH.sol";
 import { IERC20Wrapped } from "./Interfaces/IERC20Wrapped.sol";
+import { IWrappedCollateralToken } from "./Interfaces/IWrappedCollateralToken.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IPositionManagerStETH } from "./Interfaces/IPositionManagerStETH.sol";
 import { PositionManagerWrappedCollateralToken } from "./PositionManagerWrappedCollateralToken.sol";
@@ -36,7 +37,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerWrappedCo
     {
         ERC20PermitSignature memory emptySignature;
         uint256 wstETHAmount = wrapETH();
-        wrappedCollateralToken.depositFor(address(this), wstETHAmount);
+        IWrappedCollateralToken(address(wrappedCollateralToken)).depositForWithAccountCheck(
+            address(this), msg.sender, wstETHAmount
+        );
 
         if (!isDebtIncrease) {
             _applyPermit(_rToken, permitSignature);
@@ -84,7 +87,9 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerWrappedCo
         uint256 wstETHCollateralChange;
         if (isCollateralIncrease && stETHCollateralChange > 0) {
             wstETHCollateralChange = wrapStETH(stETHCollateralChange);
-            wrappedCollateralToken.depositFor(address(this), wstETHCollateralChange);
+            IWrappedCollateralToken(address(wrappedCollateralToken)).depositForWithAccountCheck(
+                address(this), msg.sender, wstETHCollateralChange
+            );
         } else {
             wstETHCollateralChange = wstETH.getWstETHByStETH(stETHCollateralChange);
         }

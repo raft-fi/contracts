@@ -17,6 +17,9 @@ interface IWrappedCollateralToken is IERC20, IERC20Permit {
     /// @dev Address is not whitelisted.
     error AddressIsNotWhitelisted(address);
 
+    /// @dev Method not supported.
+    error Unsupported();
+
     /// @dev New `maxBalance` value is set.
     /// @param maxBalance_ Maximum balance of single user.
     event MaxBalanceSet(uint256 maxBalance_);
@@ -54,4 +57,10 @@ interface IWrappedCollateralToken is IERC20, IERC20Permit {
     /// @dev Mint wrapped token to cover any underlyingTokens that would have been transferred by mistake.
     /// @param account Addres to mint wrapped tokens to.
     function recover(address account) external returns (uint256);
+
+    /// @dev Deposits underlying tokens on behalf of user.
+    /// @param to Address to receive minted wrapped tokens.
+    /// @param accountToCheck Address of the user which token balances we need to check.
+    /// @param amount Amount of underlying being deposited.
+    function depositForWithAccountCheck(address to, address accountToCheck, uint256 amount) external returns (bool);
 }
