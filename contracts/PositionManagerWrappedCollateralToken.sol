@@ -92,7 +92,15 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         );
     }
 
-    function redeemCollateral(uint256 debtAmount, uint256 maxFeePercentage) external override {
+    function redeemCollateral(
+        uint256 debtAmount,
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
+    )
+        external
+        override
+    {
+        _applyPermit(_rToken, permitSignature);
         _rToken.transferFrom(msg.sender, address(this), debtAmount);
 
         IPositionManager(positionManager).redeemCollateral(wrappedCollateralToken, debtAmount, maxFeePercentage);
