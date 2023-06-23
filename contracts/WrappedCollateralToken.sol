@@ -7,21 +7,30 @@ import { ERC20Wrapper } from "@openzeppelin/contracts/token/ERC20/extensions/ERC
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IWrappedCollateralToken } from "./Interfaces/IWrappedCollateralToken.sol";
+import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 
-contract WrappedCollateralToken is IWrappedCollateralToken, ERC20Wrapper, ERC20Permit, Ownable2Step {
+contract WrappedCollateralToken is
+    IWrappedCollateralToken,
+    ERC20Wrapper,
+    ERC20Permit,
+    Ownable2Step,
+    PositionManagerDependent
+{
     uint256 public override maxBalance;
     uint256 public override cap;
 
     constructor(
-        IERC20 underlying,
+        IERC20 underlying_,
         string memory name_,
         string memory symbol_,
         uint256 maxBalance_,
-        uint256 cap_
+        uint256 cap_,
+        address positionManager_
     )
         ERC20(name_, symbol_)
-        ERC20Wrapper(underlying)
+        ERC20Wrapper(underlying_)
         ERC20Permit(name_)
+        PositionManagerDependent(positionManager_)
     {
         setMaxBalance(maxBalance_);
         setCap(cap_);
@@ -45,16 +54,18 @@ contract WrappedCollateralToken is IWrappedCollateralToken, ERC20Wrapper, ERC20P
         return _recover(account);
     }
 
-    /// @dev This is called by OZ ERC20 for mint and all transfers after the actual transfer.
-    /// In case of burn it calls with to set to 0.
-    /// In case of mint it calls with from set to 0.
-    /// Implementing balance check here is sufficient.
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        if (from == address(0) && totalSupply() > cap) {
+    function depositFor(address account, uint256 amount) public override returns (bool) {
+        if (totalSupply() + amount > cap) {
             revert ExceedsCap();
         }
-        if (to != address(0) && balanceOf(to) > maxBalance) {
+        if (balanceOf(account) + amount > maxBalance) {
             revert ExceedsMaxBalance();
         }
+
+        return super.depositFor(account, amount);
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal override onlyPositionManager {
+        super._transfer(from, to, amount);
     }
 }

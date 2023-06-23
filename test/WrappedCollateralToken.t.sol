@@ -2,22 +2,25 @@
 pragma solidity 0.8.19;
 
 import { Test } from "forge-std/Test.sol";
-
-import { WrappedCollateralToken } from "../contracts/WrappedCollateralToken.sol";
+import { IPositionManagerDependent } from "../contracts/Interfaces/IPositionManagerDependent.sol";
 import { IWrappedCollateralToken } from "../contracts/Interfaces/IWrappedCollateralToken.sol";
+import { PositionManager } from "../contracts/PositionManager.sol";
+import { WrappedCollateralToken } from "../contracts/WrappedCollateralToken.sol";
 import { TokenMock } from "./mocks/TokenMock.sol";
 
 contract WrappedCollateralTokenTest is Test {
     TokenMock public underlying;
     WrappedCollateralToken public wrapped;
+    PositionManager public positionManager;
     address public account = address(1234);
     address public account2 = address(12_345);
 
     function setUp() public {
         vm.startPrank(account);
         underlying = new TokenMock();
+        positionManager = new PositionManager();
         wrapped = new WrappedCollateralToken(
-            underlying, "Wrapped Token Mock", "WRPTKMCK", type(uint256).max, type(uint256).max
+            underlying, "Wrapped Token Mock", "WRPTKMCK", type(uint256).max, type(uint256).max, address(positionManager)
         );
         vm.stopPrank();
     }
@@ -67,7 +70,7 @@ contract WrappedCollateralTokenTest is Test {
         vm.stopPrank();
     }
 
-    function testTransfers() public {
+    function testCannotTransfers() public {
         vm.startPrank(account);
 
         // set the wrapped token to a pre state
@@ -75,17 +78,8 @@ contract WrappedCollateralTokenTest is Test {
         underlying.approve(address(wrapped), 1000e18);
         wrapped.depositFor(account, 1000e18);
 
-        wrapped.setMaxBalance(500e18);
-
-        vm.expectRevert(IWrappedCollateralToken.ExceedsMaxBalance.selector);
+        vm.expectRevert(abi.encodeWithSelector(IPositionManagerDependent.CallerIsNotPositionManager.selector, account));
         wrapped.transfer(account2, 501e18);
-
-        // this one should pass
-        wrapped.transfer(account2, 300e18);
-
-        vm.expectRevert(IWrappedCollateralToken.ExceedsMaxBalance.selector);
-        wrapped.transfer(account2, 300e18);
-
         vm.stopPrank();
     }
 

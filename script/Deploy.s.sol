@@ -20,7 +20,7 @@ contract DeployScript is Script {
 
         PositionManager positionManager = new PositionManager();
         WrappedCollateralToken wrappedCollateralToken = new WrappedCollateralToken(
-            IERC20(WSTETH), "Wrapped Collateral Token", "WCT", 100_000_0e18, type(uint256).max
+            IERC20(WSTETH), "Wrapped Collateral Token", "WCT", 100_000_0e18, type(uint256).max, address(positionManager)
         );
         new PositionManagerStETH(address(positionManager), IERC20Wrapped(address(wrappedCollateralToken)));
 
