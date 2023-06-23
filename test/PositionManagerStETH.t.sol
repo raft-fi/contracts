@@ -46,6 +46,8 @@ contract PositionManagerStETHTest is TestSetup {
         );
         stETH = positionManagerStETH.stETH();
 
+        wrappedCollateralToken.whitelistAddress(address(positionManagerStETH), true);
+
         vm.prank(ALICE);
         positionManager.whitelistDelegate(address(positionManagerStETH), true);
     }
