@@ -15,6 +15,9 @@ interface ILiquidator is IPositionManagerDependent {
     /// @dev Collateral token cannot be zero address.
     error CollateralTokenCannotBeZero();
 
+    /// @dev Collateral underlying token cannot be zero address.
+    error CollateralUnderlyingTokenCannotBeZero();
+
     /// @dev One step leverage supports only R token flash mints.
     error UnsupportedToken();
 
@@ -26,8 +29,11 @@ interface ILiquidator is IPositionManagerDependent {
     /// @dev Address of the contract that handles swaps from collateral token to R.
     function amm() external view returns (IAMM);
 
-    /// @dev Collateral token used for leverage.
+    /// @dev Collateral token to be liquidated.
     function collateralToken() external view returns (IERC20);
+
+    /// @dev Underlying token of collateral token.
+    function collateralUnderlyingToken() external view returns (IERC20);
 
     /// @dev Address of Raft debt token. Used to get amount of debt to liquidate.
     function raftDebtToken() external view returns (IERC20);

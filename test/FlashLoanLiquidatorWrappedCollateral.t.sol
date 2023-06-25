@@ -4,32 +4,74 @@ pragma solidity 0.8.19;
 import { Test } from "forge-std/Test.sol";
 import { IVault } from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
-import { IAMM } from "../contracts/Interfaces/IAMM.sol";
 import { OneInchV5BalancerAMM } from "../contracts/AMMs/OneInchV5BalancerAMM.sol";
-import { IPriceFeed } from "../contracts/Interfaces/IPriceFeed.sol";
-import { FlashLoanLiquidator } from "../contracts/FlashLoanLiquidator.sol";
+import { FlashLoanLiquidatorWrappedCollateral } from "../contracts/FlashLoanLiquidatorWrappedCollateral.sol";
+import {
+    IERC20Wrapped,
+    PositionManagerWrappedCollateralToken
+} from "../contracts/PositionManagerWrappedCollateralToken.sol";
+import { PositionManagerUtils } from "./utils/PositionManagerUtils.sol";
+import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
+import { WrappedCollateralToken } from "../contracts/WrappedCollateralToken.sol";
 
 // solhint-disable max-line-length
-contract FlashLoanLiquidatorTest is Test {
+contract FlashLoanLiquidatorWrappedCollateralTest is Test {
     IERC20 public constant collateralToken = IERC20(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0); // WSTETH
     address public constant AGGREGATION_ROUTER_V5 = 0x1111111254EEB25477B68fb85Ed929f73A960582;
     address public constant BALANCER_VAULT = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
     IPositionManager public constant positionManager = IPositionManager(0x5F59b322eB3e16A0C78846195af1F588b77403FC);
     OneInchV5BalancerAMM public amm;
+    WrappedCollateralToken public wrappedCollateralToken;
+    PriceFeedTestnet public priceFeed;
+    address public constant ALICE = 0x5313b39bf226ced2332C81eB97BB28c6fD50d1a3;
 
-    FlashLoanLiquidator public liquidator;
+    FlashLoanLiquidatorWrappedCollateral public liquidator;
 
     function setUp() public {
         vm.createSelectFork("mainnet", 17_470_095);
 
         amm = new OneInchV5BalancerAMM(AGGREGATION_ROUTER_V5, IVault(BALANCER_VAULT));
-        liquidator = new FlashLoanLiquidator(positionManager, amm, collateralToken);
+        wrappedCollateralToken = new WrappedCollateralToken(
+            collateralToken, "Wrapped Collateral Token", "WCT", type(uint256).max, type(uint256).max, address(positionManager)
+        );
+
+        priceFeed = new PriceFeedTestnet();
+        vm.startPrank(0xaB40A7e3cEF4AfB323cE23B6565012Ac7c76BFef); // PositionManager owner
+        positionManager.addCollateralToken(wrappedCollateralToken, priceFeed, new SplitLiquidationCollateral());
+        vm.stopPrank();
+
+        PositionManagerWrappedCollateralToken positionManagerWrappedCollToken =
+        new PositionManagerWrappedCollateralToken(
+            address(positionManager),
+            IERC20Wrapped(address(wrappedCollateralToken))
+        );
+
+        wrappedCollateralToken.whitelistAddress(address(positionManagerWrappedCollToken), true);
+        liquidator = new FlashLoanLiquidatorWrappedCollateral(positionManagerWrappedCollToken, amm);
+
+        wrappedCollateralToken.whitelistAddress(ALICE, true);
+        vm.startPrank(ALICE);
+        collateralToken.approve(address(wrappedCollateralToken), 10_000e18);
+        wrappedCollateralToken.depositForWithAccountCheck(ALICE, ALICE, 10_000e18);
+        vm.stopPrank();
+
+        priceFeed.setPrice(200e18);
     }
 
-    // Closes a position that has 100% < ICR < 110% (MCR)
-    function testFlashLoanLiquidatorLiquidateWrappedCollateral() public {
-        address whale = 0xccFa0530B9d52f970d1A2dAEa670ce58E4176389;
+    function testFlashLoanLiquidatorWrappedCollateralLiquidate() public {
+        vm.startPrank(ALICE);
+        PositionManagerUtils.openPosition({
+            positionManager: positionManager,
+            priceFeed: priceFeed,
+            collateralToken: wrappedCollateralToken,
+            position: ALICE,
+            extraDebtAmount: 1_152_493_611_190_892_690_137_000,
+            icr: 0,
+            amount: 7_027_468_055_954_463_450_685
+        });
+        vm.stopPrank();
 
         uint256 fromAmountOffset = 164;
         /// WstETH --> DAI
@@ -54,11 +96,9 @@ contract FlashLoanLiquidatorTest is Test {
 
         bytes memory ammData = abi.encode(swaps, assets, deadline, fromAmountOffset, swapCalldata);
 
-        (,, IPriceFeed priceFeed,,,,,,,) = IPositionManager(positionManager).collateralInfo(collateralToken);
+        priceFeed.setPrice(180e18);
 
-        vm.mockCall(address(priceFeed), abi.encodeWithSelector(IPriceFeed.fetchPrice.selector), abi.encode(1720e18, 0));
-
-        liquidator.liquidate(whale, ammData);
-        assertEq(positionManager.raftDebtToken(collateralToken).balanceOf(whale), 0);
+        liquidator.liquidate(ALICE, ammData);
+        assertEq(positionManager.raftDebtToken(wrappedCollateralToken).balanceOf(ALICE), 0);
     }
 }
