@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20PermitSignature, PermitHelper } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IStETH } from "./Dependencies/IStETH.sol";
@@ -15,6 +16,12 @@ import { IPositionManagerWrappedCollateralToken } from "./Interfaces/IPositionMa
 import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 
 contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollateralToken, PositionManagerDependent {
+    // --- Types ---
+
+    using SafeERC20 for IERC20;
+
+    // --- Immutables ---
+
     IERC20Wrapped public immutable override wrappedCollateralToken;
 
     IERC20 internal immutable _underlyingCollateralToken;
@@ -38,7 +45,7 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         _raftDebtToken = IPositionManager(positionManager_).raftDebtToken(wrappedCollateralToken);
         _rToken = IPositionManager(positionManager_).rToken();
 
-        _underlyingCollateralToken.approve(address(wrappedCollateralToken), type(uint256).max);
+        _underlyingCollateralToken.safeApprove(address(wrappedCollateralToken), type(uint256).max);
 
         wrappedCollateralToken.approve(positionManager, type(uint256).max);
     }
@@ -65,7 +72,7 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         }
 
         if (isCollateralIncrease && collateralChange > 0) {
-            _underlyingCollateralToken.transferFrom(msg.sender, address(this), collateralChange);
+            _underlyingCollateralToken.safeTransferFrom(msg.sender, address(this), collateralChange);
             IWrappedCollateralToken(address(wrappedCollateralToken)).depositForWithAccountCheck(
                 address(this), msg.sender, collateralChange
             );
