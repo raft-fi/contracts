@@ -25,6 +25,9 @@ interface IPositionManagerWETH is IPositionManagerWrappedCollateralToken {
 
     // --- Errors ---
 
+    /// @dev Cannot send ETH when collateral is decreased.
+    error CannotSendETHWhenCollateralDecrease();
+
     /// @dev Collateral change amount does not match ETH value.
     error CollateralChangeAmountDoesNotMatchETHValue();
 

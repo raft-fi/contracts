@@ -34,6 +34,10 @@ contract PositionManagerWETH is IPositionManagerWETH, PositionManagerWrappedColl
         payable
         override
     {
+        if (!isCollateralIncrease && msg.value > 0) {
+            revert CannotSendETHWhenCollateralDecrease();
+        }
+
         ERC20PermitSignature memory emptySignature;
 
         if (!isDebtIncrease) {
@@ -44,7 +48,7 @@ contract PositionManagerWETH is IPositionManagerWETH, PositionManagerWrappedColl
             _rToken.transferFrom(msg.sender, address(this), debtChange);
         }
 
-        if (isCollateralIncrease && collateralChange > 0) {
+        if (isCollateralIncrease) {
             if (collateralChange != msg.value) {
                 revert CollateralChangeAmountDoesNotMatchETHValue();
             }
