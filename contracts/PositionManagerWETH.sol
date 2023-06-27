@@ -69,6 +69,10 @@ contract PositionManagerWETH is IPositionManagerWETH, PositionManagerWrappedColl
             emptySignature
         );
 
+        if (isDebtIncrease) {
+            _rToken.transfer(msg.sender, debtChange);
+        }
+
         if (!isCollateralIncrease && collateralChange > 0) {
             wrappedCollateralToken.withdrawTo(address(this), collateralChange);
             IWETH(address(_underlyingCollateralToken)).withdraw(collateralChange);
@@ -76,10 +80,6 @@ contract PositionManagerWETH is IPositionManagerWETH, PositionManagerWrappedColl
             if (!success) {
                 revert SendingEtherFailed();
             }
-        }
-
-        if (isDebtIncrease) {
-            _rToken.transfer(msg.sender, debtChange);
         }
 
         emit ETHPositionChanged(msg.sender, collateralChange, isCollateralIncrease, debtChange, isDebtIncrease);
