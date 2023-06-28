@@ -54,34 +54,4 @@ contract OneStepLeverageStETH is IERC3156FlashBorrower, IOneStepLeverageStETH, W
             msg.sender, stETHCollateralChange, stETHCollateralIncrease, debtChange, isDebtIncrease
         );
     }
-
-    function manageLeveragedPositionETH(
-        uint256 debtChange,
-        bool isDebtIncrease,
-        bytes calldata ammData,
-        uint256 minReturnOrAmountToSell,
-        uint256 maxFeePercentage
-    )
-        external
-        payable
-        override
-    {
-        uint256 principalCollateralChange = wrapETH();
-        if (principalCollateralChange == 0) {
-            revert NoETHProvided();
-        }
-
-        _manageLeveragedPosition(
-            debtChange,
-            isDebtIncrease,
-            principalCollateralChange,
-            true,
-            ammData,
-            minReturnOrAmountToSell,
-            maxFeePercentage,
-            true
-        );
-
-        emit ETHLeveragedPositionChange(msg.sender, msg.value, debtChange, isDebtIncrease);
-    }
 }

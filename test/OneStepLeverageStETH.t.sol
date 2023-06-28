@@ -89,28 +89,6 @@ contract OneStepLeverageStETHTest is TestSetup {
         checkEffectiveLeverage(ALICE, leverageMultiplier);
     }
 
-    function testOpenLeveragedPositionWithETH() public {
-        uint256 collateralAmount = 42e18;
-        uint256 leverageMultiplier = 9e18;
-        uint256 price = priceFeed.getPrice();
-        uint256 targetDebt =
-            stETH.getSharesByPooledEth(collateralAmount).mulDown(price).mulDown(leverageMultiplier - 1e18);
-        uint256 minReturn =
-            stETH.getSharesByPooledEth(collateralAmount).mulDown(leverageMultiplier - 1e18).mulDown(1e18 - 1e15);
-
-        vm.startPrank(ALICE);
-        oneStepLeverageStETH.manageLeveragedPositionETH{ value: collateralAmount }(
-            targetDebt, true, "", minReturn, MathUtils._100_PERCENT
-        );
-
-        checkEffectiveLeverage(ALICE, leverageMultiplier);
-    }
-
-    function testManageLeveragedPositionETHWithNoValueFails() public {
-        vm.expectRevert(IWstETHWrapper.SendingEtherFailed.selector);
-        oneStepLeverageStETH.manageLeveragedPositionETH{ value: 0 }(1, true, "", 1, MathUtils._100_PERCENT);
-    }
-
     function testReduceLeveragedPositionWithStETH() public {
         uint256 collateralAmount = 42e18;
         uint256 leverageMultiplier = 9e18;

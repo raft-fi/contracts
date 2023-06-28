@@ -5,9 +5,6 @@ import { IOneStepLeverage } from "./IOneStepLeverage.sol";
 
 /// @dev Interface that OneStepLeverage needs to implement
 interface IOneStepLeverageStETH is IOneStepLeverage {
-    /// @dev Thrown when `manageLeveragedPositionETH` is invoked without passing any ETH value (msg.value == 0).
-    error NoETHProvided();
-
     /// @dev Leveraged position was changed using stETH.
     /// @param position The changed position.
     /// @param collateralChange stETH collateral change (collateral added/removed from/to user wallet).
@@ -20,15 +17,6 @@ interface IOneStepLeverageStETH is IOneStepLeverage {
         bool isCollateralIncrease,
         uint256 debtChange,
         bool isDebtIncrease
-    );
-
-    /// @dev Leveraged position was changed using ETH.
-    /// @param position The changed position.
-    /// @param collateralChange ETH collateral change (collateral added/removed from/to user wallet).
-    /// @param debtChange Debt being added or removed.
-    /// @param isDebtIncrease True if increasing debt/leverage.
-    event ETHLeveragedPositionChange(
-        address indexed position, uint256 collateralChange, uint256 debtChange, bool isDebtIncrease
     );
 
     /// @dev Increases or decreases leverage for a position. Allows stETH deposits.
@@ -53,22 +41,4 @@ interface IOneStepLeverageStETH is IOneStepLeverage {
         uint256 maxFeePercentage
     )
         external;
-
-    /// @dev Increases or decreases leverage for a position. Allows ETH deposits.
-    /// @param debtChange Debt being added or removed.
-    /// @param isDebtIncrease True if increasing debt/leverage.
-    /// @param ammData Additional data to pass to swap method in amm.
-    /// @param minReturnOrAmountToSell Serves for two different purposes:
-    /// - leverage increase: it is min amount of collateral token to get from swapping flash minted R.
-    /// - leverage decrease: it is amount of collateral to swap that will result with enough R to repay flash mint.
-    /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
-    function manageLeveragedPositionETH(
-        uint256 debtChange,
-        bool isDebtIncrease,
-        bytes calldata ammData,
-        uint256 minReturnOrAmountToSell,
-        uint256 maxFeePercentage
-    )
-        external
-        payable;
 }

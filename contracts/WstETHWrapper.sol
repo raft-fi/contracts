@@ -19,16 +19,6 @@ abstract contract WstETHWrapper is IWstETHWrapper {
         stETH.approve(address(wstETH), type(uint256).max); // for wrapping
     }
 
-    function wrapETH() internal returns (uint256) {
-        uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
-        (bool sent,) = address(wstETH).call{ value: msg.value }("");
-        if (!sent) {
-            revert SendingEtherFailed();
-        }
-
-        return wstETH.balanceOf(address(this)) - wstETHBalanceBefore;
-    }
-
     function wrapStETH(uint256 stETHAmount) internal returns (uint256) {
         stETH.transferFrom(msg.sender, address(this), stETHAmount);
         return wstETH.wrap(stETHAmount);

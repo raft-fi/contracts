@@ -9,15 +9,6 @@ import { IWstETHWrapper } from "./IWstETHWrapper.sol";
 interface IPositionManagerStETH is IPositionManagerWrappedCollateralToken, IWstETHWrapper {
     // --- Events ---
 
-    /// @dev The position is changed using ETH.
-    /// @param position The address of the user that has opened the position.
-    /// @param collateralAmount The amount of collateral added.
-    /// @param debtAmount The amount of debt added or removed.
-    /// @param isDebtIncrease Whether the debt is added to the position or removed from it.
-    event ETHPositionChanged(
-        address indexed position, uint256 collateralAmount, uint256 debtAmount, bool isDebtIncrease
-    );
-
     /// @dev The position is changed using stETH.
     /// @param position The address of the user that has opened the position.
     /// @param collateralAmount The amount of collateral added or removed.
@@ -33,21 +24,6 @@ interface IPositionManagerStETH is IPositionManagerWrappedCollateralToken, IWstE
     );
 
     // --- Functions ---
-
-    /// @dev Manages the position with ether for the position (the caller).
-    /// @param debtChange The amount of R to add or remove.
-    /// @param isDebtIncrease True if the debt is being increased, false otherwise.
-    /// @param maxFeePercentage The maximum fee percentage to pay for the position management.
-    /// @param permitSignature The permit signature for the R token used for position repayment. Ignored in other
-    /// cases.
-    function managePositionETH(
-        uint256 debtChange,
-        bool isDebtIncrease,
-        uint256 maxFeePercentage,
-        ERC20PermitSignature calldata permitSignature
-    )
-        external
-        payable;
 
     /// @dev Manages the position with stETH for the position (the caller).
     /// @param collateralChange The amount of stETH to add or remove.

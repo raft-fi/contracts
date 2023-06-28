@@ -8,9 +8,6 @@ interface IWstETHWrapper {
     /// @dev Invalid wstETH address.
     error WstETHAddressCannotBeZero();
 
-    /// @dev Sending ether has failed.
-    error SendingEtherFailed();
-
     /// @dev Returns wstETH token.
     function wstETH() external view returns (IWstETH);
 
