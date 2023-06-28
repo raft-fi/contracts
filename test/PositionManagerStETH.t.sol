@@ -52,26 +52,6 @@ contract PositionManagerStETHTest is TestSetup {
         positionManager.whitelistDelegate(address(positionManagerStETH), true);
     }
 
-    function testGetPositionETH() public {
-        vm.startPrank(ALICE);
-        PositionManagerUtils.OpenPositionResult memory alicePosition = PositionManagerUtils.openPositionStETH({
-            positionManagerStETH: positionManagerStETH,
-            priceFeed: priceFeed,
-            icr: 150 * MathUtils._100_PERCENT / 100,
-            ethType: PositionManagerUtils.ETHType.ETH,
-            extraDebt: 0
-        });
-        vm.stopPrank();
-
-        (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
-            positionManager.collateralInfo(wrappedCollateralToken);
-        uint256 alicePositionCollateral = raftCollateralToken.balanceOf(ALICE);
-        uint256 aliceDebt = raftDebtToken.balanceOf(ALICE);
-
-        assertEq(alicePositionCollateral, alicePosition.collateral);
-        assertEq(aliceDebt, alicePosition.totalDebt);
-    }
-
     function testGetPositionStETH() public {
         _depositETH(ALICE, 50 ether);
 
@@ -80,7 +60,6 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 150 * MathUtils._100_PERCENT / 100,
-            ethType: PositionManagerUtils.ETHType.STETH,
             extraDebt: 0
         });
         vm.stopPrank();
@@ -92,59 +71,6 @@ contract PositionManagerStETHTest is TestSetup {
 
         assertEq(alicePositionCollateral, alicePosition.collateral);
         assertEq(aliceDebt, alicePosition.totalDebt);
-    }
-
-    function testDepositETH() public {
-        uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
-        vm.startPrank(ALICE);
-        PositionManagerUtils.OpenPositionResult memory result = PositionManagerUtils.openPositionStETH({
-            positionManagerStETH: positionManagerStETH,
-            priceFeed: priceFeed,
-            icr: 2 * MathUtils._100_PERCENT,
-            ethType: PositionManagerUtils.ETHType.ETH,
-            extraDebt: 0
-        });
-        vm.stopPrank();
-        assertGt(positionManager.rToken().balanceOf(ALICE), rBalanceBefore);
-
-        (IERC20Indexable raftCollateralToken,,,,,,,,,) = positionManager.collateralInfo(wrappedCollateralToken);
-
-        uint256 positionCollateralBefore = raftCollateralToken.balanceOf(ALICE);
-        assertEq(positionCollateralBefore, result.collateral);
-
-        uint256 positionManagerStETHBalanceBefore = wrappedCollateralToken.balanceOf(address(positionManager));
-        assertEq(positionManagerStETHBalanceBefore, result.collateral);
-
-        uint256 collateralTopUpAmount = 1 ether;
-        ERC20PermitSignature memory emptySignature;
-
-        vm.startPrank(ALICE);
-        uint256 wstETHAmount = stETH.getSharesByPooledEth(collateralTopUpAmount);
-        positionManagerStETH.managePositionETH{ value: collateralTopUpAmount }(0, false, 0, emptySignature);
-        vm.stopPrank();
-
-        uint256 positionCollateralAfter = raftCollateralToken.balanceOf(ALICE);
-        assertEq(positionCollateralAfter, positionCollateralBefore + wstETHAmount);
-
-        uint256 positionManagerStETHBalanceAfter = wrappedCollateralToken.balanceOf(address(positionManager));
-        assertEq(positionManagerStETHBalanceAfter, positionManagerStETHBalanceBefore + wstETHAmount);
-    }
-
-    function testCannotDepositETH() public {
-        vm.startPrank(ALICE);
-        PositionManagerUtils.openPositionStETH({
-            positionManagerStETH: positionManagerStETH,
-            priceFeed: priceFeed,
-            icr: 2 * MathUtils._100_PERCENT,
-            ethType: PositionManagerUtils.ETHType.ETH,
-            extraDebt: 0
-        });
-        vm.stopPrank();
-
-        vm.startPrank(ALICE);
-        vm.expectRevert(IWstETHWrapper.SendingEtherFailed.selector);
-        positionManagerStETH.managePositionETH{ value: 0 }(0, false, 0, emptySignature);
-        vm.stopPrank();
     }
 
     function testDepositStETH() public {
@@ -156,7 +82,6 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 2 * MathUtils._100_PERCENT,
-            ethType: PositionManagerUtils.ETHType.STETH,
             extraDebt: 0
         });
         vm.stopPrank();
@@ -194,14 +119,12 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 2 * MathUtils._100_PERCENT,
-            ethType: PositionManagerUtils.ETHType.STETH,
             extraDebt: 0
         });
         vm.stopPrank();
 
         uint256 aliceBalanceBefore = stETH.balanceOf(ALICE);
         uint256 withdrawAmount = 1 ether;
-        ERC20PermitSignature memory emptySignature;
 
         // Alice withdraws 1 stETH
         vm.prank(ALICE);
@@ -218,14 +141,12 @@ contract PositionManagerStETHTest is TestSetup {
             positionManagerStETH: positionManagerStETH,
             priceFeed: priceFeed,
             icr: 2 * MathUtils._100_PERCENT,
-            ethType: PositionManagerUtils.ETHType.STETH,
             extraDebt: 2 ether
         });
         vm.stopPrank();
 
         uint256 aliceBalanceBefore = stETH.balanceOf(ALICE);
         uint256 withdrawAmount = 1 ether;
-        ERC20PermitSignature memory emptySignature;
 
         uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
 

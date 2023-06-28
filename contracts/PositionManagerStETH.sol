@@ -25,44 +25,6 @@ contract PositionManagerStETH is IPositionManagerStETH, PositionManagerWrappedCo
 
     // --- Functions ---
 
-    function managePositionETH(
-        uint256 debtChange,
-        bool isDebtIncrease,
-        uint256 maxFeePercentage,
-        ERC20PermitSignature calldata permitSignature
-    )
-        external
-        payable
-        override
-    {
-        ERC20PermitSignature memory emptySignature;
-        uint256 wstETHAmount = wrapETH();
-        IWrappedCollateralToken(address(wrappedCollateralToken)).depositForWithAccountCheck(
-            address(this), msg.sender, wstETHAmount
-        );
-
-        if (!isDebtIncrease) {
-            _applyPermit(_rToken, permitSignature);
-            _rToken.transferFrom(msg.sender, address(this), debtChange);
-        }
-
-        IPositionManager(positionManager).managePosition(
-            wrappedCollateralToken,
-            msg.sender,
-            wstETHAmount,
-            true,
-            debtChange,
-            isDebtIncrease,
-            maxFeePercentage,
-            emptySignature
-        );
-        if (isDebtIncrease) {
-            _rToken.transfer(msg.sender, debtChange);
-        }
-
-        emit ETHPositionChanged(msg.sender, msg.value, debtChange, isDebtIncrease);
-    }
-
     function managePositionStETH(
         uint256 stETHCollateralChange,
         bool isCollateralIncrease,

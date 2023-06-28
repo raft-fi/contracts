@@ -17,11 +17,6 @@ import { PriceFeedTestnet } from "../mocks/PriceFeedTestnet.sol";
 library PositionManagerUtils {
     using Fixed256x18 for uint256;
 
-    enum ETHType {
-        ETH,
-        STETH
-    }
-
     struct OpenPositionResult {
         uint256 debtAmount;
         uint256 totalDebt;
@@ -76,7 +71,6 @@ library PositionManagerUtils {
         PositionManagerStETH positionManagerStETH,
         PriceFeedTestnet priceFeed,
         uint256 icr,
-        ETHType ethType,
         uint256 extraDebt
     )
         internal
@@ -97,16 +91,10 @@ library PositionManagerUtils {
         IStETH stETH = positionManagerStETH.stETH();
         uint256 wstETHAmount = stETH.getSharesByPooledEth(amount);
 
-        if (ethType == ETHType.ETH) {
-            positionManagerStETH.managePositionETH{ value: amount }(
-                result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
-            );
-        } else {
-            stETH.approve(address(positionManagerStETH), amount);
-            positionManagerStETH.managePositionStETH(
-                amount, true, result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
-            );
-        }
+        stETH.approve(address(positionManagerStETH), amount);
+        positionManagerStETH.managePositionStETH(
+            amount, true, result.debtAmount, true, MathUtils._100_PERCENT, emptySignature
+        );
 
         result.collateral = wstETHAmount;
 
