@@ -23,16 +23,16 @@ contract ParaSwapBalancerAMM is ParaSwapAMM, BalancerAMM {
             uint256 intermediaryMinReturn,
             bool isParaSwapFirst,
             bytes memory paraSwapAMMData,
-            bytes memory BalancerAMMData
+            bytes memory balancerAMMData
         ) = abi.decode(extraData, (IERC20, uint256, bool, bytes, bytes));
 
         if (isParaSwapFirst) {
             ParaSwapAMM._executeSwap(tokenIn, amountIn, intermediaryMinReturn, paraSwapAMMData);
             BalancerAMM._executeSwap(
-                intermediaryToken, intermediaryToken.balanceOf(address(this)), minReturn, BalancerAMMData
+                intermediaryToken, intermediaryToken.balanceOf(address(this)), minReturn, balancerAMMData
             );
         } else {
-            BalancerAMM._executeSwap(tokenIn, amountIn, intermediaryMinReturn, BalancerAMMData);
+            BalancerAMM._executeSwap(tokenIn, amountIn, intermediaryMinReturn, balancerAMMData);
             ParaSwapAMM._executeSwap(
                 intermediaryToken, intermediaryToken.balanceOf(address(this)), minReturn, paraSwapAMMData
             );

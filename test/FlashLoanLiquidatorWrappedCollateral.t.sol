@@ -94,7 +94,10 @@ contract FlashLoanLiquidatorWrappedCollateralTest is Test {
         /// R
         uint256 deadline = type(uint256).max;
 
-        bytes memory ammData = abi.encode(swaps, assets, deadline, fromAmountOffset, swapCalldata);
+        bytes memory oneInchData = abi.encode(fromAmountOffset, swapCalldata);
+        bytes memory balancerData = abi.encode(swaps, assets, deadline);
+        bytes memory ammData =
+            abi.encode(IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F), 1, true, oneInchData, balancerData);
 
         priceFeed.setPrice(180e18);
 
