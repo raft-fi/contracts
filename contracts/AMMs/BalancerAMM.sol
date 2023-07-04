@@ -29,7 +29,7 @@ contract BalancerAMM is AMMBase {
         IERC20 tokenIn,
         uint256 amountIn,
         uint256 minReturn,
-        bytes calldata extraData
+        bytes memory extraData
     )
         internal
         virtual

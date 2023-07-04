@@ -21,7 +21,7 @@ contract OneInchV5BalancerAMM is OneInchV5AMM, BalancerAMM {
         IERC20 tokenIn,
         uint256 amountIn,
         uint256 minReturn,
-        bytes calldata extraData
+        bytes memory extraData
     )
         internal
         override(OneInchV5AMM, BalancerAMM)

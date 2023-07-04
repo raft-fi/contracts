@@ -26,7 +26,7 @@ contract OneInchV5AMM is AMMBase {
         IERC20 tokenIn,
         uint256 amountIn,
         uint256,
-        bytes calldata extraData
+        bytes memory extraData
     )
         internal
         virtual

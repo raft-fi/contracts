@@ -28,7 +28,16 @@ contract ParaSwapAMM is AMMBase {
         augustusRegistry = IParaSwapAugustusRegistry(_augustusRegistry);
     }
 
-    function _executeSwap(IERC20 tokenIn, uint256 amountIn, uint256, bytes calldata extraData) internal override {
+    function _executeSwap(
+        IERC20 tokenIn,
+        uint256 amountIn,
+        uint256,
+        bytes memory extraData
+    )
+        internal
+        virtual
+        override
+    {
         (IParaSwapAugustus augustus, uint256 fromAmountOffset, bytes memory swapCalldata) =
             abi.decode(extraData, (IParaSwapAugustus, uint256, bytes));
 
