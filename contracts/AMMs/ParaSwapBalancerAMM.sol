@@ -2,16 +2,11 @@
 pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IVault } from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
-import { AMMBase } from "./AMMBase.sol";
 import { ParaSwapAMM } from "./ParaSwapAMM.sol";
 import { BalancerAMM } from "./BalancerAMM.sol";
-import { IAMM } from "../Interfaces/IAMM.sol";
 
 contract ParaSwapBalancerAMM is ParaSwapAMM, BalancerAMM {
-    using SafeERC20 for IERC20;
-
     constructor(address _augustusRegistry, IVault _vault) ParaSwapAMM(_augustusRegistry) BalancerAMM(_vault) { }
 
     function _executeSwap(
