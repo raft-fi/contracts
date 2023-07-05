@@ -130,6 +130,25 @@ contract OneStepLeverageTest is TestSetup {
         assertEq(collateralToken.balanceOf(address(oneStepLeverage)), 0);
     }
 
+    function testRescueTokens() public {
+        vm.startPrank(BOB);
+        uint256 amountToRescue = collateralToken.balanceOf(BOB);
+        collateralToken.transfer(address(oneStepLeverage), amountToRescue);
+        assertEq(collateralToken.balanceOf(address(oneStepLeverage)), amountToRescue);
+        vm.stopPrank();
+
+        uint256 carolBalanceBeforeRescue = collateralToken.balanceOf(CAROL);
+        oneStepLeverage.rescueTokens(collateralToken, CAROL);
+        assertEq(collateralToken.balanceOf(CAROL), carolBalanceBeforeRescue + amountToRescue);
+        assertEq(collateralToken.balanceOf(address(oneStepLeverage)), 0);
+    }
+
+    function testCannotRescueTokens() public {
+        vm.prank(BOB);
+        vm.expectRevert("Ownable: caller is not the owner");
+        oneStepLeverage.rescueTokens(collateralToken, CAROL);
+    }
+
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
         (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken, IPriceFeed priceFeedCollateral,,,,,,,) =
             positionManager.collateralInfo(collateralToken);

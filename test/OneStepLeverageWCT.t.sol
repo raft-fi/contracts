@@ -117,6 +117,25 @@ contract OneStepLeverageTest is TestSetup {
         assertEq(collateralToken.balanceOf(address(oneStepLeverage)), 0);
     }
 
+    function testRescueTokens() public {
+        vm.startPrank(BOB);
+        wct.approve(address(positionManager), type(uint256).max);
+        vm.stopPrank();
+
+        vm.startPrank(address(positionManager));
+        uint256 amountToRescue = wct.balanceOf(BOB);
+        wct.transferFrom(address(BOB), address(oneStepLeverage), amountToRescue);
+        assertEq(wct.balanceOf(address(oneStepLeverage)), amountToRescue);
+        vm.stopPrank();
+
+        uint256 carolBalanceBeforeRescue = collateralToken.balanceOf(CAROL);
+        oneStepLeverage.rescueTokens(wct, CAROL);
+
+        assertEq(collateralToken.balanceOf(CAROL), carolBalanceBeforeRescue + amountToRescue);
+        assertEq(wct.balanceOf(address(oneStepLeverage)), 0);
+        assertEq(collateralToken.balanceOf(address(oneStepLeverage)), 0);
+    }
+
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
         (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken, IPriceFeed priceFeedCollateral,,,,,,,) =
             positionManager.collateralInfo(wct);
