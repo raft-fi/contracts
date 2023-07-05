@@ -11,12 +11,14 @@ import { PositionManagerDependent } from "./PositionManagerDependent.sol";
 import { IOneStepLeverage } from "./Interfaces/IOneStepLeverage.sol";
 import { IAMM } from "./Interfaces/IAMM.sol";
 import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
+import { WrappedCollateralToken } from "./WrappedCollateralToken.sol";
 
 contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
     using SafeERC20 for IERC20;
 
     IAMM public immutable override amm;
     IERC20 public immutable override collateralToken;
+    IERC20 public immutable override underlyingCollateralToken;
     IERC20Indexable public immutable override raftDebtToken;
     IERC20Indexable public immutable override raftCollateralToken;
 
@@ -25,7 +27,8 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
     constructor(
         IPositionManager positionManager_,
         IAMM amm_,
-        IERC20 collateralToken_
+        IERC20 collateralToken_,
+        bool isWrappedCollateralToken
     )
         PositionManagerDependent(address(positionManager_))
     {
@@ -35,8 +38,12 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         if (address(collateralToken_) == address(0)) {
             revert CollateralTokenCannotBeZero();
         }
+
         amm = amm_;
         collateralToken = collateralToken_;
+        underlyingCollateralToken = isWrappedCollateralToken
+            ? WrappedCollateralToken(address(collateralToken_)).underlying()
+            : collateralToken_;
         raftCollateralToken = positionManager_.raftCollateralToken(collateralToken);
         raftDebtToken = positionManager_.raftDebtToken(collateralToken);
 
@@ -46,8 +53,11 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         // No need to use safeApprove, IRToken is known token and is safe.
         positionManager_.rToken().approve(address(amm), type(uint256).max);
         positionManager_.rToken().approve(address(positionManager_.rToken()), type(uint256).max);
-        collateralToken_.safeApprove(address(amm), type(uint256).max);
+        underlyingCollateralToken.safeApprove(address(amm), type(uint256).max);
         collateralToken_.safeApprove(address(positionManager_), type(uint256).max);
+        if (isWrappedCollateralToken) {
+            underlyingCollateralToken.safeApprove(address(collateralToken_), type(uint256).max);
+        }
     }
 
     function manageLeveragedPosition(
@@ -63,7 +73,7 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         override
     {
         if (principalCollateralIncrease && principalCollateralChange > 0) {
-            collateralToken.safeTransferFrom(msg.sender, address(this), principalCollateralChange);
+            underlyingCollateralToken.safeTransferFrom(msg.sender, address(this), principalCollateralChange);
         }
 
         _manageLeveragedPosition(
@@ -159,7 +169,7 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         ) = abi.decode(data, (address, uint256, bool, bool, bytes, uint256, uint256, bool, bool, uint256));
 
         uint256 leveragedCollateralChange = isDebtIncrease
-            ? amm.swap(rToken, collateralToken, amount, minReturnOrAmountToSell, ammData)
+            ? amm.swap(rToken, underlyingCollateralToken, amount, minReturnOrAmountToSell, ammData)
             : minReturnOrAmountToSell;
 
         uint256 collateralChange;
@@ -177,6 +187,10 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             collateralChange = principalCollateralChange + (fullRepayment ? 0 : leveragedCollateralChange);
         }
 
+        if (increaseCollateral) {
+            _wrapCollateralTokens(user, collateralChange);
+        }
+
         ERC20PermitSignature memory emptySignature;
         IPositionManager(positionManager).managePosition(
             collateralToken,
@@ -190,11 +204,13 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
         );
 
         if (releasePrincipals && !principalCollateralIncrease && actualCollateralChange > 0) {
-            collateralToken.safeTransfer(user, actualCollateralChange - (fullRepayment ? minReturnOrAmountToSell : 0));
+            _transferCollateralOut(user, actualCollateralChange - (fullRepayment ? minReturnOrAmountToSell : 0));
         }
         if (!isDebtIncrease) {
             uint256 repayAmount = amount + fee;
-            uint256 amountOut = amm.swap(collateralToken, rToken, leveragedCollateralChange, repayAmount, ammData);
+            _unwrapCollateralTokens(leveragedCollateralChange);
+            uint256 amountOut =
+                amm.swap(underlyingCollateralToken, rToken, leveragedCollateralChange, repayAmount, ammData);
             if (amountOut > repayAmount + MAX_LEFTOVER_R) {
                 // No need to use safeTransfer as rToken is known
                 rToken.transfer(user, amountOut - repayAmount);
@@ -210,5 +226,25 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             leveragedCollateralChange
         );
         return keccak256("ERC3156FlashBorrower.onFlashLoan");
+    }
+
+    function _wrapCollateralTokens(address user, uint256 amount) internal {
+        if (collateralToken != underlyingCollateralToken) {
+            WrappedCollateralToken(address(collateralToken)).depositForWithAccountCheck(address(this), user, amount);
+        }
+    }
+
+    function _unwrapCollateralTokens(uint256 amount) internal {
+        if (collateralToken != underlyingCollateralToken) {
+            WrappedCollateralToken(address(collateralToken)).withdrawTo(address(this), amount);
+        }
+    }
+
+    function _transferCollateralOut(address user, uint256 amount) internal {
+        if (collateralToken != underlyingCollateralToken) {
+            WrappedCollateralToken(address(collateralToken)).withdrawTo(user, amount);
+        } else {
+            collateralToken.safeTransfer(user, amount);
+        }
     }
 }

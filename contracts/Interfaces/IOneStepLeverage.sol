@@ -60,6 +60,10 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
     /// @dev Collateral token used for leverage.
     function collateralToken() external view returns (IERC20);
 
+    /// @dev Underlying collateral token used for leverage.
+    /// @dev It is different to collateralToken in case of WrappedCollateralToken.
+    function underlyingCollateralToken() external view returns (IERC20);
+
     /// @dev Collateral token used for leverage.
     function raftCollateralToken() external view returns (IERC20Indexable);
 
