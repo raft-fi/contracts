@@ -92,4 +92,9 @@ interface IOneStepLeverage is IERC3156FlashBorrower, IPositionManagerDependent {
         uint256 maxFeePercentage
     )
         external;
+
+    /// @dev Rescues tokens from the contract.
+    /// @param token Address of the token to rescue.
+    /// @param to Address to send the rescued tokens to.
+    function rescueTokens(IERC20 token, address to) external;
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -13,7 +14,7 @@ import { IAMM } from "./Interfaces/IAMM.sol";
 import { IERC20Indexable } from "./Interfaces/IERC20Indexable.sol";
 import { WrappedCollateralToken } from "./WrappedCollateralToken.sol";
 
-contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
+contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent, Ownable2Step {
     using SafeERC20 for IERC20;
 
     IAMM public immutable override amm;
@@ -226,6 +227,17 @@ contract OneStepLeverage is IOneStepLeverage, PositionManagerDependent {
             leveragedCollateralChange
         );
         return keccak256("ERC3156FlashBorrower.onFlashLoan");
+    }
+
+    function rescueTokens(IERC20 token, address to) external override onlyOwner {
+        if (token == collateralToken) {
+            uint256 balance = token.balanceOf(address(this));
+            if (balance > 0) {
+                _unwrapCollateralTokens(balance);
+            }
+            token = underlyingCollateralToken;
+        }
+        token.safeTransfer(to, token.balanceOf(address(this)));
     }
 
     function _wrapCollateralTokens(address user, uint256 amount) internal {
