@@ -16,6 +16,7 @@ import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollate
 import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 import { MathUtils } from "../contracts/Dependencies/MathUtils.sol";
 import { IERC20Indexable } from "../contracts/Interfaces/IERC20Indexable.sol";
+import { WrappedCollateralToken } from "../contracts/WrappedCollateralToken.sol";
 
 contract OneStepLeverageTest is TestSetup {
     using Fixed256x18 for uint256;
@@ -24,16 +25,21 @@ contract OneStepLeverageTest is TestSetup {
 
     PriceFeedTestnet public priceFeed;
     OneStepLeverage public oneStepLeverage;
+    WrappedCollateralToken public wct;
 
     function setUp() public override {
         super.setUp();
 
         priceFeed = new PriceFeedTestnet();
+        wct = new WrappedCollateralToken(
+            collateralToken, "WCT", "WCT", type(uint256).max, type(uint256).max, address(positionManager)
+        );
 
-        positionManager.addCollateralToken(collateralToken, priceFeed, splitLiquidationCollateral);
+        positionManager.addCollateralToken(wct, priceFeed, splitLiquidationCollateral);
 
         IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);
-        oneStepLeverage = new OneStepLeverage(positionManager, mockAmm, collateralToken, false);
+        oneStepLeverage = new OneStepLeverage(positionManager, mockAmm, wct, true);
+        wct.whitelistAddress(address(oneStepLeverage), true);
 
         collateralToken.mint(address(oneStepLeverage.amm()), 10e36);
         collateralToken.mint(ALICE, 10e36);
@@ -46,38 +52,19 @@ contract OneStepLeverageTest is TestSetup {
         positionManager.whitelistDelegate(address(oneStepLeverage), true);
 
         collateralToken.mint(BOB, 10e36);
+        wct.whitelistAddress(BOB, true);
+
         vm.startPrank(BOB);
+        collateralToken.approve(address(wct), 5e36);
+        wct.depositForWithAccountCheck(BOB, BOB, 5e36);
         PositionManagerUtils.openPosition({
             positionManager: positionManager,
             priceFeed: priceFeed,
-            collateralToken: collateralToken,
+            collateralToken: wct,
             position: BOB,
             icr: 2e18
         });
         vm.stopPrank();
-    }
-
-    function testCannotCreateOneStepLeverage() public {
-        IAMM mockAmm = new MockAMM(collateralToken, positionManager.rToken(), 200e18);
-
-        vm.expectRevert(IPositionManagerDependent.PositionManagerCannotBeZero.selector);
-        new OneStepLeverage(IPositionManager(address(0)), mockAmm, collateralToken, false);
-
-        vm.expectRevert(IOneStepLeverage.AmmCannotBeZero.selector);
-        new OneStepLeverage(positionManager, IAMM(address(0)), collateralToken, false);
-
-        vm.expectRevert(IOneStepLeverage.CollateralTokenCannotBeZero.selector);
-        new OneStepLeverage(positionManager, mockAmm, IERC20Indexable(address(0)), false);
-    }
-
-    function testCannotProvideZeroDebtChange() public {
-        uint256 collateralAmount = 420e18;
-
-        vm.startPrank(ALICE);
-        collateralToken.approve(address(oneStepLeverage), collateralAmount);
-
-        vm.expectRevert(IOneStepLeverage.ZeroDebtChange.selector);
-        oneStepLeverage.manageLeveragedPosition(0, true, collateralAmount, true, "", 1, MathUtils._100_PERCENT);
     }
 
     function testOpenLeveragedPosition() public {
@@ -101,7 +88,7 @@ contract OneStepLeverageTest is TestSetup {
 
     function testAdjustLeveragedPositionToClosePosition() public {
         (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken,,,,,,,,) =
-            positionManager.collateralInfo(collateralToken);
+            positionManager.collateralInfo(wct);
 
         uint256 collateralAmount = 420e18;
         uint256 leverageMultiplier = 9e18;
@@ -132,7 +119,7 @@ contract OneStepLeverageTest is TestSetup {
 
     function checkEffectiveLeverage(address position, uint256 targetLeverageMultiplier) internal {
         (IERC20Indexable raftCollateralToken, IERC20Indexable raftDebtToken, IPriceFeed priceFeedCollateral,,,,,,,) =
-            positionManager.collateralInfo(collateralToken);
+            positionManager.collateralInfo(wct);
         uint256 debtAfter = raftDebtToken.balanceOf(position);
         uint256 collAfter = raftCollateralToken.balanceOf(position);
         (uint256 price,) = priceFeedCollateral.fetchPrice();

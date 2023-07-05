@@ -15,7 +15,7 @@ contract OneStepLeverageStETH is IERC3156FlashBorrower, IOneStepLeverageStETH, W
         IAMM amm_,
         IWstETH wstETH_
     )
-        OneStepLeverage(positionManager_, amm_, wstETH_)
+        OneStepLeverage(positionManager_, amm_, wstETH_, false)
         WstETHWrapper(wstETH_)
     { }
 
