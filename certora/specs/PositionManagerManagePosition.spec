@@ -15,6 +15,13 @@ using RTokenMock as rToken;
 using SplitLiquidationCollateral as splitLiquidationMock;
 
 methods {
+    function collateralTokenForPosition(address)                                            external returns (address)                  envfree;
+    function computeICR(address,uint256)                                                    external returns (uint256)                  envfree;
+
+    function managePosition(address,address,uint256,bool,uint256,bool,uint256,PositionManagerHarness.ERC20PermitSignature) external;
+    function redeemCollateral(address,uint256,uint256)                                                                     external;
+    function liquidate(address)                                                                                            external;
+
     function raftDebtTokenMock.balanceOf(address)                           external returns (uint256)   envfree;
     function raftDebtTokenMock.totalSupply()                                external returns (uint256)   envfree;
 

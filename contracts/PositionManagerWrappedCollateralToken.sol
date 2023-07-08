@@ -58,7 +58,7 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         uint256 maxFeePercentage,
         ERC20PermitSignature calldata permitSignature
     )
-        external
+        public
         override
     {
         ERC20PermitSignature memory emptySignature;
@@ -107,7 +107,7 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         uint256 maxFeePercentage,
         ERC20PermitSignature calldata permitSignature
     )
-        external
+        public
         override
     {
         _applyPermit(_rToken, permitSignature);
