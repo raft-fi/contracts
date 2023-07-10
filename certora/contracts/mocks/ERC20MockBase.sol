@@ -8,11 +8,11 @@ abstract contract ERC20MockBase is IERC20 {
     mapping(address => uint256) private _balanceOf;
     mapping(address => mapping(address => uint256)) private _allowance;
 
-    function name() public pure returns (string memory) {
+    function name() public view virtual returns (string memory) {
         return "ERC20MockBase";
     }
 
-    function symbol() public pure returns (string memory) {
+    function symbol() public view virtual returns (string memory) {
         return "ERC20MockBase";
     }
 
@@ -28,20 +28,20 @@ abstract contract ERC20MockBase is IERC20 {
         return _allowance[owner][spender];
     }
 
-    function approve(address spender, uint256 amount) external override returns (bool) {
+    function approve(address spender, uint256 amount) external virtual override returns (bool) {
         _allowance[msg.sender][spender] = amount;
 
         return true;
     }
 
-    function transfer(address recipient, uint256 amount) external override returns (bool) {
+    function transfer(address recipient, uint256 amount) external virtual override returns (bool) {
         _balanceOf[msg.sender] -= amount;
         _balanceOf[recipient] += amount;
 
         return true;
     }
 
-    function transferFrom(address from, address recipient, uint256 amount) external override returns (bool) {
+    function transferFrom(address from, address recipient, uint256 amount) external virtual override returns (bool) {
         if (_allowance[from][msg.sender] != type(uint256).max) {
             _allowance[from][msg.sender] -= amount;
         }
@@ -59,12 +59,12 @@ abstract contract ERC20MockBase is IERC20 {
         _burn(user, amount);
     }
 
-    function _mint(address user, uint256 amount) internal {
+    function _mint(address user, uint256 amount) internal virtual {
         _totalSupply += amount;
         _balanceOf[user] += amount;
     }
 
-    function _burn(address user, uint256 amount) internal {
+    function _burn(address user, uint256 amount) internal virtual {
         _totalSupply -= amount;
         _balanceOf[user] -= amount;
     }
