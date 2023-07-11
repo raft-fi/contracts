@@ -47,7 +47,7 @@ contract OneStepLeverageStETH is IERC3156FlashBorrower, IOneStepLeverageStETH, W
         );
 
         if (!stETHCollateralIncrease && wstETHCollateralChange > 0) {
-            unwrapStETH(wstETHCollateralChange);
+            unwrapStETH(wstETH.balanceOf(address(this)));
         }
 
         emit StETHLeveragedPositionChange(
