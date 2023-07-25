@@ -208,7 +208,7 @@ interface IPositionManager is IFeeCollector {
     error InvalidPosition();
 
     /// @dev An operation that would result in ICR < MCR is not permitted.
-    /// @param newICR Resulting ICR that is bellow MCR.
+    /// @param newICR Resulting ICR that is below MCR.
     error NewICRLowerThanMCR(uint256 newICR);
 
     /// @dev Position's net debt must be greater than minimum.
