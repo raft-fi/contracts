@@ -67,6 +67,16 @@ contract PositionManagerWrappedCollateralTokenHarness is PositionManagerWrappedC
         );
     }
 
+    function redeemCollateralHarness(
+        uint256 debtAmount,
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
+    )
+        external
+    {
+        super.redeemCollateral(debtAmount, maxFeePercentage, permitSignature);
+    }
+
     function getRToken() external view returns (IRToken) {
         return _rToken;
     }
