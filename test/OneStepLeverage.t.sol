@@ -82,7 +82,7 @@ contract OneStepLeverageTest is TestSetup {
 
     function testOpenLeveragedPosition() public {
         uint256 collateralAmount = 420e18;
-        uint256 leverageMultiplier = 9e18;
+        uint256 leverageMultiplier = 5e18;
         uint256 price = priceFeed.getPrice();
         uint256 targetDebt = collateralAmount.mulDown(price).mulDown(leverageMultiplier - 1e18);
         uint256 minReturn = collateralAmount.mulDown(leverageMultiplier - 1e18).mulDown(1e18 - 1e15);
@@ -104,7 +104,7 @@ contract OneStepLeverageTest is TestSetup {
             positionManager.collateralInfo(collateralToken);
 
         uint256 collateralAmount = 420e18;
-        uint256 leverageMultiplier = 9e18;
+        uint256 leverageMultiplier = 5e18;
         uint256 price = priceFeed.getPrice();
         uint256 targetDebt = collateralAmount.mulDown(price).mulDown(leverageMultiplier - 1e18);
         uint256 minReturn = collateralAmount.mulDown(leverageMultiplier - 1e18).mulDown(1e18 - 1e15);

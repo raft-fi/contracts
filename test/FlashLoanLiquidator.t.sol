@@ -27,7 +27,7 @@ contract FlashLoanLiquidatorTest is Test {
         liquidator = new FlashLoanLiquidator(positionManager, amm, collateralToken);
     }
 
-    // Closes a position that has 100% < ICR < 110% (MCR)
+    // Closes a position that has 100% < ICR < 120% (MCR)
     function testFlashLoanLiquidatorLiquidateWrappedCollateral() public {
         address whale = 0xccFa0530B9d52f970d1A2dAEa670ce58E4176389;
 
