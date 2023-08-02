@@ -61,14 +61,14 @@ contract PositionManagerWithdrawRTest is TestSetup {
             priceFeed: priceFeed,
             collateralToken: collateralToken,
             position: CAROL,
-            icr: (110 * MathUtils._100_PERCENT / 100)
+            icr: (120 * MathUtils._100_PERCENT / 100)
         });
         vm.stopPrank();
 
         vm.prank(CAROL);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPositionManager.NewICRLowerThanMCR.selector, (110 * MathUtils._100_PERCENT / 100) - 1
+                IPositionManager.NewICRLowerThanMCR.selector, (120 * MathUtils._100_PERCENT / 100) - 1
             )
         );
         positionManager.managePosition(
@@ -81,7 +81,7 @@ contract PositionManagerWithdrawRTest is TestSetup {
 
         assertLt(
             PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price),
-            (110 * MathUtils._100_PERCENT / 100)
+            (120 * MathUtils._100_PERCENT / 100)
         );
 
         uint256 withdrawalAmount = 1;

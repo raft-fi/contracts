@@ -61,7 +61,7 @@ contract FlashMintLiquidatorWrappedCollateralTest is TestSetup {
         mockAmm.setRate(price);
     }
 
-    // Closes a position that has 100% < ICR < 110% (MCR)
+    // Closes a position that has 100% < ICR < 120% (MCR)
     function testSuccessfulPositionLiquidationWrappedToken() public {
         assertEq(rToken.balanceOf(address(this)), 0);
         vm.startPrank(ALICE);
@@ -89,8 +89,8 @@ contract FlashMintLiquidatorWrappedCollateralTest is TestSetup {
         uint256 icrBefore = PositionManagerUtils.getCurrentICR(positionManager, wrappedCollateralToken, BOB, price);
         assertEq(icrBefore, 2e18);
 
-        // Bob increases debt to 180 R, lowering his ICR to 1.11
-        uint256 targetICR = 1_111_111_111_111_111_111;
+        // Bob increases debt to 180 R, lowering his ICR to 1.21
+        uint256 targetICR = 1_211_111_111_111_111_111;
         vm.startPrank(BOB);
         PositionManagerUtils.withdrawDebt({
             positionManager: positionManager,
@@ -104,7 +104,7 @@ contract FlashMintLiquidatorWrappedCollateralTest is TestSetup {
         uint256 icrAfter = PositionManagerUtils.getCurrentICR(positionManager, wrappedCollateralToken, BOB, price);
         assertEq(icrAfter, targetICR);
 
-        // price drops to 1ETH:198R, reducing Bob's ICR between 100% and 110%
+        // price drops to 1ETH:198R, reducing Bob's ICR between 100% and 120%
         setPriceHelper(198e18);
 
         // liquidate position

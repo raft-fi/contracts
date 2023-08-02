@@ -28,8 +28,8 @@ abstract contract FlashLoanLiquidatorBase is ILiquidator, IAaveV3FlashLoanSimple
         IPoolAddressesProvider(0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e);
     IPool public immutable override POOL;
 
-    /// 113% - leave some buffer for fees
-    uint256 private constant TARGET_CR = 1.13e18;
+    /// 123% - leave some buffer for fees
+    uint256 private constant TARGET_CR = 1.23e18;
 
     /// @dev `executeOperation` was provided with an unexpected token.
     /// @param token The received token.

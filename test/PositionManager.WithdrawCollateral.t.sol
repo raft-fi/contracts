@@ -55,7 +55,7 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
 
         assertLt(
             PositionManagerUtils.getCurrentICR(positionManager, collateralToken, ALICE, price),
-            (110 * MathUtils._100_PERCENT / 100)
+            (120 * MathUtils._100_PERCENT / 100)
         );
 
         uint256 collateralWithdrawAmount = 1;
@@ -174,15 +174,15 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             priceFeed: priceFeed,
             collateralToken: collateralToken,
             position: BOB,
-            icr: (110 * MathUtils._100_PERCENT / 100)
+            icr: (120 * MathUtils._100_PERCENT / 100)
         });
         vm.stopPrank();
 
-        // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
+        // Bob attempts to withdraws 1 wei, which would leave him with < 120% ICR.
         vm.prank(BOB);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPositionManager.NewICRLowerThanMCR.selector, (110 * MathUtils._100_PERCENT / 100) - 1
+                IPositionManager.NewICRLowerThanMCR.selector, (120 * MathUtils._100_PERCENT / 100) - 1
             )
         );
         positionManager.managePosition(collateralToken, BOB, 1, false, 0, false, 0, emptySignature);
@@ -209,14 +209,18 @@ contract PositionManagerWithdrawCollateralTest is TestSetup {
             priceFeed: priceFeed,
             collateralToken: collateralToken,
             position: BOB,
-            icr: (110 * MathUtils._100_PERCENT / 100)
+            icr: (120 * MathUtils._100_PERCENT / 100)
         });
         vm.stopPrank();
-        /*
-        // Bob attempts to withdraws 1 wei, which would leave him with < 110% ICR.
+
+        // Bob attempts to withdraws 1 wei, which would leave him with < 120% ICR.
         vm.prank(BOB);
-        vm.expectRevert(abi.encodeWithSelector(NewICRLowerThanMCR.selector, (110 * MathUtils._100_PERCENT / 100) - 1));
-        positionManager.managePosition(1, false, 0, false, 0);*/
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPositionManager.NewICRLowerThanMCR.selector, (120 * MathUtils._100_PERCENT / 100) - 1
+            )
+        );
+        positionManager.managePosition(collateralToken, BOB, 1, false, 0, false, 0, emptySignature);
     }
 
     // Doesn’t allow a user to completely withdraw all collateral from their position (due to gas compensation)

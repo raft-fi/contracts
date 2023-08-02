@@ -57,8 +57,8 @@ contract PositionManagerRedistributionTest is TestSetup {
         uint256 icrBefore = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         assertEq(icrBefore, 4e18);
 
-        // Bob increases debt to 180 R, lowering his ICR to 1.11
-        uint256 targetICR = 1_111_111_111_111_111_111;
+        // Bob increases debt to 180 R, lowering his ICR to 1.21
+        uint256 targetICR = 1_211_111_111_111_111_111;
         vm.startPrank(BOB);
         PositionManagerUtils.withdrawDebt({
             positionManager: positionManager,
@@ -133,8 +133,8 @@ contract PositionManagerRedistributionTest is TestSetup {
 
         uint256 price = priceFeed.getPrice();
 
-        // Bob increases debt to 180 R, lowering his ICR to 1.11
-        uint256 targetICR = 1_111_111_111_111_111_111;
+        // Bob increases debt to 180 R, lowering his ICR to 1.21
+        uint256 targetICR = 1_211_111_111_111_111_111;
         vm.startPrank(ALICE);
         PositionManagerUtils.withdrawDebt({
             positionManager: positionManager,
@@ -274,7 +274,7 @@ contract PositionManagerRedistributionTest is TestSetup {
             collateralToken: collateralToken,
             position: BOB,
             extraDebtAmount: 100e18,
-            icr: 2.21e18
+            icr: 2.41e18
         });
         vm.stopPrank();
 
@@ -310,13 +310,13 @@ contract PositionManagerRedistributionTest is TestSetup {
 
         /* Before redistribution:
         Alice ICR: 2 * 100 / 50 = 400%
-        Bob ICR: 1 * 100 / 90.5 = 110.5%
+        Bob ICR: 1 * 100 / 82.3 = 120.5%
         Carol ICR: 1 * 100 / 100 = 100%
 
         Therefore Alice and Bob above the MCR, Carol is below */
-        assertGe(aliceICRBefore, (110 * MathUtils._100_PERCENT / 100));
-        assertGe(bobICRBefore, (110 * MathUtils._100_PERCENT / 100));
-        assertLe(carolICRBefore, (110 * MathUtils._100_PERCENT / 100));
+        assertGe(aliceICRBefore, (120 * MathUtils._100_PERCENT / 100));
+        assertGe(bobICRBefore, (120 * MathUtils._100_PERCENT / 100));
+        assertLe(carolICRBefore, (120 * MathUtils._100_PERCENT / 100));
 
         positionManager.liquidate(DAVE);
 
@@ -324,9 +324,9 @@ contract PositionManagerRedistributionTest is TestSetup {
         uint256 bobICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, BOB, price);
         uint256 carolICRAfter = PositionManagerUtils.getCurrentICR(positionManager, collateralToken, CAROL, price);
 
-        assertGe(aliceICRAfter, (110 * MathUtils._100_PERCENT / 100));
-        assertLe(bobICRAfter, (110 * MathUtils._100_PERCENT / 100));
-        assertLe(carolICRAfter, (110 * MathUtils._100_PERCENT / 100));
+        assertGe(aliceICRAfter, (120 * MathUtils._100_PERCENT / 100));
+        assertLe(bobICRAfter, (120 * MathUtils._100_PERCENT / 100));
+        assertLe(carolICRAfter, (120 * MathUtils._100_PERCENT / 100));
 
         (, IERC20Indexable raftDebtToken,,,,,,,,) = positionManager.collateralInfo(collateralToken);
 
@@ -336,7 +336,7 @@ contract PositionManagerRedistributionTest is TestSetup {
         uint256 bobPositionCollateral = collateralToken.balanceOf(BOB);
 
         uint256 bobRawICR = bobPositionCollateral * price / bobDebt;
-        assertGe(bobRawICR, (110 * MathUtils._100_PERCENT / 100));
+        assertGe(bobRawICR, (120 * MathUtils._100_PERCENT / 100));
 
         vm.startPrank(EVE);
         PositionManagerUtils.openPosition({

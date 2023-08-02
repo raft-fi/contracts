@@ -73,7 +73,7 @@ contract OneStepLeverageStETHTest is TestSetup {
 
     function testOpenLeveragedPositionWithStETH() public {
         uint256 collateralAmount = 42e18;
-        uint256 leverageMultiplier = 9e18;
+        uint256 leverageMultiplier = 5e18;
         uint256 price = priceFeed.getPrice();
         uint256 targetDebt =
             stETH.getSharesByPooledEth(collateralAmount).mulDown(price).mulDown(leverageMultiplier - 1e18);
@@ -91,7 +91,7 @@ contract OneStepLeverageStETHTest is TestSetup {
 
     function testReduceLeveragedPositionWithStETH() public {
         uint256 collateralAmount = 42e18;
-        uint256 leverageMultiplier = 9e18;
+        uint256 leverageMultiplier = 5e18;
         uint256 price = priceFeed.getPrice();
         uint256 targetDebt =
             stETH.getSharesByPooledEth(collateralAmount).mulDown(price).mulDown(leverageMultiplier - 1e18);
