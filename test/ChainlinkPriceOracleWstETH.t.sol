@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import { Test } from "forge-std/Test.sol";
-import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import { IWstETH } from "../contracts/Dependencies/IWstETH.sol";
 import { IPriceOracle } from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
 import { ChainlinkPriceOracleWstETH } from "../contracts/Oracles/ChainlinkPriceOracleWstETH.sol";

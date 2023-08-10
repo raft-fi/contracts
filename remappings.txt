@@ -3,4 +3,5 @@ forge-std/=lib/forge-std/src/
 @tempusfinance/tempus-utils/contracts/=lib/tempus-utils/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @balancer-labs/v2-interfaces/contracts/=lib/balancer-v2-monorepo/pkg/interfaces/contracts/
-@smartcontractkit/chainlink=lib/chainlink/contracts/src/v0.8
+@chainlink=lib/chainlink/
+@redstone-finance/=lib/redstone-oracles-monorepo/packages/
