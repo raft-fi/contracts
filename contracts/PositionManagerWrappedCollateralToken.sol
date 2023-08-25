@@ -59,6 +59,7 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         ERC20PermitSignature calldata permitSignature
     )
         public
+        virtual
         override
     {
         ERC20PermitSignature memory emptySignature;
@@ -108,6 +109,7 @@ contract PositionManagerWrappedCollateralToken is IPositionManagerWrappedCollate
         ERC20PermitSignature calldata permitSignature
     )
         public
+        virtual
         override
     {
         _applyPermit(_rToken, permitSignature);
