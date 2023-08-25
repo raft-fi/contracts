@@ -82,6 +82,7 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     )
         public
         override
+        unlockCollateralToken
     {
         _payInterest();
         super.managePosition(
@@ -97,7 +98,7 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     }
 
     /// TODO: IMPORTANT create interface and add dis?
-    function liquidate(address position) external {
+    function liquidate(address position) external unlockCollateralToken {
         uint256 positionDebt = debtToken.balanceOf(position);
 
         _rToken.transferFrom(msg.sender, address(this), positionDebt);
