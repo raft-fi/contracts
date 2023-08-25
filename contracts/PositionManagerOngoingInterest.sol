@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { MathUtils } from "./Dependencies/MathUtils.sol";
 import { IERC20WrappedLockable } from "./Interfaces/IERC20WrappedLockable.sol";
+import { IERC20Wrapped } from "./Interfaces/IERC20Wrapped.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IPriceFeed } from "./Interfaces/IPriceFeed.sol";
 import { PositionManagerWrappedCollateralToken } from "./PositionManagerWrappedCollateralToken.sol";
@@ -29,15 +30,15 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     event InterestPaid(address indexed position, uint256 interestPaid, uint256 pendingInterest);
 
     /// TODO: IMPORTANT leave like dis or use callback instead?
-    // modifier unlockCollateralToken {
-    //     wrappedCollateralToken.unlock();
-    //     _;
-    //     wrappedCollateralToken.lock();
-    // }
+    modifier unlockCollateralToken() {
+        IERC20WrappedLockable(address(wrappedCollateralToken)).setLock(false);
+        _;
+        IERC20WrappedLockable(address(wrappedCollateralToken)).setLock(true);
+    }
 
     constructor(
         address positionManager_,
-        IERC20WrappedLockable wrappedCollateralToken_,
+        IERC20Wrapped wrappedCollateralToken_,
         uint256 interestRatePerSecond_
     )
         PositionManagerWrappedCollateralToken(positionManager_, wrappedCollateralToken_)
@@ -62,7 +63,12 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     }
 
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
-        IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        if (tokenAddress == address(wrappedCollateralToken)) {
+            wrappedCollateralToken.withdrawTo(msg.sender, tokenAmount);
+        } else {
+            IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        }
+
         emit Recovered(tokenAddress, tokenAmount);
     }
 
@@ -83,20 +89,28 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
         );
     }
 
-    function redeemCollateral(
-        uint256 debtAmount,
-        uint256 maxFeePercentage,
-        ERC20PermitSignature calldata permitSignature
-    )
-        public
-        override
-    {
+    error NotSupported();
+
+    function redeemCollateral(uint256, uint256, ERC20PermitSignature calldata) public override {
         /// TODO: IMPORTANT wut do? revert NotSupported()? or add support
-        require(false, "no");
+        revert NotSupported();
     }
 
-    /// TODO: IMPORTANT implement. create interface and add dis?
-    function liquidate(address position) external { }
+    /// TODO: IMPORTANT create interface and add dis?
+    function liquidate(address position) external {
+        uint256 positionDebt = debtToken.balanceOf(position);
+
+        _rToken.transferFrom(msg.sender, address(this), positionDebt);
+
+        uint256 balBefore = wrappedCollateralToken.balanceOf(address(this));
+        IPositionManager(positionManager).liquidate(position);
+        uint256 liquidatorReward = wrappedCollateralToken.balanceOf(address(this)) - balBefore;
+        wrappedCollateralToken.withdrawTo(msg.sender, liquidatorReward);
+
+        /// TODO: IMPORTANT discuss
+        pendingInterestStored[position] = 0;
+        lastPendingInterestUpdate[position] = block.timestamp;
+    }
 
     function _payInterest() internal {
         uint256 pendingInterest_ = pendingInterest(msg.sender);
