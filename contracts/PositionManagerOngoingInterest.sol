@@ -24,10 +24,9 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     uint256 public interestRatePerSecond;
     mapping(address => uint256) public pendingInterestStored;
     mapping(address => uint256) public lastPendingInterestUpdate;
-    /// TODO: IMPORTANT probably add another mapping that maps pending rewards that were unpaid on the
-    /// lastPendingInterestUpdate update
-    /// (btw maybe rename it to lastInterestPaymentUpdate becuz of that) due to reaching the maximum
-    /// collateralization ratio, so that they can be paid later if CR increases
+
+    event Recovered(address indexed token, uint256 amount);
+    event InterestPaid(address indexed position, uint256 interestPaid, uint256 pendingInterest);
 
     /// TODO: IMPORTANT leave like dis or use callback instead?
     // modifier unlockCollateralToken {
@@ -47,8 +46,24 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
         interestRatePerSecond = interestRatePerSecond_;
     }
 
+    function pendingInterest(address position) public view returns (uint256) {
+        uint256 debtBalance = debtToken.balanceOf(position);
+        if (debtBalance == 0) return 0;
+
+        uint256 timeElapsed = block.timestamp - lastPendingInterestUpdate[msg.sender];
+        uint256 pendingInterestSinceUpdate =
+            debtBalance * (interestRatePerSecond * timeElapsed) / INTEREST_RATE_PRECISION;
+
+        return pendingInterestSinceUpdate + pendingInterestStored[msg.sender];
+    }
+
     function setInterestRate(uint256 interestRatePerSecond_) external onlyOwner {
         interestRatePerSecond = interestRatePerSecond_;
+    }
+
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
+        IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        emit Recovered(tokenAddress, tokenAmount);
     }
 
     function managePosition(
@@ -63,35 +78,8 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
         override
     {
         _payInterest();
-        // tODO: IMPORTANT add feeRecipient to send R to, or just add recoverERC20 which owner can call.
-        /// TODO: IMPORTANT emit event
-        /// }
         super.managePosition(
             collateralChange, isCollateralIncrease, debtChange, isDebtIncrease, maxFeePercentage, permitSignature
-        );
-    }
-
-    function _payInterest() internal {
-        uint256 pendingInterest_ = pendingInterest(msg.sender);
-        if (pendingInterest_ == 0) return;
-
-        uint256 maxMintableDebt = getMaxMintableDebt(msg.sender);
-
-        uint256 debtToMint;
-        uint256 appliedBorrowingFee;
-        if (pendingInterest_ > maxMintableDebt) {
-            (debtToMint, appliedBorrowingFee) = applyBorrowingFee(maxMintableDebt);
-            pendingInterestStored[msg.sender] -= maxMintableDebt;
-            /// TODO: IMPORTANT should deduct borrowing fee
-        } else {
-            (debtToMint, appliedBorrowingFee) = applyBorrowingFee(pendingInterest_);
-            pendingInterestStored[msg.sender] = 0;
-        }
-        lastPendingInterestUpdate[msg.sender] = block.timestamp;
-
-        ERC20PermitSignature memory emptySignature;
-        IPositionManager(positionManager).managePosition(
-            wrappedCollateralToken, msg.sender, 0, false, debtToMint, true, appliedBorrowingFee, emptySignature
         );
     }
 
@@ -110,22 +98,33 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     /// TODO: IMPORTANT implement. create interface and add dis?
     function liquidate(address position) external { }
 
-    /// TODO: IMPORTANT maybe this should return (uint256, uint256), which is the split that will be minted and cached
-    function pendingInterest(address position) public view returns (uint256) {
-        uint256 debtBalance = debtToken.balanceOf(position);
-        if (debtBalance == 0) return 0;
+    function _payInterest() internal {
+        uint256 pendingInterest_ = pendingInterest(msg.sender);
+        if (pendingInterest_ == 0) return;
 
-        uint256 timeElapsed = block.timestamp - lastPendingInterestUpdate[msg.sender];
-        /// TODO: IMPORTANT what if lastPendingInterestUpdate[msg.sender] is 0? this will happen on initial debt mint.
-        /// Also think about end to end flows
+        uint256 maxMintableDebt = _getMaxMintableDebt(msg.sender);
 
-        uint256 pendingInterestSinceUpdate =
-            debtBalance * (interestRatePerSecond * timeElapsed) / INTEREST_RATE_PRECISION;
-        return pendingInterestSinceUpdate + pendingInterestStored[msg.sender];
+        uint256 debtToMint;
+        uint256 appliedBorrowingFee;
+        if (pendingInterest_ > maxMintableDebt) {
+            (debtToMint, appliedBorrowingFee) = _applyBorrowingFee(maxMintableDebt);
+            pendingInterestStored[msg.sender] -= maxMintableDebt;
+        } else {
+            (debtToMint, appliedBorrowingFee) = _applyBorrowingFee(pendingInterest_);
+            pendingInterestStored[msg.sender] = 0;
+        }
+        lastPendingInterestUpdate[msg.sender] = block.timestamp;
+
+        ERC20PermitSignature memory emptySignature;
+        (, uint256 actualDebtChange) = IPositionManager(positionManager).managePosition(
+            wrappedCollateralToken, msg.sender, 0, false, debtToMint, true, appliedBorrowingFee, emptySignature
+        );
+
+        emit InterestPaid(msg.sender, actualDebtChange, pendingInterestStored[msg.sender]);
     }
 
     // IPositionManager(positionManager).splitLiquidationCollateral(wrappedCollateralToken).MCR()
-    function getMaxMintableDebt(address position) internal returns (uint256) {
+    function _getMaxMintableDebt(address position) internal returns (uint256) {
         (uint256 price,) = priceFeed.fetchPrice();
         uint256 collateralBalance = wrappedCollateralToken.balanceOf(position);
         uint256 debtBalance = debtToken.balanceOf(position);
@@ -135,7 +134,7 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
         return debtBalance >= maxDebt ? 0 : maxDebt - debtBalance;
     }
 
-    function applyBorrowingFee(uint256 amount)
+    function _applyBorrowingFee(uint256 amount)
         internal
         view
         returns (uint256 feeAdjustedAmount, uint256 appliedBorrowingFee)
