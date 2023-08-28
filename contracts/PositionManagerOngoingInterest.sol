@@ -117,6 +117,7 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
 
     function _payInterest() internal {
         uint256 pendingInterest_ = pendingInterest(msg.sender);
+        lastPendingInterestUpdate[msg.sender] = block.timestamp;
         if (pendingInterest_ == 0) return;
 
         uint256 maxMintableDebt = _getMaxMintableDebt(msg.sender);
@@ -129,7 +130,6 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
             (debtToMint, appliedBorrowingFee) = _applyBorrowingFee(pendingInterest_);
             pendingInterestStored[msg.sender] = 0;
         }
-        lastPendingInterestUpdate[msg.sender] = block.timestamp;
 
         ERC20PermitSignature memory emptySignature;
         (, uint256 actualDebtChange) = IPositionManager(positionManager).managePosition(
