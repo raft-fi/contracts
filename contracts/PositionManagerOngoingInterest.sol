@@ -20,6 +20,7 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     uint256 public constant INTEREST_RATE_PRECISION = 1e18;
 
     IERC20 public immutable debtToken;
+    IERC20 public immutable raftCollateralToken;
     IPriceFeed public immutable priceFeed;
 
     uint256 public interestRatePerSecond;
@@ -44,6 +45,7 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
         PositionManagerWrappedCollateralToken(positionManager_, wrappedCollateralToken_)
     {
         (, debtToken, priceFeed,,,,,,,) = IPositionManager(positionManager).collateralInfo(wrappedCollateralToken_);
+        raftCollateralToken = IPositionManager(positionManager).raftCollateralToken(wrappedCollateralToken_);
         interestRatePerSecond = interestRatePerSecond_;
     }
 
@@ -118,12 +120,11 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
         if (pendingInterest_ == 0) return;
 
         uint256 maxMintableDebt = _getMaxMintableDebt(msg.sender);
-
         uint256 debtToMint;
         uint256 appliedBorrowingFee;
         if (pendingInterest_ > maxMintableDebt) {
             (debtToMint, appliedBorrowingFee) = _applyBorrowingFee(maxMintableDebt);
-            pendingInterestStored[msg.sender] -= maxMintableDebt;
+            pendingInterestStored[msg.sender] = pendingInterest_ - maxMintableDebt;
         } else {
             (debtToMint, appliedBorrowingFee) = _applyBorrowingFee(pendingInterest_);
             pendingInterestStored[msg.sender] = 0;
@@ -141,7 +142,7 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
     // IPositionManager(positionManager).splitLiquidationCollateral(wrappedCollateralToken).MCR()
     function _getMaxMintableDebt(address position) internal returns (uint256) {
         (uint256 price,) = priceFeed.fetchPrice();
-        uint256 collateralBalance = wrappedCollateralToken.balanceOf(position);
+        uint256 collateralBalance = raftCollateralToken.balanceOf(position);
         uint256 debtBalance = debtToken.balanceOf(position);
         uint256 MCR = IPositionManager(positionManager).splitLiquidationCollateral(wrappedCollateralToken).MCR();
 
