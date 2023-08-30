@@ -9,9 +9,9 @@ import { Fixed256x18 } from "@tempusfinance/tempus-utils/contracts/math/Fixed256
 import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IRToken } from "../Interfaces/IRToken.sol";
 import { IPositionManager } from "../Interfaces/IPositionManager.sol";
+import { ILock } from "../Interfaces/ILock.sol";
 import { IPSM } from "./IPSM.sol";
 import { IPSMFeeCalculator } from "./IPSMFeeCalculator.sol";
-import { ILock } from "./ILock.sol";
 
 /// @dev Base implementation of Peg Stability Module.
 /// Handles basic reserve token transfers as well as minting R.

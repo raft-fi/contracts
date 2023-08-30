@@ -46,6 +46,7 @@ contract PositionManagerOngoingInterestTest is TestSetup {
         );
 
         wrappedCollateralToken.whitelistAddress(address(positionManagerOngoingInterest), true);
+        wrappedCollateralToken.setLocker(address(positionManagerOngoingInterest));
 
         vm.startPrank(ALICE);
         positionManager.whitelistDelegate(address(positionManagerOngoingInterest), true);
@@ -57,7 +58,7 @@ contract PositionManagerOngoingInterestTest is TestSetup {
         priceFeed.setPrice(DEFAULT_PRICE);
     }
 
-    function testDeposit() public {
+    function testDepositOngoingInterest() public {
         uint256 rBalanceBefore = positionManager.rToken().balanceOf(ALICE);
         vm.startPrank(ALICE);
         PositionManagerUtils.OpenPositionResult memory result;

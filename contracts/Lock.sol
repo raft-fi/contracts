@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import { ILock } from "./ILock.sol";
+import { ILock } from "./Interfaces/ILock.sol";
 
 contract Lock is ILock {
     bool public override locked;
-    address public override locker;
+    mapping(address => bool) public override isWhitelistedLocker;
 
-    constructor(address locker_) {
-        locker = locker_;
+    constructor() {
         locked = true;
     }
 
@@ -20,7 +19,7 @@ contract Lock is ILock {
     }
 
     modifier onlyLocker() {
-        if (msg.sender != locker) {
+        if (!isWhitelistedLocker[msg.sender]) {
             revert Unauthorized();
         }
         _;
@@ -32,5 +31,9 @@ contract Lock is ILock {
 
     function lock() public onlyLocker {
         locked = true;
+    }
+
+    function _setWhitelistedLocker(address locker, bool isWhitelisted) internal {
+        isWhitelistedLocker[locker] = isWhitelisted;
     }
 }

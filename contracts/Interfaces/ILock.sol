@@ -11,8 +11,8 @@ interface ILock {
     /// @dev Retrieves if contract is currently locked or not.
     function locked() external view returns (bool);
 
-    /// @dev Retrieves address of the locker who can unlock contract.
-    function locker() external view returns (address);
+    /// @dev Checks if a given address is whitelisted locker.
+    function isWhitelistedLocker(address locker) external view returns (bool);
 
     /// @dev Unlcoks the usage of the contract.
     function unlock() external;

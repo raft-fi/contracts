@@ -8,7 +8,7 @@ import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IPSM } from "../contracts/PSM/IPSM.sol";
 import { IChai } from "../contracts/PSM/IChai.sol";
-import { ILock } from "../contracts/PSM/ILock.sol";
+import { ILock } from "../contracts/Interfaces/ILock.sol";
 import { ChaiPSM } from "../contracts/PSM/ChaiPSM.sol";
 import { ConstantPriceFeed } from "../contracts/PSM/ConstantPriceFeed.sol";
 import { PSMFixedFee } from "../contracts/PSM/FixedFee.sol";

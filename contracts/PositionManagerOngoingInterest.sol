@@ -6,7 +6,7 @@ import { ERC20PermitSignature } from "@tempusfinance/tempus-utils/contracts/util
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { MathUtils } from "./Dependencies/MathUtils.sol";
-import { IERC20WrappedLockable } from "./Interfaces/IERC20WrappedLockable.sol";
+import { ILock } from "./Interfaces/ILock.sol";
 import { IERC20Wrapped } from "./Interfaces/IERC20Wrapped.sol";
 import { IPositionManager } from "./Interfaces/IPositionManager.sol";
 import { IPriceFeed } from "./Interfaces/IPriceFeed.sol";
@@ -32,9 +32,9 @@ contract PositionManagerOngoingInterest is Ownable2Step, PositionManagerWrappedC
 
     /// TODO: IMPORTANT leave like dis or use callback instead?
     modifier unlockCollateralToken() {
-        IERC20WrappedLockable(address(wrappedCollateralToken)).setLock(false);
+        ILock(address(wrappedCollateralToken)).unlock();
         _;
-        IERC20WrappedLockable(address(wrappedCollateralToken)).setLock(true);
+        ILock(address(wrappedCollateralToken)).lock();
     }
 
     constructor(
