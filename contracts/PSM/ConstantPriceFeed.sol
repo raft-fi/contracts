@@ -7,7 +7,7 @@ import { IPriceOracle } from "../Oracles/Interfaces/IPriceOracle.sol";
 import { Lock } from "./Lock.sol";
 
 /// @dev Price oracle to be used for peg stability module to mint R.
-/// Returns constant price of 2 USD per token with 0 deviation.
+/// Returns constant price of 1 USD per token with 0 deviation.
 contract ConstantPriceFeed is IPriceFeed, Lock {
     /// @dev Thrown in case action is not supported
     error NotSupported();
