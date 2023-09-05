@@ -1,0 +1,85 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.19;
+
+import { Test } from "forge-std/Test.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IPSM } from "../contracts/PSM/IPSM.sol";
+import { PSMFixedFee } from "../contracts/PSM/FixedFee.sol";
+import { OneInchV5PSMAMM } from "../contracts/AMMs/OneInchV5PSMAMM.sol";
+
+// solhint-disable max-line-length
+contract OneInchV5PSMAMMTest is Test {
+    address public constant PSM = 0xa03342feB2e1D4690B60Ef556509ec3B76c97eE7;
+    address public constant AGGREGATION_ROUTER_V5 = 0x1111111254EEB25477B68fb85Ed929f73A960582;
+
+    OneInchV5PSMAMM public oneInchPSMAMM;
+
+    function setUp() public {
+        vm.createSelectFork("mainnet", 18_064_015);
+        oneInchPSMAMM = new OneInchV5PSMAMM(AGGREGATION_ROUTER_V5, IPSM(PSM));
+
+        vm.startPrank(0xaB40A7e3cEF4AfB323cE23B6565012Ac7c76BFef);
+        PSMFixedFee(address(IPSM(PSM).feeCalculator())).setFees(0, 0);
+        vm.stopPrank();
+
+        vm.startPrank(0x66F62574ab04989737228D18C3624f7FC1edAe14);
+        IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).approve(PSM, type(uint256).max);
+        IPSM(PSM).buyR(10_000e18, 1);
+        vm.stopPrank();
+    }
+
+    function testOneInchV5PSM_oneInchFirst() public {
+        IERC20 wstETH = IERC20(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
+        IERC20 R = IERC20(0x183015a9bA6fF60230fdEaDc3F43b3D788b13e21);
+        uint256 swapAmount = 123_456_000_123_412_312_321;
+        uint256 minReturn = 194_356_800_191_289_084_097_550;
+        address fromAddress = 0x5fEC2f34D80ED82370F733043B6A536d7e9D7f8d;
+
+        uint256 wstETHBalBefore = wstETH.balanceOf(fromAddress);
+        uint256 RBalBefore = R.balanceOf(fromAddress);
+
+        vm.startPrank(fromAddress);
+        wstETH.approve(address(oneInchPSMAMM), swapAmount);
+
+        uint256 fromAmountOffset = 164;
+        /// wstETH --> DAI
+        bytes memory swapCalldata =
+            hex"12aa3caf0000000000000000000000003208684f96458c540eb08f6f01b9e9afb2b7d4f00000000000000000000000007f39c581f595b53c5cb19bd0b3f8da6c935e2ca00000000000000000000000006b175474e89094c44da98b954eedeac495271d0f0000000000000000000000003208684f96458c540eb08f6f01b9e9afb2b7d4f00000000000000000000000005615deb798bb3e4dfa0139dfa1b3d433cc23b72f000000000000000000000000000000000000000000000006b14bd203aa92710100000000000000000000000000000000000000000000182605efa31b5d84b8000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000021b0000000000000000000000000000000000000000000001fd0001cf00018500a007e5c0d200000000000000000000000000016100015b00010c0000f20000ec00003c41207f39c581f595b53c5cb19bd0b3f8da6c935e2ca00004de0e9a3e00000000000000000000000000000000000000000000000000000000000000005120dc24316b9ae028f1497c275eb9192a3ea0f67022ae7ab96520de3a18e5e111b5eaab095312d7fe8400443df02124000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003ced9425484e0ba3800206b4be0b94041c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2d0e30db002a00000000000000000000000000000000000000000000000000000001a8d34d533ee63c1e50088e6a0c2ddd26feeb64f039a2c41296fcb3f5640c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200a0fd53121f00a0f2fa6b666b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000000000000000000304c0bdf4636bb09700000000000000000004551a32affaa76ae80a06c4eca276b175474e89094c44da98b954eedeac495271d0f1111111254eeb25477b68fb85ed929f73a96058200000000008c4b600c";
+
+        bytes memory oneInchData = abi.encode(fromAmountOffset, swapCalldata);
+        bytes memory ammData = abi.encode(IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F), 1, true, oneInchData);
+        uint256 amountOut = oneInchPSMAMM.swap(wstETH, R, swapAmount, minReturn, ammData);
+
+        assertEq(wstETHBalBefore - wstETH.balanceOf(fromAddress), swapAmount);
+        assertEq(amountOut, R.balanceOf(fromAddress) - RBalBefore);
+        assertGe(amountOut, minReturn);
+    }
+
+    function testOneInchV5PSM_oneInchLast() public {
+        IERC20 wstETH = IERC20(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
+        IERC20 R = IERC20(0x183015a9bA6fF60230fdEaDc3F43b3D788b13e21);
+        IERC20 DAI = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
+        uint256 swapAmount = 123_456_000_123_412_312_321;
+        uint256 minReturn = 53_456_000_123_412_312;
+        address fromAddress = 0xA07B17c7df2257ae49f26e17Fff1a6dFC206Ca84;
+
+        uint256 wstETHBalBefore = wstETH.balanceOf(fromAddress);
+        uint256 RBalBefore = R.balanceOf(fromAddress);
+
+        vm.startPrank(fromAddress);
+        R.approve(address(oneInchPSMAMM), swapAmount);
+
+        uint256 fromAmountOffset = 36;
+        /// DAI --> wstETH
+        bytes memory swapCalldata =
+            hex"0502b1c50000000000000000000000006b175474e89094c44da98b954eedeac495271d0f000000000000000000000000000000000000000000000006b14bd203aa9271010000000000000000000000000000000000000000000000000074458fb7050f910000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d0340c5578194d457dcce3f272538d1ad52c68d1ce8498c4b600c";
+
+        bytes memory oneInchData = abi.encode(fromAmountOffset, swapCalldata);
+        bytes memory ammData = abi.encode(DAI, 1, false, oneInchData);
+        uint256 amountOut = oneInchPSMAMM.swap(R, wstETH, swapAmount, minReturn, ammData);
+
+        assertEq(RBalBefore - R.balanceOf(fromAddress), swapAmount);
+        assertEq(amountOut, wstETH.balanceOf(fromAddress) - wstETHBalBefore);
+        assertGe(amountOut, minReturn);
+    }
+}
