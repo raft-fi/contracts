@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import { Test } from "forge-std/Test.sol";
 import { IPositionManagerDependent } from "../contracts/Interfaces/IPositionManagerDependent.sol";
+import { IWhitelistAddress } from "../contracts/Interfaces/IWhitelistAddress.sol";
 import { IWrappedCollateralToken } from "../contracts/Interfaces/IWrappedCollateralToken.sol";
 import { PositionManager } from "../contracts/PositionManager.sol";
 import { SplitLiquidationCollateral } from "../contracts/SplitLiquidationCollateral.sol";
@@ -82,7 +83,7 @@ contract WrappedCollateralTokenTest is Test {
     function testCannotDepositFor() public {
         vm.startPrank(account2);
 
-        vm.expectRevert(abi.encodeWithSelector(IWrappedCollateralToken.AddressIsNotWhitelisted.selector, account2));
+        vm.expectRevert(abi.encodeWithSelector(IWhitelistAddress.AddressIsNotWhitelisted.selector, account2));
         wrapped.depositForWithAccountCheck(account2, account2, 501e18);
         vm.stopPrank();
     }
@@ -97,25 +98,6 @@ contract WrappedCollateralTokenTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(IPositionManagerDependent.CallerIsNotPositionManager.selector, account));
         wrapped.transfer(account2, 501e18);
-        vm.stopPrank();
-    }
-
-    function testAddWhitelistAddress() public {
-        vm.startPrank(account);
-        wrapped.whitelistAddress(account2, true);
-        assert(wrapped.isWhitelisted(account2));
-        vm.stopPrank();
-    }
-
-    function testCannotAddWhitelistAddress() public {
-        vm.startPrank(account2);
-        vm.expectRevert("Ownable: caller is not the owner");
-        wrapped.whitelistAddress(account2, true);
-        vm.stopPrank();
-
-        vm.startPrank(account);
-        vm.expectRevert(abi.encodeWithSelector(IWrappedCollateralToken.InvalidWhitelistAddress.selector));
-        wrapped.whitelistAddress(address(0), true);
         vm.stopPrank();
     }
 

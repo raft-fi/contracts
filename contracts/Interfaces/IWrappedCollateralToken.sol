@@ -11,12 +11,6 @@ interface IWrappedCollateralToken is IERC20, IERC20Permit {
     /// @dev Total supply of the token cannot exceed `cap`.
     error ExceedsCap();
 
-    /// @dev Invalid address for whitelist.
-    error InvalidWhitelistAddress();
-
-    /// @dev Address is not whitelisted.
-    error AddressIsNotWhitelisted(address);
-
     /// @dev Method not supported.
     error Unsupported();
 
@@ -28,31 +22,17 @@ interface IWrappedCollateralToken is IERC20, IERC20Permit {
     /// @param cap_ Maximum total supply of the token.
     event CapSet(uint256 cap_);
 
-    /// @dev Address is whitelisted or unwhitelisted.
-    /// @param addressForWhitelist Address to whitelist or unwhitelist.
-    /// @param whitelisted True if address is whitelisted, false if unwhitelisted.
-    event AddressWhitelisted(address indexed addressForWhitelist, bool whitelisted);
-
     /// @dev Maximum balance of single user.
     function maxBalance() external view returns (uint256);
 
     /// @dev Maximum total supply of the token.
     function cap() external view returns (uint256);
 
-    /// @dev Checks if address is whitelisted.
-    /// @param _addressToCheck Address to check is whitelisted.
-    function isWhitelisted(address _addressToCheck) external view returns (bool);
-
     /// @dev Sets new maximum balance of a user.
     function setMaxBalance(uint256 newMaxBalance) external;
 
     /// @dev Sets new cap for the token.
     function setCap(uint256 newCap) external;
-
-    /// @dev Whitelist or unwhitelist address.
-    /// @param addressForWhitelist Address to whitelist or unwhitelist.
-    /// @param whitelisted True if address is whitelisted, false if unwhitelisted.
-    function whitelistAddress(address addressForWhitelist, bool whitelisted) external;
 
     /// @dev Mint wrapped token to cover any underlyingTokens that would have been transferred by mistake.
     /// @param account Address to mint wrapped tokens to.
