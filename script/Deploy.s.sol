@@ -18,7 +18,7 @@ contract DeployScript is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        PositionManager positionManager = new PositionManager();
+        PositionManager positionManager = new PositionManager(address(0));
         WrappedCollateralToken wrappedCollateralToken = new WrappedCollateralToken(
             IERC20(WSTETH), "Wrapped Collateral Token", "WCT", 100_000_0e18, type(uint256).max, address(positionManager)
         );

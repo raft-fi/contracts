@@ -8,11 +8,11 @@ import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { IPositionManager } from "../contracts/Interfaces/IPositionManager.sol";
 import { IPSM } from "../contracts/PSM/IPSM.sol";
 import { IChai } from "../contracts/PSM/IChai.sol";
-import { ILock } from "../contracts/PSM/ILock.sol";
+import { ILock } from "../contracts/common/ILock.sol";
 import { ChaiPSM } from "../contracts/PSM/ChaiPSM.sol";
-import { ConstantPriceFeed } from "../contracts/PSM/ConstantPriceFeed.sol";
+import { ConstantPriceFeed } from "../contracts/common/ConstantPriceFeed.sol";
 import { PSMFixedFee } from "../contracts/PSM/FixedFee.sol";
-import { PSMSplitLiquidationCollateral } from "../contracts/PSM/PSMSplitLiquidationCollateral.sol";
+import { PSMSplitLiquidationCollateral } from "../contracts/common/PSMSplitLiquidationCollateral.sol";
 
 contract ChaiPSMIntegrationTests is Test {
     IERC20 public constant DAI = IERC20(address(0x6B175474E89094C44Da98b954EedeAC495271d0F));

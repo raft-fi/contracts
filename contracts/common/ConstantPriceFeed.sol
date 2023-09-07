@@ -7,7 +7,7 @@ import { IPriceOracle } from "../Oracles/Interfaces/IPriceOracle.sol";
 import { Lock } from "./Lock.sol";
 
 /// @dev Price oracle to be used for peg stability module to mint R.
-/// Returns constant price of 1 USD per token with 0 deviation.
+/// Returns constant price of 2 USD per token with 0 deviation.
 contract ConstantPriceFeed is IPriceFeed, Lock {
     /// @dev Thrown in case action is not supported
     error NotSupported();
@@ -18,7 +18,7 @@ contract ConstantPriceFeed is IPriceFeed, Lock {
     uint256 public constant override lastGoodPrice = 1e18;
     uint256 public override priceDifferenceBetweenOracles;
 
-    constructor(address psm) Lock(psm) { }
+    constructor(address unlocker) Lock(unlocker) { }
 
     function setPrimaryOracle(IPriceOracle) external pure override {
         revert NotSupported();

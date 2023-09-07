@@ -11,7 +11,7 @@ contract ERC20IndexableTest is Test {
     address private constant USER = address(234);
 
     function setUp() public {
-        token = new ERC20Indexable(POS_MANAGER, "name", "symbol");
+        token = new ERC20Indexable(POS_MANAGER, "name", "symbol", type(uint256).max);
     }
 
     function testMintWithIndexChange(uint256 initialSupply, uint256 amountToMint, uint256 supplyDecrease) public {
