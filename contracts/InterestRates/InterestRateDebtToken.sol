@@ -88,6 +88,9 @@ contract InterestRateDebtToken is ERC20Indexable {
     }
 
     function _payFees(uint256 currentIndex_) private {
-        IInterestRatePositionManager(positionManager).mintFees(collateralToken, _unpaidFees(currentIndex_));
+        uint256 unpaidFees = _unpaidFees(currentIndex_);
+        if (unpaidFees > 0) {
+            IInterestRatePositionManager(positionManager).mintFees(collateralToken, unpaidFees);
+        }
     }
 }
