@@ -47,7 +47,7 @@ contract ERC20Indexable is IERC20Indexable, ERC20Capped, PositionManagerDependen
         _burn(from, amount == type(uint256).max ? ERC20.balanceOf(from) : amount.divUp(storedIndex));
     }
 
-    function setIndex(uint256 backingAmount) public virtual override onlyPositionManager {
+    function setIndex(uint256 backingAmount) external override onlyPositionManager {
         uint256 supply = ERC20.totalSupply();
         uint256 newIndex = (backingAmount == 0 && supply == 0) ? INDEX_PRECISION : backingAmount.divUp(supply);
         storedIndex = newIndex;
