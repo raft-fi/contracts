@@ -50,19 +50,22 @@ contract InterestRatePositionManagerTests is Test {
 
     function testFeesPaidAndInterestAccrues() public {
         ERC20PermitSignature memory emptySignature;
+        uint256 debtAmount = 3000e18;
 
         vm.startPrank(WHALE);
         WETH.approve(address(irPosman), 6e18);
-        irPosman.managePosition(WETH, WHALE, 6e18, true, 3000e18, true, 0, emptySignature);
+        irPosman.managePosition(WETH, WHALE, 6e18, true, debtAmount, true, 0, emptySignature);
         vm.stopPrank();
 
         uint256 currentTime = block.timestamp;
         vm.warp(currentTime + 10 days);
         uint256 debtAfter = irPosman.raftDebtToken(WETH).balanceOf(WHALE);
-        assertGt(debtAfter, 3000e18);
-        uint256 totalFees = debtAfter - 3000e18;
+        assertGt(debtAfter, debtAmount);
+        uint256 totalFees = debtAfter - debtAmount;
         InterestRateDebtToken(address(irPosman.raftDebtToken(WETH))).updateIndexAndPayFees();
+        uint256 expectedTotalFees = debtAmount * INDEX_INC_PER_SEC * (10 days) / 1e18;
         assertGe(R.balanceOf(OWNER), totalFees);
+        assertEq(totalFees, expectedTotalFees);
     }
 
     function testMintingFailsAfterCapReached() public {
