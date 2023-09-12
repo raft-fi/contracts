@@ -25,7 +25,7 @@ contract InterestRatePositionManagerTests is Test {
     PriceFeedTestnet public wethPriceFeed;
     IERC20 public constant WETH = IERC20(address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2));
     InterestRatePositionManager public irPosman;
-    uint256 public constant CAP = 3000e18;
+    uint256 public constant CAP = 4000e18;
     uint256 public constant INDEX_INC_PER_SEC = 1e10;
     address WHALE = address(0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E);
 
@@ -50,7 +50,7 @@ contract InterestRatePositionManagerTests is Test {
 
     function testFeesPaidAndInterestAccrues() public {
         ERC20PermitSignature memory emptySignature;
-        uint256 debtAmount = 3000e18;
+        uint256 debtAmount = CAP;
 
         vm.startPrank(WHALE);
         WETH.approve(address(irPosman), 6e18);
@@ -73,10 +73,13 @@ contract InterestRatePositionManagerTests is Test {
 
         vm.startPrank(WHALE);
         WETH.approve(address(irPosman), 6e18);
-        irPosman.managePosition(WETH, WHALE, 6e18, true, 3000e18, true, 0, emptySignature);
+        irPosman.managePosition(WETH, WHALE, 6e18, true, CAP - 1e18, true, 0, emptySignature);
+
+        uint256 currentTime = block.timestamp;
+        vm.warp(currentTime + 10 days);
 
         vm.expectRevert(ERC20Capped.ERC20ExceededCap.selector);
-        irPosman.managePosition(WETH, WHALE, 0, false, 100, true, 0, emptySignature);
+        irPosman.managePosition(WETH, WHALE, 0, false, 1e18, true, 0, emptySignature);
         vm.stopPrank();
     }
 

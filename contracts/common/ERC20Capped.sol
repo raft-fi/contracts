@@ -38,7 +38,7 @@ abstract contract ERC20Capped is ERC20, Ownable2Step {
      * @dev See {ERC20-_mint}.
      */
     function _mint(address account, uint256 amount) internal virtual override {
-        if (ERC20.totalSupply() + amount > cap) {
+        if (totalSupply() + amount > cap) {
             revert ERC20ExceededCap();
         }
         super._mint(account, amount);
