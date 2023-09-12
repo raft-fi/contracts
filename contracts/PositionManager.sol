@@ -111,7 +111,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 maxFeePercentage,
         ERC20PermitSignature calldata permitSignature
     )
-        external
+        public
+        virtual
         override
         collateralTokenExists(collateralToken)
         validMaxFeePercentageWhen(maxFeePercentage, isDebtIncrease)

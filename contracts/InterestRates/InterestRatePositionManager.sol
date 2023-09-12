@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20PermitSignature, PermitHelper } from "@tempusfinance/tempus-utils/contracts/utils/PermitHelper.sol";
 import { IRToken } from "../Interfaces/IRToken.sol";
 import { IPriceFeed } from "../Interfaces/IPriceFeed.sol";
 import { IInterestRatePositionManager } from "./IInterestRatePositionManager.sol";
@@ -24,6 +25,36 @@ contract InterestRatePositionManager is ERC20RMinter, PositionManager, IInterest
     { }
 
     // --- External functions ---
+
+    function managePosition(
+        IERC20 collateralToken,
+        address position,
+        uint256 collateralChange,
+        bool isCollateralIncrease,
+        uint256 debtChange,
+        bool isDebtIncrease,
+        uint256 maxFeePercentage,
+        ERC20PermitSignature calldata permitSignature
+    )
+        public
+        virtual
+        override(IPositionManager, PositionManager)
+        returns (uint256 actualCollateralChange, uint256 actualDebtChange)
+    {
+        if (address(permitSignature.token) == address(r)) {
+            PermitHelper.applyPermit(permitSignature, msg.sender, address(this));
+        }
+        return super.managePosition(
+            collateralToken,
+            position,
+            collateralChange,
+            isCollateralIncrease,
+            debtChange,
+            isDebtIncrease,
+            maxFeePercentage,
+            permitSignature
+        );
+    }
 
     function mintFees(IERC20 collateralToken, uint256 amount) external {
         if (msg.sender != address(collateralInfo[collateralToken].debtToken)) {
