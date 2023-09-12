@@ -69,6 +69,7 @@ contract InterestRateDebtToken is ERC20Indexable {
     }
 
     function setIndexIncreasePerSecond(uint256 indexIncreasePerSecond_) public onlyOwner {
+        updateIndexAndPayFees();
         indexIncreasePerSecond = indexIncreasePerSecond_;
         emit IndexIncreasePerSecondSet(indexIncreasePerSecond_);
     }
