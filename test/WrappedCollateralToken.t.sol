@@ -21,7 +21,7 @@ contract WrappedCollateralTokenTest is Test {
     function setUp() public {
         vm.startPrank(account);
         underlying = new TokenMock();
-        positionManager = new PositionManager();
+        positionManager = new PositionManager(address(0));
         wrapped = new WrappedCollateralToken(
             underlying, "Wrapped Token Mock", "WRPTKMCK", type(uint256).max, type(uint256).max, address(positionManager)
         );

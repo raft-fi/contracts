@@ -6,10 +6,10 @@ import { IERC3156FlashLender } from "@openzeppelin/contracts/interfaces/IERC3156
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IRToken } from "../contracts/Interfaces/IRToken.sol";
 import { ChaiPSM } from "../contracts/PSM/ChaiPSM.sol";
-import { ConstantPriceFeed } from "../contracts/PSM/ConstantPriceFeed.sol";
+import { ConstantPriceFeed } from "../contracts/common/ConstantPriceFeed.sol";
 import { PSMFixedFee } from "../contracts/PSM/FixedFee.sol";
 import { IChai } from "../contracts/PSM/IChai.sol";
-import { PSMSplitLiquidationCollateral } from "../contracts/PSM/PSMSplitLiquidationCollateral.sol";
+import { PSMSplitLiquidationCollateral } from "../contracts/common/PSMSplitLiquidationCollateral.sol";
 import { UpperPegArbitrager } from "../contracts/PSM/UpperPegArbitrager.sol";
 import { PriceFeedTestnet } from "./mocks/PriceFeedTestnet.sol";
 

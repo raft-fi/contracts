@@ -13,7 +13,7 @@ for testing the parent's internal functions. */
 
 contract PositionManagerTester is PositionManager {
     // solhint-disable no-empty-blocks
-    constructor() PositionManager() { }
+    constructor() PositionManager(address(0)) { }
     // solhint-enable no-empty-blocks
 
     function unprotectedDecayBaseRateFromBorrowing(IERC20 collateralToken) external returns (uint256) {

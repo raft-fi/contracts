@@ -39,6 +39,6 @@ contract TestSetup is Test {
     function setUp() public virtual {
         collateralToken = new WstETHTokenMock();
         splitLiquidationCollateral = new SplitLiquidationCollateral();
-        positionManager = new PositionManager();
+        positionManager = new PositionManager(address(0));
     }
 }

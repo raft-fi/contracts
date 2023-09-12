@@ -94,8 +94,8 @@ contract PositionManager is FeeCollector, IPositionManager {
     // --- Constructor ---
 
     /// @dev Initializes the position manager.
-    constructor() FeeCollector(msg.sender) {
-        rToken = new RToken(address(this), msg.sender);
+    constructor(address rToken_) FeeCollector(msg.sender) {
+        rToken = rToken_ == address(0) ? new RToken(address(this), msg.sender) : IRToken(rToken_);
         emit PositionManagerDeployed(rToken, msg.sender);
     }
 
@@ -195,7 +195,7 @@ contract PositionManager is FeeCollector, IPositionManager {
             splitLiquidation.split(entireCollateral, entireDebt, price, isRedistribution);
 
         if (!isRedistribution) {
-            rToken.burn(msg.sender, entireDebt);
+            _burnRTokens(msg.sender, entireDebt);
             totalDebt -= entireDebt;
 
             // Collateral is sent to protocol as a fee only in case of liquidation
@@ -225,7 +225,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 debtAmount,
         uint256 maxFeePercentage
     )
-        external
+        public
+        virtual
         override
     {
         if (maxFeePercentage > MathUtils._100_PERCENT) {
@@ -268,7 +269,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         collateralToken.safeTransfer(feeRecipient, redemptionFee - rebate);
 
         // Burn the total R that is cancelled with debt, and send the redeemed collateral to msg.sender
-        rToken.burn(msg.sender, debtAmount);
+        _burnRTokens(msg.sender, debtAmount);
 
         // Send collateral to account
         collateralToken.safeTransfer(msg.sender, collateralToRedeem - redemptionFee);
@@ -328,6 +329,36 @@ contract PositionManager is FeeCollector, IPositionManager {
         ISplitLiquidationCollateral newSplitLiquidationCollateral
     )
         public
+        virtual
+        override
+    {
+        addCollateralToken(
+            collateralToken,
+            priceFeed,
+            newSplitLiquidationCollateral,
+            new ERC20Indexable(
+                address(this),
+                string(bytes.concat("Raft ", bytes(IERC20Metadata(address(collateralToken)).name()), " collateral")),
+                string(bytes.concat("r", bytes(IERC20Metadata(address(collateralToken)).symbol()), "-c")),
+                type(uint256).max
+            ),
+            new ERC20Indexable(
+                address(this),
+                string(bytes.concat("Raft ", bytes(IERC20Metadata(address(collateralToken)).name()), " debt")),
+                string(bytes.concat("r", bytes(IERC20Metadata(address(collateralToken)).symbol()), "-d")),
+                type(uint256).max
+            )
+        );
+    }
+
+    function addCollateralToken(
+        IERC20 collateralToken,
+        IPriceFeed priceFeed,
+        ISplitLiquidationCollateral newSplitLiquidationCollateral,
+        IERC20Indexable raftCollateralToken_,
+        IERC20Indexable raftDebtToken_
+    )
+        public
         override
         onlyOwner
     {
@@ -342,16 +373,8 @@ contract PositionManager is FeeCollector, IPositionManager {
         }
 
         CollateralTokenInfo memory raftCollateralTokenInfo;
-        raftCollateralTokenInfo.collateralToken = new ERC20Indexable(
-            address(this),
-            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(collateralToken)).name()), " collateral")),
-            string(bytes.concat("r", bytes(IERC20Metadata(address(collateralToken)).symbol()), "-c"))
-        );
-        raftCollateralTokenInfo.debtToken = new ERC20Indexable(
-            address(this),
-            string(bytes.concat("Raft ", bytes(IERC20Metadata(address(collateralToken)).name()), " debt")),
-            string(bytes.concat("r", bytes(IERC20Metadata(address(collateralToken)).symbol()), "-d"))
-        );
+        raftCollateralTokenInfo.collateralToken = raftCollateralToken_;
+        raftCollateralTokenInfo.debtToken = raftDebtToken_;
         raftCollateralTokenInfo.isEnabled = true;
         raftCollateralTokenInfo.priceFeed = priceFeed;
 
@@ -508,13 +531,23 @@ contract PositionManager is FeeCollector, IPositionManager {
             uint256 totalDebtChange =
                 debtChange + _triggerBorrowingFee(collateralToken, position, debtChange, maxFeePercentage);
             raftDebtToken.mint(position, totalDebtChange);
-            rToken.mint(msg.sender, debtChange);
+            _mintRTokens(msg.sender, debtChange);
         } else {
             raftDebtToken.burn(position, debtChange);
-            rToken.burn(msg.sender, debtChange);
+            _burnRTokens(msg.sender, debtChange);
         }
 
         emit DebtChanged(position, collateralToken, debtChange, isDebtIncrease);
+    }
+
+    /// @dev Mints R tokens
+    function _mintRTokens(address to, uint256 amount) internal virtual {
+        rToken.mint(to, amount);
+    }
+
+    /// @dev Burns R tokens
+    function _burnRTokens(address from, uint256 amount) internal virtual {
+        rToken.burn(from, amount);
     }
 
     /// @dev Adjusts the collateral of a given borrower by burning or minting the corresponding amount of Raft
@@ -658,6 +691,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         uint256 maxFeePercentage
     )
         internal
+        virtual
         returns (uint256 borrowingFee)
     {
         _decayBaseRateFromBorrowing(collateralToken); // decay the baseRate state variable
@@ -666,7 +700,7 @@ contract PositionManager is FeeCollector, IPositionManager {
         _checkValidFee(borrowingFee, debtAmount, maxFeePercentage);
 
         if (borrowingFee > 0) {
-            rToken.mint(feeRecipient, borrowingFee);
+            _mintRTokens(feeRecipient, borrowingFee);
             emit RBorrowingFeePaid(collateralToken, position, borrowingFee);
         }
     }

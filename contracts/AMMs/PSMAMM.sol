@@ -18,7 +18,7 @@ contract PSMAMM is AMMBase {
         }
         psm = _psm;
         _psm.reserveToken().approve(address(_psm), type(uint256).max);
-        _psm.rToken().approve(address(_psm), type(uint256).max);
+        _psm.r().approve(address(_psm), type(uint256).max);
     }
 
     function _executeSwap(
@@ -33,7 +33,7 @@ contract PSMAMM is AMMBase {
     {
         if (tokenIn == psm.reserveToken()) {
             psm.buyR(amountIn, minReturn);
-        } else if (tokenIn == psm.rToken()) {
+        } else if (tokenIn == psm.r()) {
             psm.buyReserveToken(amountIn, minReturn);
         } else {
             revert InvalidTokenIn();

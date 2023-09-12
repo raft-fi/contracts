@@ -17,7 +17,7 @@ contract PositionManagerHarness is PositionManager {
     ISplitLiquidationCollateral public splitLiquidationCollateralHarness;
 
     // solhint-disable-next-line no-empty-blocks
-    constructor() PositionManager() { }
+    constructor() PositionManager(address(0)) { }
 
     function computeICR(address position, uint256 price) external view returns (uint256) {
         IERC20 collateralToken = collateralTokenForPosition[position];

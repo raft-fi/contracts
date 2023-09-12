@@ -81,7 +81,7 @@ contract UpperPegArbitrager is IUpperPegArbitrager, IERC3156FlashBorrower, OneIn
             _buyR(amount);
 
             // OneInch swap R -> DAI
-            _executeSwap(IERC20(psm.rToken()), IERC20(psm.rToken()).balanceOf(address(this)), 0, _dataForOneInchSwap);
+            _executeSwap(IERC20(psm.r()), IERC20(psm.r()).balanceOf(address(this)), 0, _dataForOneInchSwap);
         } else {
             revert ActionNotSupported();
         }
