@@ -57,6 +57,8 @@ tests/simulation.csv
 # foundry
 forge-cache/
 out/
+report/
+lcov.info
 
 # certora
 .certora_internal/
