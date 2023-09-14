@@ -97,8 +97,9 @@ contract UpperPegArbitrager is IUpperPegArbitrager, IERC3156FlashBorrower, OneIn
         uint256 _repayment = amount + _fee;
         borrowToken.approve(address(lender), _allowance + _repayment);
         lender.flashLoan(this, address(borrowToken), amount, data);
-
         emit FlashBorrowed(borrowToken, amount, _fee);
+
+        borrowToken.transfer(owner(), borrowToken.balanceOf(address(this)));
     }
 
     function rescueTokens(IERC20 token, address to) external override onlyOwner {
