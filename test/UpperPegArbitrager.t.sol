@@ -48,6 +48,7 @@ contract UpperPegArbitragerTest is Test {
         vm.startPrank(DAI_WHALE);
         DAI.transfer(address(upperPegArbitrager), amount / 5);
         vm.stopPrank();
+        uint256 ownerBalanceBefore = DAI.balanceOf(upperPegArbitrager.owner());
 
         // solhint-disable max-line-length
         bytes memory swapCalldata =
@@ -57,8 +58,9 @@ contract UpperPegArbitragerTest is Test {
 
         upperPegArbitrager.flashBorrow(amount, extraData);
 
+        uint256 profit = DAI.balanceOf(upperPegArbitrager.owner()) - ownerBalanceBefore;
         assertEq(R.balanceOf(address(upperPegArbitrager)), 0);
-        assertGt(DAI.balanceOf(address(upperPegArbitrager)), 0);
-        assertLt(DAI.balanceOf(address(upperPegArbitrager)), amount / 5);
+        assertGt(profit, 0);
+        assertLt(profit, amount / 5);
     }
 }

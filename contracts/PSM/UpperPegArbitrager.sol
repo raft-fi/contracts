@@ -78,10 +78,10 @@ contract UpperPegArbitrager is IUpperPegArbitrager, IERC3156FlashBorrower, OneIn
             }
 
             // Buy R from PSM
-            uint256 rReceived = _buyR(amount);
+            _buyR(amount);
 
             // OneInch swap R -> DAI
-            _executeSwap(IERC20(psm.r()), rReceived, 0, _dataForOneInchSwap);
+            _executeSwap(IERC20(psm.r()), IERC20(psm.r()).balanceOf(address(this)), 0, _dataForOneInchSwap);
         } else {
             revert ActionNotSupported();
         }
@@ -97,8 +97,9 @@ contract UpperPegArbitrager is IUpperPegArbitrager, IERC3156FlashBorrower, OneIn
         uint256 _repayment = amount + _fee;
         borrowToken.approve(address(lender), _allowance + _repayment);
         lender.flashLoan(this, address(borrowToken), amount, data);
-
         emit FlashBorrowed(borrowToken, amount, _fee);
+
+        borrowToken.transfer(owner(), borrowToken.balanceOf(address(this)));
     }
 
     function rescueTokens(IERC20 token, address to) external override onlyOwner {
@@ -108,8 +109,8 @@ contract UpperPegArbitrager is IUpperPegArbitrager, IERC3156FlashBorrower, OneIn
         emit TokensRescued(token, to, amount);
     }
 
-    function _buyR(uint256 amount) internal returns (uint256) {
+    function _buyR(uint256 amount) internal {
         uint256 fee = feeCalculator.calculateFee(amount, true);
-        return psm.buyR(amount, amount - fee);
+        psm.buyR(amount, amount - fee);
     }
 }
