@@ -6,6 +6,10 @@ import { IAMM } from "../Interfaces/IAMM.sol";
 import { IPSM } from "../PSM/IPSM.sol";
 import { AMMBase } from "./AMMBase.sol";
 
+interface IPSMOld {
+    function rToken() external view returns (IERC20);
+}
+
 contract PSMAMM is AMMBase {
     error ZeroAddress();
     error InvalidTokenIn();
@@ -18,7 +22,7 @@ contract PSMAMM is AMMBase {
         }
         psm = _psm;
         _psm.reserveToken().approve(address(_psm), type(uint256).max);
-        _psm.r().approve(address(_psm), type(uint256).max);
+        IPSMOld(address(_psm)).rToken().approve(address(_psm), type(uint256).max);
     }
 
     function _executeSwap(
@@ -33,7 +37,7 @@ contract PSMAMM is AMMBase {
     {
         if (tokenIn == psm.reserveToken()) {
             psm.buyR(amountIn, minReturn);
-        } else if (tokenIn == psm.r()) {
+        } else if (tokenIn == IPSMOld(address(psm)).rToken()) {
             psm.buyReserveToken(amountIn, minReturn);
         } else {
             revert InvalidTokenIn();
