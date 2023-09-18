@@ -16,7 +16,7 @@ contract ChainlinkPriceOracleWstETHTest is Test {
     function setUp() public {
         vm.createSelectFork("mainnet", 17_214_483);
 
-        chainlinkPriceOracleWstETH = new ChainlinkPriceOracleWstETH(aggregatorV3StETH, wstETH, 1e16, 3 hours);
+        chainlinkPriceOracleWstETH = new ChainlinkPriceOracleWstETH(aggregatorV3StETH, wstETH, 1e16, 3 hours, 18);
     }
 
     function testChainlinkWstETHPrice() public {

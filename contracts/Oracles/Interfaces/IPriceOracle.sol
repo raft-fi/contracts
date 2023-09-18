@@ -25,8 +25,8 @@ interface IPriceOracle {
     /// frozen.
     function timeout() external view returns (uint256);
 
-    /// @dev Used to convert a price answer to an 18-digit precision uint.
-    function TARGET_DIGITS() external view returns (uint256);
+    /// @dev Used to convert a price answer to an target-digit precision uint.
+    function targetDigits() external view returns (uint256);
 
     /// @dev price deviation for the oracle in percentage.
     function DEVIATION() external view returns (uint256);

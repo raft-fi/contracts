@@ -13,8 +13,8 @@ contract TellorPriceOracleSwETHTest is Test {
     function setUp() public {
         vm.createSelectFork("goerli", 9_516_129);
 
-        tellorPriceOracleSwETH =
-        new TellorPriceOracle(tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("sweth", "usd"))), 0, 9 hours);
+        tellorPriceOracleSwETH = new TellorPriceOracle(
+            tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("sweth", "usd"))), 0, 9 hours, 18);
     }
 
     function testTellorSwETHPrice() public {

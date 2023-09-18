@@ -24,9 +24,10 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
     constructor(
         AggregatorV3Interface _priceAggregatorAddress,
         uint256 _deviation,
-        uint256 timeout_
+        uint256 timeout_,
+        uint256 targetDigits_
     )
-        BasePriceOracle(timeout_)
+        BasePriceOracle(timeout_, targetDigits_)
     {
         if (address(_priceAggregatorAddress) == address(0)) {
             revert InvalidPriceAggregatorAddress();

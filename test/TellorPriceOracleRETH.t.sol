@@ -15,7 +15,7 @@ contract TellorPriceOracleRETHTest is Test {
 
         tellorPriceOracleRETH = new TellorPriceOracle(
             tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("reth", "usd"))
-        ), 0, 3 hours);
+        ), 0, 3 hours, 18);
     }
 
     function testTellorRETHPrice() public {

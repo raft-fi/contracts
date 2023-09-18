@@ -21,9 +21,10 @@ contract ChainlinkPriceOracleWstETH is IPriceOracleWstETH, ChainlinkPriceOracle 
         AggregatorV3Interface priceAggregatorAddress_,
         IWstETH wstETH_,
         uint256 deviation_,
-        uint256 timeout_
+        uint256 timeout_,
+        uint256 targetDigits_
     )
-        ChainlinkPriceOracle(priceAggregatorAddress_, deviation_, timeout_)
+        ChainlinkPriceOracle(priceAggregatorAddress_, deviation_, timeout_, targetDigits_)
     {
         if (address(wstETH_) == address(0)) {
             revert InvalidWstETHAddress();

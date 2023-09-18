@@ -22,9 +22,10 @@ contract TellorPriceOracleWstETH is IPriceOracleWstETH, TellorPriceOracle {
         bytes32 tellorQueryId_,
         IWstETH wstETH_,
         uint256 deviation_,
-        uint256 timeout_
+        uint256 timeout_,
+        uint256 targetDigits_
     )
-        TellorPriceOracle(tellor_, tellorQueryId_, deviation_, timeout_)
+        TellorPriceOracle(tellor_, tellorQueryId_, deviation_, timeout_, targetDigits_)
     {
         if (address(wstETH_) == address(0)) {
             revert InvalidWstETHAddress();

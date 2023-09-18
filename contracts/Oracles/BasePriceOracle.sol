@@ -4,16 +4,17 @@ pragma solidity 0.8.19;
 import { IPriceOracle } from "./Interfaces/IPriceOracle.sol";
 
 abstract contract BasePriceOracle is IPriceOracle {
-    // --- Constants & immutables ---
-
-    uint256 public constant override TARGET_DIGITS = 18;
+    // --- Immutables ---
 
     uint256 public immutable override timeout;
 
+    uint256 public immutable override targetDigits;
+
     // --- Constructor ---
 
-    constructor(uint256 timeout_) {
+    constructor(uint256 timeout_, uint256 targetDigits_) {
         timeout = timeout_;
+        targetDigits = targetDigits_;
     }
 
     // --- Functions ---
@@ -26,13 +27,13 @@ abstract contract BasePriceOracle is IPriceOracle {
         /*
         * Convert the price returned by the oracle to an 18-digit decimal for use by Raft.
         */
-        if (answerDigits > TARGET_DIGITS) {
+        if (answerDigits > targetDigits) {
             // Scale the returned price value down to Raft's target precision
-            return price / (10 ** (answerDigits - TARGET_DIGITS));
+            return price / (10 ** (answerDigits - targetDigits));
         }
-        if (answerDigits < TARGET_DIGITS) {
+        if (answerDigits < targetDigits) {
             // Scale the returned price value up to Raft's target precision
-            return price * (10 ** (TARGET_DIGITS - answerDigits));
+            return price * (10 ** (targetDigits - answerDigits));
         }
         return price;
     }
