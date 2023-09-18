@@ -17,7 +17,7 @@ contract TellorPriceOracleWstETHTest is Test {
 
         tellorPriceOracleWstETH = new TellorPriceOracleWstETH(
             tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd"))
-        ), wstETH, 0, 3 hours);
+        ), wstETH, 0, 3 hours, 18);
     }
 
     function testTellorWstETHPrice() public {

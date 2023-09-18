@@ -20,13 +20,13 @@ contract ChainlinkPriceOracleRETHTest is Test {
     function setUp() public {
         vm.createSelectFork("mainnet", 17_509_100);
 
-        ChainlinkPriceOracle chainlinkPriceOracleETH = new ChainlinkPriceOracle(aggregatorV3ETH, 5e15, 1 hours);
+        ChainlinkPriceOracle chainlinkPriceOracleETH = new ChainlinkPriceOracle(aggregatorV3ETH, 5e15, 1 hours, 18);
         ITellor tellorOracle = ITellor(0xD9157453E2668B2fc45b7A803D3FEF3642430cC0);
-        TellorPriceOracle tellorPriceOracleETH =
-        new TellorPriceOracle(tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("eth", "usd"))), 0, 1 hours);
+        TellorPriceOracle tellorPriceOracleETH = new TellorPriceOracle(
+            tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("eth", "usd"))), 0, 1 hours, 18);
         PriceFeed priceFeedETH = new PriceFeed(chainlinkPriceOracleETH, tellorPriceOracleETH, 5e16);
 
-        chainlinkPriceOracleRETH = new ChainlinkPriceOracleRETH(aggregatorV3RETH, priceFeedETH, 25e15, 48 hours);
+        chainlinkPriceOracleRETH = new ChainlinkPriceOracleRETH(aggregatorV3RETH, priceFeedETH, 25e15, 48 hours, 18);
     }
 
     function testChainlinkRETHPrice() public {

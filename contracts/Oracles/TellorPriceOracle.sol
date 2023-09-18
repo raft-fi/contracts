@@ -27,9 +27,10 @@ contract TellorPriceOracle is BasePriceOracle, ITellorPriceOracle {
         ITellor tellor_,
         bytes32 tellorQueryId_,
         uint256 _deviation,
-        uint256 timeout_
+        uint256 timeout_,
+        uint256 targetDigits_
     )
-        BasePriceOracle(timeout_)
+        BasePriceOracle(timeout_, targetDigits_)
     {
         if (address(tellor_) == address(0)) {
             revert InvalidTellorAddress();
