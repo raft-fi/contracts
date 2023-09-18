@@ -20,13 +20,15 @@ contract ChainlinkPriceOracleWBTC is Test {
     function setUp() public {
         vm.createSelectFork("mainnet", 17_509_100);
 
-        ChainlinkPriceOracle chainlinkPriceOracleBTC = new ChainlinkPriceOracle(AGGREGATOR_V3_BTC, 5e15, 3 hours, 18);
+        ChainlinkPriceOracle chainlinkPriceOracleBTC =
+            new ChainlinkPriceOracle(AGGREGATOR_V3_BTC, 5e15, 3 hours, 18, 25e16);
         ITellor tellorOracle = ITellor(0xD9157453E2668B2fc45b7A803D3FEF3642430cC0);
         TellorPriceOracle tellorPriceOracleBTC = new TellorPriceOracle(
             tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("btc", "usd"))), 0, 3 hours, 18);
         PriceFeed priceFeedBTC = new PriceFeed(chainlinkPriceOracleBTC, tellorPriceOracleBTC, 5e16);
 
-        chainlinkPriceOracleWBTC = new ChainlinkPriceOracleRETH(AGGREGATOR_V3_WBTC, priceFeedBTC, 2e16, 27 hours, 28);
+        chainlinkPriceOracleWBTC =
+            new ChainlinkPriceOracleRETH(AGGREGATOR_V3_WBTC, priceFeedBTC, 2e16, 27 hours, 28, 25e16);
     }
 
     function testChainlinkWBTCHPrice() public {
