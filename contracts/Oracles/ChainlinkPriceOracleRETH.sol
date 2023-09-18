@@ -22,9 +22,16 @@ contract ChainlinkPriceOracleRETH is ChainlinkPriceOracle, IPriceOracleRETH {
         IPriceFeed priceFeedETH_,
         uint256 deviation_,
         uint256 timeout_,
-        uint256 targetDigits_
+        uint256 targetDigits_,
+        uint256 maxPriceDeviationFromPreviousRound_
     )
-        ChainlinkPriceOracle(priceAggregatorAddress_, deviation_, timeout_, targetDigits_)
+        ChainlinkPriceOracle(
+            priceAggregatorAddress_,
+            deviation_,
+            timeout_,
+            targetDigits_,
+            maxPriceDeviationFromPreviousRound_
+        )
     {
         if (address(priceFeedETH_) == address(0)) {
             revert InvalidPriceFeedETHAddress();

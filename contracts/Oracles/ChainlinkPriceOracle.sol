@@ -17,7 +17,7 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
 
     uint256 public immutable override DEVIATION;
 
-    uint256 public constant override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 25e16; // 25%
+    uint256 public immutable override MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
 
     // --- Constructor ---
 
@@ -25,7 +25,8 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
         AggregatorV3Interface _priceAggregatorAddress,
         uint256 _deviation,
         uint256 timeout_,
-        uint256 targetDigits_
+        uint256 targetDigits_,
+        uint256 maxPriceDeviationFromPreviousRound_
     )
         BasePriceOracle(timeout_, targetDigits_)
     {
@@ -37,6 +38,7 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
         }
         priceAggregator = _priceAggregatorAddress;
         DEVIATION = _deviation;
+        MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = maxPriceDeviationFromPreviousRound_;
     }
 
     // --- Functions ---
@@ -152,7 +154,7 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
         ChainlinkResponse memory prevResponse
     )
         internal
-        pure
+        view
         returns (bool)
     {
         // Not needed to be converted to WstETH price, as we are only checking for a percentage change.

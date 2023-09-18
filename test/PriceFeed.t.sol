@@ -28,7 +28,8 @@ contract PriceFeedTest is TestSetup {
         randomAddress = makeAddr("randomAddress");
 
         mockChainlink = new MockChainlink();
-        chainlinkPriceOracleWstETH = new ChainlinkPriceOracleWstETH(mockChainlink, collateralToken, 1e16, 3 hours, 18);
+        chainlinkPriceOracleWstETH =
+            new ChainlinkPriceOracleWstETH(mockChainlink, collateralToken, 1e16, 3 hours, 18, 25e16);
         mockTellor = new MockTellor();
         tellorPriceOracleWstETH = new TellorPriceOracleWstETH(
             mockTellor, keccak256(abi.encode("SpotPrice", abi.encode("steth", "usd"))
@@ -45,7 +46,7 @@ contract PriceFeedTest is TestSetup {
 
         MockChainlink newMockChainlink = new MockChainlink();
         ChainlinkPriceOracleWstETH newChainlinkPriceOracle =
-            new ChainlinkPriceOracleWstETH(newMockChainlink, collateralToken, 1e16, 3 hours, 18);
+            new ChainlinkPriceOracleWstETH(newMockChainlink, collateralToken, 1e16, 3 hours, 18, 25e16);
         vm.expectRevert(IPriceFeed.PrimaryOracleBrokenOrFrozenOrBadResult.selector);
         new PriceFeed(newChainlinkPriceOracle, IPriceOracle(address(0)), 5e16);
 
@@ -61,7 +62,7 @@ contract PriceFeedTest is TestSetup {
 
     function testSetPrimaryOracle() public {
         ChainlinkPriceOracleWstETH newChainlinkPriceOracle =
-            new ChainlinkPriceOracleWstETH(mockChainlink, collateralToken, 1e16, 3 hours, 18);
+            new ChainlinkPriceOracleWstETH(mockChainlink, collateralToken, 1e16, 3 hours, 18, 25e16);
         priceFeed.setPrimaryOracle(newChainlinkPriceOracle);
 
         assertEq(address(newChainlinkPriceOracle), address(priceFeed.primaryOracle()));
@@ -73,7 +74,7 @@ contract PriceFeedTest is TestSetup {
 
         MockChainlink newMockChainlink = new MockChainlink();
         ChainlinkPriceOracleWstETH newChainlinkPriceOracle =
-            new ChainlinkPriceOracleWstETH(newMockChainlink, collateralToken, 1e16, 3 hours, 18);
+            new ChainlinkPriceOracleWstETH(newMockChainlink, collateralToken, 1e16, 3 hours, 18, 25e16);
         vm.expectRevert(IPriceFeed.PrimaryOracleBrokenOrFrozenOrBadResult.selector);
         priceFeed.setPrimaryOracle(newChainlinkPriceOracle);
 

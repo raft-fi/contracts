@@ -14,7 +14,7 @@ contract RedstonePriceOracleSwETHTest is Test {
     function setUp() public {
         vm.createSelectFork("mainnet", 18_001_216);
 
-        redstonePriceOracleSwETH = new ChainlinkPriceOracle(aggregatorV3SwETH, 5e15, 9 hours, 18);
+        redstonePriceOracleSwETH = new ChainlinkPriceOracle(aggregatorV3SwETH, 5e15, 9 hours, 18, 25e16);
     }
 
     function testRedstonekSwETHPrice() public {
