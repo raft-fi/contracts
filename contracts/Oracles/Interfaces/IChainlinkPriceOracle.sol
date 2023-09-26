@@ -23,6 +23,9 @@ interface IChainlinkPriceOracle is IPriceOracle {
 
     // --- Functions ---
 
+    /// @dev Returns the isBrokenOrFrozen and priceChangeAboveMax flags from the latest Chainlink response.
+    function getPriceOracleResponseStatus() external returns (bool, bool);
+
     /// @dev Mainnet Chainlink aggregator.
     function priceAggregator() external returns (AggregatorV3Interface);
 

@@ -27,16 +27,19 @@ contract RedstonePriceOracleSwETHTest is Test {
     }
 
     function testCheckDeployedRedstoneSwETHOracle() public {
-        IChainlinkPriceOracle redstoneDeplyedOracle = IChainlinkPriceOracle(0xecB97207D588F334d7D06b99Acf9d85C11A47732);
+        IChainlinkPriceOracle redstoneDeployedOracle =
+            IChainlinkPriceOracle(0xecB97207D588F334d7D06b99Acf9d85C11A47732);
 
-        assertEq(address(redstoneDeplyedOracle.priceAggregator()), address(redstonePriceOracleSwETH.priceAggregator()));
-        assertEq(redstoneDeplyedOracle.timeout(), redstonePriceOracleSwETH.timeout());
+        assertEq(
+            address(redstoneDeployedOracle.priceAggregator()), address(redstonePriceOracleSwETH.priceAggregator())
+        );
+        assertEq(redstoneDeployedOracle.timeout(), redstonePriceOracleSwETH.timeout());
         /* TODO It is wrong setup in the deployed contract, but, it is not important because it is not used
                     (redemCollateral is it not used for V2 vaults)
-        assertEq(redstoneDeplyedOracle.DEVIATION(), redstonePriceOracleSwETH.DEVIATION());
+        assertEq(redstoneDeployedOracle.DEVIATION(), redstonePriceOracleSwETH.DEVIATION());
         */
         assertEq(
-            redstoneDeplyedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
+            redstoneDeployedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
             redstonePriceOracleSwETH.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND()
         );
     }

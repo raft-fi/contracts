@@ -63,6 +63,20 @@ contract ChainlinkPriceOracle is BasePriceOracle, IChainlinkPriceOracle {
         );
     }
 
+    function getPriceOracleResponseStatus() external view override returns (bool, bool) {
+        ChainlinkResponse memory chainlinkResponse = _getCurrentChainlinkResponse();
+        ChainlinkResponse memory prevChainlinkResponse =
+            _getPrevChainlinkResponse(chainlinkResponse.roundId, chainlinkResponse.decimals);
+
+        if (
+            _chainlinkIsBroken(chainlinkResponse, prevChainlinkResponse)
+                || _oracleIsFrozen(chainlinkResponse.timestamp)
+        ) {
+            return (true, false);
+        }
+        return (false, _chainlinkPriceChangeAboveMax(chainlinkResponse, prevChainlinkResponse));
+    }
+
     function _getCurrentChainlinkResponse() internal view returns (ChainlinkResponse memory chainlinkResponse) {
         // First, try to get current decimal precision:
         try priceAggregator.decimals() returns (uint8 decimals) {
