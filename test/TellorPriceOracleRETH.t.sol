@@ -11,19 +11,19 @@ contract TellorPriceOracleRETHTest is Test {
     TellorPriceOracle public tellorPriceOracleRETH;
 
     function setUp() public {
-        vm.createSelectFork("goerli", 9_196_139);
+        vm.createSelectFork("mainnet", 18_213_950);
 
         tellorPriceOracleRETH = new TellorPriceOracle(
             tellorOracle, keccak256(abi.encode("SpotPrice", abi.encode("reth", "usd"))
-        ), 0, 3 hours, 18);
+        ), 5e15, 2 hours, 18);
     }
 
     function testTellorRETHPrice() public {
-        vm.warp(1_687_044_000);
+        vm.warp(1_695_658_800 + 20 minutes);
         IPriceOracle.PriceOracleResponse memory priceOracleResponse = tellorPriceOracleRETH.getPriceOracleResponse();
         assertEq(priceOracleResponse.isBrokenOrFrozen, false);
         assertEq(priceOracleResponse.priceChangeAboveMax, false);
-        assertApproxEqAbs(priceOracleResponse.price, 1_859_369e15, 1e15);
+        assertApproxEqAbs(priceOracleResponse.price, 1_723_667e15, 1e15);
     }
 
     function testTellorRETHPriceFrozen() public {
@@ -31,5 +31,14 @@ contract TellorPriceOracleRETHTest is Test {
         assertEq(priceOracleResponse.isBrokenOrFrozen, true);
         assertEq(priceOracleResponse.priceChangeAboveMax, false);
         assertEq(priceOracleResponse.price, 0);
+    }
+
+    function testCheckDeployedTellorRETHOracle() public {
+        TellorPriceOracle tellorDeployedOracle = TellorPriceOracle(0xf9784B938c5b82510708f90941F1aD03169d75BD);
+
+        assertEq(address(tellorDeployedOracle.tellor()), address(tellorPriceOracleRETH.tellor()));
+        assertEq(tellorDeployedOracle.tellorQueryId(), tellorPriceOracleRETH.tellorQueryId());
+        assertEq(tellorDeployedOracle.DEVIATION(), tellorPriceOracleRETH.DEVIATION());
+        assertEq(tellorDeployedOracle.timeout(), tellorPriceOracleRETH.timeout());
     }
 }
