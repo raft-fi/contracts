@@ -18,7 +18,7 @@ contract ChainlinkPriceOracleWETHTest is Test {
         chainlinkPriceOracleWETH = new ChainlinkPriceOracle(aggregatorV3ETH, 5e15, 3 hours, 18, 25e16);
     }
 
-    function testChainlinkWstETHPrice() public {
+    function testChainlinkWETHPrice() public {
         vm.warp(1_694_604_083);
         IPriceOracle.PriceOracleResponse memory priceOracleResponse = chainlinkPriceOracleWETH.getPriceOracleResponse();
         assertEq(priceOracleResponse.isBrokenOrFrozen, false);
@@ -27,16 +27,16 @@ contract ChainlinkPriceOracleWETHTest is Test {
     }
 
     function testCheckDeployedChainlinkWETHOracle() public {
-        IChainlinkPriceOracle chainlinkDeplyedOracle =
+        IChainlinkPriceOracle chainlinkDeployedOracle =
             IChainlinkPriceOracle(0xea589074765677892191E796208165E97F7384b2);
 
         assertEq(
-            address(chainlinkDeplyedOracle.priceAggregator()), address(chainlinkPriceOracleWETH.priceAggregator())
+            address(chainlinkDeployedOracle.priceAggregator()), address(chainlinkPriceOracleWETH.priceAggregator())
         );
-        assertEq(chainlinkDeplyedOracle.timeout(), chainlinkPriceOracleWETH.timeout());
-        assertEq(chainlinkDeplyedOracle.DEVIATION(), chainlinkPriceOracleWETH.DEVIATION());
+        assertEq(chainlinkDeployedOracle.timeout(), chainlinkPriceOracleWETH.timeout());
+        assertEq(chainlinkDeployedOracle.DEVIATION(), chainlinkPriceOracleWETH.DEVIATION());
         assertEq(
-            chainlinkDeplyedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
+            chainlinkDeployedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
             chainlinkPriceOracleWETH.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND()
         );
     }

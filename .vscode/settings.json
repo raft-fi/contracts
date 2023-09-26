@@ -34,5 +34,18 @@
     "WRPTKMCK",
     "WSTETH",
     "yarnrc"
+  ],
+  "woke.compiler.solc.remappings": [
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "forge-std/=lib/forge-std/src/",
+    "@tempusfinance/tempus-utils/contracts/=lib/tempus-utils/contracts/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@balancer-labs/v2-interfaces/contracts/=lib/balancer-v2-monorepo/pkg/interfaces/contracts/",
+    "@smartcontractkit/chainlink/=lib/chainlink/contracts/src/v0.8/",
+    "balancer-v2-monorepo/=lib/balancer-v2-monorepo/",
+    "chainlink/=lib/chainlink/",
+    "erc4626-tests/=lib/chainlink/contracts/foundry-lib/openzeppelin-contracts/lib/erc4626-tests/",
+    "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+    "tempus-utils/=lib/tempus-utils/contracts/"
   ]
 }

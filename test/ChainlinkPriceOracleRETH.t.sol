@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { AggregatorV3Interface } from "@smartcontractkit/chainlink/interfaces/AggregatorV3Interface.sol";
 import { ITellor } from "../contracts/Dependencies/ITellor.sol";
 import { IPriceFeed } from "../contracts/Interfaces/IPriceFeed.sol";
+import { IChainlinkPriceOracle } from "../contracts/Oracles/Interfaces/IChainlinkPriceOracle.sol";
 import { IPriceOracle } from "../contracts/Oracles/Interfaces/IPriceOracle.sol";
 import { ChainlinkPriceOracle } from "../contracts/Oracles/ChainlinkPriceOracle.sol";
 import { ChainlinkPriceOracleRETH } from "../contracts/Oracles/ChainlinkPriceOracleRETH.sol";
@@ -32,17 +33,17 @@ contract ChainlinkPriceOracleRETHTest is Test {
     }
 
     function testCheckDeployedChainlinkRETHOracle() public {
-        ChainlinkPriceOracleRETH chainlinkDeplyedOracle =
+        ChainlinkPriceOracleRETH chainlinkDeployedOracle =
             ChainlinkPriceOracleRETH(0x3b4bCb14f31Fb4Ee5C1d3E07e4d623FEf50F122E);
 
         assertEq(
-            address(chainlinkDeplyedOracle.priceAggregator()), address(chainlinkPriceOracleRETH.priceAggregator())
+            address(chainlinkDeployedOracle.priceAggregator()), address(chainlinkPriceOracleRETH.priceAggregator())
         );
-        assertEq(address(chainlinkDeplyedOracle.priceFeedETH()), address(chainlinkPriceOracleRETH.priceFeedETH()));
-        assertEq(chainlinkDeplyedOracle.timeout(), chainlinkPriceOracleRETH.timeout());
-        assertEq(chainlinkDeplyedOracle.DEVIATION(), chainlinkPriceOracleRETH.DEVIATION());
+        assertEq(address(chainlinkDeployedOracle.priceFeedETH()), address(chainlinkPriceOracleRETH.priceFeedETH()));
+        assertEq(chainlinkDeployedOracle.timeout(), chainlinkPriceOracleRETH.timeout());
+        assertEq(chainlinkDeployedOracle.DEVIATION(), chainlinkPriceOracleRETH.DEVIATION());
         assertEq(
-            chainlinkDeplyedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
+            chainlinkDeployedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
             chainlinkPriceOracleRETH.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND()
         );
     }
