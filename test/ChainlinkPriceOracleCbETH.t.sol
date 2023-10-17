@@ -33,17 +33,17 @@ contract ChainlinkPriceOracleCbETHTest is Test {
     }
 
     function testCheckDeployedChainlinkCbETHOracle() public {
-        ChainlinkPriceOracleRETH chainlinkDeplyedOracle =
+        ChainlinkPriceOracleRETH chainlinkDeployedOracle =
             ChainlinkPriceOracleRETH(0xCeb62B7080460c5C5E91B7acFC490bB49ea34Df6);
 
         assertEq(
-            address(chainlinkDeplyedOracle.priceAggregator()), address(chainlinkPriceOracleCbETH.priceAggregator())
+            address(chainlinkDeployedOracle.priceAggregator()), address(chainlinkPriceOracleCbETH.priceAggregator())
         );
-        assertEq(address(chainlinkDeplyedOracle.priceFeedETH()), address(chainlinkPriceOracleCbETH.priceFeedETH()));
-        assertEq(chainlinkDeplyedOracle.timeout(), chainlinkPriceOracleCbETH.timeout());
-        assertEq(chainlinkDeplyedOracle.DEVIATION(), chainlinkPriceOracleCbETH.DEVIATION());
+        assertEq(address(chainlinkDeployedOracle.priceFeedETH()), address(chainlinkPriceOracleCbETH.priceFeedETH()));
+        assertEq(chainlinkDeployedOracle.timeout(), chainlinkPriceOracleCbETH.timeout());
+        assertEq(chainlinkDeployedOracle.DEVIATION(), chainlinkPriceOracleCbETH.DEVIATION());
         assertEq(
-            chainlinkDeplyedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
+            chainlinkDeployedOracle.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND(),
             chainlinkPriceOracleCbETH.MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND()
         );
     }

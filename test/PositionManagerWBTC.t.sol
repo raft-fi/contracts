@@ -260,4 +260,18 @@ contract PositionManagerWBTCTest is Test {
             bobICRBeforeRedistribution
         );
     }
+
+    function testCannotLiquidate() public {
+        // Alice transaction
+        vm.startPrank(ALICE);
+        uint256 aliceCollateralAmount = 5e8;
+        uint256 aliceDebtAmount = 62_500e18;
+        WBTC.approve(address(irPosman), aliceCollateralAmount);
+        ERC20PermitSignature memory emptySignature;
+        irPosman.managePosition(WBTC, ALICE, aliceCollateralAmount, true, aliceDebtAmount, true, 0, emptySignature);
+        vm.stopPrank();
+
+        vm.expectRevert(abi.encodeWithSelector(IPositionManager.NothingToLiquidate.selector));
+        irPosman.liquidate(ALICE);
+    }
 }
